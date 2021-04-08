@@ -1,0 +1,26 @@
+
+# intrinsic	frequency
+w    	= 24.25E9Hz
+	
+#Coupling strength
+K(Kvco, AkPD, Ga1)=(Kvco*Ga1*AkPD)=6,03712e8Hz/V
+
+
+# the integration time of the Loop Filter tauc=1/wc=1/(2πfc), fc the cutoff frequency of the Loop Filter
+if v == 512:
+	tauc	= 1.0/(2.0*np.pi*0.965E6);  
+	fc	= 0.965E6Hz
+
+if v == 128:
+	tauc	= 1.0/(2.0*np.pi*4.019E6); 	
+	fc	= 4.019E6Hz
+
+if v == 32:
+	tauc	= 1.0/(2.0*np.pi*4.019E6);  
+	fc	= 40.19E6Hz
+
+# Inverter
+INV		= 1.0*np.pi				
+
+# the order of the Loop Filter
+order	= 2.0			

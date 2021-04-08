@@ -1,0 +1,4 @@
+intrisic freq [Hz]: 		1
+coupling strength [Hz/V]:	(1.35-27)*1E-3
+cut-off frequency [Hz]:		fc >= 2 alpha_max = (2.63-10.55)*1E-5
+division v:			{32, 64, 128, 256, 512, 1024}

@@ -63,9 +63,17 @@ class PhaseLockedLoop:
 		phi 		  	= self.vco.next(x_ctrl)[0]								# the control signal is used to update the VCO and thereby evolving the phase
 		return phi#, x_ctrl
 
-	def clock_count(self,idx_time,current_phi):
+	def clock_periods_count(self,idx_time,current_phi):							# count periods of oscillations
 		count			= self.counter.read_periods(current_phi)
 		return count
+
+	def clock_halfperiods_count(self,idx_time,current_phi):						# count every half a period of the oscillations
+		count			= self.counter.read_halfperiods(current_phi)
+		return count
+
+	def clock_reset(self,current_phi):											# reset all clock counters
+		count			= self.counter.reset(current_phi)
+		return None
 
 	def next_antenna(self,idx_time,phi):
 		x, x_delayed  	= self.delayer.next(idx_time,phi)						# this gets the values of a signal x at time t, and time t-tau, from the delayer (x is the matrix phi here)
@@ -103,24 +111,30 @@ class LowPass:
 		self.dt     = dictPLL['dt']												# set time-step
 		self.Fc 	= self.set_from_value_or_list(idx_self, dictPLL['cutFc'], dictNet['Nx']*dictNet['Ny']) # set cut-off frequency [Hz]
 		self.K_Hz	= self.set_from_value_or_list(idx_self, dictPLL['coupK'], dictNet['Nx']*dictNet['Ny']) # set coupling strength
-		self.intF  	= self.set_from_value_or_list(idx_self, dictPLL['intrF'], dictNet['Nx']*dictNet['Ny']) # intrinsic frequency of VCO - here needed for x_k^C(0)
+		self.intrF  = self.set_from_value_or_list(idx_self, dictPLL['intrF'], dictNet['Nx']*dictNet['Ny']) # intrinsic frequency of VCO - here needed for x_k^C(0)
 		self.syncF  = dictPLL['syncF']											# provide freq. of synchronized state under investigation - here needed for x_k^C(0) [Hz]
 
 		self.idx		= idx_self
-		self.wc 		= 2.0*np.pi*self.Fc										# angular cut-off frequency of the loop filter for a=1, filter of first order
 		self.Omega  	= 2.0*np.pi*self.syncF									# angular frequency of synchronized state
 		self.K 	  		= 2.0*np.pi*self.K_Hz									# provide coupling strength - here needed for x_k^C(0)
 		self.instantF  	= None													# instantaneous frequency [Hz]
 
-		self.beta 		= self.dt*self.wc
 		self.y 			= None													# denotes the control signal, output of the LF: dictPLL['initCtrlSig']
+
+		if not self.Fc == None:
+			self.wc 	= 2.0*np.pi*self.Fc										# angular cut-off frequency of the loop filter for a=1, filter of first order
+			self.beta 	= self.dt*self.wc
+			self.evolve = lambda xPD: (1.0-self.beta)*self.y + self.beta*xPD
+		else:
+			print('No cut-off frequency defined (None), hence simulating without loop filter!')
+			self.evolve = lambda xPD: xPD
 
 	#***************************************************************************
 
 	def set_from_value_or_list(self,idx_self,set_vars,numberPLLs):
 		if ( ( isinstance(set_vars, list) or isinstance(set_vars, np.ndarray) ) and len(set_vars) == numberPLLs ):
 			return set_vars[idx_self]											# set individual value
-		elif ( isinstance(set_vars, float) or isinstance(set_vars, int) ):
+		elif ( isinstance(set_vars, float) or isinstance(set_vars, int) or set_vars == None):
 			return set_vars														# set value for all
 		else:
 			print('Error in LF constructor setting a variable!'); sys.exit()
@@ -130,8 +144,8 @@ class LowPass:
 		self.instantF = inst_Freq												# calculate the instantaneous frequency for the last time step of the history
 		#self.y = (self.F_Omeg - self.F) / (self.K)								# calculate the state of the LF at the last time step of the history, it is needed for the simulation of the network
 		if self.K != 0:															# this if-call is fine, since it will only be evaluated once
-			self.y = (self.instantF - self.intF) / (self.K_Hz)					# calculate the state of the LF at the last time step of the history, it is needed for the simulation of the network
-			#print('Set initial ctrl signal! self.instantF, self.intF, self.K_Hz', self.instantF, ' ', self.intF, ' ', self.K_Hz)
+			self.y = (self.instantF - self.intrF) / (self.K_Hz)					# calculate the state of the LF at the last time step of the history, it is needed for the simulation of the network
+			#print('Set initial ctrl signal! self.instantF, self.intrF, self.K_Hz', self.instantF, ' ', self.intrF, ' ', self.K_Hz)
 		else:
 			self.y = 0.0
 		#print('Set initial control signal of PLL %i to:' %self.idx, self.y)
@@ -140,11 +154,11 @@ class LowPass:
 	def next(self,xPD):										      				# this updates y=x_k^{C}(t), the control signal, using the input x=x_k^{PD}(t), the phase-detector signal
 
 		#print('Current PD signal of PLL %i:' %self.idx, xPD); time.sleep(1)
-		self.y = (1.0-self.beta)*self.y + self.beta*xPD
+		self.y = self.evolve(xPD)
 		#print('Current control signal of PLL %i:' %self.idx, self.y)
 		return self.y
 
-	def read_ctrl():
+	def monitor_ctrl(self):														# monitor ctrl signal
 		return self.y
 
 ################################################################################
@@ -156,7 +170,7 @@ class VoltageControlledOscillator:
 		self.Omega 		= 2.0*np.pi*dictPLL['syncF']							# set angular frequency of synchronized state under investigation
 		self.omega 		= 2.0*np.pi*self.set_from_value_or_list(idx_self, dictPLL['intrF'], dictNet['Nx']*dictNet['Ny']) # set intrinsic frequency of the VCO
 		self.K 			= 2.0*np.pi*self.set_from_value_or_list(idx_self, dictPLL['coupK'], dictNet['Nx']*dictNet['Ny']) # set coupling strength
-		self.c 			= dictPLL['noiseVarVCO']								# noise strength -- provide the variance of the GWN process
+		self.c 			= self.set_from_value_or_list(idx_self, dictPLL['noiseVarVCO'], dictNet['Nx']*dictNet['Ny'])	 # noise strength -- provide the variance of the GWN process
 		self.dt 		= dictPLL['dt']											# set time step with which the equations are evolved
 		self.phi 		= None													# this is the internal representation of phi, NOT the container in simulateNetwork
 		self.responVCO	= dictPLL['responseVCO']								# defines a nonlinar VCO response, either set to 'linear' or the nonlinear expression
@@ -166,6 +180,7 @@ class VoltageControlledOscillator:
 			if self.responVCO == 'linear':										# this simulates a linear response of the VCO
 				self.evolvePhi = lambda w, K, x_ctrl, c, dt: ( w + K * x_ctrl ) * dt + np.random.normal(loc=0.0, scale=np.sqrt( c * dt ))
 			elif not self.responVCO == 'linear':								# this simulates a user defined nonlinear VCO response
+				print('\nself.responVCO:',self.responVCO,'\n')
 				self.evolvePhi = lambda w, K, x_ctrl, c, dt: self.responVCO(w, K, x_ctrl) * dt + np.random.normal(loc=0.0, scale=np.sqrt( c * dt ))
 		elif self.c == 0:														# create non-noisy VCO output
 			if self.responVCO == 'linear':
@@ -203,6 +218,10 @@ class VoltageControlledOscillator:
 		self.d_phi 	= phiPert + self.evolvePhi(self.init_freq, self.K, x_ctrl, self.c, self.dt)
 		self.phi 	= self.phi + self.d_phi
 		return self.phi, self.d_phi
+
+	def add_perturbation(self, phiPert):										# adds additional perturbation to current state
+		self.phi 	= self.phi + phiPert
+		return self.phi
 
 	def set_initial_forward(self):												# sets the phase history of the VCO with the frequency of the synchronized state under investigation
 		self.d_phi 	= self.evolvePhi(self.init_freq, 0.0, 0.0, self.c, self.dt)
@@ -395,7 +414,7 @@ class Counter:
 	#***************************************************************************
 
 	def reset(self,phi0):
-		self.init_phase = phi0
+		self.phase_init = phi0
 		return None
 
 	def read_periods(self,phi):

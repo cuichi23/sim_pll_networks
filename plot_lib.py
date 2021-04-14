@@ -72,6 +72,9 @@ figheight = 5;
 
 def plotPSD(dictPLL, dictNet, dictData, plotList=[], saveData=False):
 
+	if dictPLL['cutFc'] == None:
+		dictPLL.update({'cutFc': np.inf})
+
 	f = []; Pxx_db = [];
 	if plotList:
 		for i in range(len(plotList)):											# calculate spectrum of signals for the oscillators specified in the list
@@ -399,6 +402,31 @@ def plotPhaseDiff(dictPLL, dictNet, dictData):
 		plt.legend();
 	plt.savefig('results/phaseConf-t_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.pdf' %(np.mean(dictPLL['coupK']), np.mean(dictPLL['cutFc']), np.mean(dictPLL['syncF']), np.mean(dictPLL['transmission_delay']), np.mean(dictPLL['noiseVarVCO']), now.year, now.month, now.day))
 	plt.savefig('results/phaseConf-t_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.png' %(np.mean(dictPLL['coupK']), np.mean(dictPLL['cutFc']), np.mean(dictPLL['syncF']), np.mean(dictPLL['transmission_delay']), np.mean(dictPLL['noiseVarVCO']), now.year, now.month, now.day), dpi=300)
+
+	return None
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+def plotClockTime(dictPLL, dictNet, dictData):
+
+	labeldict 	= {'wc': r'$\frac{\omega_\textrm{c}}{\omega}$', 'tau': r'$\frac{\Omega\tau}{2\pi}$', 'K': r'$K$',
+					'a': r'$\alpha$', 'Omeg': r'$\Omega$', 'zeta': r'$\zeta$', 'beta': r'$\beta$'}
+	labeldict1 	= {'wc': r'$\omega_\textrm{c}$', 'tau': r'$\tau$', 'K': r'$K$', 'phi': r'$\phi$', 't': r'$t$',
+					'a': r'$\alpha$', 'Omeg': r'$\Omega$', 'zeta': r'$\zeta$', 'beta': r'$\beta$'}
+	color		= ['blue', 'red', 'purple', 'cyan', 'green', 'yellow'] #'magenta'
+	linet		= ['-', '-.', '--', ':', 'densily dashdotdotted', 'densely dashed']
+
+	fig9 = plt.figure(num=9, figsize=(figwidth, figheight), dpi=dpi_val, facecolor='w', edgecolor='k')
+	fig9.canvas.set_window_title('clock time') 							 		# plot the clocks' time
+
+	plt.plot(dictData['t'], dictData['clock'], linewidth=1, linestyle=linet[0])
+
+	plt.xlabel(r'$\frac{\omega t}{2\pi}$', fontdict = labelfont)
+	plt.ylabel(r'count $\frac{T}{2}$', fontdict = labelfont)
+	# plt.legend()
+
+	plt.savefig('results/clockTime-t_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.pdf' %(np.mean(dictPLL['coupK']), np.mean(dictPLL['cutFc']), np.mean(dictPLL['syncF']), np.mean(dictPLL['transmission_delay']), np.mean(dictPLL['noiseVarVCO']), now.year, now.month, now.day))
+	plt.savefig('results/clockTime-t_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.png' %(np.mean(dictPLL['coupK']), np.mean(dictPLL['cutFc']), np.mean(dictPLL['syncF']), np.mean(dictPLL['transmission_delay']), np.mean(dictPLL['noiseVarVCO']), now.year, now.month, now.day), dpi=300)
 
 	return None
 

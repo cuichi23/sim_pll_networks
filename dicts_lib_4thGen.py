@@ -38,6 +38,7 @@ def getDicts(Fsim=125):
 		'phiPerturb': [],														# delta-perturbation on initial state -- PROVIDE EITHER ONE OF THEM! if [] set to zero
 		'phiPerturbRot': [],													# delta-perturbation on initial state -- in rotated space
 		'phiInitConfig': [],													# phase-configuration of sync state,  []: automatic, else provide list
+		'test_case': True														# True: run testcase sim, False: run other simulation mode
 	}
 
 	dictPLL={
@@ -77,8 +78,9 @@ def getDicts(Fsim=125):
 
 	dictPLL.update({'dt': 1.0/dictPLL['sampleF']})
 	if ( isinstance(dictPLL['gPDin'], np.ndarray) and dictPLL['gPDin_symmetric']):
+
 		print('Generate symmetrical matrix for PD gains.')
-		dictPLL.update({'gPDin': dictPLL['gPDin']@dictPLL['gPDin'].T})
+		dictPLL.update({'gPDin': (dictPLL['gPDin']@dictPLL['gPDin'].T)/np.max(dictPLL['gPDin']@dictPLL['gPDin'].T)})
 
 	if dictPLL['intrF'] > 1E-3:
 
@@ -86,6 +88,7 @@ def getDicts(Fsim=125):
 		dictPLL.update({'sim_time_steps': int(dictNet['Tsim']/dictPLL['dt'])})
 		print('Total simulation time in multiples of the eigentfrequency:', int(dictNet['Tsim']*dictPLL['intrF']))
 	else:
+
 		print('Tsim not in multiples of T_omega, since F <= 1E-3')
 		dictNet.update({'Tsim': dictNet['Tsim']*2})
 		dictPLL.update({'sim_time_steps': int(dictNet['Tsim']/dictPLL['dt'])})

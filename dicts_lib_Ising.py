@@ -38,14 +38,15 @@ def getDicts(Fsim=125):
 		'phiPerturb': [np.random.uniform(-1.01,1.01) for i in range(20)],		# delta-perturbation on initial state -- PROVIDE EITHER ONE OF THEM! if [] set to zero
 		'phiPerturbRot': [],													# delta-perturbation on initial state -- in rotated space
 		'phiInitConfig': [],													# phase-configuration of sync state,  []: automatic, else provide list
-		'test_case': True														# True: run testcase sim, False: run other simulation mode
+		'freq_beacons': 0.25,													# frequency of external sender beacons, either a float or a list
+		'test_case': False														# True: run testcase sim, False: run other simulation mode
 	}
 
 	dictPLL={
 		'intrF': 1.0,															# intrinsic frequency in Hz
 		'syncF': 1.0,															# frequency of synchronized state in Hz
 		'coupK': 0.3,#[random.uniform(0.3, 0.4) for i in range(dictNet['Nx']*dictNet['Ny'])],# coupling strength in Hz float or [random.uniform(minK, maxK) for i in range(dictNet['Nx']*dictNet['Ny'])]
-		'gPDin': np.random.uniform(-10,10,size=[dictNet['Nx']*dictNet['Ny'],dictNet['Nx']*dictNet['Ny']]),# gains of the different inputs to PD k from input l -- G_kl, see PD, set to 1 and all G_kl=1 (so far only implemented for some cases, check!): np.random.uniform(0.95,1.05,size=[dictNet['Nx']*dictNet['Ny'],dictNet['Nx']*dictNet['Ny']])
+		'gPDin': np.random.randint(0,2,size=[dictNet['Nx']*dictNet['Ny'],dictNet['Nx']*dictNet['Ny']]),# gains of the different inputs to PD k from input l -- G_kl, see PD, set to 1 and all G_kl=1 (so far only implemented for some cases, check!): np.random.uniform(0.95,1.05,size=[dictNet['Nx']*dictNet['Ny'],dictNet['Nx']*dictNet['Ny']])
 		'gPDin_symmetric': True,												# set to True if G_kl == G_lk, False otherwise
 		'cutFc': None,															# LF cut-off frequency in Hz, here N=9 with mean 0.015: [0.05,0.015,0.00145,0.001,0.0001,0.001,0.00145,0.015,0.05]
 		'div': 1,																# divisor of divider (int)
@@ -76,11 +77,19 @@ def getDicts(Fsim=125):
 		'percentPeriodsAverage': 0.7											# average of *percentPeriodsAverage* % of simulated periods
 	}
 
+	# calculate other parameters and test for incompatibilities
 	dictPLL.update({'dt': 1.0/dictPLL['sampleF']})
 	if ( isinstance(dictPLL['gPDin'], np.ndarray) and dictPLL['gPDin_symmetric']):
 
-		print('Generate symmetrical matrix for PD gains.')
+		print('Generate symmetrical matrix for PD gains. CHECK HERE AGAIN! CONSTRUCTION SITE!')
 		dictPLL.update({'gPDin': (dictPLL['gPDin']@dictPLL['gPDin'].T)/np.max(dictPLL['gPDin']@dictPLL['gPDin'].T)})
+		for i in range(len(dictPLL['gPDin'][:][0])):
+			for j in range(len(dictPLL['gPDin'][0][:])):
+					if dictPLL['gPDin'][i][j] > 0.25:
+						dictPLL['gPDin'][i][j] = 1
+					else:
+						dictPLL['gPDin'][i][j] = 0
+
 
 	if dictPLL['intrF'] > 1E-3:
 
@@ -100,5 +109,6 @@ def getDicts(Fsim=125):
 		dictPLL.update({})
 
 	print('Setup (dictNet, dictPLL):', dictNet, dictPLL)
+	time.sleep(4)
 
 	return dictPLL, dictNet

@@ -33,37 +33,37 @@ def getDicts(Fsim=125):
 		'my': 0,																# twist/chequerboard in y-direction
 		'topology': 'ring',														# 1d) ring, chain, 2d) square-open, square-periodic, hexagonal...
 																				# 3) global, entrainOne, entrainAll, entrainPLLsHierarch, compareEntrVsMutual
-		'Tsim': 1000,															# simulation time in multiples of the period
+		'Tsim': 5000,															# simulation time in multiples of the period
 		'phi_array_mult_tau': 1,												# how many multiples of the delay is stored of the phi time series
-		'phiPerturb': [0, 0.5],													# delta-perturbation on initial state -- PROVIDE EITHER ONE OF THEM! if [] set to zero
+		'phiPerturb': [0, 0.55],												# delta-perturbation on initial state -- PROVIDE EITHER ONE OF THEM! if [] set to zero
 		'phiPerturbRot': [],													# delta-perturbation on initial state -- in rotated space
 		'phiInitConfig': [],													# phase-configuration of sync state,  []: automatic, else provide list
 		'freq_beacons': 0.25,													# frequency of external sender beacons, either a float or a list
-		'test_case': True														# True: run testcase sim, False: run other simulation mode
+		'test_case': False														# True: run testcase sim, False: run other simulation mode
 	}
 
 	dictPLL={
 		'intrF': 1.0,															# intrinsic frequency in Hz
 		'syncF': 1.0,															# frequency of synchronized state in Hz
-		'coupK': 0.4,															#[random.uniform(0.3, 0.4) for i in range(dictNet['Nx']*dictNet['Ny'])],# coupling strength in Hz float or [random.uniform(minK, maxK) for i in range(dictNet['Nx']*dictNet['Ny'])]
+		'coupK': 0.05,															#[random.uniform(0.3, 0.4) for i in range(dictNet['Nx']*dictNet['Ny'])],# coupling strength in Hz float or [random.uniform(minK, maxK) for i in range(dictNet['Nx']*dictNet['Ny'])]
 		'gPDin': 1,																# gains of the different inputs to PD k from input l -- G_kl, see PD, set to 1 and all G_kl=1 (so far only implemented for some cases, check!): np.random.uniform(0.95,1.05,size=[dictNet['Nx']*dictNet['Ny'],dictNet['Nx']*dictNet['Ny']])
 		'gPDin_symmetric': True,												# set to True if G_kl == G_lk, False otherwise
-		'cutFc': 0.6,															# LF cut-off frequency in Hz, None for no LF, or e.g., N=9 with mean 0.015: [0.05,0.015,0.00145,0.001,0.0001,0.001,0.00145,0.015,0.05]
-		'div': 1,																# divisor of divider (int)
-		'noiseVarVCO': 0,														# variance of VCO GWN
+		'cutFc': 0.00166,															# LF cut-off frequency in Hz, here N=9 with mean 0.015: [0.05,0.015,0.00145,0.001,0.0001,0.001,0.00145,0.015,0.05]
+		'div': 32,																# divisor of divider (int)
+		'noiseVarVCO': 1E-9,													# variance of VCO GWN
 		'feedback_delay': 0,													# value of feedback delay in seconds
 		'feedback_delay_var': None, 											# variance of feedback delay
-		'transmission_delay': 0.25, 											# value of transmission delay in seconds, float (single), list (tau_k) or list of lists (tau_kl): np.random.uniform(min,max,size=[dictNet['Nx']*dictNet['Ny'],dictNet['Nx']*dictNet['Ny']]), OR [np.random.uniform(min,max) for i in range(dictNet['Nx']*dictNet['Ny'])]
+		'transmission_delay': 112.195, 												# value of transmission delay in seconds, float (single), list (tau_k) or list of lists (tau_kl): np.random.uniform(min,max,size=[dictNet['Nx']*dictNet['Ny'],dictNet['Nx']*dictNet['Ny']]), OR [np.random.uniform(min,max) for i in range(dictNet['Nx']*dictNet['Ny'])]
 		'transmission_delay_var': None, 										# variance of transmission delays
 		'distribution_for_delays': None,										# from what distribution are random delays drawn?
 		'posX': 0,																# antenna position of PLL k -- x, y z coordinates, need to be set
 		'posY': 0,
 		'posZ': 0,
-		'coup_fct_sig': lambda x: -np.cos(x),									# coupling function for PLLs with ideally filtered PD signals:
+		'coup_fct_sig': lambda x: sawtooth(x,width=0.5),						# coupling function for PLLs with ideally filtered PD signals:
 		# mixer+1sig shift: np.sin(x), mixer: np.cos(x), XOR: sawtooth(x,width=0.5), PSD: 0.5*(np.sign(x)*(1+sawtooth(1*x*np.sign(x), width=1)))
-		'derivative_coup_fct': lambda x: np.sin(x),								# derivative of coupling function h
+		'derivative_coup_fct': lambda x: (2.0/np.pi)*square(x,duty=0.5),		# derivative of coupling function h: -np.sin(x), cos(x), (2.0/np.pi)*square(x,duty=0.5)
 		'includeCompHF': False,													# boolean True/False whether to simulate with HF components
-		'typeVCOsig': 'analogHF',												# 'analogHF' or 'digitalHF'
+		'typeVCOsig': 'digitalHF',												# 'analogHF' or 'digitalHF'
 		'vco_out_sig': lambda x: 0.5*(1.0+square(x,duty=0.5)),					# for HF case, e.g.: np.sin(x) or 0.5*(1.0+square(x,duty=0.5))
 		'antenna': False,														# boolean True/False whether antenna present for PLLs
 		'initAntennaState': 0,
@@ -98,8 +98,8 @@ def getDicts(Fsim=125):
 
 	dictPLL.update({'timeSeriesAverTime': int(dictPLL['percentPeriodsAverage']*dictNet['Tsim']*dictPLL['syncF'])})
 
-	if dictPLL['typeVCOsig'] == 'analogHF':
-		dictPLL.update({})
+	#if dictPLL['typeVCOsig'] == 'analogHF' and inspect.getsourcelines(dictPLL['coup_fct_sig'])[0][0] == "dictPLL={'coup_fct_sig': lambda x: sawtooth(x,width=0.5)\n}"
+	#	print('Recheck paramater combinations in dictPLL: set to analogHF while coupling function of digital PLL choosen.'); sys.exit()
 
 	print('Setup (dictNet, dictPLL):', dictNet, dictPLL)
 

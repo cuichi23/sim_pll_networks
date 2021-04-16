@@ -32,7 +32,7 @@ def generatePLLs(dictPLL, dictNet):	#mode,div,params['topology'],couplingfct,his
 					pll.PhaseDetectorCombiner(idx_pll, dictPLL),				# setup PDadder object of PLL k;
 					pll.LowPass(idx_pll, dictPLL, dictNet),						# setup LF(1st) object of PLL k;
 					pll.VoltageControlledOscillator(idx_pll,dictPLL,dictNet),	# setup VCO object of PLL k;
-					pll.Antenna(idx_pll, dictPLL),								# setup Antenna object of PLL k;
+					pll.Antenna(idx_pll, dictPLL, dictNet),						# setup Antenna object of PLL k;
 					pll.Counter(idx_pll, dictPLL)								# setup Counter object of PLL k;
 					)  for idx_pll in range(dictNet['Nx']*dictNet['Ny']) ]
 

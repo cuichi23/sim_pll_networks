@@ -27,22 +27,29 @@ gc.enable();
 authors: Alexandros Pollakis, Lucas Wetzel [ lwetzel@pks.mpg.de ]
 '''
 
-# system/measurement
-class Algorithm:
-	"""An algorithm class"""
-	def __init__(self,idx_self,pll1,pll2,algo):									# takes two PLLs and computes something
-		self.pll1		= pll1
-		self.pll2		= pll2
-		self.algorithm	= algo
-
-	def next(self,idx_time,phi,x_ctrl):
-		monitor_ctrl	= self.pll1.lf.read_ctrl()
-		countPLL1 		= self.pll1.read_periods(phi)							# reads the current count of periods of PLL1
-		countPLL2 		= self.pll2.read_periods(phi)							# reads the current count of periods of PLL2
-
-	def init_counters(self,phi0):
-		self.pll1.reset(phi0)													# resets the counters of the PLLs, storing their current phase as new reference
-		self.pll2.reset(phi0)													# counter states are computed as np.floor((phi-phi0)/(2*np.pi))
+# # system/measurement
+# class Algorithm:
+# 	"""An algorithm class"""
+# 	def __init__(self,idx_self,pll1x,pll2x,pll1y,pll2y,pll1z,pll2z,algo):		# takes two PLLs and computes something
+# 		self.pll_listX	= [pll1x, pll2x]
+# 		self.pll_listY	= [pll1y, pll2y]
+# 		self.pll_listZ	= [pll1z, pll2z]
+# 		self.algorithm	= algo
+#
+# 	def next(self,idx_time,phi,ext_field):
+#
+# 		phi				= [pll1.next_antenna(idx_time,phi,ext_field) for pll in self.pll_listX]
+#
+# 		monitor_ctrl1	= self.pll1.lf.read_ctrl()
+# 		monitor_ctrl2	= self.pll2.lf.read_ctrl()
+# 		countPLL1 		= self.pll1.read_periods(phi)							# reads the current count of periods of PLL1
+# 		countPLL2 		= self.pll2.read_periods(phi)							# reads the current count of periods of PLL2
+#
+# 	return phiPLLpair, countPLL1, countPLL2,
+#
+# 	def init_counters(self,phi0):
+# 		self.pll1.reset(phi0)													# resets the counters of the PLLs, storing their current phase as new reference
+# 		self.pll2.reset(phi0)													# counter states are computed as np.floor((phi-phi0)/(2*np.pi))
 
 # PLL
 class PhaseLockedLoop:
@@ -75,10 +82,10 @@ class PhaseLockedLoop:
 		count			= self.counter.reset(current_phi)
 		return None
 
-	def next_antenna(self,idx_time,phi):
+	def next_antenna(self,idx_time,phi,ext_field):
 		x, x_delayed  	= self.delayer.next(idx_time,phi)						# this gets the values of a signal x at time t, and time t-tau, from the delayer (x is the matrix phi here)
-		antenna_in		= self.antenna.listen(idx_time,ext_field)				# antenna listens to the external signal
-		x_comb 		  	= self.pdc.next(x, x_delayed,antenna_in,idx_time)		# the phase detector signal is computed
+		antenna_rx		= self.antenna.listen(idx_time,ext_field)				# antenna listens to the external signal
+		x_comb 		  	= self.pdc.next(x,x_delayed,antenna_rx,idx_time)		# the phase detector signal is computed
 		x_ctrl		 	= self.lf.next(x_comb)									# the filtering at the loop filter is applied to the phase detector signal
 		phi 		  	= self.vco.next(x_ctrl)[0]								# the control signal is used to update the VCO and thereby evolving the phase
 		return phi
@@ -248,24 +255,25 @@ class PhaseDetectorCombiner:													# this class creates PD objects, these 
 		self.hp				= dictPLL['derivative_coup_fct']					# derivative of coupling function h
 		self.hf				= dictPLL['vco_out_sig']							# set the type of VCO output signal, needed for HF cases
 		self.a 				= dictPLL['antenna_sig']							# set the type of wireless signal
+		self.actRx			= 0													# PLL dynamic independent of antenna input
 
-		self.idx_neighbors = [n for n in dictPLL['G'].neighbors(self.idx_self)]# for networkx > v1.11
+		self.idx_neighbors 	= [n for n in dictPLL['G'].neighbors(self.idx_self)]# for networkx > v1.11
 		print('I am PLL %i, my neighbors have indexes:'%self.idx_self, self.idx_neighbors)
 		if isinstance(dictPLL['gPDin'], np.ndarray):
-			tempG_kl 			= [dictPLL['gPDin'][self.idx_self,i] for i in self.idx_neighbors]# pick the entries
-			self.G_kl			= np.array(tempG_kl)							# the gain of each individual input gain, together with heterogeneous coupling strength: K_kl
+			tempG_kl 		= [dictPLL['gPDin'][self.idx_self,i] for i in self.idx_neighbors]# pick the entries
+			self.G_kl		= np.array(tempG_kl)							# the gain of each individual input gain, together with heterogeneous coupling strength: K_kl
 			print('PD has different gains for each input signal! Hence: G_kl are introduced. CHECK THESE CASES AGAIN! self.G_kl[%i,l]'%self.idx_self, self.G_kl); #time.sleep(1)
 		else:
-			self.G_kl			= 1
+			self.G_kl		= 1
 
 		if dictPLL['includeCompHF'] == False:
 
 			# depending on the coupling function for the Kuramoto like model with ideally damped HF terms this implements an XOR (triangular) or mixer PD (cos/sin)
 			if dictPLL['antenna'] == True and dictPLL['extra_coup_sig'] == None:
-				self.compute	= lambda x_ext, ant_in, x_feed:  np.mean( self.G_kl * self.h( ( x_ext - x_feed ) / self.div ) + self.h( ant_in - x_feed / self.div ) )
+				self.compute	= lambda x_ext, ant_in, x_feed:  np.mean( self.G_kl * self.h( ( x_ext - x_feed ) / self.div ) + self.actRx * self.h( ant_in - x_feed / self.div ) )
 			elif dictPLL['antenna'] == False and dictPLL['extra_coup_sig'] == 'injection2ndHarm':
-				print('Setup PLL with injection locking signal! --> MODIFY TO MAKE COUPLING STRENGTH OF 2w INJECTION INDEPENDENT! Maybe separate PD?!');
-				self.compute	= lambda x_ext, ant_in, x_feed:  np.mean( self.G_kl * self.h( ( x_ext - x_feed ) / self.div ) ) + self.h( 2.0*x_feed / self.div )
+				print('Setup PLL with injection locking signal! --> Introduce separate coupling strength for 2nd Harm. injection?!');
+				self.compute	= lambda x_ext, ant_in, x_feed:  np.mean( self.G_kl * self.h( ( x_ext - x_feed ) / self.div ) ) - self.h( 2.0*x_feed / self.div )
 			else:
 				self.compute	= lambda x_ext, ant_in, x_feed:  np.mean( self.G_kl * self.h( ( x_ext - x_feed ) / self.div ) )
 
@@ -275,7 +283,7 @@ class PhaseDetectorCombiner:													# this class creates PD objects, these 
 			if dictPLL['antenna'] == True and dictPLL['extra_coup_sig'] == None:
 				if dictPLL['typeVCOsig'] == 'analogHF':							# this becomes the coupling function for analog VCO output signals
 					self.compute= lambda x_ext, ant_in, x_feed: np.mean( self.G_kl * self.hf( x_ext / self.div ) * self.hf( x_feed / self.div )
-																					+ self.a( ant_in ) * self.hf( x_feed / self.div ) )
+																					+ self.actRx * self.a( ant_in ) * self.hf( x_feed / self.div ) )
 
 				elif dictPLL['typeVCOsig'] == 'digitalHF':						# this becomes the coupling function for digital VCO output signals
 					self.compute= lambda x_ext, ant_in, x_feed: np.mean( self.G_kl * ( self.hf( x_ext / self.div )*(1.0-self.hf( x_feed / self.div ))
@@ -308,7 +316,7 @@ class PhaseDetectorCombiner:													# this class creates PD objects, these 
 			if self.idx_neighbors:
 				#x_neighbours = x_delayed[self.idx_neighbors]					# extract the states of all coupling neighbors at t-tau and save to x_neighbours
 				#self.y = self.compute( x_neighbours, antenna_in, x_feed  )		--> replaced these by choosing in delayer already!
-				self.y = self.compute( x_delayed, antenna_in, x_feed  )
+				self.y = self.compute( x_delayed, antenna_in, x_feed )
 			else:
 				self.y = 0.0;
 			return self.y
@@ -382,24 +390,33 @@ class Delayer:
 # antenna
 class Antenna:
 	"""A antenna class"""
-	def __init__(self,idx_self,dictPLL):
+	def __init__(self,idx_self,dictPLL,dictNet):
 
+		self.dt			 = dictPLL['dt']
 		self.posX 		 = dictPLL['posX']
 		self.posY 		 = dictPLL['posY']
 		self.posZ 		 = dictPLL['posZ']
 
+		self.signalRx	 = dictPLL['antenna_sig']
+		self.networkF	 = dictNet['freq_beacons']
+
 		self.stateListen = dictPLL['initAntennaState']
+		self.signalHeard = []
 
 	#***************************************************************************
 
 	def listen(self,idx_time,ext_field):
 
-		antenna_in = 0;
+		antenna_in = self.signalRx(self.networkF*idx_time*self.dt)
+		#antenna_in = 0
 		return antenna_in
 
 	def toggle_activation():
 
-		self.stateListen = True
+		if self.stateListen:
+			self.stateListen = False
+		elif not self.stateListen:
+			self.stateListen = True
 		return None
 
 ################################################################################

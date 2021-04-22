@@ -140,7 +140,10 @@ class LowPass:
 
 	def set_from_value_or_list(self,idx_self,set_vars,numberPLLs):
 		if ( ( isinstance(set_vars, list) or isinstance(set_vars, np.ndarray) ) and len(set_vars) == numberPLLs ):
-			return set_vars[idx_self]											# set individual value
+			if len(set_vars) > 1:												# additional test, in case a single float has been case into a list or array
+				return set_vars[idx_self]										# set individual value
+			else:
+				return set_vars													# set value for all
 		elif ( isinstance(set_vars, float) or isinstance(set_vars, int) or set_vars == None):
 			return set_vars														# set value for all
 		else:
@@ -210,7 +213,10 @@ class VoltageControlledOscillator:
 
 	def set_from_value_or_list(self,idx_self,set_vars,numberPLLs):
 		if ( ( isinstance(set_vars, list) or isinstance(set_vars, np.ndarray) ) and len(set_vars) == numberPLLs ):
-			return set_vars[idx_self]											# set individual value
+			if len(set_vars) > 1:												# additional test, in case a single float has been case into a list or array
+				return set_vars[idx_self]										# set individual value
+			else:
+				return set_vars													# set value for all
 		elif ( isinstance(set_vars, float) or isinstance(set_vars, int) ):
 			return set_vars														# set value for all
 		else:
@@ -247,7 +253,7 @@ class VoltageControlledOscillator:
 # print('Phasedetector and Combiner: sawtooth')
 class PhaseDetectorCombiner:													# this class creates PD objects, these are responsible to detect the phase differences and combine the results
 	"""A phase detector and combiner class"""									# of different inputs (coupling partners)
-	def __init__(self,idx_self,dictPLL):
+	def __init__(self,idx_self,dictPLL,dictNet):
 		# print('Phasedetector and Combiner: sin(x)')
 		self.idx_self 		= idx_self											# assigns the index
 		self.div 			= dictPLL['div']									# set the divider
@@ -255,6 +261,7 @@ class PhaseDetectorCombiner:													# this class creates PD objects, these 
 		self.hp				= dictPLL['derivative_coup_fct']					# derivative of coupling function h
 		self.hf				= dictPLL['vco_out_sig']							# set the type of VCO output signal, needed for HF cases
 		self.a 				= dictPLL['antenna_sig']							# set the type of wireless signal
+		self.K2nd_k			= self.set_from_value_or_list(idx_self, dictPLL['coupStr_2ndHarm']/np.array(dictPLL['coupK']), dictNet['Nx']*dictNet['Ny']) # set coupling strength for injection of 2nd harmonic, divide by PLL coupling strength as this is later multiplied again
 		self.actRx			= 0													# PLL dynamic independent of antenna input
 
 		self.idx_neighbors 	= [n for n in dictPLL['G'].neighbors(self.idx_self)]# for networkx > v1.11
@@ -273,7 +280,7 @@ class PhaseDetectorCombiner:													# this class creates PD objects, these 
 				self.compute	= lambda x_ext, ant_in, x_feed:  np.mean( self.G_kl * self.h( ( x_ext - x_feed ) / self.div ) + self.actRx * self.h( ant_in - x_feed / self.div ) )
 			elif dictPLL['antenna'] == False and dictPLL['extra_coup_sig'] == 'injection2ndHarm':
 				print('Setup PLL with injection locking signal! --> Introduce separate coupling strength for 2nd Harm. injection?!');
-				self.compute	= lambda x_ext, ant_in, x_feed:  np.mean( self.G_kl * self.h( ( x_ext - x_feed ) / self.div ) ) - self.h( 2.0*x_feed / self.div )
+				self.compute	= lambda x_ext, ant_in, x_feed:  np.sum( self.G_kl * self.h( ( x_ext - x_feed ) / self.div ) ) - self.K2nd_k * self.h( 2.0*x_feed / self.div )
 			else:
 				self.compute	= lambda x_ext, ant_in, x_feed:  np.mean( self.G_kl * self.h( ( x_ext - x_feed ) / self.div ) )
 
@@ -304,6 +311,17 @@ class PhaseDetectorCombiner:													# this class creates PD objects, these 
 			print('Phase detector and combiner problem, dictPLL[*includeCompHF*] should either be True or False, check PhaseDetectorCombiner in pll_lib! ')
 
 	#***************************************************************************
+
+	def set_from_value_or_list(self,idx_self,set_vars,numberPLLs):
+		if ( ( isinstance(set_vars, list) or isinstance(set_vars, np.ndarray) ) and len(set_vars) == numberPLLs ):
+			if len(set_vars) > 1:												# additional test, in case a single float has been case into a list or array
+				return set_vars[idx_self]										# set individual value
+			else:
+				return set_vars													# set value for all
+		elif ( isinstance(set_vars, float) or isinstance(set_vars, int) ):
+			return set_vars														# set value for all
+		else:
+			print('Error in LF constructor setting a variable!'); sys.exit()
 
 	def next(self,x_feed,x_delayed,antenna_in,idx_time=0):						# gets time-series results at delayed time and current time to calculate phase differences
 		#print('self.idx_neighbors:', self.idx_neighbors)

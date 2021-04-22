@@ -113,7 +113,6 @@ def simulateSystem(dictNet, dictPLL, dictAlgo=None):
 		print('Simulating testcase scenario!'); time.sleep(2)
 		dictData = evolveSystemTestCases(dictNet, dictPLL, phi, clock_counter, pll_list, dictData)
 
-	plot.plotPSD(dictPLL, dictNet, dictData, [], saveData=False)
 	plot.plotPhasesInf(dictPLL, dictNet, dictData)
 	plot.plotPhases2pi(dictPLL, dictNet, dictData)
 	plot.plotFrequency(dictPLL, dictNet, dictData)
@@ -121,6 +120,7 @@ def simulateSystem(dictNet, dictPLL, dictAlgo=None):
 	plot.plotPhaseRela(dictPLL, dictNet, dictData)
 	plot.plotPhaseDiff(dictPLL, dictNet, dictData)
 	plot.plotClockTime(dictPLL, dictNet, dictData)
+	plot.plotPSD(dictPLL, dictNet, dictData, [], saveData=False)
 
 	plt.draw()
 	plt.show()

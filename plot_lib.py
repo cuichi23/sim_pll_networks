@@ -70,10 +70,23 @@ figheight = 5;
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-def plotPSD(dictPLL, dictNet, dictData, plotList=[], saveData=False):
+def prepareDictsForPlotting(dictPLL, dictNet):
 
 	if dictPLL['cutFc'] == None:
 		dictPLL.update({'cutFc': np.inf})
+
+	if dictPLL['intrF'] > 0:													# for f=0, there would otherwies be a float division by zero
+		F1=dictPLL['intrF']
+	else:
+		F1=dictPLL['intrF']+1E-3
+
+	return dictPLL, dictNet
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+def plotPSD(dictPLL, dictNet, dictData, plotList=[], saveData=False):
+
+	dictPLL, dictNet = prepareDictsForPlotting(dictPLL, dictNet)
 
 	f = []; Pxx_db = [];
 	if plotList:
@@ -202,6 +215,8 @@ def plotPSD(dictPLL, dictNet, dictData, plotList=[], saveData=False):
 
 def plotPhases2pi(dictPLL, dictNet, dictData):
 
+	dictPLL, dictNet = prepareDictsForPlotting(dictPLL, dictNet)
+
 	labeldict 	= {'wc': r'$\frac{\omega_\textrm{c}}{\omega}$', 'tau': r'$\frac{\Omega\tau}{2\pi}$', 'K': r'$K$',
 					'a': r'$\alpha$', 'Omeg': r'$\Omega$', 'zeta': r'$\zeta$', 'beta': r'$\beta$'}
 	labeldict1 	= {'wc': r'$\omega_\textrm{c}$', 'tau': r'$\tau$', 'K': r'$K$', 'phi': r'$\phi$', 't': r'$t$',
@@ -229,6 +244,8 @@ def plotPhases2pi(dictPLL, dictNet, dictData):
 
 def plotPhasesInf(dictPLL, dictNet, dictData):
 
+	dictPLL, dictNet = prepareDictsForPlotting(dictPLL, dictNet)
+
 	labeldict 	= {'wc': r'$\frac{\omega_\textrm{c}}{\omega}$', 'tau': r'$\frac{\Omega\tau}{2\pi}$', 'K': r'$K$',
 					'a': r'$\alpha$', 'Omeg': r'$\Omega$', 'zeta': r'$\zeta$', 'beta': r'$\beta$'}
 	labeldict1 	= {'wc': r'$\omega_\textrm{c}$', 'tau': r'$\tau$', 'K': r'$K$', 'phi': r'$\phi$', 't': r'$t$',
@@ -254,6 +271,8 @@ def plotPhasesInf(dictPLL, dictNet, dictData):
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 def plotFrequency(dictPLL, dictNet, dictData):
+
+	dictPLL, dictNet = prepareDictsForPlotting(dictPLL, dictNet)
 
 	labeldict 	= {'wc': r'$\frac{\omega_\textrm{c}}{\omega}$', 'tau': r'$\frac{\Omega\tau}{2\pi}$', 'K': r'$K$',
 					'a': r'$\alpha$', 'Omeg': r'$\Omega$', 'zeta': r'$\zeta$', 'beta': r'$\beta$'}
@@ -294,6 +313,7 @@ def plotFrequency(dictPLL, dictNet, dictData):
 
 def plotOrderPara(dictPLL, dictNet, dictData):
 
+	dictPLL, dictNet = prepareDictsForPlotting(dictPLL, dictNet)
 	r, orderparam, F1 = eva.obtainOrderParam(dictPLL, dictNet, dictData)
 
 	fig6 = plt.figure(num=6, figsize=(figwidth, figheight), dpi=dpi_val, facecolor='w', edgecolor='k')
@@ -322,10 +342,7 @@ def plotOrderPara(dictPLL, dictNet, dictData):
 
 def plotPhaseRela(dictPLL, dictNet, dictData):
 
-	if dictPLL['intrF'] > 0:																				   # for f=0, there would otherwies be a float division by zero
-		F1=dictPLL['intrF']
-	else:
-		F1=dictPLL['intrF']+1E-3
+	dictPLL, dictNet = prepareDictsForPlotting(dictPLL, dictNet)
 
 	fig7 = plt.figure(num=7, figsize=(figwidth, figheight), dpi=dpi_val, facecolor='w', edgecolor='k')
 	fig7.canvas.set_window_title('phase relations')
@@ -369,6 +386,8 @@ def plotPhaseRela(dictPLL, dictNet, dictData):
 
 def plotPhaseDiff(dictPLL, dictNet, dictData):
 
+	dictPLL, dictNet = prepareDictsForPlotting(dictPLL, dictNet)
+
 	fig8 = plt.figure(num=8, figsize=(figwidth, figheight), dpi=dpi_val, facecolor='w', edgecolor='k')
 	fig8.canvas.set_window_title('phase configuration with respect to the phase of osci 0')
 	if len(dictData['phi'][:,0]) > dictPLL['treshold_maxT_to_plot'] * (1.0/(dictPLL['intrF']*dictPLL['dt'])):	# (1.0/(dictPLL['intrF']*dictPLL['dt'])) steps for one period
@@ -409,6 +428,8 @@ def plotPhaseDiff(dictPLL, dictNet, dictData):
 
 def plotClockTime(dictPLL, dictNet, dictData):
 
+	dictPLL, dictNet = prepareDictsForPlotting(dictPLL, dictNet)
+
 	labeldict 	= {'wc': r'$\frac{\omega_\textrm{c}}{\omega}$', 'tau': r'$\frac{\Omega\tau}{2\pi}$', 'K': r'$K$',
 					'a': r'$\alpha$', 'Omeg': r'$\Omega$', 'zeta': r'$\zeta$', 'beta': r'$\beta$'}
 	labeldict1 	= {'wc': r'$\omega_\textrm{c}$', 'tau': r'$\tau$', 'K': r'$K$', 'phi': r'$\phi$', 't': r'$t$',
@@ -434,11 +455,15 @@ def plotClockTime(dictPLL, dictNet, dictData):
 
 def plotFreqAndOrderP(dictPLL, dictNet, dictData):
 
+	dictPLL, dictNet = prepareDictsForPlotting(dictPLL, dictNet)
+
 	return None
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 def plotPhasesAndPhaseRelations(dictPLL, dictNet, dictData):
+
+	dictPLL, dictNet = prepareDictsForPlotting(dictPLL, dictNet)
 
 	return None
 
@@ -446,11 +471,15 @@ def plotPhasesAndPhaseRelations(dictPLL, dictNet, dictData):
 
 def plotFreqAndOrderP_cutAxis(dictPLL, dictNet, dictData):
 
+	dictPLL, dictNet = prepareDictsForPlotting(dictPLL, dictNet)
+
 	return None
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 def plotPhasesAndPhaseRelations_cutAxis(dictPLL, dictNet, dictData):
+
+	dictPLL, dictNet = prepareDictsForPlotting(dictPLL, dictNet)
 
 	return None
 

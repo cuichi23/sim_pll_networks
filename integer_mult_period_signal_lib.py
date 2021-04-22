@@ -12,7 +12,7 @@ if not os.environ.get('SGE_ROOT') == None:										# this environment variable 
 	matplotlib.use('Agg') #'%pylab inline'
 import matplotlib.pyplot as plt
 
-def cutTimeSeriesOfIntegerPeriod(Fsim, Tsim, f, phi, percentOfTsim):
+def cutTimeSeriesOfIntegerPeriod(Fsim, Tsim, syncF, maxK, phi, percentOfTsim):
 	# Tsim = 1000; Fsim = 125; f = 0.999; phiInit = 0.0; percentOfTsim = 0.75;
 	signal		= square(phi, duty=0.5)
 	siglen		= len(signal);
@@ -21,6 +21,8 @@ def cutTimeSeriesOfIntegerPeriod(Fsim, Tsim, f, phi, percentOfTsim):
 	testplot	= True
 	#print('analyze', analyzeL1/(Fsim/f),' periods')
 
+	f = syncF + maxK
+
 	# find rising edge close to t[-analyzeL] and t[-1] -- NOTE f represents Omega here
 	widthWinI  = 3.3;
 	widthWin1E = 3.3; widthWin2E = 3.05; widthWin3E = 3.55;
@@ -28,6 +30,27 @@ def cutTimeSeriesOfIntegerPeriod(Fsim, Tsim, f, phi, percentOfTsim):
 	indexesHigStateI = np.where(signal[-analyzeL-int(widthWinI*Fsim/f):-analyzeL]!=-1)
 	indexesLowStateE = np.where(signal[-int(widthWin1E*Fsim/f):]!= 1)
 	indexesHigStateE = np.where(signal[-int(widthWin1E*Fsim/f):]!=-1)
+
+	# plt.figure(1);
+	# plt.plot(signal[-analyzeL-int(widthWinI*Fsim/f)-300:-analyzeL+300]);
+	# plt.plot(signal[-int(widthWinI*Fsim/f)-300:]);
+	# plt.draw(); plt.show()
+
+	if not ( np.shape(indexesLowStateI)[1]>0 and np.shape(indexesHigStateI)[1]>0 and np.shape(indexesLowStateE)[1]>0 and np.shape(indexesHigStateE)[1]>0 ):
+		print('WIDER WINDOW')
+		widthWinI  = 6.3;
+		widthWin1E = 6.3; widthWin2E = 6.05; widthWin3E = 6.55;
+		indexesLowStateI = np.where(signal[-analyzeL-int(widthWinI*Fsim/f):-analyzeL]!= 1)
+		indexesHigStateI = np.where(signal[-analyzeL-int(widthWinI*Fsim/f):-analyzeL]!=-1)
+		indexesLowStateE = np.where(signal[-int(widthWin1E*Fsim/f):]!= 1)
+		indexesHigStateE = np.where(signal[-int(widthWin1E*Fsim/f):]!=-1)
+
+
+	#print('signal:', signal)
+	#print('signal analyzed for LowStateI:', signal[-analyzeL-int(widthWinI*Fsim/f):-analyzeL])
+	#print('indexesLowStateI and indexesHigStateI:', indexesLowStateI, '\t', indexesHigStateI)
+	#print('np.shape(indexesLowStateI) and np.shape(indexesHigStateI):', np.shape(indexesLowStateI), '\t', np.shape(indexesHigStateI))
+	#print('len(indexesLowStateI) and len(indexesHigStateI):', len(indexesLowStateI), '\t', len(indexesHigStateI))
 
 	if indexesLowStateI[0][0] == 0 and indexesHigStateI[0][0] != 0:
 		print('First edge in the inital time window will be rising!')

@@ -34,6 +34,7 @@ def getDicts(Fsim=125):
 		'topology': 'ring',														# 1d) ring, chain, 2d) square-open, square-periodic, hexagonal...
 																				# 3) global, entrainOne, entrainAll, entrainPLLsHierarch, compareEntrVsMutual
 		'Tsim': 1000,															# simulation time in multiples of the period
+		'computeFreqAndStab': True,												# compute linear stability and global frequency if possible: True or False
 		'phi_array_mult_tau': 1,												# how many multiples of the delay is stored of the phi time series
 		'phiPerturb': [0, 0.5],													# delta-perturbation on initial state -- PROVIDE EITHER ONE OF THEM! if [] set to zero
 		'phiPerturbRot': [],													# delta-perturbation on initial state -- in rotated space
@@ -60,6 +61,7 @@ def getDicts(Fsim=125):
 		# mixer+1sig shift: np.sin(x), mixer: np.cos(x), XOR: sawtooth(x,width=0.5), PSD: 0.5*(np.sign(x)*(1+sawtooth(1*x*np.sign(x), width=1)))
 		'derivative_coup_fct': lambda x: np.sin(x),								# derivative of coupling function h
 		'includeCompHF': False,													# boolean True/False whether to simulate with HF components
+		'responseVCO': 'linear',												# either string: 'linear' or a nonlinear function of omega, Kvco, e.g., lambda w, K, ...: expression
 		'typeVCOsig': 'analogHF',												# 'analogHF' or 'digitalHF'
 		'vco_out_sig': lambda x: 0.5*(1.0+square(x,duty=0.5)),					# for HF case, e.g.: np.sin(x) or 0.5*(1.0+square(x,duty=0.5))
 		'antenna': True,														# boolean True/False whether antenna present for PLLs
@@ -69,7 +71,7 @@ def getDicts(Fsim=125):
 		'initAntennaState': 0,
 		'antenna_sig': lambda x: np.sin(x),										# type of signal received by the antenna
 		'extra_coup_sig': None,													# choose from: 'injection2ndHarm', None
-		'responseVCO': 'linear',												# either string: 'linear' or a nonlinear function of omega, Kvco, e.g., lambda w, K, ...: expression
+		'coupStr_2ndHarm': 0.6,													# the coupling constant for the injection of the 2nd harmonic: float, will be indepent of 'coupK'
 		'typeOfHist': 'syncState',												# string, choose from: 'freeRunning', 'syncState'
 		'sampleF': Fsim,														# sampling frequency
 		'sampleFplot': 5,														# sampling frequency for reduced plotting (every sampleFplot time step)
@@ -101,6 +103,32 @@ def getDicts(Fsim=125):
 	if dictPLL['typeVCOsig'] == 'analogHF':
 		dictPLL.update({})
 
+	if dictNet['computeFreqAndStab']:
+		#try:
+		isRadian = False														# set this False to get values returned in [Hz] instead of [rad * Hz]
+		sf = synctools.SweepFactory(dictPLL, dictNet, isRadians=isRadian)
+		fsl = sf.sweep()
+		para_mat = fsl.get_parameter_matrix(isRadians=False)				    # extract variables from the sweep, this matrix contains all cases
+		print('New parameter combinations with {intrF, coupK, cutFc, delay, Omega, ReLambda, ImLambda, TsimToPert1/e, Nx, Ny, mx, my, div}: \n', para_mat)
+		choice = chooseSolution(para_mat)
+		dictPLL.update({'syncF': para_mat[choice,4], 'ReLambda': para_mat[choice,5], 'ImLambda': para_mat[choice,6]})
+		#except:
+		#	print('Could not compute linear stability and global frequency! Check synctools and case!')
+
 	print('Setup (dictNet, dictPLL):', dictNet, dictPLL)
 
 	return dictPLL, dictNet
+
+# ******************************************************************************
+
+def chooseSolution(para_mat):													# ask user-input for which solution to simulate
+	a_true = True
+	while a_true:
+		# get user input which of the possible cases to simulate
+		choice = input('Choose which case to simulate [0,...,%i]:'%(len(para_mat[:,0])-1))
+		if int(choice) >= 0 and int(choice) < len(para_mat[:,0]):
+			break
+		else:
+			print('Please provide input as integer choice!')
+
+	return int(choice)

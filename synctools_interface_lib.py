@@ -7,27 +7,31 @@ import os
 
 import matplotlib.pyplot as plt
 import numpy as np
+import inspect
 
 import synctools_lib as st
 
-TOPO_0D_GLOBAL = 'global'
-TOPO_1D_RING = 'ring'
-TOPO_1D_CHAIN = 'chain'
-TOPO_1D_ENTRAINONE = 'entrainOne'
-TOPO_1D_ENTRAINALL = 'entrainAll'
-TOPO_2D_CUBIC_OPEN = 'square-open'
-TOPO_2D_CUBIC_PERIODIC = 'square-periodic'
-TOPO_2D_HEXAGONAL_OPEN = 'hexagon-open'
-TOPO_2D_HEXAGONAL_PERIODIC = 'hexagon-periodic'
-TOPO_2D_OCTAGONAL_OPEN = 'octagon-open'
-TOPO_2D_OCTAGONAL_PERIODIC = 'octagon-periodic'
+TOPO_0D_GLOBAL 				= 'global'
+TOPO_1D_RING 				= 'ring'
+TOPO_1D_CHAIN 				= 'chain'
+TOPO_1D_ENTRAINONE 			= 'entrainOne'
+TOPO_1D_ENTRAINALL 			= 'entrainAll'
+TOPO_2D_CUBIC_OPEN 			= 'square-open'
+TOPO_2D_CUBIC_PERIODIC 		= 'square-periodic'
+TOPO_2D_HEXAGONAL_OPEN 		= 'hexagon-open'
+TOPO_2D_HEXAGONAL_PERIODIC 	= 'hexagon-periodic'
+TOPO_2D_OCTAGONAL_OPEN 		= 'octagon-open'
+TOPO_2D_OCTAGONAL_PERIODIC 	= 'octagon-periodic'
 
-
-COUPLING_FUNCTION_COS = 'cos'
-COUPLING_FUNCTION_SIN = 'sin'
-COUPLING_FUNCTION_SINCOS = 'sincos'
-COUPLING_FUNCTION_TRIANGLE = 'triang'
-COUPLING_FUNCTION_TRIANGSHIFT = 'triangshift'
+# mixer+1sig shift: +/-np.sin(x), mixer: +/-np.cos(x), XOR: sawtooth(x,width=0.5), PFD: 0.5*(np.sign(x)*(1+sawtooth(1*x*np.sign(x), width=1)))
+COUPLING_FUNCTION_TRIANGLE 		= 'sawtooth'
+COUPLING_FUNCTION_PFD 			= '0.5*(np.sign(x)*(1+sawtooth(1*x*np.sign(x))'
+COUPLING_FUNCTION_COS 			= 'np.cos'
+COUPLING_FUNCTION_NEGCOS		= '-np.cos'
+COUPLING_FUNCTION_SIN 			= 'np.sin'
+COUPLING_FUNCTION_NEGSIN		= '-np.sin'
+#COUPLING_FUNCTION_SINCOS 		= 'sincos'
+#COUPLING_FUNCTION_TRIANGSHIFT 	= 'triangshift'
 
 # #############################################################################
 
@@ -120,36 +124,36 @@ class SweepFactory(object):
 			(angular) cut-off frequency of low-pass filter
 	   m : int
 		   twist number
-	   v : int
+	   v : int/np.ndarray
 		   divider for cross-coupling
 	   tsim : float
 			  simulation time
 	'''
-	def __init__(self, n, ny, nx, w, k, tau, h, wc, m, mx, my, topology, c, v=1, tsim=0.0, isRadians=True):
-		self.n = n
-		self.nx = nx
-		self.ny = ny
-		self.tau = tau
-		self.h = h
-		self.m = m
-		self.mx = mx
-		self.my = my
-		self.tsim = tsim
-		self.topology = topology
-		self.c = c                     # just dummy variable here
-		self.v = v
+	def __init__(self, dictPLL, dictNet, isRadians=True):
+		self.n 			= dictNet['Nx']*dictNet['Ny']
+		self.nx 		= dictNet['Nx']
+		self.ny 		= dictNet['Ny']
+		self.tau 		= dictNet['Ny']
+		self.h 			= dictPLL['coup_fct_sig']
+		self.m 			= dictNet['mx']
+		self.mx 		= dictNet['mx']
+		self.my 		= dictNet['my']
+		self.tsim 		= dictNet['Tsim']
+		self.topology 	= dictNet['topology']
+		self.c 			= 0                     								# just dummy variable here
+		self.v 			= dictPLL['div']
+		self.dummy		= np.array([self.n])
 
 		# if parameters provided in rad*Hz
 		if isRadians:
-			self.w    = w
-			self.k    = k
-			self.wc   = wc
+			self.w    = dictPLL['intrF']
+			self.k    = dictPLL['coupK']
+			self.wc   = dictPLL['cutFc']
 		# if parameters provided in Hz, multiply by 2pi, as needed in the phase model
 		else:
-			self.w    = 2.0*np.pi*w           # here, w = f
-			self.k    = 2.0*np.pi*k           # here, k is given in Hz instead rad*Hz
-			self.wc   = 2.0*np.pi*wc          # here, wc = fc
-
+			self.w    = 2.0*np.pi*dictPLL['intrF']           					# here, w = f
+			self.k    = 2.0*np.pi*dictPLL['coupK']           					# here, k is given in Hz instead rad*Hz
+			self.wc   = 2.0*np.pi*dictPLL['cutFc']           					# here, wc = fc
 
 		# Identify and store swept variable
 		self.key_sweep = self._identify_swept_variable()
@@ -186,7 +190,7 @@ class SweepFactory(object):
 		elif type(self.v) is np.ndarray:
 			return 'v'
 		else:
-			return None
+			return 'dummy'
 
 	def __getitem__(self, key):
 		return self.__dict__[key]
@@ -196,16 +200,25 @@ class SweepFactory(object):
 
 	def init_system(self):
 		# Initilaize coupling function
-		if self.h == COUPLING_FUNCTION_TRIANGLE:
+
+		print('inspect.getsourcelines(self.h)[0][0]', inspect.getsourcelines(self.h)[0][0][28:])
+
+		if inspect.getsourcelines(self.h)[0][0][28:36] 	 == COUPLING_FUNCTION_TRIANGLE:
 			h_func = st.Triangle(1.0 / (2.0 * np.pi))
-		elif self.h == COUPLING_FUNCTION_COS:
+		elif inspect.getsourcelines(self.h)[0][0][28:70] == COUPLING_FUNCTION_PFD:
+			h_func = st.PFD(1.0 / (2.0 * np.pi))
+		elif inspect.getsourcelines(self.h)[0][0][28:34] == COUPLING_FUNCTION_COS:
 			h_func = st.Cos(1.0 / (2.0 * np.pi))
-		elif self.h == COUPLING_FUNCTION_SIN:
+		elif inspect.getsourcelines(self.h)[0][0][28:34] == COUPLING_FUNCTION_SIN:
 			h_func = st.Sin(1.0 / (2.0 * np.pi))
-		elif self.h == COUPLING_FUNCTION_TRIANGSHIFT:
-			h_func = st.Triangle(1.0 / (2.0 * np.pi))
-		elif self.h == COUPLING_FUNCTION_SINCOS:
-			h_func = st.Sin(1.0 / (2.0 * np.pi)) + 0.8 * st.Cos(6.0 * 1.0 / (2.0 * np.pi))
+		elif inspect.getsourcelines(self.h)[0][0][28:35] == COUPLING_FUNCTION_NEGCOS:
+			h_func = st.NegCos(1.0 / (2.0 * np.pi))
+		elif inspect.getsourcelines(self.h)[0][0][28:35] == COUPLING_FUNCTION_NEGSIN:
+			h_func = st.NegSin(1.0 / (2.0 * np.pi))
+		#elif inspect.getsourcelines(self.h)[0][0][12:19] == COUPLING_FUNCTION_TRIANGSHIFT:
+		#	h_func = st.Triangle(1.0 / (2.0 * np.pi))
+		#elif inspect.getsourcelines(self.h)[0][0][12:19] == COUPLING_FUNCTION_SINCOS:
+		#	h_func = st.Sin(1.0 / (2.0 * np.pi)) + 0.8 * st.Cos(6.0 * 1.0 / (2.0 * np.pi))
 		else:
 			raise Exception('Non-valid coupling function string')
 
@@ -247,7 +260,7 @@ class SweepFactory(object):
 			raise Exception('Non-valid topology string')
 
 		# Initialize singel pll
-		pll = st.Pll(self.w, self.wc)
+		pll = st.Pll(self.w, self.wc, self.v)										# hand over PLL parameters
 
 		# Initialize system
 		pll_sys = st.PllSystem(pll, g)
@@ -559,22 +572,20 @@ class FlatStateList(object):
 					   frequency is given in radians if True, otherwise in Hertz
 		'''
 		if self.n > 0:
-			x = np.zeros((self.n, 15))
-			x[:, 0] = self.get_n()
-			x[:, 1] = self.get_w(isRadians=isRadians)
-			x[:, 2] = self.get_k(isRadians=isRadians)
-			x[:, 3] = self.get_wc(isRadians=isRadians)
-			x[:, 4] = self.get_tau()
-			x[:, 5] = self.get_m()
-			x[:, 6] = self.get_omega(isRadians=isRadians)
-			x[:, 7] = np.real(self.get_l())
-			x[:, 8] = np.imag(self.get_l())
-			x[:, 9] = self.get_tsim()
-			x[:, 10] = self.get_nx()
-			x[:, 11] = self.get_ny()
-			x[:, 12] = self.get_mx()
-			x[:, 13] = self.get_my()
-			x[:, 14] = self.get_v()
+			x = np.zeros((self.n, 13))
+			x[:, 0] = self.get_w(isRadians=isRadians)
+			x[:, 1] = self.get_k(isRadians=isRadians)
+			x[:, 2] = self.get_wc(isRadians=isRadians)
+			x[:, 3] = self.get_tau()
+			x[:, 4] = self.get_omega(isRadians=isRadians)
+			x[:, 5] = np.real(self.get_l())
+			x[:, 6] = np.imag(self.get_l())
+			x[:, 7] = self.get_tsim()
+			x[:, 8] = self.get_nx()
+			x[:, 9] = self.get_ny()
+			x[:, 10] = self.get_mx()
+			x[:, 11] = self.get_my()
+			x[:, 12] = self.get_v()
 			return x
 		else:
 			return None

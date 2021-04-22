@@ -29,9 +29,9 @@ def generatePLLs(dictPLL, dictNet):	#mode,div,params['topology'],couplingfct,his
 
 	pll_list = [ pll.PhaseLockedLoop(idx_pll,									# setup PLLs and store in a list as PLL class objects
 					pll.Delayer(idx_pll, dictPLL, dictNet),						# setup delayer object of PLL k; it organizes the delayed communications
-					pll.PhaseDetectorCombiner(idx_pll, dictPLL),				# setup PDadder object of PLL k;
+					pll.PhaseDetectorCombiner(idx_pll, dictPLL, dictNet),		# setup PDadder object of PLL k;
 					pll.LowPass(idx_pll, dictPLL, dictNet),						# setup LF(1st) object of PLL k;
-					pll.VoltageControlledOscillator(idx_pll,dictPLL,dictNet),	# setup VCO object of PLL k;
+					pll.VoltageControlledOscillator(idx_pll,dictPLL, dictNet),	# setup VCO object of PLL k;
 					pll.Antenna(idx_pll, dictPLL, dictNet),						# setup Antenna object of PLL k;
 					pll.Counter(idx_pll, dictPLL)								# setup Counter object of PLL k;
 					)  for idx_pll in range(dictNet['Nx']*dictNet['Ny']) ]
@@ -224,6 +224,7 @@ def generatePhi0(dictNet):
 
 def setupTopology(dictNet):
 
+	# see also: https://networkx.org/documentation/stable/reference/generators.html
 	if dictNet['topology'] == 'global':
 		G = nx.complete_graph(dictNet['Nx']*dictNet['Ny'])
 		# print('G and G.neighbors(PLL0):', G, G.neighbors(0)); sys.exit(1)

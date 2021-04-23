@@ -134,7 +134,7 @@ def chooseSolution(para_mat):													# ask user-input for which solution to
 	a_true = True
 	while a_true:
 		# get user input which of the possible cases to simulate
-		choice = input('Choose which case to simulate [0,...,%i]:'%(len(para_mat[:,0])-1))
+		choice = input('Choose which case to simulate [0,...,%i]: '%(len(para_mat[:,0])-1))
 		if int(choice) >= 0 and int(choice) < len(para_mat[:,0]):
 			break
 		else:

@@ -133,7 +133,7 @@ class SweepFactory(object):
 		self.n 			= dictNet['Nx']*dictNet['Ny']
 		self.nx 		= dictNet['Nx']
 		self.ny 		= dictNet['Ny']
-		self.tau 		= dictNet['Ny']
+		self.tau 		= dictPLL['transmission_delay']
 		self.h 			= dictPLL['coup_fct_sig']
 		self.m 			= dictNet['mx']
 		self.mx 		= dictNet['mx']
@@ -201,7 +201,7 @@ class SweepFactory(object):
 	def init_system(self):
 		# Initilaize coupling function
 
-		print('inspect.getsourcelines(self.h)[0][0]', inspect.getsourcelines(self.h)[0][0][28:])
+		#print('inspect.getsourcelines(self.h)[0][0]', inspect.getsourcelines(self.h)[0][0][28:])
 
 		if inspect.getsourcelines(self.h)[0][0][28:36] 	 == COUPLING_FUNCTION_TRIANGLE:
 			h_func = st.Triangle(1.0 / (2.0 * np.pi))

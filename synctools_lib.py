@@ -274,6 +274,22 @@ class Triangle(CouplingFunction):
 	def min(self):
 		return -1.0
 
+class Square(CouplingFunction):													# only needed as the derivative of the triangular coupling function
+	'''Periodic square wave vertically centered around 0'''
+	def __init__(self, freq, amp):
+		self.freq = freq
+		self.amp = amp
+		#print('Test: amplitude of derivative of triangular coupling function is: (+/- 2/pi):', self.amp)
+
+	def __call__(self, t):
+		return self.amp * signal.square(2 * np.pi * self.freq * t, duty=0.5)
+
+	def max(self):
+		return self.amp
+
+	def min(self):
+		return -self.amp
+
 class PFD(CouplingFunction):
 	'''Periodic square wave vertically centered around 0'''
 	def __init__(self, freq=1.0 / (2 * np.pi), amp=0.5):
@@ -283,22 +299,6 @@ class PFD(CouplingFunction):
 	def __call__(self, t):
 		x = 2 * np.pi * self.freq * t
 		return self.amp * (np.sign(x)*(1+sawtooth(1*x*np.sign(x), width=1)))
-
-	def max(self):
-		return self.amp
-
-	def min(self):
-		return -self.amp
-
-class Square(CouplingFunction):													# only needed as the derivative of the triangular coupling function
-	'''Periodic square wave vertically centered around 0'''
-	def __init__(self, freq, amp):
-		self.freq = freq
-		self.amp = amp
-		print('Test: amplitude of derivative of triangular coupling function is: (+/- 2/pi):', self.amp)
-
-	def __call__(self, t):
-		return self.amp * signal.square(2 * np.pi * self.freq * t, duty=0.5)
 
 	def max(self):
 		return self.amp

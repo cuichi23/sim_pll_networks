@@ -31,14 +31,14 @@ def getDicts(Fsim=125):
 	dictNet={
 		'Nx': 2,																# oscillators in x-direction
 		'Ny': 1,																# oscillators in y-direction
-		'mx': 0,																# twist/chequerboard in x-direction (depends on closed or open boundary conditions)
+		'mx': 1	,																# twist/chequerboard in x-direction (depends on closed or open boundary conditions)
 		'my': 0,																# twist/chequerboard in y-direction
 		'topology': 'ring',														# 1d) ring, chain, 2d) square-open, square-periodic, hexagonal...
 																				# 3) global, entrainOne, entrainAll, entrainPLLsHierarch, compareEntrVsMutual
 		'Tsim': 1000,															# simulation time in multiples of the period
 		'computeFreqAndStab': True,												# compute linear stability and global frequency if possible: True or False
 		'phi_array_mult_tau': 1,												# how many multiples of the delay is stored of the phi time series
-		'phiPerturb': [0, 0.0005],												# delta-perturbation on initial state -- PROVIDE EITHER ONE OF THEM! if [] set to zero
+		'phiPerturb': [0, 0.00000000000005],													# delta-perturbation on initial state -- PROVIDE EITHER ONE OF THEM! if [] set to zero
 		'phiPerturbRot': [],													# delta-perturbation on initial state -- in rotated space
 		'phiInitConfig': [],													# phase-configuration of sync state,  []: automatic, else provide list
 		'freq_beacons': 0.25,													# frequency of external sender beacons, either a float or a list
@@ -48,15 +48,15 @@ def getDicts(Fsim=125):
 	dictPLL={
 		'intrF': 1.0,															# intrinsic frequency in Hz
 		'syncF': 1.0,															# frequency of synchronized state in Hz
-		'coupK': 0.8,															#[random.uniform(0.3, 0.4) for i in range(dictNet['Nx']*dictNet['Ny'])],# coupling strength in Hz float or [random.uniform(minK, maxK) for i in range(dictNet['Nx']*dictNet['Ny'])]
+		'coupK': 0.65,															#[random.uniform(0.3, 0.4) for i in range(dictNet['Nx']*dictNet['Ny'])],# coupling strength in Hz float or [random.uniform(minK, maxK) for i in range(dictNet['Nx']*dictNet['Ny'])]
 		'gPDin': 1,																# gains of the different inputs to PD k from input l -- G_kl, see PD, set to 1 and all G_kl=1 (so far only implemented for some cases, check!): np.random.uniform(0.95,1.05,size=[dictNet['Nx']*dictNet['Ny'],dictNet['Nx']*dictNet['Ny']])
 		'gPDin_symmetric': True,												# set to True if G_kl == G_lk, False otherwise
-		'cutFc': 1.45,															# LF cut-off frequency in Hz, None for no LF, or e.g., N=9 with mean 0.015: [0.05,0.015,0.00145,0.001,0.0001,0.001,0.00145,0.015,0.05]
+		'cutFc': 0.20,															# LF cut-off frequency in Hz, None for no LF, or e.g., N=9 with mean 0.015: [0.05,0.015,0.00145,0.001,0.0001,0.001,0.00145,0.015,0.05]
 		'div': 1,																# divisor of divider (int)
 		'noiseVarVCO': 0,														# variance of VCO GWN
 		'feedback_delay': 0,													# value of feedback delay in seconds
 		'feedback_delay_var': None, 											# variance of feedback delay
-		'transmission_delay': 0.75, 											# value of transmission delay in seconds, float (single), list (tau_k) or list of lists (tau_kl): np.random.uniform(min,max,size=[dictNet['Nx']*dictNet['Ny'],dictNet['Nx']*dictNet['Ny']]), OR [np.random.uniform(min,max) for i in range(dictNet['Nx']*dictNet['Ny'])]
+		'transmission_delay': 0.65, 											# value of transmission delay in seconds, float (single), list (tau_k) or list of lists (tau_kl): np.random.uniform(min,max,size=[dictNet['Nx']*dictNet['Ny'],dictNet['Nx']*dictNet['Ny']]), OR [np.random.uniform(min,max) for i in range(dictNet['Nx']*dictNet['Ny'])]
 		'transmission_delay_var': None, 										# variance of transmission delays
 		'distribution_for_delays': None,										# from what distribution are random delays drawn?
 		'posX': 0,																# antenna position of PLL k -- x, y z coordinates, need to be set
@@ -114,6 +114,7 @@ def getDicts(Fsim=125):
 		print('New parameter combinations with {intrF, coupK, cutFc, delay, Omega, ReLambda, ImLambda, TsimToPert1/e, Nx, Ny, mx, my, div}: \n', para_mat)
 		choice = chooseSolution(para_mat)
 		dictPLL.update({'syncF': para_mat[choice,4], 'ReLambda': para_mat[choice,5], 'ImLambda': para_mat[choice,6]})
+		print('Choice %i made. This state has global frequency Omega=%0.2f Hz, and ReLambda=%0.2f and ImLambda=%0.2f'%(choice, dictPLL['syncF'], dictPLL['ReLambda'], dictPLL['ImLambda']))
 		#except:
 		#	print('Could not compute linear stability and global frequency! Check synctools and case!')
 
@@ -127,7 +128,7 @@ def chooseSolution(para_mat):													# ask user-input for which solution to
 	a_true = True
 	while a_true:
 		# get user input which of the possible cases to simulate
-		choice = input('Choose which case to simulate [0,...,%i]:'%(len(para_mat[:,0])-1))
+		choice = input('Choose which case to simulate [0,...,%i]: '%(len(para_mat[:,0])-1))
 		if int(choice) >= 0 and int(choice) < len(para_mat[:,0]):
 			break
 		else:

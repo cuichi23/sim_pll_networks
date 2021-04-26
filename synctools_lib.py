@@ -783,6 +783,7 @@ class SyncState(object):
 		x = np.zeros(2)
 		l_cx = l_vector[0] + 1j * l_vector[1]
 		y = l_cx * (1 + b * l_cx) + kc * d_sum * ( 1 - np.exp(-l_cx * tau) * eig_cx )
+		#y = l_cx * (1 + b * l_cx) + kc * d_sum - kc * np.exp(-l_cx * tau) * eig_cx
 		x[0] = np.real(y)
 		x[1] = np.imag(y)
 		return x

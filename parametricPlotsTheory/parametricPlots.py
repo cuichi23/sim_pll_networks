@@ -1,0 +1,631 @@
+#!/usr/bin/python
+
+from __future__ import division
+from __future__ import print_function
+
+import numpy as np
+import numpy.ma as ma
+import matplotlib
+import codecs
+import csv
+import os, gc, sys
+if not os.environ.get('SGE_ROOT') == None:																				# this environment variable is set within the queue network, i.e., if it exists, 'Agg' mode to supress output
+	print('NOTE: \"matplotlib.use(\'Agg\')\"-mode active, plots are not shown on screen, just saved to results folder!\n')
+	matplotlib.use('Agg') #'%pylab inline'
+import matplotlib.pyplot as plt
+from matplotlib import colors
+import matplotlib.cm as cm
+from scipy import optimize
+from mpl_toolkits.axes_grid1.inset_locator import zoomed_inset_axes
+from mpl_toolkits.axes_grid1.inset_locator import mark_inset
+#from scipy.interpolate import spline
+from scipy.special import lambertw
+from scipy.signal import square
+import itertools
+import math
+import time
+
+import synctools_interface_lib as synctools
+from function_lib import solveLinStab
+import function_lib as fct_lib
+
+import datetime
+now = datetime.datetime.now()
+
+''' Enable automatic carbage collector '''
+gc.enable();
+
+''' All plots in latex mode '''
+from matplotlib import rc
+plt.rc('text', usetex=True)
+plt.rc('font', family='serif')
+
+plt.rcParams['agg.path.chunksize'] = 10000
+
+''' STYLEPACKS '''
+titlefont = {
+		'family' : 'serif',
+		'color'  : 'black',
+		'weight' : 'normal',
+		'size'   : 9,
+		}
+
+labelfont = {
+		'family' : 'sans-serif',
+		'color'  : 'black',
+		'weight' : 'normal',
+		'size'   : 16,
+		}
+
+annotationfont = {
+		'family' : 'monospace',
+		'color'  : (0, 0.27, 0.08),
+		'weight' : 'normal',
+		'size'   : 14,
+		}
+
+# plot parameter
+axisLabel = 50;
+titleLabel= 10;
+dpi_val   = 150;
+figwidth  = 10;
+figheight = 5;
+
+def preparePlotting(params, dictPLL, dictNet):
+
+	tau	   = params.get('tau')
+	#params = globalFreqTau(params, dictPLL, dictNet)
+
+	# calculate gamma
+	params = evaluateEq(params)
+
+	print('Back here!')
+	# prepare scatter plot matrices or 2D plot
+	if not params['discrP'] == None:
+		params = prepare2D(params)
+	else:
+		params = prepareScatt(params)
+
+	#print('params[*y*]',  params['y'])
+	#print('params[*x1*]', params['x1'])
+	#print('params[*x2*]', params['x2'])
+	#print('shape(params[*x1*]), params[*x2*]', np.shape(params['x1']), np.shape(params['x2']))
+
+	return params
+
+# ******************************************************************************
+
+def globalFreqTau(params, dictPLL, dictNet):
+	#Here we calculate analyticaly the Global Frequency of the synchronised states of the network of two SLLs.
+	#First of all, there are two synchronised states, the in-phase and anti-phase. So, the inphase refers to that.
+	#we distiguish the analog and the digital case of the SLLs. So, the digital refers to that.
+	#The choice of digital and inphase mode is made in the main programs.
+
+	p 		= params.get('p')
+	w 		= params.get('w')
+	K 		= params.get('K')
+	h 		= params.get('h')
+	beta	= params.get('beta')
+
+	#if not ( isinstance(K, list) and isinstance(K, np.ndarray) ):
+	#	K = [K];
+	if ( isinstance(K, int) or isinstance(K, float) ):
+		K = [K];
+	if isinstance(K, complex):
+		print('K should not be complex!'); sys.exit();
+
+	Omeg = []; tau = [];
+
+	for i in range(len(K)):
+		# isRadian = False														# set this False to get values returned in [Hz] instead of [rad * Hz]
+		# dictPLL.update({'coupK': K[i]})
+		# sf = synctools.SweepFactory(dictPLL, dictNet, isRadians=isRadian)
+		# fsl = sf.sweep()
+		# para_mat = fsl.get_parameter_matrix(isRadians=False)
+		Omeg.append( (w + K[i] * h( -p + beta )).flatten() )
+		tau.append( (p / Omeg).flatten() )
+
+	if len(tau) == 1:
+		tau = tau[0]; Omeg = Omeg[0];
+
+	# if not ( params['loopP1'] == 'tau' or params['loopP2'] == 'tau' ):			# set Omega and tau to the closed value available from the parametric solution
+	# #if not isinstance(tau, np.ndarray):
+	# 	index_tau = np.where( np.array(syncSta['tau'])[0,:,:] > tau )[0]
+	# 	syncSta.update({'Omeg': syncSta['Omeg'][index_tau], 'tau': syncSta['tau'][index_tau]})
+	# 	#tempTau	= syncSta['tau'][index_tau]
+	# 	#tempOmeg 	= syncSta['Omeg'][index_tau]
+	#
+	# params.update(syncSta)
+
+	if ( isinstance(params['tau'], float) or isinstance(params['tau'], int) ):
+		OmegTemp = []; tauTemp = [];
+		for i in range(len(K)):
+			# print('np.array(tau)[i,:]', np.array(tau)[i][:])
+			index_tau = np.where( np.array(tau)[i][:] > params['tau'] )[0][0]
+			#print('search for params[*tau*]=', params['tau'], ' found taunumeric=', np.array(tau)[i][index_tau])
+			tauTemp.append(np.array(tau)[i][index_tau])
+			OmegTemp.append(np.array(Omeg)[i][index_tau])
+		Omeg=OmegTemp; tau=tauTemp;
+		params.update({'Omeg': Omeg})
+	else:
+		params.update({'Omeg': Omeg, 'tau': tau})
+
+	return params
+
+# ******************************************************************************
+
+def makePlotsFromSynctoolsResults(figID, x, y, z, rescale_x, rescale_y, rescale_z, x_label, y_label, z_label,
+										x_identifier, y_identifier, z_identifier, mask_treshold=None, colormap=cm.coolwarm):
+
+	fig = plt.figure(num=figID, figsize=(figwidth, figheight), dpi=dpi_val, facecolor='w', edgecolor='k')
+	fig.set_size_inches(20,10)
+
+	plt.clf()
+	ax = plt.subplot(1, 1, 1)
+	#ax.set_aspect('equal')
+
+	if z_identifier == 'ReLambda':												# fix the colormap to clearly distinguish the zero
+		colormap = shiftedColorMap(colormap, np.min(np.array(z)[np.isnan(np.array(z))==False]), np.max(np.array(z)[np.isnan(np.array(z))==False]), name='test')
+
+	tempresults = np.array(z).reshape((len(x), len(y)))
+	tempresults = np.transpose(tempresults)
+	if mask_treshold:
+		tempresults_ma = ma.masked_where(tempresults < mask_treshold, tempresults)	# create masked array
+	else:
+		tempresults_ma = tempresults
+
+	#print('tempresults_ma:', tempresults_ma, '\ttype(tempresults_ma)', type(tempresults_ma), '\tmin(tempresults_ma):', np.min(tempresults_ma), '\tmax(tempresults_ma):', np.max(tempresults_ma))
+
+	plt.imshow(tempresults_ma.astype(float)*rescale_z, interpolation='nearest', cmap=colormap, aspect='auto', origin='lower',
+			extent=(x.min()*rescale_x, x.max()*rescale_x, y.min()*rescale_y, y.max()*rescale_y),
+			vmin=np.min(tempresults_ma[np.isnan(tempresults_ma)==False]),
+			vmax=np.max(tempresults_ma[np.isnan(tempresults_ma)==False]) )
+
+	plt.title(r'%s in the %s vs %s parameter plane'%(z_label, x_label, y_label))
+	plt.xlabel(x_label)
+	plt.ylabel(y_label, rotation=0)
+	plt.xlim([np.min(x)*rescale_x, np.max(x)*rescale_x])
+	plt.ylim([np.min(y)*rescale_y, np.max(y)*rescale_y])
+	plt.colorbar()
+	plt.savefig('plots/imshow_%s_in_%s_vs_%s_%d_%d_%d.svg' %(z_identifier, x_identifier, y_identifier, now.year, now.month, now.day), dpi=dpi_val)
+	plt.savefig('plots/imshow_%s_in_%s_vs_%s_%d_%d_%d.png' %(z_identifier, x_identifier, y_identifier, now.year, now.month, now.day), dpi=dpi_val)
+
+	return None
+
+# ******************************************************************************
+
+def shiftedColorMap(cmap, min_val, max_val, name):
+	'''Function to offset the "center" of a colormap. Useful for data with a negative min and positive max and you want the middle of the colormap's dynamic range to be at zero. Adapted from https://stackoverflow.com/questions/7404116/defining-the-midpoint-of-a-colormap-in-matplotlib
+
+	Input
+	-----
+	  cmap : The matplotlib colormap to be altered.
+	  start : Offset from lowest point in the colormap's range.
+		  Defaults to 0.0 (no lower ofset). Should be between
+		  0.0 and `midpoint`.
+	  midpoint : The new center of the colormap. Defaults to
+		  0.5 (no shift). Should be between 0.0 and 1.0. In
+		  general, this should be  1 - vmax/(vmax + abs(vmin))
+		  For example if your data range from -15.0 to +5.0 and
+		  you want the center of the colormap at 0.0, `midpoint`
+		  should be set to  1 - 5/(5 + 15)) or 0.75
+	  stop : Offset from highets point in the colormap's range.
+		  Defaults to 1.0 (no upper ofset). Should be between
+		  `midpoint` and 1.0.'''
+	epsilon = 0.001
+	start, stop = 0.0, 1.0
+	min_val, max_val = min(0.0, min_val), max(0.0, max_val) 					# Edit #2
+	midpoint = 1.0 - max_val/(max_val + abs(min_val))
+	cdict = {'red': [], 'green': [], 'blue': [], 'alpha': []}
+	# regular index to compute the colors
+	reg_index = np.linspace(start, stop, 257)
+	# shifted index to match the data
+	shift_index = np.hstack([np.linspace(0.0, midpoint, 128, endpoint=False), np.linspace(midpoint, 1.0, 129, endpoint=True)])
+	for ri, si in zip(reg_index, shift_index):
+		if abs(si - midpoint) < epsilon:
+			r, g, b, a = cmap(0.5) # 0.5 = original midpoint.
+		else:
+			r, g, b, a = cmap(ri)
+		cdict['red'].append((si, r, r))
+		cdict['green'].append((si, g, g))
+		cdict['blue'].append((si, b, b))
+		cdict['alpha'].append((si, a, a))
+	newcmap = matplotlib.colors.LinearSegmentedColormap(name, cdict)
+	plt.register_cmap(cmap=newcmap)
+	return newcmap
+
+# ******************************************************************************
+
+def plotParametric(params, dictPLL, dictNet):
+
+	params = preparePlotting(params, dictPLL, dictNet)
+
+	labeldict 	= {'wc': r'$\frac{\omega_\textrm{c}}{\omega}$', 'tau': r'$\frac{\Omega\tau}{2\pi}$', 'K': r'$K$',
+					'a': r'$\alpha$', 'Omeg': r'$\Omega$', 'zeta': r'$\zeta$', 'beta': r'$\beta$', '2alpha': r'$2\alpha$'}
+
+	''' prepare colormap for scatter plot that is always in [0, 1] or [min(results), max(results)] '''
+	cdict = {
+	  'red'  :  ( (0.0, 0.25, .25), (0.02, .59, .59), (1., 1., 1.)),
+	  'green':  ( (0.0, 0.0, 0.0), (0.02, .45, .45), (1., .97, .97)),
+	  'blue' :  ( (0.0, 1.0, 1.0), (0.02, .75, .75), (1., 0.45, 0.45))
+	}
+	colormap  = matplotlib.colors.LinearSegmentedColormap('my_colormap', cdict, 1024)
+
+	fig1 = plt.figure(num=1, figsize=(figwidth, figheight), dpi=dpi_val, facecolor='w', edgecolor='k')
+	fig1.set_size_inches(20,10)
+
+	plt.clf()
+	ax = plt.subplot(1, 1, 1)
+	#ax.set_aspect('equal')
+
+	plt.scatter(params['xscatt'], params['yscatt'], s=1.5, c=params['y'], alpha=0.5, edgecolor='', cmap=colormap,
+					vmin=np.min(params['y'][np.isnan(params['y'])==False]), vmax=np.max(params['y'][np.isnan(params['y'])==False]))
+
+	plt.xlabel(labeldict[params['loopP1']])
+	plt.ylabel(labeldict[params['loopP2']])
+	plt.xlim([np.min(params['xscatt']), np.max(params['xscatt'])])
+	plt.ylim([np.min(params['yscatt']), np.max(params['yscatt'])])
+	plt.colorbar()
+	plt.savefig('plots/scatter_%s_vs_%s_%d_%d_%d.svg' %(params['loopP1'], params['loopP2'], now.year, now.month, now.day), dpi=dpi_val)
+	plt.savefig('plots/scatter_%s_vs_%s_%d_%d_%d.png' %(params['loopP1'], params['loopP2'], now.year, now.month, now.day), dpi=dpi_val)
+
+################################################################################
+
+	fig2 = plt.figure(num=2, figsize=(figwidth, figheight), dpi=dpi_val, facecolor='w', edgecolor='k')
+	fig2.set_size_inches(20,10)
+
+	plt.clf()
+	ax = plt.subplot(1, 1, 1)
+	#ax.set_aspect('equal')
+
+	tempresults = params['y'].reshape((len(params['x1']), len(params['x2'])))   #np.flipud()
+	tempresults = np.transpose(tempresults)
+	#print('tempresults:', tempresults)
+	tempresults_ma = ma.masked_where(tempresults < 0, tempresults)				# Create masked array
+	#print('tempresult_ma:', tempresults_ma)
+	#print('initPhiPrime0:', initPhiPrime0)
+
+	plt.imshow(tempresults_ma.astype(float), interpolation='nearest', cmap=cm.coolwarm, aspect='auto', origin='lower',
+			extent=(params['xscatt'].min(), params['xscatt'].max(), params['yscatt'].min(), params['yscatt'].max()),
+			vmin=np.min(tempresults_ma[np.isnan(tempresults_ma)==False]), vmax=np.max(tempresults_ma[np.isnan(tempresults_ma)==False]) )
+			#vmin=np.min(tempresults_ma), vmax=np.max(tempresults_ma) )
+
+	plt.xlabel(labeldict[params['loopP1']])
+	plt.ylabel(labeldict[params['loopP2']])
+	plt.xlim([np.min(params['xscatt']), np.max(params['xscatt'])])
+	plt.ylim([np.min(params['yscatt']), np.max(params['yscatt'])])
+	plt.colorbar()
+	plt.savefig('plots/imshow_%s_vs_%s_%d_%d_%d.svg' %(params['loopP1'], params['loopP2'], now.year, now.month, now.day), dpi=dpi_val)
+	plt.savefig('plots/imshow_%s_vs_%s_%d_%d_%d.png' %(params['loopP1'], params['loopP2'], now.year, now.month, now.day), dpi=dpi_val)
+
+	plt.draw()
+	plt.show()
+
+	return None
+
+# ******************************************************************************
+
+def plot2D(params):
+
+	params		= preparePlotting(params)
+	labeldict 	= {'wc': r'$\frac{\omega_\textrm{c}}{\omega}$', 'tau': r'$\frac{\Omega\tau}{2\pi}$', 'K': r'$K$',
+					'a': r'$\alpha$', 'Omeg': r'$\Omega$', 'zeta': r'$\zeta$', 'beta': r'$\beta$'}
+	labeldict1 	= {'wc': r'$\omega_\textrm{c}$', 'tau': r'$\tau$', 'K': r'$K$',
+					'a': r'$\alpha$', 'Omeg': r'$\Omega$', 'zeta': r'$\zeta$', 'beta': r'$\beta$'}
+	color		= ['blue', 'red', 'purple', 'cyan', 'green', 'yellow'] #'magenta'
+	linet		= ['-', '-.', '--', ':', 'densily dashdotdotted', 'densely dashed']
+
+	fig1 = plt.figure(num=1, figsize=(figwidth, figheight), dpi=dpi_val, facecolor='w', edgecolor='k')
+	fig1.canvas.set_window_title('gamma vs %s' %params['loopP2'])				# plot the gamma versus XY
+	plt.clf()
+
+	#print('shape(params[*x1*])', np.shape(params['x1']), '\t shape(params[*y*])', np.shape(params['y']))
+
+	for i in range(len(params[params['discrP']])):
+		lab1 = r''+labeldict1[params['discrP']]+'=%0.4f' % params[params['discrP']][i]
+		lab2 = r''+labeldict1[params['discrP']]+r'=%0.4f ($\gamma$)' % params[params['discrP']][i]
+		#print('lab', lab, '\t type(lab)', type(lab)); #sys.exit()
+		plt.plot(params['x1'], params['y'][i,:], 'r*', markersize=8)#color=color[i], linewidth=1, linestyle=linet[i], label=lab1)
+		#plt.plot(params['x1'], params['charEq_Im'][i,:], color=color[i], linewidth=3, linestyle='dotted', alpha=0.2, label=lab2)
+
+	plt.xlabel(labeldict[params['loopP2']], fontdict = labelfont)
+	plt.ylabel(r'$\gamma$', fontdict = labelfont)
+	plt.legend()
+
+	plt.savefig('plots/2D_%s_vs_%s_and%s_%d_%d_%d.svg' %(params['loopP2'], 'gamma', params['loopP1'], now.year, now.month, now.day), dpi=dpi_val)
+	plt.savefig('plots/2D_%s_vs_%s_and%s_%d_%d_%d.png' %(params['loopP2'], 'gamma', params['loopP1'], now.year, now.month, now.day), dpi=dpi_val)
+
+	#############################################################################################################################################
+
+	fig2 = plt.figure(num=2, figsize=(figwidth, figheight), dpi=dpi_val, facecolor='w', edgecolor='k')
+	fig2.canvas.set_window_title('sigma vs %s' %params['loopP2'])				# plot the gamma versus XY
+	plt.clf()
+
+	#print('shape(params[*x1*])', np.shape(params['x1']), '\t shape(params[*y*])', np.shape(params['y']))
+
+	for i in range(len(params[params['discrP']])):
+		lab1 = r''+labeldict1[params['discrP']]+'=%0.4f' % params[params['discrP']][i]
+		lab2 = r''+labeldict1[params['discrP']]+r'=%0.4f ($\sigma$)' % params[params['discrP']][i]
+		#print('lab', lab, '\t type(lab)', type(lab)); #sys.exit()
+		plt.plot(params['x1'], params['y1'][i,:], color=color[i], linewidth=1, linestyle=linet[i], label=lab1)
+		plt.plot(params['x1'], params['charEq_Re'][i,:], color=color[i], linewidth=3, linestyle='dotted', alpha=0.2, label=lab2)
+
+	plt.axhline(y=0)
+	plt.xlabel(labeldict[params['loopP2']], fontdict = labelfont)
+	plt.ylabel(r'$\sigma$', fontdict = labelfont)
+	plt.legend()
+
+	plt.savefig('plots/2D_%s_vs_%s_and%s_%d_%d_%d.svg' %(params['loopP2'], 'gamma', params['loopP1'], now.year, now.month, now.day), dpi=dpi_val)
+	plt.savefig('plots/2D_%s_vs_%s_and%s_%d_%d_%d.png' %(params['loopP2'], 'gamma', params['loopP1'], now.year, now.month, now.day), dpi=dpi_val)
+
+	plt.draw()
+	plt.show()
+
+	return None
+
+# ******************************************************************************
+
+def prepareScatt(params):
+
+	if  ( params['loopP1'] == 'tau' and params['loopP2'] == 'wc' ):
+
+		scatt = np.array(list(itertools.product(*np.array([params['x1'], params['x2']]))))
+		scale = np.array(list(itertools.product(*np.array([params['Omeg'], params['x2']]))))
+		params.update({'xscatt': scatt[:,0]/(2.0*np.pi/scale[:,0])})
+		params.update({'yscatt': scatt[:,1]/params['w']})
+
+	elif( params['loopP1'] == 'wc' and params['loopP2'] == 'tau' ):
+
+		scatt = np.array(list(itertools.product(*np.array([params['x1'], params['x2']]))))
+		scale = np.array(list(itertools.product(*np.array([params['Omeg'], params['x1']]))))
+		params.update({'xscatt': scatt[:,0]/params['w']})
+		params.update({'yscatt': scatt[:,1]/(2.0*np.pi/scale[:,0])})
+
+	elif( params['loopP1'] == 'K' and params['loopP2'] == 'wc' ):
+
+		scatt = np.array(list(itertools.product(*np.array([params['x1'], params['x2']]))))
+		params.update({'xscatt': scatt[:,0]/params['w']})
+		params.update({'yscatt': scatt[:,1]/params['w']})
+
+	else:
+
+		scatt = np.array(list(itertools.product(*np.array([params['x1'], params['x2']]))))
+		params.update({'xscatt': xscatt[:,0]})
+		params.update({'yscatt': yscatt[:,1]})
+
+	print('params[*y*]',  params['y'])
+	print('params[*cond*]',  params['con'])
+	params.update({'y': np.max(params['y'][:,:], axis=1)})
+
+	return params
+
+# ******************************************************************************
+
+def prepare2D(params):
+
+	# pick out maximum value of the gamma solutions
+	params.update({'y': np.max(params['y'][:,:], axis=1)})
+	#print('params[*y*]', params['y'], '\t np.shape(params[*y*])', np.shape(params['y']))
+
+	# reshape
+	params['y']  = params['y'].reshape(len(params[params['discrP']]), len(params['x1']))
+	params['y1'] = params['y1'].reshape(len(params[params['discrP']]), len(params['x1']))
+	params['charEq_Re'] = params['charEq_Re'].reshape(len(params[params['discrP']]), len(params['x1']))
+	params['charEq_Im'] = params['charEq_Im'].reshape(len(params[params['discrP']]), len(params['x1']))
+
+	# for i in range(len(params[params['discrP']])):
+	# 	for j in range(len(params['x1'])):
+	# 		if (np.abs(params['K']*params['hp'](params['Omeg'][j]*params['x1'][j]))*np.abs(params['zeta'])*
+	# 			np.abs(np.sin(params['x1'][j]*params['y'][i,j]))<=params['y'][i,j]): #params[params['discrP']][i]*
+	# 			params['y'][i,j] = -0.5
+
+	# rescale x-axis if plot against delay tau
+	if  ( params['loopP1'] == 'wc' and params['loopP2'] == 'tau' ):
+			params['x1'] = params['Omeg'] * params['x1'] / (2.0*np.pi)
+
+	return params
+
+# ******************************************************************************
+
+def evaluateEq(params):
+
+	sol = []; con = []; sig = []; ceq =[];
+
+	K 		= params.get('K')
+	wc 		= params.get('wc')
+	hp		= params.get('hp')
+	tau		= params.get('tau')
+	psi		= params.get('psi')
+	zeta	= params.get('zeta')
+	Omeg	= params.get('Omeg')
+	beta	= params.get('beta')
+
+	loopP1	= params.get('loopP1')
+	loopP2	= params.get('loopP2')
+
+	if  ( loopP1 == 'K' and loopP2 == 'wc' ):
+
+		print('Calculate x=K and y=wc!')
+		for k in range(len(K)):
+			#print('K[k], Omeg[k]', K[k], Omeg[k])
+			a = K[k] * hp( -Omeg[k]*tau + beta )
+			for l in range(len(wc)):
+				sol.append(equationGamma(tau, a, wc[l], zeta, psi))
+				#sig.append(equationSigma(tau, a, wc[l], zeta, np.max(sol[-1]), psi))
+				con.append(np.array([wc[l]/(2.0*a)-1+np.sqrt(1.0-zeta**2.0), wc[l]/(2.0*a)-1-np.sqrt(1.0-zeta**2.0), a]))
+				#ceq.append(solveLinStab({'wc': wc[l], 'zeta': zeta, 'a': a, 'tau': tau}))
+		sig.append(0); ceq.append(np.array([0, 0]));
+
+	elif( loopP1 == 'wc' and loopP2 == 'K' ):
+
+		print('Calculate x=K and y=wc!')
+		for k in range(len(wc)):
+			for l in range(len(K)):
+				a = K[l] * hp( -Omeg[l]*tau + beta )
+				sol.append(equationGamma(tau, a, wc[k], zeta, psi))
+				con.append(np.array([wc[l]/(2.0*a)-1+np.sqrt(1.0-zeta**2.0), wc[l]/(2.0*a)-1-np.sqrt(1.0-zeta**2.0), a]))
+
+	elif( loopP1 == 'K' and loopP2 == 'tau' ):
+
+		print('Calculate x=K and y=tau!')
+		for k in range(len(K)):
+			for l in range(len(tau)):
+				a = K[k] * hp( -Omeg[k,l]*tau[l] + beta )
+				sol.append(equationGamma(tau[l], a, wc, zeta, psi))
+				con.append(np.array([wc/(2.0*a)-1+np.sqrt(1.0-zeta**2.0), wc/(2.0*a)-1-np.sqrt(1.0-zeta**2.0), a]))
+
+	elif( loopP1 == 'tau' and loopP2 == 'K' ):
+
+		print('Calculate x=K and y=tau!')
+		for k in range(len(tau)):
+			for l in range(len(K)):
+				a = K[l] * hp( -Omeg[k,l]*tau[k] + beta )
+				sol.append(equationGamma(tau[k], a, wc, zeta, psi))
+				con.append(np.array([wc/(2.0*a)-1+np.sqrt(1.0-zeta**2.0), wc/(2.0*a)-1-np.sqrt(1.0-zeta**2.0), a]))
+
+	elif( loopP1 == 'K' and loopP2 == 'zeta' ):
+
+		print('Calculate x=K and y=zeta!')
+		for k in range(len(K)):
+			a = K[k] * hp( -Omeg[k]*tau + beta )
+			for l in range(len(zeta)):
+				sol.append(equationGamma(tau, a, wc, zeta[l], psi))
+				con.append(np.array([wc/(2.0*a)-1+np.sqrt(1.0-zeta**2.0), wc/(2.0*a)-1-np.sqrt(1.0-zeta**2.0), a]))
+
+	elif( loopP1 == 'wc' and loopP2 == 'zeta' ):
+
+		print('Calculate x=wc and y=zeta!')
+		a = K * hp( -Omeg*tau + beta )
+		for k in range(len(wc)):
+			for l in range(len(zeta)):
+				sol.append(equationGamma(tau, a, wc[k], zeta[l], psi))
+				con.append(np.array([wc[k]/(2.0*a)-1+np.sqrt(1.0-zeta**2.0), wc[k]/(2.0*a)-1-np.sqrt(1.0-zeta**2.0), a]))
+
+	elif( loopP1 == 'wc' and loopP2 == 'tau'):
+
+		print('Calculate x=wc and y=tau!')
+		for k in range(len(wc)):
+			for l in range(len(tau)):
+				a = K * hp( -Omeg[l]*tau[l] + beta )
+				if a > 0:
+					sol.append(equationGamma(tau[l], a, wc[k], zeta, psi))
+					sig.append(equationSigma(tau[l], a, wc[k], zeta, np.max(sol[-1]), psi))
+					con.append(np.array([wc[k]/(2.0*a)-1+np.sqrt(1.0-zeta**2.0), wc[k]/(2.0*a)-1-np.sqrt(1.0-zeta**2.0), a]))
+					ceq.append(solveLinStab({'wc': wc[k], 'zeta': zeta, 'a': a, 'tau': tau[l]}))
+				else:
+					sol.append([0, 0, 0, 0])
+					sig.append(-1)
+					con.append(np.array([wc[k]/(2.0*a)-1+np.sqrt(1.0-zeta**2.0), wc[k]/(2.0*a)-1-np.sqrt(1.0-zeta**2.0), a]))
+					ceq.append(solveLinStab({'wc': wc[k], 'zeta': zeta, 'a': a, 'tau': tau[l]}))
+				#sig.append(equationSigma(tau[l], a, wc[k], zeta, np.array(ceq)[-1,1], psi))
+
+	elif( loopP1 == 'tau' and loopP2 == 'wc' ):
+
+		print('Calculate x=tau and y=wc!')
+		for k in range(len(tau)):
+			a = K * hp( -Omeg[k]*tau[k] + beta )
+			for l in range(len(wc)):
+				sol.append(equationGamma(tau[k], a, wc[l], zeta, psi))
+				con.append(np.array([wc[l]/(2.0*a)-1+np.sqrt(1.0-zeta**2.0), wc[l]/(2.0*a)-1-np.sqrt(1.0-zeta**2.0), a]))
+
+	elif( loopP1 == 'tau' and loopP2 == 'zeta' ):
+
+		print('Calculate x=tau and y=zeta!')
+		for k in range(len(tau)):
+			a = K * hp( -Omeg[k]*tau[k] + beta )
+			for l in range(len(zeta)):
+				sol.append(equationGamma(tau[k], a, wc, zeta[l], psi))
+				con.append(np.array([wc/(2.0*a)-1+np.sqrt(1.0-zeta**2.0), wc/(2.0*a)-1-np.sqrt(1.0-zeta**2.0), a]))
+
+	elif( loopP1 == 'zeta' and loopP2 == 'tau' ):
+
+		print('Calculate x=zeta and y=tau!')
+		for k in range(len(zeta)):
+			for l in range(len(tau)):
+				a = K * hp( -Omeg[l]*tau[l] + beta )
+				sol.append(equationGamma(tau[l], a, wc, zeta[k], psi))
+				con.append(np.array([wc/(2.0*a)-1+np.sqrt(1.0-zeta**2.0), wc/(2.0*a)-1-np.sqrt(1.0-zeta**2.0), a]))
+
+	elif ( loopP1 == 'zeta' and loopP2 == 'K' ):
+
+		print('Not implemented yet- use x=K and y=zeta!'); sys.exit()
+
+	elif ( loopP1 == 'zeta' and loopP2 == 'wc' ):
+
+		print('Not implemented yet- use x=wc and y=zeta!'); sys.exit()
+
+	params.update({'y': np.array(sol)})
+	params.update({'y1': np.array(sig)})
+	params.update({'charEq_Re': np.array(ceq)[:,0]})
+	params.update({'charEq_Im': np.array(ceq)[:,1]})
+	params.update({'con': np.array(con)})
+
+	#print('params[*y*]', params['y'])
+
+	if not params['discrP'] == None:
+		params['x1']=params.pop(loopP2)
+	else:
+		params['x1']=params.pop(loopP1)
+		params['x2']=params.pop(loopP2)
+
+	return params
+
+# ******************************************************************************
+
+# potentially cythonize!
+def equationSigma(tau, a, wc, zeta, gamma=0, psi=-np.pi):
+	''' USE for gammas without the condition
+		np.abs( a*zeta*np.sin(gamma[i]*tau) ) <= gamma[i] and np.abs(gamma[i]) > zero_treshold '''
+	# real zeta, approximation for small gamma*tau
+	#sigma = -wc/2.0 + 1.0/tau * lambertw( -0.5*np.exp( 0.5*wc*tau )*wc*a*zeta*tau**2 )
+	# real zeta, no approximation, need to calculate gamma assuming sigma=0, hence only valid for sigma << 1
+	sigma = -wc/2.0 + 1.0/tau * lambertw( -(0.5/gamma)*np.exp( 0.5*wc*tau )*np.sin(gamma*tau-psi)*wc*a*np.abs(zeta)*tau )
+	# real zeta, approximation of setting sigma**2 to zero in real part of char. equation,
+	# need to calculate gamma assuming sigma=0, hence only valid for sigma << 1
+	#sigma = gamma**2/wc - a + 1.0/tau * lambertw( np.exp( -(gamma**2/wc - a)*tau )*zeta*np.cos(gamma*tau)*a*tau )
+
+	#print('type(sigma)', type(sigma))
+	return sigma
+
+# ******************************************************************************
+
+# potentially cythonize!
+def equationGamma(tau, a, wc, zeta, psi=-np.pi):
+
+	print('Compute gammas for set (tau, alpha, wc, zeto, psi):', tau, a, wc, zeta, psi)
+
+	zero_treshold1 = 1E-3
+	zero_treshold2 = 1E-10
+	all_gamma	   = []
+
+	#A = wc**2.0 - 2.0*np.abs(a)*wc
+	#B = (1.0-zeta**2.0)*(np.abs(a)*wc)**2.0
+	A = wc**2.0 - 2.0*a*wc
+	B = (1.0-zeta**2.0)*(a*wc)**2.0
+	# print('A:', A); print('B:', B);
+	gamma = np.array([ +np.sqrt(0.5*(-A+A*np.sqrt(1.0-4.0*B/(A**2.0)))), +np.sqrt(0.5*(-A-A*np.sqrt(1.0-4.0*B/(A**2.0)))),
+					   -np.sqrt(0.5*(-A+A*np.sqrt(1.0-4.0*B/(A**2.0)))), -np.sqrt(0.5*(-A-A*np.sqrt(1.0-4.0*B/(A**2.0)))) ])
+
+	all_gamma.append(gamma)
+	print('Result:', gamma); time.sleep(0.25)
+
+	for i in range(len(gamma)):													# this condition can also be checked in prepare2D
+
+		if np.abs(gamma[i]) > zero_treshold2:
+			if ( gamma[i] )**2 - np.abs(a)*wc*(1.0-np.abs(zeta)*np.cos( gamma[i]*tau-psi) )  < 0.0:
+				if   gamma[i] > 0.0 and -wc*(gamma[i] + np.abs(a)*np.abs(zeta)*np.sin( gamma[i]*tau-psi) ) < 0.0: #  wc+np.abs(a)*np.abs(zeta)*tau*np.abs( np.cos( gamma[i]*tau-psi) ) >0.0) or (    ( gamma[i] )**2 - np.abs(a)*wc*(1.0-np.abs(zeta)*np.abs( np.cos( gamma[i]*tau-psi) ) ) < 0.0 and  wc+np.abs(a)*np.abs(zeta)*tau*np.abs( np.cos( gamma[i]*tau-psi) ) >0.0):
+					gamma[i] = None
+				elif gamma[i] < 0.0 and -wc*(gamma[i] - np.abs(a)*np.abs(zeta)*np.sin( gamma[i]*tau-psi) ) > 0.0: #  wc+np.abs(a)*np.abs(zeta)*tau*np.abs( np.cos( gamma[i]*tau-psi) ) >0.0) or (    ( gamma[i] )**2 - np.abs(a)*wc*(1.0-np.abs(zeta)*np.abs( np.cos( gamma[i]*tau-psi) ) ) < 0.0 and  wc+np.abs(a)*np.abs(zeta)*tau*np.abs( np.cos( gamma[i]*tau-psi) ) >0.0):
+					gamma[i] = None
+
+
+	# for i in range(len(gamma)):													# this condition can also be checked in prepare2D
+	# 	if not np.abs( (1j*gamma[i])**2+wc*1j*gamma[i]+a*wc*(1.0-zeta*np.exp(-1j*gamma[i]*tau)) ) < zero_treshold1:
+	# 		gamma[i] = None
+
+	#print('Gammas left:', gamma); #time.sleep(1)
+
+	if a <= zero_treshold1:
+		gamma[:] = 0;	#-0.1;
+
+	return gamma#, all_gamma

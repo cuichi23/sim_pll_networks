@@ -28,6 +28,8 @@ gc.enable();
 def simulateSystem(dictNet, dictPLL, dictAlgo=None):
 #mode,div,Nplls,F,F_Omeg,K,Fc,delay,feedback_delay,dt,c,Nsteps,topology,couplingfct,histtype,phiS,phiM,domega,diffconstK,diffconstSendDelay,cPD,Nx=0,Ny=0,Trelax=0,Kadiab_value_r=0):
 
+	t0 = time.time()
+
 	np.random.seed()															# restart pseudo random-number generator
 	if not dictNet['phiInitConfig']:											# if no custom phase configuration is provided, generate it
 		print('Phase configuation of synchronized state set according to supplied topology and twist state information!')
@@ -112,6 +114,8 @@ def simulateSystem(dictNet, dictPLL, dictAlgo=None):
 	elif dictNet['test_case']:
 		print('Simulating testcase scenario!'); time.sleep(2)
 		dictData = evolveSystemTestCases(dictNet, dictPLL, phi, clock_counter, pll_list, dictData)
+
+	print('Time needed for execution of simulation: ', (time.time()-t0), ' seconds')
 
 	plot.plotPhasesInf(dictPLL, dictNet, dictData)
 	plot.plotPhases2pi(dictPLL, dictNet, dictData)

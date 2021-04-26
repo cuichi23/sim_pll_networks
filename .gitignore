@@ -1,4 +1,5 @@
 results
+parametricPlotsTheory/plots
 meep
 *.ipynb
 *.pyc

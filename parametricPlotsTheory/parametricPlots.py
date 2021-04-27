@@ -9,7 +9,7 @@ import matplotlib
 import codecs
 import csv
 import os, gc, sys
-if not os.environ.get('SGE_ROOT') == None:																				# this environment variable is set within the queue network, i.e., if it exists, 'Agg' mode to supress output
+if not os.environ.get('SGE_ROOT') == None:	# this environment variable is set within the queue network, i.e., if it exists, 'Agg' mode to supress output
 	print('NOTE: \"matplotlib.use(\'Agg\')\"-mode active, plots are not shown on screen, just saved to results folder!\n')
 	matplotlib.use('Agg') #'%pylab inline'
 import matplotlib.pyplot as plt
@@ -71,15 +71,11 @@ dpi_val   = 150;
 figwidth  = 10;
 figheight = 5;
 
-def preparePlotting(params, dictPLL, dictNet):
-
-	tau	   = params.get('tau')
-	#params = globalFreqTau(params, dictPLL, dictNet)
+def preparePlotting(params):
 
 	# calculate gamma
 	params = evaluateEq(params)
 
-	print('Back here!')
 	# prepare scatter plot matrices or 2D plot
 	if not params['discrP'] == None:
 		params = prepare2D(params)
@@ -90,65 +86,6 @@ def preparePlotting(params, dictPLL, dictNet):
 	#print('params[*x1*]', params['x1'])
 	#print('params[*x2*]', params['x2'])
 	#print('shape(params[*x1*]), params[*x2*]', np.shape(params['x1']), np.shape(params['x2']))
-
-	return params
-
-# ******************************************************************************
-
-def globalFreqTau(params, dictPLL, dictNet):
-	#Here we calculate analyticaly the Global Frequency of the synchronised states of the network of two SLLs.
-	#First of all, there are two synchronised states, the in-phase and anti-phase. So, the inphase refers to that.
-	#we distiguish the analog and the digital case of the SLLs. So, the digital refers to that.
-	#The choice of digital and inphase mode is made in the main programs.
-
-	p 		= params.get('p')
-	w 		= params.get('w')
-	K 		= params.get('K')
-	h 		= params.get('h')
-	beta	= params.get('beta')
-
-	#if not ( isinstance(K, list) and isinstance(K, np.ndarray) ):
-	#	K = [K];
-	if ( isinstance(K, int) or isinstance(K, float) ):
-		K = [K];
-	if isinstance(K, complex):
-		print('K should not be complex!'); sys.exit();
-
-	Omeg = []; tau = [];
-
-	for i in range(len(K)):
-		# isRadian = False														# set this False to get values returned in [Hz] instead of [rad * Hz]
-		# dictPLL.update({'coupK': K[i]})
-		# sf = synctools.SweepFactory(dictPLL, dictNet, isRadians=isRadian)
-		# fsl = sf.sweep()
-		# para_mat = fsl.get_parameter_matrix(isRadians=False)
-		Omeg.append( (w + K[i] * h( -p + beta )).flatten() )
-		tau.append( (p / Omeg).flatten() )
-
-	if len(tau) == 1:
-		tau = tau[0]; Omeg = Omeg[0];
-
-	# if not ( params['loopP1'] == 'tau' or params['loopP2'] == 'tau' ):			# set Omega and tau to the closed value available from the parametric solution
-	# #if not isinstance(tau, np.ndarray):
-	# 	index_tau = np.where( np.array(syncSta['tau'])[0,:,:] > tau )[0]
-	# 	syncSta.update({'Omeg': syncSta['Omeg'][index_tau], 'tau': syncSta['tau'][index_tau]})
-	# 	#tempTau	= syncSta['tau'][index_tau]
-	# 	#tempOmeg 	= syncSta['Omeg'][index_tau]
-	#
-	# params.update(syncSta)
-
-	if ( isinstance(params['tau'], float) or isinstance(params['tau'], int) ):
-		OmegTemp = []; tauTemp = [];
-		for i in range(len(K)):
-			# print('np.array(tau)[i,:]', np.array(tau)[i][:])
-			index_tau = np.where( np.array(tau)[i][:] > params['tau'] )[0][0]
-			#print('search for params[*tau*]=', params['tau'], ' found taunumeric=', np.array(tau)[i][index_tau])
-			tauTemp.append(np.array(tau)[i][index_tau])
-			OmegTemp.append(np.array(Omeg)[i][index_tau])
-		Omeg=OmegTemp; tau=tauTemp;
-		params.update({'Omeg': Omeg})
-	else:
-		params.update({'Omeg': Omeg, 'tau': tau})
 
 	return params
 
@@ -167,7 +104,8 @@ def makePlotsFromSynctoolsResults(figID, x, y, z, rescale_x, rescale_y, rescale_
 	if z_identifier == 'ReLambda':												# fix the colormap to clearly distinguish the zero
 		colormap = shiftedColorMap(colormap, np.min(np.array(z)[np.isnan(np.array(z))==False]), np.max(np.array(z)[np.isnan(np.array(z))==False]), name='test')
 
-	tempresults = np.array(z).reshape((len(x), len(y)))
+	#tempresults = np.array(z).reshape((len(x), len(y)))
+	tempresults = z
 	tempresults = np.transpose(tempresults)
 	if mask_treshold:
 		tempresults_ma = ma.masked_where(tempresults < mask_treshold, tempresults)	# create masked array
@@ -236,12 +174,12 @@ def shiftedColorMap(cmap, min_val, max_val, name):
 
 # ******************************************************************************
 
-def plotParametric(params, dictPLL, dictNet):
+def plotParametric(params):
 
-	params = preparePlotting(params, dictPLL, dictNet)
+	params = preparePlotting(params)
 
 	labeldict 	= {'wc': r'$\frac{\omega_\textrm{c}}{\omega}$', 'tau': r'$\frac{\Omega\tau}{2\pi}$', 'K': r'$K$',
-					'a': r'$\alpha$', 'Omeg': r'$\Omega$', 'zeta': r'$\zeta$', 'beta': r'$\beta$', '2alpha': r'$2\alpha$'}
+					'a': r'$\alpha$', 'Omeg': r'$\Omega$', 'zeta': r'$\zeta$', 'beta': r'$\beta$', 'alpha': r'$2\alpha$'}
 
 	''' prepare colormap for scatter plot that is always in [0, 1] or [min(results), max(results)] '''
 	cdict = {
@@ -387,8 +325,17 @@ def prepareScatt(params):
 		params.update({'xscatt': scatt[:,0]/params['w']})
 		params.update({'yscatt': scatt[:,1]/params['w']})
 
-	else:
+	elif( params['loopP1'] == 'alpha' and params['loopP2'] == 'wc' ):
 
+		rescale_x = 1
+		if params['rescale'] == '2alpha':
+			rescale_x = 2
+
+		scatt = np.array(list(itertools.product(*np.array([params['x1'][:,0], params['x2']]))))
+		params.update({'xscatt': scatt[:,0]*rescale_x})
+		params.update({'yscatt': scatt[:,1]/params['w']})
+
+	else:
 		scatt = np.array(list(itertools.product(*np.array([params['x1'], params['x2']]))))
 		params.update({'xscatt': xscatt[:,0]})
 		params.update({'yscatt': yscatt[:,1]})
@@ -438,6 +385,7 @@ def evaluateEq(params):
 	psi		= params.get('psi')
 	zeta	= params.get('zeta')
 	Omeg	= params.get('Omeg')
+	alpha	= params.get('alpha')
 	beta	= params.get('beta')
 
 	loopP1	= params.get('loopP1')
@@ -448,8 +396,11 @@ def evaluateEq(params):
 		print('Calculate x=K and y=wc!')
 		for k in range(len(K)):
 			#print('K[k], Omeg[k]', K[k], Omeg[k])
-			a = K[k] * hp( -Omeg[k]*tau + beta )
+			#a = K[k] * hp( -Omeg[k]*tau + beta )
 			for l in range(len(wc)):
+				#a = K[k] * hp( -Omeg[k,l]*tau + beta )
+				#print('a_old:', a, '\ta_synctools:', alpha[k,l]); time.sleep(0.5)
+				a = alpha[k,l]
 				sol.append(equationGamma(tau, a, wc[l], zeta, psi))
 				#sig.append(equationSigma(tau, a, wc[l], zeta, np.max(sol[-1]), psi))
 				con.append(np.array([wc[l]/(2.0*a)-1+np.sqrt(1.0-zeta**2.0), wc[l]/(2.0*a)-1-np.sqrt(1.0-zeta**2.0), a]))
@@ -464,6 +415,18 @@ def evaluateEq(params):
 				a = K[l] * hp( -Omeg[l]*tau + beta )
 				sol.append(equationGamma(tau, a, wc[k], zeta, psi))
 				con.append(np.array([wc[l]/(2.0*a)-1+np.sqrt(1.0-zeta**2.0), wc[l]/(2.0*a)-1-np.sqrt(1.0-zeta**2.0), a]))
+
+	elif( loopP1 == 'alpha' and loopP2 == 'wc' ):
+
+		print('Calculate x=alpha and y=wc!')
+		for k in range(len(alpha)):
+			for l in range(len(wc)):
+				a = alpha[k,l]
+				sol.append(equationGamma(tau, a, wc[l], zeta, psi))
+				#sig.append(equationSigma(tau, a, wc[l], zeta, np.max(sol[-1]), psi))
+				con.append(np.array([wc[l]/(2.0*a)-1+np.sqrt(1.0-zeta**2.0), wc[l]/(2.0*a)-1-np.sqrt(1.0-zeta**2.0), a]))
+				#ceq.append(solveLinStab({'wc': wc[l], 'zeta': zeta, 'a': a, 'tau': tau}))
+		sig.append(0); ceq.append(np.array([0, 0]));
 
 	elif( loopP1 == 'K' and loopP2 == 'tau' ):
 
@@ -607,7 +570,7 @@ def equationGamma(tau, a, wc, zeta, psi=-np.pi):
 					   -np.sqrt(0.5*(-A+A*np.sqrt(1.0-4.0*B/(A**2.0)))), -np.sqrt(0.5*(-A-A*np.sqrt(1.0-4.0*B/(A**2.0)))) ])
 
 	all_gamma.append(gamma)
-	print('Result:', gamma); time.sleep(0.25)
+	#print('Result:', gamma); time.sleep(0.25)
 
 	for i in range(len(gamma)):													# this condition can also be checked in prepare2D
 

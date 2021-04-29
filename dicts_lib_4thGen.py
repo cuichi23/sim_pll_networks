@@ -17,6 +17,9 @@ from scipy.stats import cauchy
 import datetime
 import time
 
+import coupling_fct_lib as coupfct
+import synctools_interface_lib as synctools
+
 ''' Enable automatic carbage collector '''
 gc.enable();
 
@@ -57,19 +60,19 @@ def getDicts(Fsim=125):
 		'transmission_delay': 0.55, 												# value of transmission delay in seconds, float (single), list (tau_k) or list of lists (tau_kl): np.random.uniform(min,max,size=[dictNet['Nx']*dictNet['Ny'],dictNet['Nx']*dictNet['Ny']]), OR [np.random.uniform(min,max) for i in range(dictNet['Nx']*dictNet['Ny'])]
 		'transmission_delay_var': None, 										# variance of transmission delays
 		'distribution_for_delays': None,										# from what distribution are random delays drawn?
+		# choose from coupfct.<ID>: sine, cosine, neg_sine, neg_cosine, triangular, deriv_triangular, square_wave, pfd
+		'coup_fct_sig': coupfct.neg_cosine,										# coupling function h(x) for PLLs with ideally filtered PD signals:
+		'derivative_coup_fct': coupfct.sine,									# derivative h'(x) of coupling function h(x)
+		'includeCompHF': False,													# boolean True/False whether to simulate with HF components
+		'vco_out_sig': coupfct.square_wave,										# for HF case, e.g.: coupfct.sine or coupfct.square_wave
+		'typeVCOsig': 'analogHF',												# 'analogHF' or 'digitalHF'
+		'responseVCO': 'linear',												# either string: 'linear' or a nonlinear function of omega, Kvco, e.g., lambda w, K, ...: expression
+		'antenna': False,														# boolean True/False whether antenna present for PLLs
 		'posX': 0,																# antenna position of PLL k -- x, y z coordinates, need to be set
 		'posY': 0,
 		'posZ': 0,
-		'coup_fct_sig': lambda x: np.cos(x),									# coupling function for PLLs with ideally filtered PD signals:
-		# mixer+1sig shift: np.sin(x), mixer: np.cos(x), XOR: sawtooth(x,width=0.5), PSD: 0.5*(np.sign(x)*(1+sawtooth(1*x*np.sign(x), width=1)))
-		'derivative_coup_fct': lambda x: -np.sin(x),								# derivative of coupling function h
-		'includeCompHF': False,													# boolean True/False whether to simulate with HF components
-		'typeVCOsig': 'analogHF',												# 'analogHF' or 'digitalHF'
-		'responseVCO': 'linear',												# either string: 'linear' or a nonlinear function of omega, Kvco, e.g., lambda w, K, ...: expression
-		'vco_out_sig': lambda x: 0.5*(1.0+square(x,duty=0.5)),					# for HF case, e.g.: np.sin(x) or 0.5*(1.0+square(x,duty=0.5))
-		'antenna': False,														# boolean True/False whether antenna present for PLLs
 		'initAntennaState': 0,
-		'antenna_sig': lambda x: np.sin(x),										# type of signal received by the antenna
+		'antenna_sig': coupfct.sine,											# type of signal received by the antenna
 		'extra_coup_sig': None,													# choose from: 'injection2ndHarm', None
 		'coupStr_2ndHarm': 0.6,													# the coupling constant for the injection of the 2nd harmonic: float, will be indepent of 'coupK'
 		'typeOfHist': 'syncState',												# string, choose from: 'freeRunning', 'syncState'

@@ -17,6 +17,9 @@ from scipy.stats import cauchy
 import datetime
 import time
 
+import coupling_fct_lib as coupfct
+import synctools_interface_lib as synctools
+
 ''' Enable automatic carbage collector '''
 gc.enable();
 
@@ -27,29 +30,32 @@ gc.enable();
 def getDicts(Fsim=125):
 
 	dictNet={
-		'Nx': 20,																# oscillators in x-direction
+		'Nx': 4,																# oscillators in x-direction
 		'Ny': 1,																# oscillators in y-direction
 		'mx': 0,																# twist/chequerboard in x-direction (depends on closed or open boundary conditions)
-		'my': 0,																# twist/chequerboard in y-direction
+		'my': -999,																# twist/chequerboard in y-direction
 		'topology': 'global',													# 1d) ring, chain, 2d) square-open, square-periodic, hexagonal...
 																				# 3) global, entrainOne, entrainAll, entrainPLLsHierarch, compareEntrVsMutual
 		'Tsim': 2500,															# simulation time in multiples of the period
-		'computeFreqAndStab': True,												# compute linear stability and global frequency if possible: True or False
+		'computeFreqAndStab': False,											# compute linear stability and global frequency if possible: True or False (only identical oscis and Kuramoto 2nd order)
 		'phi_array_mult_tau': 1,												# how many multiples of the delay is stored of the phi time series
-		'phiPerturb': [np.random.uniform(-1.01,1.01) for i in range(20)],		# delta-perturbation on initial state -- PROVIDE EITHER ONE OF THEM! if [] set to zero
-		'phiPerturbRot': [],													# delta-perturbation on initial state -- in rotated space
 		'phiInitConfig': [],													# phase-configuration of sync state,  []: automatic, else provide list
 		'freq_beacons': 0.25,													# frequency of external sender beacons, either a float or a list
 		'test_case': False														# True: run testcase sim, False: run other simulation mode
 	}
 
+	dictNet.update({
+		'phiPerturb': [np.random.uniform(-0.21,0.21) for i in range(dictNet['Nx']*dictNet['Ny'])], # delta-perturbation on initial state -- PROVIDE EITHER ONE OF THEM! if [] set to zero
+		'phiPerturbRot': [],													# delta-perturbation on initial state -- in rotated space
+	})
+
 	dictPLL={
-		'intrF': 10.0,															# intrinsic frequency in Hz
+		'intrF': 1.0,															# intrinsic frequency in Hz
 		'syncF': 1.0,															# frequency of synchronized state in Hz
-		'coupK': 0.5, #[random.uniform(0.3, 0.5) for i in range(dictNet['Nx']*dictNet['Ny'])],# coupling strength in Hz float or [random.uniform(minK, maxK) for i in range(dictNet['Nx']*dictNet['Ny'])]
-		'gPDin': np.random.randint(0,2,size=[dictNet['Nx']*dictNet['Ny'],dictNet['Nx']*dictNet['Ny']]),# gains of the different inputs to PD k from input l -- G_kl, see PD, set to 1 and all G_kl=1 (so far only implemented for some cases, check!): np.random.uniform(0.95,1.05,size=[dictNet['Nx']*dictNet['Ny'],dictNet['Nx']*dictNet['Ny']])
+		'coupK': 0.2, #[random.uniform(0.3, 0.5) for i in range(dictNet['Nx']*dictNet['Ny'])],# coupling strength in Hz float or [random.uniform(minK, maxK) for i in range(dictNet['Nx']*dictNet['Ny'])]
+		'gPDin': 1, #np.random.randint(0,2,size=[dictNet['Nx']*dictNet['Ny'],dictNet['Nx']*dictNet['Ny']]),# gains of the different inputs to PD k from input l -- G_kl, see PD, set to 1 and all G_kl=1 (so far only implemented for some cases, check!): np.random.uniform(0.95,1.05,size=[dictNet['Nx']*dictNet['Ny'],dictNet['Nx']*dictNet['Ny']])
 		'gPDin_symmetric': True,												# set to True if G_kl == G_lk, False otherwise
-		'cutFc': None,															# LF cut-off frequency in Hz, here N=9 with mean 0.015: [0.05,0.015,0.00145,0.001,0.0001,0.001,0.00145,0.015,0.05]
+		'cutFc': 0.25,															# LF cut-off frequency in Hz, here N=9 with mean 0.015: [0.05,0.015,0.00145,0.001,0.0001,0.001,0.00145,0.015,0.05]
 		'div': 1,																# divisor of divider (int)
 		'noiseVarVCO': 1E-6,													# variance of VCO GWN
 		'feedback_delay': 0,													# value of feedback delay in seconds
@@ -57,19 +63,19 @@ def getDicts(Fsim=125):
 		'transmission_delay': 0,	 											# value of transmission delay in seconds, float (single), list (tau_k) or list of lists (tau_kl): np.random.uniform(min,max,size=[dictNet['Nx']*dictNet['Ny'],dictNet['Nx']*dictNet['Ny']]), OR [np.random.uniform(min,max) for i in range(dictNet['Nx']*dictNet['Ny'])]
 		'transmission_delay_var': None, 										# variance of transmission delays
 		'distribution_for_delays': None,										# from what distribution are random delays drawn?
+		# choose from coupfct.<ID>: sine, cosine, neg_sine, neg_cosine, triangular, deriv_triangular, square_wave, pfd
+		'coup_fct_sig': coupfct.neg_cosine,										# coupling function h(x) for PLLs with ideally filtered PD signals:
+		'derivative_coup_fct': coupfct.sine,									# derivative h'(x) of coupling function h(x)
+		'includeCompHF': False,													# boolean True/False whether to simulate with HF components
+		'vco_out_sig': coupfct.square_wave,										# for HF case, e.g.: coupfct.sine or coupfct.square_wave
+		'typeVCOsig': 'analogHF',												# 'analogHF' or 'digitalHF'
+		'responseVCO': 'linear',												# either string: 'linear' or a nonlinear function of omega, Kvco, e.g., lambda w, K, ...: expression
+		'antenna': False,														# boolean True/False whether antenna present for PLLs
 		'posX': 0,																# antenna position of PLL k -- x, y z coordinates, need to be set
 		'posY': 0,
 		'posZ': 0,
-		'coup_fct_sig': lambda x: np.sin(x),									# coupling function for PLLs with ideally filtered PD signals:
-		# mixer+1sig shift: np.sin(x), mixer: np.cos(x), XOR: sawtooth(x,width=0.5), PSD: 0.5*(np.sign(x)*(1+sawtooth(1*x*np.sign(x), width=1)))
-		'derivative_coup_fct': lambda x: np.cos(x),								# derivative of coupling function h
-		'includeCompHF': False,													# boolean True/False whether to simulate with HF components
-		'responseVCO': 'linear',												# either string: 'linear' or a nonlinear function of omega, Kvco, e.g., lambda w, K, ...: expression
-		'typeVCOsig': 'analogHF',												# 'analogHF' or 'digitalHF'
-		'vco_out_sig': lambda x: 0.5*(1.0+square(x,duty=0.5)),					# for HF case, e.g.: np.sin(x) or 0.5*(1.0+square(x,duty=0.5))
-		'antenna': False,														# boolean True/False whether antenna present for PLLs
 		'initAntennaState': 0,
-		'antenna_sig': lambda x: np.sin(x),										# type of signal received by the antenna
+		'antenna_sig': coupfct.sine,											# type of signal received by the antenna
 		'extra_coup_sig': 'injection2ndHarm',									# choose from: 'injection2ndHarm', None
 		'coupStr_2ndHarm': 1.0,													# the coupling constant for the injection of the 2nd harmonic: float, will be indepent of 'coupK'
 		'typeOfHist': 'syncState',												# string, choose from: 'freeRunning', 'syncState'

@@ -279,8 +279,10 @@ class PhaseDetectorCombiner:													# this class creates PD objects, these 
 			if dictPLL['antenna'] == True and dictPLL['extra_coup_sig'] == None:
 				self.compute	= lambda x_ext, ant_in, x_feed:  np.mean( self.G_kl * self.h( ( x_ext - x_feed ) / self.div ) + self.actRx * self.h( ant_in - x_feed / self.div ) )
 			elif dictPLL['antenna'] == False and dictPLL['extra_coup_sig'] == 'injection2ndHarm':
-				print('Setup PLL with injection locking signal! --> Introduce separate coupling strength for 2nd Harm. injection?!');
-				self.compute	= lambda x_ext, ant_in, x_feed:  np.sum( self.G_kl * self.h( ( x_ext - x_feed ) / self.div ) ) - self.K2nd_k * self.h( 2.0*x_feed / self.div )
+				print('Setup PLL with injection locking signal!');
+				self.compute	= lambda x_ext, ant_in, x_feed:  np.mean( self.G_kl * self.h( ( 2 * x_ext - x_feed ) / self.div ) )
+				#self.compute	= lambda x_ext, ant_in, x_feed:  np.mean( self.G_kl * self.h( ( 2 * x_ext - x_feed ) / self.div ) ) + self.h( ( 2 * x_ext - x_feed ) / self.div )
+								#lambda x_ext, ant_in, x_feed:  - np.sum( self.G_kl * self.h( ( 2 * x_ext - x_feed ) / self.div ) ) - self.K2nd_k * self.h( 2.0*x_feed / self.div )
 			else:
 				self.compute	= lambda x_ext, ant_in, x_feed:  np.mean( self.G_kl * self.h( ( x_ext - x_feed ) / self.div ) )
 
@@ -298,7 +300,9 @@ class PhaseDetectorCombiner:													# this class creates PD objects, these 
 																		   		+ self.h( ant_in )*(1.0-self.hf( x_feed / self.div ))
 																				+ (1.0-self.hf( ant_in ))*self.hf( x_feed / self.div ))
 			elif dictPLL['antenna'] == False and dictPLL['extra_coup_sig'] == 'injection2ndHarm':
-				print('Mode *injection2ndHarm* not supprted, code needs to be changed to implement high pass filter for this contribution!'); sys.exit()
+				print('Setup PLL with injection locking signal!');
+				self.compute	= lambda x_ext, ant_in, x_feed: np.mean( self.G_kl * ( self.h( ( 2 * x_ext - x_feed ) / self.div )
+																				+ self.h( ( 2 * x_ext + x_feed ) / self.div ) ) )
 			else:
 				if dictPLL['typeVCOsig'] == 'analogHF':							# this becomes the coupling function for analog VCO output signals
 					self.compute= lambda x_ext, ant_in, x_feed: np.mean( self.G_kl * self.hf( x_ext / self.div ) * self.hf( x_feed / self.div ) )

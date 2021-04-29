@@ -10,6 +10,7 @@ import numpy as np
 import inspect
 
 import synctools_lib as st
+import coupling_fct_lib as coupfct
 
 TOPO_0D_GLOBAL 				= 'global'
 TOPO_1D_RING 				= 'ring'
@@ -24,60 +25,60 @@ TOPO_2D_OCTAGONAL_OPEN 		= 'octagon-open'
 TOPO_2D_OCTAGONAL_PERIODIC 	= 'octagon-periodic'
 
 # mixer+1sig shift: +/-np.sin(x), mixer: +/-np.cos(x), XOR: sawtooth(x,width=0.5), PFD: 0.5*(np.sign(x)*(1+sawtooth(1*x*np.sign(x), width=1)))
-COUPLING_FUNCTION_TRIANGLE 		= 'sawtooth'
-COUPLING_FUNCTION_PFD 			= '0.5*(np.sign(x)*(1+sawtooth(1*x*np.sign(x))'
-COUPLING_FUNCTION_COS 			= 'np.cos'
-COUPLING_FUNCTION_NEGCOS		= '-np.cos'
-COUPLING_FUNCTION_SIN 			= 'np.sin'
-COUPLING_FUNCTION_NEGSIN		= '-np.sin'
+COUPLING_FUNCTION_TRIANGLE 		= coupfct.triangular 							#'sawtooth'
+COUPLING_FUNCTION_PFD 			= coupfct.pfd									#'0.5*(np.sign(x)*(1+sawtooth(1*x*np.sign(x))'
+COUPLING_FUNCTION_COS 			= coupfct.cosine								#'np.cos'
+COUPLING_FUNCTION_NEGCOS		= coupfct.neg_cosine							#'-np.cos'
+COUPLING_FUNCTION_SIN 			= coupfct.sine									#'np.sin'
+COUPLING_FUNCTION_NEGSIN		= coupfct.neg_sine								#'-np.sin'
 #COUPLING_FUNCTION_SINCOS 		= 'sincos'
 #COUPLING_FUNCTION_TRIANGSHIFT 	= 'triangshift'
 
 # #############################################################################
 
 
-
-def generate_delay_plot(n, ny, nx, w, k, h, wc, m, mx, my, topology, isRadians=True, filename=None):
+def generate_delay_plot(dictPLL, dictNet, isRadians=True, filename=None):
 	# Setup sweep factory and create state list
 	n_points = 250
 	if isRadians:
-		tau_max = 2.0 / (w / (2 * np.pi))
-		f  = w / (2 * np.pi)
-		fc = wc / (2 * np.pi)
-		kc = k  / (2 * np.pi)
+		tau_max = 5.0 / (dictPLL['intrF'] / (2 * np.pi))
+		f  = dictPLL['intrF'] / (2 * np.pi)
+		fc = dictPLL['cutFc'] / (2 * np.pi)
+		kc = dictPLL['coupK'] / (2 * np.pi)
 	else:
-		tau_max = 2.0 / w
-		f  = w
-		fc = wc
-		kc = k
+		tau_max = 5.0 / dictPLL['intrF']
+		f  = dictPLL['intrF']
+		fc = dictPLL['cutFc']
+		kc = dictPLL['coupK']
 	tau = np.linspace(0, tau_max, n_points)
-	sf  = SweepFactory(n, ny, nx, w, k, tau, h, wc, m, mx, my, topology, 0, isRadians=isRadians)
+	dictPLL.update({'transmission_delay': tau})
+	sf  = SweepFactory(dictPLL, dictNet, isRadians=isRadians)
 	fsl = sf.sweep()
 
 	# Create parameter string
 	str_para = ''
-	str_para += 'k = %i   kx = %i   ky = %i' % (m, mx, my)
-	str_para += '\n%s topology' % topology
-	str_para += ' n = %i   nx = %i   ny = %i' % (n, nx, ny)
+	str_para += 'k = %i   kx = %i   ky = %i' % (dictNet['mx'], dictNet['mx'], dictNet['my'])
+	str_para += '\n%s topology' % dictNet['topology']
+	str_para += ' n = %i   nx = %i   ny = %i' % (dictNet['Nx']*dictNet['Ny'], dictNet['Nx'], dictNet['Ny'])
 	str_para += '\nF = %.2f Hz   Fc = %.2f Hz   Kc = %.2f Hz' % (f, fc, kc)
 
 	# Create figure
-	plt.figure(figsize=(8, 8.2))
+	plt.figure(num=1, figsize=(8, 8.2))
 
 	plt.subplot(2, 1, 1)
 	plt.title(str_para)
 	plt.plot(fsl.get_tau(), fsl.get_omega(), '.')
 	plt.grid(True, ls='--')
-	plt.xlabel('Delay [s]')
-	plt.ylabel('Sync. frequency [rad/s]')
+	plt.xlabel('delay [s]')
+	plt.ylabel('sync. frequency [rad/s]')
 	plt.tight_layout()
 
 	plt.subplot(2, 1, 2)
 	plt.axhline(0, color='k')
 	plt.plot(fsl.get_tau(), np.real(fsl.get_l()), '.')
 	plt.grid(True, ls='--')
-	plt.xlabel('Delay [s]')
-	plt.ylabel('Stability [rad/s]')
+	plt.xlabel('delay [s]')
+	plt.ylabel('stability [rad/s]')
 	plt.tight_layout()
 	plt.draw()
 
@@ -88,12 +89,46 @@ def generate_delay_plot(n, ny, nx, w, k, h, wc, m, mx, my, topology, isRadians=T
 		except:
 			raise Exception('results folder does not exist and could not be created')
 
-
 	# Save figure
 	if filename == None:
 		dt = datetime.datetime.now()
 		str_time = dt.strftime('%Y%m%d_%H%M%S')
 		filename = os.path.join('results', 'delay_plot_' + str_time)
+	plt.savefig(filename + '.png', dpi=150)
+	plt.savefig(filename + '.pdf')
+
+	# Create figure
+	plt.figure(num=2, figsize=(8, 8.2))
+
+	plt.subplot(2, 1, 1)
+	plt.title(str_para)
+	plt.plot(fsl.get_tau()*fsl.get_omega()/(2*np.pi), fsl.get_omega(), '.')
+	plt.grid(True, ls='--')
+	plt.xlabel('Omega delay')
+	plt.ylabel('sync. frequency [rad/s]')
+	plt.tight_layout()
+
+	plt.subplot(2, 1, 2)
+	plt.axhline(0, color='k')
+	plt.plot(fsl.get_tau()*fsl.get_omega()/(2*np.pi), np.real(fsl.get_l()), '.')
+	plt.grid(True, ls='--')
+	plt.xlabel('Omega delay [s]')
+	plt.ylabel('stability [rad/s]')
+	plt.tight_layout()
+	plt.draw()
+
+	# Check if results folder exists
+	if not os.path.isdir('results'):
+		try:
+			os.makedirs('results')
+		except:
+			raise Exception('results folder does not exist and could not be created')
+
+	# Save figure
+	if filename == None:
+		dt = datetime.datetime.now()
+		str_time = dt.strftime('%Y%m%d_%H%M%S')
+		filename = os.path.join('results', 'delayOmeg_plot_' + str_time)
 	plt.savefig(filename + '.png', dpi=150)
 	plt.savefig(filename + '.pdf')
 
@@ -201,19 +236,19 @@ class SweepFactory(object):
 	def init_system(self):
 		# Initilaize coupling function
 
-		#print('inspect.getsourcelines(self.h)[0][0]', inspect.getsourcelines(self.h)[0][0][28:])
+		#print('inspect.getsourcelines(self.h)[0][0]', inspect.getsourcelines(self.h)[0][0][27:])
 
-		if inspect.getsourcelines(self.h)[0][0][28:36] 	 == COUPLING_FUNCTION_TRIANGLE:
+		if self.h == COUPLING_FUNCTION_TRIANGLE:								# inspect.getsourcelines(self.h)[0][0][27:35]
 			h_func = st.Triangle(1.0 / (2.0 * np.pi))
-		elif inspect.getsourcelines(self.h)[0][0][28:70] == COUPLING_FUNCTION_PFD:
+		elif self.h == COUPLING_FUNCTION_PFD:									# inspect.getsourcelines(self.h)[0][0][27:70]
 			h_func = st.PFD(1.0 / (2.0 * np.pi))
-		elif inspect.getsourcelines(self.h)[0][0][28:34] == COUPLING_FUNCTION_COS:
+		elif self.h == COUPLING_FUNCTION_COS:									# inspect.getsourcelines(self.h)[0][0][27:33]
 			h_func = st.Cos(1.0 / (2.0 * np.pi))
-		elif inspect.getsourcelines(self.h)[0][0][28:34] == COUPLING_FUNCTION_SIN:
+		elif self.h == COUPLING_FUNCTION_SIN:									# inspect.getsourcelines(self.h)[0][0][27:33]
 			h_func = st.Sin(1.0 / (2.0 * np.pi))
-		elif inspect.getsourcelines(self.h)[0][0][28:35] == COUPLING_FUNCTION_NEGCOS:
+		elif self.h == COUPLING_FUNCTION_NEGCOS:								# inspect.getsourcelines(self.h)[0][0][27:34]
 			h_func = st.NegCos(1.0 / (2.0 * np.pi))
-		elif inspect.getsourcelines(self.h)[0][0][28:35] == COUPLING_FUNCTION_NEGSIN:
+		elif self.h == COUPLING_FUNCTION_NEGSIN:								# inspect.getsourcelines(self.h)[0][0][27:34]
 			h_func = st.NegSin(1.0 / (2.0 * np.pi))
 		#elif inspect.getsourcelines(self.h)[0][0][12:19] == COUPLING_FUNCTION_TRIANGSHIFT:
 		#	h_func = st.Triangle(1.0 / (2.0 * np.pi))
@@ -563,6 +598,16 @@ class FlatStateList(object):
 		else:
 			return None
 
+	def get_phiConf(self):
+		'''Returns an array of the delay times of the states in the list'''
+		if self.n > 0:
+			x = []
+			for i in range(self.n):
+				x.append( self.states[i].get_phi() )
+			return np.array(x)
+		else:
+			return None
+
 	def get_parameter_matrix(self, isRadians=True):
 		'''Returns a matrix of the numeric parameters the states in the list
 
@@ -586,6 +631,7 @@ class FlatStateList(object):
 			x[:, 10] = self.get_mx()
 			x[:, 11] = self.get_my()
 			x[:, 12] = self.get_v()
+			#x[:, 13] = self.get_phiConf().flatten()
 			return x
 		else:
 			return None

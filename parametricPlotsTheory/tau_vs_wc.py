@@ -20,6 +20,7 @@ figheight = 5;
 
 import parametricPlots as paraPlot
 import synctools_interface_lib as synctools
+import coupling_fct_lib as coupfct
 
 dictNet={
 	'Nx': 2,																	# oscillators in x-direction
@@ -29,35 +30,38 @@ dictNet={
 	'Tsim': 100,
 	'topology': 'ring',															# 1d) ring, chain, 2d) square-open, square-periodic, hexagonal...
 																				# 3) global, entrainOne, entrainAll, entrainPLLsHierarch, compareEntrVsMutual
+	'zeta': -1, 																# real part of eigenvalue of slowest decaying perturbation mode for the set of parameters, also a fct. of tau!
+	'psi': np.pi,																# real part of eigenvalue of slowest decaying perturbation
 	'computeFreqAndStab': True													# compute linear stability and global frequency if possible: True or False
 }
 
 dictPLL={
+	'analyzeFreq': 'max',														# choose from 'max', 'min', 'middle' --> which of up to three multistable Omega to analyze
 	'intrF': 1.0,																# intrinsic frequency in Hz
 	'syncF': 1.0,																# frequency of synchronized state in Hz
-	'coupK': 0.65,																# [random.uniform(0.3, 0.4) for i in range(dictNet['Nx']*dictNet['Ny'])],# coupling strength in Hz float or [random.uniform(minK, maxK) for i in range(dictNet['Nx']*dictNet['Ny'])]
+	'coupK': 0.2,																# [random.uniform(0.3, 0.4) for i in range(dictNet['Nx']*dictNet['Ny'])],# coupling strength in Hz float or [random.uniform(minK, maxK) for i in range(dictNet['Nx']*dictNet['Ny'])]
 	'cutFc': 0.4,																# LF cut-off frequency in Hz, None for no LF, or e.g., N=9 with mean 0.015: [0.05,0.015,0.00145,0.001,0.0001,0.001,0.00145,0.015,0.05]
 	'div': 1,																	# divisor of divider (int)
 	'feedback_delay': 0,														# value of feedback delay in seconds
 	'feedback_delay_var': None, 												# variance of feedback delay
 	'transmission_delay': 0.65, 												# value of transmission delay in seconds, float (single), list (tau_k) or list of lists (tau_kl): np.random.uniform(min,max,size=[dictNet['Nx']*dictNet['Ny'],dictNet['Nx']*dictNet['Ny']]), OR [np.random.uniform(min,max) for i in range(dictNet['Nx']*dictNet['Ny'])]
-	'coup_fct_sig': lambda x: -np.cos(x),										# coupling function for PLLs with ideally filtered PD signals:
-	# mixer+1sig shift: np.sin(x), mixer: np.cos(x), XOR: sawtooth(x,width=0.5), PFD: 0.5*(np.sign(x)*(1+sawtooth(1*x*np.sign(x), width=1)))
-	'derivative_coup_fct': lambda x: np.sin(x)									# derivative of coupling function h
+	# choose from coupfct.<ID>: sine, cosine, neg_sine, neg_cosine, triangular, deriv_triangular, square_wave, pfd
+	'coup_fct_sig': coupfct.neg_cosine,											# coupling function h(x) for PLLs with ideally filtered PD signals:
+	'derivative_coup_fct': coupfct.sine											# derivative h'(x) of coupling function h(x)
 }
 
 w 		= 2.0*np.pi*dictPLL['intrF']
 K		= 2.0*np.pi*dictPLL['coupK']
-z 		= -1																	# eigenvalue of the perturbation mode
-psi		= -np.pi																# imaginary part of complex representation of zeta in polar coordinates
+z 		= dictNet['zeta']														# eigenvalue of the perturbation mode
+psi		= dictNet['psi']														# imaginary part of complex representation of zeta in polar coordinates
 
 h  		= dictPLL['coup_fct_sig']
 hp 		= dictPLL['derivative_coup_fct']
 
-beta 	= 0#np.pi																	# choose according to choice of mx, my and the topology!
+beta 	= np.pi																	# choose according to choice of mx, my and the topology!
 
-tau 	= np.arange(0, 5, 0.01)
-wc  	= 2.0*np.pi*np.arange(0.0001, 0.75, 0.006285/(2.0*np.pi))
+tau 	= np.arange(0, 4, 0.1)
+wc  	= 2.0*np.pi*np.arange(0.0001, 0.5, 0.06285/(2.0*np.pi))
 
 #OmegInTauVsFc = []; alpha = []; ReLambda = []; ImLambda = [];
 OmegInTauVsFc = np.zeros([len(tau), len(wc)]); alpha = np.zeros([len(tau), len(wc)]); ReLambda = np.zeros([len(tau), len(wc)]); ImLambda = np.zeros([len(tau), len(wc)]);
@@ -70,8 +74,13 @@ for i in range(len(tau)):
 		fsl 		= sf.sweep()
 		para_mat 	= fsl.get_parameter_matrix(isRadians=isRadian)
 		if len(para_mat[:,4]) > 1:
-			print('Found multistability of synchronized state, Omega:', para_mat[:,4], '\tfor (K, tau, beta)=(', dictPLL['coupK'], dictPLL['transmission_delay'], beta,')\nPick state with largest frequency!')
-			index = np.argmax(para_mat[:,4], axis=0)
+			#print('Found multistability of synchronized state, Omega:', para_mat[:,4], '\tfor (K, tau, beta)=(', dictPLL['coupK'], dictPLL['transmission_delay'], beta,')\nPick state with largest frequency!')
+			if dictPLL['analyzeFreq'] == 'max':
+				index = np.argmax(para_mat[:,4], axis=0)
+			elif dictPLL['analyzeFreq'] == 'min':
+				index = np.argmin(para_mat[:,4], axis=0)
+			elif dictPLL['analyzeFreq'] == 'middle':
+				index = np.where(para_mat[:,4]==sorted(para_mat[:,4])[1])[0][0]
 			OmegInTauVsFc[i,j] = 2.0*np.pi*para_mat[index,4];
 			#OmegInTauVsFc.append(para_mat[index,4].tolist());
 			alpha[i,j] = ((2.0*np.pi*para_mat[index,1]/para_mat[index,12])*dictPLL['derivative_coup_fct']( (-2.0*np.pi*para_mat[index,4]*para_mat[index,3]+beta)/para_mat[index,12] ))
@@ -81,7 +90,7 @@ for i in range(len(tau)):
 			ImLambda[i,j] = para_mat[index,6]
 			#ImLambda.append(para_mat[index,6].tolist());
 		else:
-			print('Found one synchronized state, Omega:', para_mat[:,4], '\tfor (K, tau, beta)=(', dictPLL['coupK'], dictPLL['transmission_delay'], beta,').')
+			#print('Found one synchronized state, Omega:', para_mat[:,4], '\tfor (K, tau, beta)=(', dictPLL['coupK'], dictPLL['transmission_delay'], beta,').')
 			OmegInTauVsFc[i,j] = 2.0*np.pi*para_mat[:,4][0];
 			#OmegInTauVsFc.append(para_mat[:,4].tolist()[0]);
 			alpha[i,j] = ((2.0*np.pi*para_mat[:,1]/para_mat[:,12])*dictPLL['derivative_coup_fct']( (-2.0*np.pi*para_mat[:,4]*para_mat[:,3]+beta)/para_mat[:,12] ))[0]

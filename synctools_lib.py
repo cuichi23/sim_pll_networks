@@ -523,8 +523,8 @@ class CheckerboardDefinition(SyncStateDefinition):
 
 class TwistDefinition(SyncStateDefinition):
 	def __init__(self, system, m):
-		if isinstance(system.g.arr, Ring) or (isinstance(system.g.arr, Chain) and m ==0):
-			super(TwistDefinition, self).__init__(system)
+		if isinstance(system.g.arr, Ring) or (isinstance(system.g.arr, Chain) and m == 0):
+			super(TwistDefinition, self).__init__(system)						# super calls SyncStateDefinition class
 			self.m = m
 		else:
 			raise Exception('State definition not compatible with system.')
@@ -537,6 +537,7 @@ class TwistDefinition(SyncStateDefinition):
 		n = self.sys.g.arr.get_n()
 		dphi = 2 * np.pi /float(n) * self.m
 		phi = dphi * np.arange(n)
+		# print('In synctools phi: ', phi)
 		return phi
 
 
@@ -715,7 +716,17 @@ class SyncState(object):
 		funcs = self.get_stability_functions()
 		l = []
 		for f in funcs:
-			l_full = optimize.root(f, l0, tol=1e-14, method='lm')
+			l_full = optimize.root(f, l0, tol=1e-14, method='lm')				#- 'hybr'             :ref:`(see here) <optimize.root-hybr>`
+																				#- 'lm'               :ref:`(see here) <optimize.root-lm>`
+																				#- 'broyden1'         :ref:`(see here) <optimize.root-broyden1>`
+																				#- 'broyden2'         :ref:`(see here) <optimize.root-broyden2>`
+																				#- 'anderson'         :ref:`(see here) <optimize.root-anderson>`
+																				#- 'linearmixing'     :ref:`(see here) <optimize.root-linearmixing>`
+																				#- 'diagbroyden'      :ref:`(see here) <optimize.root-diagbroyden>`
+																				#- 'excitingmixing'   :ref:`(see here) <optimize.root-excitingmixing>`
+																				#- 'krylov'           :ref:`(see here) <optimize.root-krylov>`
+																				#- 'df-sane'          :ref:`(see here) <optimize.root-dfsane>`
+
 			l.append(l_full)
 
 		if isFullOutput:
@@ -782,8 +793,8 @@ class SyncState(object):
 	def _stability_function(l_vector, b, kc, d_sum, tau, div, eig_cx):
 		x = np.zeros(2)
 		l_cx = l_vector[0] + 1j * l_vector[1]
-		y = l_cx * (1 + b * l_cx) + kc * d_sum * ( 1 - np.exp(-l_cx * tau) * eig_cx )
-		#y = l_cx * (1 + b * l_cx) + kc * d_sum - kc * np.exp(-l_cx * tau) * eig_cx
+		#y = l_cx * (1 + b * l_cx) + kc * d_sum * ( 1 - np.exp(-l_cx * tau) * eig_cx ) # not valid for twist states
+		y = l_cx * (1 + b * l_cx) + kc * d_sum - kc * np.exp(-l_cx * tau) * eig_cx
 		x[0] = np.real(y)
 		x[1] = np.imag(y)
 		return x

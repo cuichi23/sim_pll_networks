@@ -10,9 +10,9 @@ import setup
 # obtain dictionaries for the PLLs and the network
 #dictPLL, dictNet            = dicts_lib_4thGen.getDicts()
 #dictPLL, dictNet            = dicts_lib_3rdGen.getDicts()
-#dictPLL, dictNet            = dicts_lib_Ising.getDicts()
+dictPLL, dictNet            = dicts_lib_Ising.getDicts()
 #dictPLL, dictNet            = dicts_lib_Nav.getDicts()
-dictPLL, dictNet            = dicts_lib.getDicts()
+#dictPLL, dictNet            = dicts_lib.getDicts()
 # print('dictPLL:', dictPLL)
 # print('dictNet:', dictNet)
 

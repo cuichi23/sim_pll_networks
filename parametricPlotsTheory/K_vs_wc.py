@@ -44,7 +44,7 @@ dictPLL={
 	'feedback_delay': 0,														# value of feedback delay in seconds
 	'feedback_delay_var': None, 												# variance of feedback delay
 	'transmission_delay': 0.85, 												# value of transmission delay in seconds, float (single), list (tau_k) or list of lists (tau_kl): np.random.uniform(min,max,size=[dictNet['Nx']*dictNet['Ny'],dictNet['Nx']*dictNet['Ny']]), OR [np.random.uniform(min,max) for i in range(dictNet['Nx']*dictNet['Ny'])]
-	# choose from coupfct.<ID>: sine, cosine, neg_sine, neg_cosine, triangular, deriv_triangular, square_wave, pfd
+	# choose from coupfct.<ID>: sine, cosine, neg_sine, neg_cosine, triangular, deriv_triangular, square_wave, pfd, inverse_cosine, inverse_sine
 	'coup_fct_sig': coupfct.neg_cosine,											# coupling function h(x) for PLLs with ideally filtered PD signals:
 	'derivative_coup_fct': coupfct.sine											# derivative h'(x) of coupling function h(x)
 }
@@ -59,11 +59,13 @@ hp 		= dictPLL['derivative_coup_fct']
 
 beta 	= 0																		# choose according to choice of mx, my and the topology!
 
-K		= 2.0*np.pi*np.arange( 0.001, 0.6, 0.06285/(2.0*np.pi) )
-wc  	= 2.0*np.pi*np.arange( 0.0001, 0.5, 0.06285/(2.0*np.pi) )
+K		= 2.0*np.pi*np.arange( 0.001, 0.6, 0.6285/(2.0*np.pi) )
+wc  	= 2.0*np.pi*np.arange( 0.0001, 0.5, .06285/(2.0*np.pi) )
 
+fzeta = 1+np.sqrt(1-np.abs(z)**2)
 #OmegInKvsFc = []; alpha = []; ReLambda = []; ImLambda = [];
 OmegInKvsFc = np.zeros([len(K), len(wc)]); alpha = np.zeros([len(K), len(wc)]); ReLambda = np.zeros([len(K), len(wc)]); ImLambda = np.zeros([len(K), len(wc)]);
+CondStab = np.zeros([len(tau), len(wc)]);
 for i in range(len(K)):
 	dictPLL.update({'coupK': K[i]/(2*np.pi)})									# set this temporarly to one value -- in Hz
 	for j in range(len(wc)):
@@ -90,6 +92,10 @@ for i in range(len(K)):
 			alpha[i,j] = ((2.0*np.pi*para_mat[:,1]/para_mat[:,12])*dictPLL['derivative_coup_fct']( (-2.0*np.pi*para_mat[:,4]*para_mat[:,3]+beta)/para_mat[:,12] ))[0]
 			ReLambda[i,j] = para_mat[:,5][0]
 			ImLambda[i,j] = para_mat[:,6][0]
+		if wc[j]/(2*alpha[i,j]) < fzeta and wc[j]/(2*alpha[i,j]) > 1:
+			CondStab[i,j] = 1
+		else:
+			CondStab[i,j] = None
 
 dictPLL.update({'coupK': K})													# set coupling strength key in dictPLL back to the array
 dictPLL.update({'cutFc': wc})													# set coupling strength key in dictPLL back to the array
@@ -99,7 +105,7 @@ loopP2 	= 'wc'																	# y-axis	otherwise, the Omega sorting will be INC
 discrP	= None																	# does not apply to parametric plots
 rescale = 'K_to_2alpha'															# set this in case you want to plot against a rescaled loopP variable
 
-paramsDict = {'h': h, 'hp': hp, 'w': w, 'K': K, 'wc': wc, 'Omeg': OmegInKvsFc, 'alpha': alpha,
+paramsDict = {'h': h, 'hp': hp, 'w': w, 'K': K, 'wc': wc, 'Omeg': OmegInKvsFc, 'alpha': alpha, 'noInstCond1': Cond1, 'noInstCond2': Cond2,
 			'tau': tau, 'zeta': z, 'psi': psi, 'beta': beta, 'loopP1': loopP1, 'loopP2': loopP2, 'discrP': discrP}
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ plot Omega as parameter plot in the K - wc plot

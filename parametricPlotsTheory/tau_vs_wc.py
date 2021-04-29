@@ -45,7 +45,7 @@ dictPLL={
 	'feedback_delay': 0,														# value of feedback delay in seconds
 	'feedback_delay_var': None, 												# variance of feedback delay
 	'transmission_delay': 0.65, 												# value of transmission delay in seconds, float (single), list (tau_k) or list of lists (tau_kl): np.random.uniform(min,max,size=[dictNet['Nx']*dictNet['Ny'],dictNet['Nx']*dictNet['Ny']]), OR [np.random.uniform(min,max) for i in range(dictNet['Nx']*dictNet['Ny'])]
-	# choose from coupfct.<ID>: sine, cosine, neg_sine, neg_cosine, triangular, deriv_triangular, square_wave, pfd
+	# choose from coupfct.<ID>: sine, cosine, neg_sine, neg_cosine, triangular, deriv_triangular, square_wave, pfd, inverse_cosine, inverse_sine
 	'coup_fct_sig': coupfct.neg_cosine,											# coupling function h(x) for PLLs with ideally filtered PD signals:
 	'derivative_coup_fct': coupfct.sine											# derivative h'(x) of coupling function h(x)
 }
@@ -63,8 +63,10 @@ beta 	= np.pi																	# choose according to choice of mx, my and the top
 tau 	= np.arange(0, 4, 0.1)
 wc  	= 2.0*np.pi*np.arange(0.0001, 0.5, 0.06285/(2.0*np.pi))
 
+fzeta = 1+np.sqrt(1-np.abs(z)**2)
 #OmegInTauVsFc = []; alpha = []; ReLambda = []; ImLambda = [];
 OmegInTauVsFc = np.zeros([len(tau), len(wc)]); alpha = np.zeros([len(tau), len(wc)]); ReLambda = np.zeros([len(tau), len(wc)]); ImLambda = np.zeros([len(tau), len(wc)]);
+CondStab = np.zeros([len(tau), len(wc)]);
 for i in range(len(tau)):
 	dictPLL.update({'transmission_delay': tau[i]})								# set this temporarly to one value -- in seconds
 	for j in range(len(wc)):
@@ -82,23 +84,19 @@ for i in range(len(tau)):
 			elif dictPLL['analyzeFreq'] == 'middle':
 				index = np.where(para_mat[:,4]==sorted(para_mat[:,4])[1])[0][0]
 			OmegInTauVsFc[i,j] = 2.0*np.pi*para_mat[index,4];
-			#OmegInTauVsFc.append(para_mat[index,4].tolist());
 			alpha[i,j] = ((2.0*np.pi*para_mat[index,1]/para_mat[index,12])*dictPLL['derivative_coup_fct']( (-2.0*np.pi*para_mat[index,4]*para_mat[index,3]+beta)/para_mat[index,12] ))
-			#alpha.append( ((para_mat[index,1]/para_mat[index,12])*dictPLL['derivative_coup_fct']( -para_mat[index,4]*para_mat[index,3]+beta)).tolist() );
 			ReLambda[i,j] = para_mat[index,5]
-			#ReLambda.append(para_mat[index,5].tolist());
 			ImLambda[i,j] = para_mat[index,6]
-			#ImLambda.append(para_mat[index,6].tolist());
 		else:
 			#print('Found one synchronized state, Omega:', para_mat[:,4], '\tfor (K, tau, beta)=(', dictPLL['coupK'], dictPLL['transmission_delay'], beta,').')
 			OmegInTauVsFc[i,j] = 2.0*np.pi*para_mat[:,4][0];
-			#OmegInTauVsFc.append(para_mat[:,4].tolist()[0]);
 			alpha[i,j] = ((2.0*np.pi*para_mat[:,1]/para_mat[:,12])*dictPLL['derivative_coup_fct']( (-2.0*np.pi*para_mat[:,4]*para_mat[:,3]+beta)/para_mat[:,12] ))[0]
-			#alpha.append( ((para_mat[:,1]/para_mat[:,12])*dictPLL['derivative_coup_fct']( -para_mat[:,4]*para_mat[:,3]+beta)).tolist()[0] );
 			ReLambda[i,j] = para_mat[:,5][0]
-			#ReLambda.append(para_mat[:,5].tolist()[0]);
 			ImLambda[i,j] = para_mat[:,6][0]
-			#ImLambda.append(para_mat[:,6].tolist()[0]);
+		if wc[j]/(2*alpha[i,j]) < fzeta and wc[j]/(2*alpha[i,j]) > 1:
+			CondStab[i,j] = 1
+		else:
+			CondStab[i,j] = None
 
 dictPLL.update({'transmission_delay': tau})										# set coupling strength key in dictPLL back to the array
 dictPLL.update({'cutFc': wc})													# set coupling strength key in dictPLL back to the array
@@ -108,7 +106,7 @@ loopP2 	= 'wc'																	# y-axis
 discrP	= None																	# does not apply to parametric plots
 rescale = None																	# set this in case you want to plot against a rescaled loopP variable
 
-paramsDict = {'h': h, 'hp': hp, 'w': w, 'K': K, 'wc': wc, 'Omeg': OmegInTauVsFc, 'alpha': alpha,
+paramsDict = {'h': h, 'hp': hp, 'w': w, 'K': K, 'wc': wc, 'Omeg': OmegInTauVsFc, 'alpha': alpha, 'noInstCond1': Cond1, 'noInstCond2': Cond2,
 			'tau': tau, 'zeta': z, 'psi': psi, 'beta': beta, 'loopP1': loopP1, 'loopP2': loopP2, 'discrP': discrP}
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ plot Omega as parameter plot in the tau - wc plot

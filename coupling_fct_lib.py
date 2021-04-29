@@ -18,17 +18,31 @@ def neg_cosine(x):
 def cosine(x):
 	return np.cos(x)
 
+def inverse_cosine(x):
+	# if x>=0:
+	# 	return +np.arccos(x)
+	# else:
+	# 	return -np.arccos(x)
+	np.arccos(x)
+
 def neg_sine(x):
 	return -np.sin(x)
 
 def sine(x):
 	return np.sin(x)
 
+def inverse_sine(x):
+	# if x>=0:
+	# 	return np.arcsin(x)
+	# else:
+	# 	return np.pi+np.arcsin(x)
+	np.arcsin(x)
+
 def triangular(x):
 	return sawtooth(x,width=0.5)
 
 def deriv_triangular(x):
-	return (2/np.pi)*square(x,duty=0.5)	
+	return (2/np.pi)*square(x,duty=0.5)
 
 def square_wave(x):
 	return 0.5*(1.0+square(x,duty=0.5))

@@ -201,7 +201,11 @@ def plotParametric(params):
 	#ax.set_aspect('equal')
 
 	tempresults = params['yy'].reshape((len(params['x1']), len(params['x2'])))   #np.flipud()
+	tempcond = params['CondStab'].reshape((len(params['x1']), len(params['x2'])))
+	#tempcond2 = params['noInstCond2'].reshape((len(params['x1']), len(params['x2'])))
 	tempresults = np.transpose(tempresults)
+	tempcond = np.transpose(tempcond)
+	#tempcond2 = np.transpose(tempcond2)
 	#print('tempresults:', tempresults)
 	#tempresults_ma = tempresults
 	tempresults_ma = ma.masked_where(tempresults < 0, tempresults)				# Create masked array
@@ -220,7 +224,12 @@ def plotParametric(params):
 		plt.imshow(tempresults_ma1.astype(float), interpolation='nearest', cmap=cmap_neg_alpha, aspect='auto', origin='lower',
 				extent=(params['xscatt'].min(), params['xscatt'].max(), params['yscatt'].min(), params['yscatt'].max()),
 				vmin=np.min(tempresults_ma1), vmax=np.max(tempresults_ma1) )
+		cmap_cond = colors.ListedColormap(['yellow'])
+		plt.imshow(tempcond.astype(float), interpolation='nearest', cmap=cmap_cond, aspect='auto', origin='lower',
+				extent=(params['xscatt'].min(), params['xscatt'].max(), params['yscatt'].min(), params['yscatt'].max()),
+				vmin=np.min(tempcond), vmax=np.max(tempcond) )
 	except:
+		print('Exception mode when plotting imshow!');
 		plt.imshow(tempresults_ma.astype(float), interpolation='nearest', cmap=cmap_choice, aspect='auto', origin='lower',
 				extent=(params['xscatt'].min(), params['xscatt'].max(), params['yscatt'].min(), params['yscatt'].max()),
 				vmin=np.min(tempresults_ma), vmax=np.max(tempresults_ma) )
@@ -263,6 +272,9 @@ def plotParametric(params):
 			extent=(params['xscatt'].min(), params['xscatt'].max(), params['yscatt'].min(), params['yscatt'].max()),
 			vmin=np.min(tempresults_ma[np.isnan(tempresults_ma)==False]), vmax=np.max(tempresults_ma[np.isnan(tempresults_ma)==False]) )
 			#vmin=np.min(tempresults_ma), vmax=np.max(tempresults_ma) )
+	plt.imshow(tempcond.astype(float), interpolation='nearest', cmap=cmap_cond, aspect='auto', origin='lower',
+			extent=(params['xscatt'].min(), params['xscatt'].max(), params['yscatt'].min(), params['yscatt'].max()),
+			vmin=np.min(tempcond), vmax=np.max(tempcond) )
 
 	if ( params['loopP1'] == 'alphaK' and ( isinstance(params['K'], np.ndarray) or isinstance(params['K'], list)) ):
 		print('Plot condition region into the plot!')

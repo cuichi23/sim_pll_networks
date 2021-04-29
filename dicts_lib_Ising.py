@@ -63,7 +63,7 @@ def getDicts(Fsim=125):
 		'transmission_delay': 0,	 											# value of transmission delay in seconds, float (single), list (tau_k) or list of lists (tau_kl): np.random.uniform(min,max,size=[dictNet['Nx']*dictNet['Ny'],dictNet['Nx']*dictNet['Ny']]), OR [np.random.uniform(min,max) for i in range(dictNet['Nx']*dictNet['Ny'])]
 		'transmission_delay_var': None, 										# variance of transmission delays
 		'distribution_for_delays': None,										# from what distribution are random delays drawn?
-		# choose from coupfct.<ID>: sine, cosine, neg_sine, neg_cosine, triangular, deriv_triangular, square_wave, pfd
+		# choose from coupfct.<ID>: sine, cosine, neg_sine, neg_cosine, triangular, deriv_triangular, square_wave, pfd, inverse_cosine, inverse_sine
 		'coup_fct_sig': coupfct.neg_cosine,										# coupling function h(x) for PLLs with ideally filtered PD signals:
 		'derivative_coup_fct': coupfct.sine,									# derivative h'(x) of coupling function h(x)
 		'includeCompHF': False,													# boolean True/False whether to simulate with HF components

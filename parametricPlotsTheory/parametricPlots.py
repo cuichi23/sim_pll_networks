@@ -24,6 +24,7 @@ from scipy.signal import square
 import itertools
 import math
 import time
+import pickle
 
 import synctools_interface_lib as synctools
 from function_lib import solveLinStab
@@ -212,7 +213,9 @@ def plotParametric(params):
 	tempresults_ma1 = ma.masked_where(tempresults >= 0, tempresults)			# Create masked array
 	#print('tempresult_ma:', tempresults_ma)
 	#print('initPhiPrime0:', initPhiPrime0)
-	cmap_choice = cm.PuOr														# cm.coolwarm
+	cmap_choice 	= cm.PuOr													# cm.coolwarm
+	cmap_neg_alpha 	= colors.ListedColormap(['black'])
+	cmap_cond 		= colors.ListedColormap(['yellow'])
 
 	try:
 		plt.imshow(tempresults_ma.astype(float), interpolation='nearest', cmap=cmap_choice, aspect='auto', origin='lower',
@@ -220,11 +223,9 @@ def plotParametric(params):
 				vmin=np.min(tempresults_ma[np.isnan(tempresults_ma)==False]), vmax=np.max(tempresults_ma[np.isnan(tempresults_ma)==False]) )
 				#vmin=np.min(tempresults_ma), vmax=np.max(tempresults_ma) )
 		plt.colorbar();
-		cmap_neg_alpha = colors.ListedColormap(['black'])
 		plt.imshow(tempresults_ma1.astype(float), interpolation='nearest', cmap=cmap_neg_alpha, aspect='auto', origin='lower',
 				extent=(params['xscatt'].min(), params['xscatt'].max(), params['yscatt'].min(), params['yscatt'].max()),
 				vmin=np.min(tempresults_ma1), vmax=np.max(tempresults_ma1) )
-		cmap_cond = colors.ListedColormap(['yellow'])
 		plt.imshow(tempcond.astype(float), interpolation='nearest', cmap=cmap_cond, aspect='auto', origin='lower',
 				extent=(params['xscatt'].min(), params['xscatt'].max(), params['yscatt'].min(), params['yscatt'].max()),
 				vmin=np.min(tempcond), vmax=np.max(tempcond) )
@@ -234,6 +235,12 @@ def plotParametric(params):
 				extent=(params['xscatt'].min(), params['xscatt'].max(), params['yscatt'].min(), params['yscatt'].max()),
 				vmin=np.min(tempresults_ma), vmax=np.max(tempresults_ma) )
 				#vmin=np.min(tempresults_ma), vmax=np.max(tempresults_ma) )
+		plt.imshow(tempresults_ma1.astype(float), interpolation='nearest', cmap=cmap_neg_alpha, aspect='auto', origin='lower',
+				extent=(params['xscatt'].min(), params['xscatt'].max(), params['yscatt'].min(), params['yscatt'].max()),
+				vmin=np.min(tempresults_ma1), vmax=np.max(tempresults_ma1) )
+		plt.imshow(tempcond.astype(float), interpolation='nearest', cmap=cmap_cond, aspect='auto', origin='lower',
+				extent=(params['xscatt'].min(), params['xscatt'].max(), params['yscatt'].min(), params['yscatt'].max()),
+				vmin=np.min(tempcond), vmax=np.max(tempcond) )
 
 	if ( params['loopP1'] == 'alphaK' and ( isinstance(params['K'], np.ndarray) or isinstance(params['K'], list)) ):
 		print('Plot condition region into the plot!')
@@ -382,26 +389,30 @@ def prepareScatt(params):
 
 	if  ( params['loopP1'] == 'tau' and params['loopP2'] == 'wc' ):
 
+		print('Prepare %s vs %s plot!'%(params['loopP1'], params['loopP2']))
 		scatt = np.array(list(itertools.product(*np.array([params['x1'], params['x2']]))))
 		scale = np.array(list(itertools.product(*np.array([params['Omeg'][:,0], params['x2']])))) #rescale only in x-direction, Omega independent of y-direction
-		params.update({'xscatt': scatt[:,0]/(2.0*np.pi/params['w'])})#scale[:,0]
-		params.update({'yscatt': scatt[:,1]/params['w']})
+		params.update({'xscatt': scatt[:,0]*params['w']/(2.0*np.pi)})#scale[:,0]
+		params.update({'yscatt': scatt[:,1]/params['w']})#
 
 	elif( params['loopP1'] == 'wc' and params['loopP2'] == 'tau' ):
 
+		print('Prepare %s vs %s plot!'%(params['loopP1'], params['loopP2']))
 		scatt = np.array(list(itertools.product(*np.array([params['x1'], params['x2']]))))
 		scale = np.array(list(itertools.product(*np.array([params['Omeg'][0,:], params['x1']]))))
 		params.update({'xscatt': scatt[:,0]/params['w']})
-		params.update({'yscatt': scatt[:,1]/(2.0*np.pi/params['w'])}) #scale[:,0]
+		params.update({'yscatt': scatt[:,1]*params['w']/(2.0*np.pi)}) #scale[:,0]
 
 	elif( params['loopP1'] == 'K' and params['loopP2'] == 'wc' ):
 
+		print('Prepare %s vs %s plot!'%(params['loopP1'], params['loopP2']))
 		scatt = np.array(list(itertools.product(*np.array([params['x1'], params['x2']]))))
 		params.update({'xscatt': scatt[:,0]/params['w']})
 		params.update({'yscatt': scatt[:,1]/params['w']})
 
 	elif( params['loopP1'] == 'tau' and params['loopP2'] == 'K' ):
 
+		print('Prepare %s vs %s plot!'%(params['loopP1'], params['loopP2']))
 		scatt  = np.array(list(itertools.product(*np.array([params['x1'], params['x2']]))))
 		scalex = np.array(list(itertools.product(*np.array([params['Omeg'][:,0], params['x2']]))))
 		scaley = np.array(list(itertools.product(*np.array([params['Omeg'][0,:], params['x1']]))))
@@ -411,6 +422,7 @@ def prepareScatt(params):
 
 	elif( params['loopP1'] == 'alpha' and params['loopP2'] == 'wc' ):
 
+		print('Prepare %s vs %s plot!'%(params['loopP1'], params['loopP2']))
 		if ( isinstance(params['K'], np.ndarray) or isinstance(params['K'], list) and params['loopP1'] == 'alpha' ):
 			params.update({'loopP1': 'alphaK'})
 		elif ( isinstance(params['tau'], np.ndarray) or isinstance(params['tau'], list) and params['loopP1'] == 'alpha' ):
@@ -429,12 +441,13 @@ def prepareScatt(params):
 		params.update({'yscatt': scatt[:,1]/params['w']})
 
 	else:
+
+		print('Prepare unspecified plot! No rescaling.')
 		scatt = np.array(list(itertools.product(*np.array([params['x1'], params['x2']]))))
 		params.update({'xscatt': xscatt[:,0]})
 		params.update({'yscatt': yscatt[:,1]})
 
 	print('params[*y*]',  params['y'])
-	print('params[*cond*]',  params['con'])
 
 	#print('params[*y*][0,:]', params['y'][0,:], ' \nparams[*y*][:,0]', params['y'][:,0])
 
@@ -449,6 +462,12 @@ def prepareScatt(params):
 	# 		else:
 	# 			ytemp.append(np.max(params['y'][i,np.isnan(params['y'][i,:])==False]))
 
+	#save results in pickle file
+	filename = 'results/params_%s_vs_%s_%d:%d_%d_%d_%d'%(params['loopP1'], params['loopP2'], now.hour, now.minute, now.year, now.month, now.day)
+	f 		 = open(filename,'wb')
+	pickle.dump(params,f)
+	f.close()
+
 	print('Here we pick the largest gamma! Check when studying systems with N>2.')
 	ytemp = [];
 	for i in range(len(params['y'][:,0])):
@@ -459,8 +478,8 @@ def prepareScatt(params):
 
 	params.update({'yy': np.array(ytemp)})
 
-	ytemp = np.array(ytemp)
-	maxGamma = np.max(ytemp[np.isnan(ytemp)==False])
+	ytemp 		= np.array(ytemp)
+	maxGamma 	= np.max(ytemp[np.isnan(ytemp)==False])							# for the case that one wants to set the negative alpha from -0.1 to max ytemp
 	ytemp[ytemp == -0.1] = maxGamma
 
 	params.update({'y': np.array(ytemp)})
@@ -500,7 +519,7 @@ def prepare2D(params):
 
 def evaluateEq(params):
 
-	sol = []; con = []; sig = []; ceq =[];
+	sol = [];
 
 	K 		= params.get('K')
 	wc 		= params.get('wc')
@@ -525,20 +544,17 @@ def evaluateEq(params):
 				#a = K[k] * hp( -Omeg[k,l]*tau + beta )
 				#print('a_old:', a, '\ta_synctools:', alpha[k,l]); time.sleep(0.5)
 				a = alpha[k,l]
+				#sol, cond_noInst = equationGamma(tau, a, wc[l], zeta, psi)
+				#sol.append(sol)
 				sol.append(equationGamma(tau, a, wc[l], zeta, psi))
-				#sig.append(equationSigma(tau, a, wc[l], zeta, np.max(sol[-1]), psi))
-				con.append(np.array([wc[l]/(2.0*a)-1+np.sqrt(1.0-zeta**2.0), wc[l]/(2.0*a)-1, a]))
-				#ceq.append(solveLinStab({'wc': wc[l], 'zeta': zeta, 'a': a, 'tau': tau}))
-		sig.append(0); ceq.append(np.array([0, 0]));
 
 	elif( loopP1 == 'wc' and loopP2 == 'K' ):
 
 		print('Calculate x=K and y=wc!')
 		for k in range(len(wc)):
 			for l in range(len(K)):
-				a = K[l] * hp( -Omeg[l]*tau + beta )
+				a = alpha[k,l]
 				sol.append(equationGamma(tau, a, wc[k], zeta, psi))
-				con.append(np.array([wc[l]/(2.0*a)-1+np.sqrt(1.0-zeta**2.0), wc[l]/(2.0*a)-1, a]))
 
 	elif( loopP1 == 'alpha' and loopP2 == 'wc' ):
 
@@ -558,47 +574,22 @@ def evaluateEq(params):
 			for l in range(len(wc)):
 				a = alpha[k,l]
 				sol.append(equationGamma(tautemp, a, wc[l], zeta, psi))
-				#sig.append(equationSigma(tau, a, wc[l], zeta, np.max(sol[-1]), psi))
-				con.append(np.array([wc[l]/(2.0*a)-1+np.sqrt(1.0-zeta**2.0), wc[l]/(2.0*a)-1, a]))
-				#ceq.append(solveLinStab({'wc': wc[l], 'zeta': zeta, 'a': a, 'tau': tau}))
-		sig.append(0); ceq.append(np.array([0, 0]));
 
 	elif( loopP1 == 'K' and loopP2 == 'tau' ):
 
 		print('Calculate x=K and y=tau!')
 		for k in range(len(K)):
 			for l in range(len(tau)):
-				a = K[k] * hp( -Omeg[k,l]*tau[l] + beta )
+				a = alpha[k,l]
 				sol.append(equationGamma(tau[l], a, wc, zeta, psi))
-				con.append(np.array([wc/(2.0*a)-1+np.sqrt(1.0-zeta**2.0), wc/(2.0*a)-1-np.sqrt(1.0-zeta**2.0), a]))
 
 	elif( loopP1 == 'tau' and loopP2 == 'K' ):
 
 		print('Calculate x=K and y=tau!')
 		for k in range(len(tau)):
 			for l in range(len(K)):
-				a = K[l] * hp( -Omeg[k,l]*tau[k] + beta )
+				a = alpha[k,l]
 				sol.append(equationGamma(tau[k], a, wc, zeta, psi))
-				con.append(np.array([wc/(2.0*a)-1+np.sqrt(1.0-zeta**2.0), wc/(2.0*a)-1-np.sqrt(1.0-zeta**2.0), a]))
-		sig.append(0); ceq.append(np.array([0, 0]));
-
-	elif( loopP1 == 'K' and loopP2 == 'zeta' ):
-
-		print('Calculate x=K and y=zeta!')
-		for k in range(len(K)):
-			a = K[k] * hp( -Omeg[k]*tau + beta )
-			for l in range(len(zeta)):
-				sol.append(equationGamma(tau, a, wc, zeta[l], psi))
-				con.append(np.array([wc/(2.0*a)-1+np.sqrt(1.0-zeta**2.0), wc/(2.0*a)-1-np.sqrt(1.0-zeta**2.0), a]))
-
-	elif( loopP1 == 'wc' and loopP2 == 'zeta' ):
-
-		print('Calculate x=wc and y=zeta!')
-		a = K * hp( -Omeg*tau + beta )
-		for k in range(len(wc)):
-			for l in range(len(zeta)):
-				sol.append(equationGamma(tau, a, wc[k], zeta[l], psi))
-				con.append(np.array([wc[k]/(2.0*a)-1+np.sqrt(1.0-zeta**2.0), wc[k]/(2.0*a)-1-np.sqrt(1.0-zeta**2.0), a]))
 
 	elif( loopP1 == 'wc' and loopP2 == 'tau'):
 
@@ -608,15 +599,8 @@ def evaluateEq(params):
 				a = alpha[k,l]
 				if a > 0:
 					sol.append(equationGamma(tau[l], a, wc[k], zeta, psi))
-					sig.append(equationSigma(tau[l], a, wc[k], zeta, np.max(sol[-1]), psi))
-					con.append(np.array([wc[k]/(2.0*a)-1+np.sqrt(1.0-zeta**2.0), wc[k]/(2.0*a)-1-np.sqrt(1.0-zeta**2.0), a]))
-					ceq.appe1nd(solveLinStab({'wc': wc[k], 'zeta': zeta, 'a': a, 'tau': tau[l]}))
 				else:
 					sol.append([0, 0, 0, 0])
-					sig.append(-1)
-					con.append(np.array([wc[k]/(2.0*a)-1+np.sqrt(1.0-zeta**2.0), wc[k]/(2.0*a)-1-np.sqrt(1.0-zeta**2.0), a]))
-					ceq.append(solveLinStab({'wc': wc[k], 'zeta': zeta, 'a': a, 'tau': tau[l]}))
-				#sig.append(equationSigma(tau[l], a, wc[k], zeta, np.array(ceq)[-1,1], psi))
 
 	elif( loopP1 == 'tau' and loopP2 == 'wc' ):
 
@@ -625,40 +609,8 @@ def evaluateEq(params):
 			for l in range(len(wc)):
 				a = alpha[k,l]
 				sol.append(equationGamma(tau[k], a, wc[l], zeta, psi))
-				con.append(np.array([wc[l]/(2.0*a)-1+np.sqrt(1.0-zeta**2.0), wc[l]/(2.0*a)-1, a]))
-		sig.append(0); ceq.append(np.array([0, 0]));
-
-	elif( loopP1 == 'tau' and loopP2 == 'zeta' ):
-
-		print('Calculate x=tau and y=zeta!')
-		for k in range(len(tau)):
-			a = K * hp( -Omeg[k]*tau[k] + beta )
-			for l in range(len(zeta)):
-				sol.append(equationGamma(tau[k], a, wc, zeta[l], psi))
-				con.append(np.array([wc/(2.0*a)-1+np.sqrt(1.0-zeta**2.0), wc/(2.0*a)-1-np.sqrt(1.0-zeta**2.0), a]))
-
-	elif( loopP1 == 'zeta' and loopP2 == 'tau' ):
-
-		print('Calculate x=zeta and y=tau!')
-		for k in range(len(zeta)):
-			for l in range(len(tau)):
-				a = K * hp( -Omeg[l]*tau[l] + beta )
-				sol.append(equationGamma(tau[l], a, wc, zeta[k], psi))
-				con.append(np.array([wc/(2.0*a)-1+np.sqrt(1.0-zeta**2.0), wc/(2.0*a)-1-np.sqrt(1.0-zeta**2.0), a]))
-
-	elif ( loopP1 == 'zeta' and loopP2 == 'K' ):
-
-		print('Not implemented yet- use x=K and y=zeta!'); sys.exit()
-
-	elif ( loopP1 == 'zeta' and loopP2 == 'wc' ):
-
-		print('Not implemented yet- use x=wc and y=zeta!'); sys.exit()
 
 	params.update({'y': np.array(sol)})
-	params.update({'y1': np.array(sig)})
-	params.update({'charEq_Re': np.array(ceq)[:,0]})
-	params.update({'charEq_Im': np.array(ceq)[:,1]})
-	params.update({'con': np.array(con)})
 
 	#print('params[*y*]', params['y'])
 
@@ -692,48 +644,68 @@ def equationSigma(tau, a, wc, zeta, gamma=0, psi=-np.pi):
 # potentially cythonize!
 def equationGamma(tau, a, wc, zeta, psi=-np.pi):
 
-	print('Compute gammas for set (tau, alpha, wc, zeto, psi):', tau, a, wc, zeta, psi)
+	if isinstance(zeta, list) or isinstance(zeta, np.ndarray):
+		zetlen = len(zeta)
+	elif isinstance(zeta, int) or isinstance(zeta, float):
+		zetlen = 1; zeta = np.array([zeta]); psi = np.array([psi]);
+	else:
+		print('Error, zeta needs to be value or list!')
 
-	zero_treshold1 = 1E-17
-	zero_treshold2 = 1E-17
-	all_gamma	   = []
+	result_gamma = []
+	all_gamma	 = []
+	cond_noInst  = []
 
-	#A = wc**2.0 - 2.0*np.abs(a)*wc
-	#B = (1.0-zeta**2.0)*(np.abs(a)*wc)**2.0
-	A = wc**2.0 - 2.0*a*wc
-	B = (1.0-zeta**2.0)*(a*wc)**2.0
-	# print('A:', A); print('B:', B);
-	gamma = np.array([ +np.sqrt(0.5*(-A+A*np.sqrt(1.0-4.0*B/(A**2.0)))), +np.sqrt(0.5*(-A-A*np.sqrt(1.0-4.0*B/(A**2.0)))),
-					   -np.sqrt(0.5*(-A+A*np.sqrt(1.0-4.0*B/(A**2.0)))), -np.sqrt(0.5*(-A-A*np.sqrt(1.0-4.0*B/(A**2.0)))) ])
+	for i in range(zetlen):
 
-	all_gamma.append(gamma)
-	print('Result before condition:', gamma); #time.sleep(0.25)
+		print('Compute gammas for set (tau, alpha, wc, zeta, psi):', tau, a, wc, zeta[i], psi[i])
 
-	for i in range(len(gamma)):													# this condition can also be checked in prepare2D
+		zero_treshold1 = 1E-17
+		zero_treshold2 = 1E-17
 
-		if np.abs(gamma[i]) > zero_treshold2:
-			if ( gamma[i] )**2 - np.abs(a)*wc*(1.0-np.abs(zeta)*np.cos( gamma[i]*tau-psi) )  < 0.0: #if fullfilled, stable synced state!
-				if   gamma[i] > 0.0 and -wc*(gamma[i] + np.abs(a)*np.abs(zeta)*np.sin( gamma[i]*tau-psi) ) < 0.0: #  wc+np.abs(a)*np.abs(zeta)*tau*np.abs( np.cos( gamma[i]*tau-psi) ) >0.0) or (    ( gamma[i] )**2 - np.abs(a)*wc*(1.0-np.abs(zeta)*np.abs( np.cos( gamma[i]*tau-psi) ) ) < 0.0 and  wc+np.abs(a)*np.abs(zeta)*tau*np.abs( np.cos( gamma[i]*tau-psi) ) >0.0):
-					gamma[i] = None
-				elif gamma[i] < 0.0 and -wc*(gamma[i] - np.abs(a)*np.abs(zeta)*np.sin( gamma[i]*tau-psi) ) > 0.0: #  wc+np.abs(a)*np.abs(zeta)*tau*np.abs( np.cos( gamma[i]*tau-psi) ) >0.0) or (    ( gamma[i] )**2 - np.abs(a)*wc*(1.0-np.abs(zeta)*np.abs( np.cos( gamma[i]*tau-psi) ) ) < 0.0 and  wc+np.abs(a)*np.abs(zeta)*tau*np.abs( np.cos( gamma[i]*tau-psi) ) >0.0):
-					gamma[i] = None
 
-		elif np.abs(gamma[i]) < zero_treshold2:									# gamma = 0 means that there is no instability
-			gamma[i] = None
+		#A = wc**2.0 - 2.0*np.abs(a)*wc
+		#B = (1.0-zeta**2.0)*(np.abs(a)*wc)**2.0
+		A = wc**2.0 - 2.0*a*wc
+		B = (1.0-zeta[i]**2.0)*(a*wc)**2.0
+		# print('A:', A); print('B:', B);
+		gamma = np.array([ +np.sqrt(0.5*(-A+A*np.sqrt(1.0-4.0*B/(A**2.0)))), +np.sqrt(0.5*(-A-A*np.sqrt(1.0-4.0*B/(A**2.0)))),
+						   -np.sqrt(0.5*(-A+A*np.sqrt(1.0-4.0*B/(A**2.0)))), -np.sqrt(0.5*(-A-A*np.sqrt(1.0-4.0*B/(A**2.0)))) ])
 
-	#print('Result after condition:', gamma); #time.sleep(0.25)
+		all_gamma.append(gamma)
+		cond_noInst.append(0)
+		print('Result before condition:', gamma); #time.sleep(0.25)
 
-		# if gamma[i] != 0:
-		# 	if ( gamma[i] )**2 - np.abs(a)*wc*(1.0-np.abs(zeta)*np.cos( gamma[i]*tau-psi) )  < 0.0:
-		# 		if   gamma[i] > 0.0 and -wc*(gamma[i] + np.abs(a)*np.abs(zeta)*np.sin( gamma[i]*tau-psi) ) < 0.0: #  wc+np.abs(a)*np.abs(zeta)*tau*np.abs( np.cos( gamma[i]*tau-psi) ) >0.0) or (    ( gamma[i] )**2 - np.abs(a)*wc*(1.0-np.abs(zeta)*np.abs( np.cos( gamma[i]*tau-psi) ) ) < 0.0 and  wc+np.abs(a)*np.abs(zeta)*tau*np.abs( np.cos( gamma[i]*tau-psi) ) >0.0):
-		# 			gamma[i] = None
-		# 		elif gamma[i] < 0.0 and -wc*(gamma[i] - np.abs(a)*np.abs(zeta)*np.sin( gamma[i]*tau-psi) ) > 0.0: #  wc+np.abs(a)*np.abs(zeta)*tau*np.abs( np.cos( gamma[i]*tau-psi) ) >0.0) or (    ( gamma[i] )**2 - np.abs(a)*wc*(1.0-np.abs(zeta)*np.abs( np.cos( gamma[i]*tau-psi) ) ) < 0.0 and  wc+np.abs(a)*np.abs(zeta)*tau*np.abs( np.cos( gamma[i]*tau-psi) ) >0.0):
-		# 			gamma[i] = None
+		for j in range(len(gamma)):													# this condition can also be checked in prepare2D
 
-	#print('Gammas left:', gamma); #time.sleep(1)
+			if np.abs(gamma[j]) > zero_treshold2:
+				if ( gamma[j] )**2 - np.abs(a)*wc*(1.0-np.abs(zeta[i])*np.cos( gamma[j]*tau-psi[i]) )  < 0.0: #if fullfilled, stable synced state!
+					if   gamma[j] > 0.0 and -wc*(gamma[j] + np.abs(a)*np.abs(zeta[i])*np.sin( gamma[j]*tau-psi[i]) ) < 0.0: #  wc+np.abs(a)*np.abs(zeta)*tau*np.abs( np.cos( gamma[j]*tau-psi) ) >0.0) or (    ( gamma[j] )**2 - np.abs(a)*wc*(1.0-np.abs(zeta)*np.abs( np.cos( gamma[j]*tau-psi) ) ) < 0.0 and  wc+np.abs(a)*np.abs(zeta)*tau*np.abs( np.cos( gamma[j]*tau-psi) ) >0.0):
+						gamma[j] = None
+					elif gamma[j] < 0.0 and -wc*(gamma[j] - np.abs(a)*np.abs(zeta[i])*np.sin( gamma[j]*tau-psi[i]) ) > 0.0: #  wc+np.abs(a)*np.abs(zeta)*tau*np.abs( np.cos( gamma[j]*tau-psi) ) >0.0) or (    ( gamma[j] )**2 - np.abs(a)*wc*(1.0-np.abs(zeta)*np.abs( np.cos( gamma[j]*tau-psi) ) ) < 0.0 and  wc+np.abs(a)*np.abs(zeta)*tau*np.abs( np.cos( gamma[j]*tau-psi) ) >0.0):
+						gamma[j] = None
 
-	if a <= zero_treshold1:														# for alpha < 0, the state for the above parameters IS UNSTABLE
-		#print('Set gamma to zero since alpha<0!'); time.sleep(2)
-		gamma[:] = -0.1;
+			elif np.abs(gamma[j]) < zero_treshold2:									# gamma = 0 means that there is no instability
+				gamma[j] = None
+
+		print('Result after condition:', gamma); #time.sleep(0.25)
+
+		# ADD condition that checks whether gamma fulfill Re and Im part equation, or which is closer...
+
+			# if gamma[j] != 0:
+			# 	if ( gamma[j] )**2 - np.abs(a)*wc*(1.0-np.abs(zeta)*np.cos( gamma[j]*tau-psi) )  < 0.0:
+			# 		if   gamma[j] > 0.0 and -wc*(gamma[j] + np.abs(a)*np.abs(zeta)*np.sin( gamma[j]*tau-psi) ) < 0.0: #  wc+np.abs(a)*np.abs(zeta)*tau*np.abs( np.cos( gamma[j]*tau-psi) ) >0.0) or (    ( gamma[j] )**2 - np.abs(a)*wc*(1.0-np.abs(zeta)*np.abs( np.cos( gamma[j]*tau-psi) ) ) < 0.0 and  wc+np.abs(a)*np.abs(zeta)*tau*np.abs( np.cos( gamma[j]*tau-psi) ) >0.0):
+			# 			gamma[j] = None
+			# 		elif gamma[j] < 0.0 and -wc*(gamma[j] - np.abs(a)*np.abs(zeta)*np.sin( gamma[j]*tau-psi) ) > 0.0: #  wc+np.abs(a)*np.abs(zeta)*tau*np.abs( np.cos( gamma[j]*tau-psi) ) >0.0) or (    ( gamma[j] )**2 - np.abs(a)*wc*(1.0-np.abs(zeta)*np.abs( np.cos( gamma[j]*tau-psi) ) ) < 0.0 and  wc+np.abs(a)*np.abs(zeta)*tau*np.abs( np.cos( gamma[j]*tau-psi) ) >0.0):
+			# 			gamma[j] = None
+
+		#print('Gammas left:', gamma); #time.sleep(1)
+
+		if a <= zero_treshold1:														# for alpha < 0, the state for the above parameters IS UNSTABLE
+			#print('Set gamma to zero since alpha<0!'); time.sleep(2)
+			gamma[:] = -0.1;
+
+		result_gamma.append(gamma)
+
+	gamma = np.concatenate(result_gamma).tolist()
 
 	return gamma#, all_gamma

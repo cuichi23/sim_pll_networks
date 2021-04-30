@@ -22,15 +22,15 @@ import synctools_interface_lib as synctools
 import coupling_fct_lib as coupfct
 
 dictNet={
-	'Nx': 2,																	# oscillators in x-direction
-	'Ny': 1,																	# oscillators in y-direction
+	'Nx': 3,																	# oscillators in x-direction
+	'Ny': 3,																	# oscillators in y-direction
 	'mx': 0	,																	# twist/chequerboard in x-direction (depends on closed or open boundary conditions)
-	'my': -999,																	# twist/chequerboard in y-direction
+	'my': 0,																	# twist/chequerboard in y-direction
 	'Tsim': 100,
-	'topology': 'ring',															# 1d) ring, chain, 2d) square-open, square-periodic, hexagonal...
+	'topology': 'square-periodic',															# 1d) ring, chain, 2d) square-open, square-periodic, hexagonal...
 																				# 3) global, entrainOne, entrainAll, entrainPLLsHierarch, compareEntrVsMutual
-	'zeta': -1, 																# real part of eigenvalue of slowest decaying perturbation mode for the set of parameters, also a fct. of tau!
-	'psi': np.pi,																# real part of eigenvalue of slowest decaying perturbation
+	'zeta': [-1/2, 1/4], 														# real part of eigenvalue of slowest decaying perturbation mode for the set of parameters, also a fct. of tau!
+	'psi': [np.pi, np.pi],														# real part of eigenvalue of slowest decaying perturbation
 	'computeFreqAndStab': True													# compute linear stability and global frequency if possible: True or False
 }
 
@@ -43,7 +43,7 @@ dictPLL={
 	'div': 1,																	# divisor of divider (int)
 	'feedback_delay': 0,														# value of feedback delay in seconds
 	'feedback_delay_var': None, 												# variance of feedback delay
-	'transmission_delay': 0.85, 												# value of transmission delay in seconds, float (single), list (tau_k) or list of lists (tau_kl): np.random.uniform(min,max,size=[dictNet['Nx']*dictNet['Ny'],dictNet['Nx']*dictNet['Ny']]), OR [np.random.uniform(min,max) for i in range(dictNet['Nx']*dictNet['Ny'])]
+	'transmission_delay': 2.95, 												# value of transmission delay in seconds, float (single), list (tau_k) or list of lists (tau_kl): np.random.uniform(min,max,size=[dictNet['Nx']*dictNet['Ny'],dictNet['Nx']*dictNet['Ny']]), OR [np.random.uniform(min,max) for i in range(dictNet['Nx']*dictNet['Ny'])]
 	# choose from coupfct.<ID>: sine, cosine, neg_sine, neg_cosine, triangular, deriv_triangular, square_wave, pfd, inverse_cosine, inverse_sine
 	'coup_fct_sig': coupfct.neg_cosine,											# coupling function h(x) for PLLs with ideally filtered PD signals:
 	'derivative_coup_fct': coupfct.sine											# derivative h'(x) of coupling function h(x)
@@ -59,13 +59,15 @@ hp 		= dictPLL['derivative_coup_fct']
 
 beta 	= 0																		# choose according to choice of mx, my and the topology!
 
-K		= 2.0*np.pi*np.arange( 0.001, 0.6, 0.6285/(2.0*np.pi) )
-wc  	= 2.0*np.pi*np.arange( 0.0001, 0.5, .06285/(2.0*np.pi) )
+K		= 2.0*np.pi*np.arange( 0.0001, 0.6, 0.6285/(8.0*np.pi) )
+wc  	= 2.0*np.pi*np.arange( 0.0001, 0.6, 0.6285/(8.0*np.pi) )
+# K		= 2.0*np.pi*np.arange( 0.0001, 0.6, 0.06285/(8.0*np.pi) )
+# wc  	= 2.0*np.pi*np.arange( 0.0001, 0.6, 0.06285/(8.0*np.pi) )
 
-fzeta = 1+np.sqrt(1-np.abs(z)**2)
+fzeta = 1+np.sqrt(1-np.abs(z[0])**2)
 #OmegInKvsFc = []; alpha = []; ReLambda = []; ImLambda = [];
 OmegInKvsFc = np.zeros([len(K), len(wc)]); alpha = np.zeros([len(K), len(wc)]); ReLambda = np.zeros([len(K), len(wc)]); ImLambda = np.zeros([len(K), len(wc)]);
-CondStab = np.zeros([len(tau), len(wc)]);
+CondStab = np.zeros([len(K), len(wc)]);
 for i in range(len(K)):
 	dictPLL.update({'coupK': K[i]/(2*np.pi)})									# set this temporarly to one value -- in Hz
 	for j in range(len(wc)):
@@ -97,16 +99,16 @@ for i in range(len(K)):
 		else:
 			CondStab[i,j] = None
 
-dictPLL.update({'coupK': K})													# set coupling strength key in dictPLL back to the array
-dictPLL.update({'cutFc': wc})													# set coupling strength key in dictPLL back to the array
+dictPLL.update({'coupK': K/(2*np.pi)})											# set coupling strength key in dictPLL back to the array
+dictPLL.update({'cutFc': wc/(2*np.pi)})											# set coupling strength key in dictPLL back to the array
 
 loopP1	= 'K'																	# x-axis -- NOTE: this needs to have the same order as the loops above!
 loopP2 	= 'wc'																	# y-axis	otherwise, the Omega sorting will be INCORRECT!
 discrP	= None																	# does not apply to parametric plots
 rescale = 'K_to_2alpha'															# set this in case you want to plot against a rescaled loopP variable
 
-paramsDict = {'h': h, 'hp': hp, 'w': w, 'K': K, 'wc': wc, 'Omeg': OmegInKvsFc, 'alpha': alpha, 'noInstCond1': Cond1, 'noInstCond2': Cond2,
-			'tau': tau, 'zeta': z, 'psi': psi, 'beta': beta, 'loopP1': loopP1, 'loopP2': loopP2, 'discrP': discrP}
+paramsDict = {'h': h, 'hp': hp, 'w': w, 'K': K, 'wc': wc, 'Omeg': OmegInKvsFc, 'alpha': alpha, 'CondStab': CondStab,
+			'tau': tau, 'zeta': z, 'psi': psi, 'beta': beta, 'loopP1': loopP1, 'loopP2': loopP2, 'discrP': discrP, 'ReLambSynctools': ReLambda, 'ImLambSynctools': ImLambda}
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ plot Omega as parameter plot in the K - wc plot
 

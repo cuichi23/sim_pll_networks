@@ -28,10 +28,10 @@ dictNet={
 	'mx': 0	,																	# twist/chequerboard in x-direction (depends on closed or open boundary conditions)
 	'my': 0,																	# twist/chequerboard in y-direction
 	'Tsim': 100,
-	'topology': 'ring',															# 1d) ring, chain, 2d) square-open, square-periodic, hexagonal...
+	'topology': 'square-periodic',												# 1d) ring, chain, 2d) square-open, square-periodic, hexagonal...
 																				# 3) global, entrainOne, entrainAll, entrainPLLsHierarch, compareEntrVsMutual
-	'zeta': -1/2, 																# real part of eigenvalue of slowest decaying perturbation mode for the set of parameters, also a fct. of tau!
-	'psi': np.pi,																# real part of eigenvalue of slowest decaying perturbation
+	'zeta': [-1/2], 															# real part of eigenvalue of slowest decaying perturbation mode for the set of parameters, also a fct. of tau!
+	'psi': [np.pi],																# real part of eigenvalue of slowest decaying perturbation
 	'computeFreqAndStab': True													# compute linear stability and global frequency if possible: True or False
 }
 
@@ -64,12 +64,12 @@ hp 		= dictPLL['derivative_coup_fct']
 
 beta 	= 0#np.pi																	# choose according to choice of mx, my and the topology!
 
-tau 	= np.arange(0, 5, 0.05)# 2.5
-K		= 2.0*np.pi*np.arange(0.001, 0.8, 0.06285/(2.0*np.pi) ) #0.001, 0.4
-#tau 	= np.arange(0, 5, 0.005)# 2.5
-#K		= 2.0*np.pi*np.arange(0.001, 0.8, 0.06285/(8.0*np.pi) ) #0.001, 0.4
+#tau 	= np.arange(0, 5, 0.1)# 2.5
+#K		= 2.0*np.pi*np.arange(0.001, 0.8, 0.6285/(2.0*np.pi) ) #0.001, 0.4
+tau 	= np.arange(0, 6, 0.005)# 2.5
+K		= 2.0*np.pi*np.arange(0.001, 0.8, 0.06285/(8.0*np.pi) ) #0.001, 0.4
 
-fzeta = 1+np.sqrt(1-np.abs(z)**2)
+fzeta = 1+np.sqrt(1-np.abs(z[0])**2)
 OmegInTauVsK = np.zeros([len(tau), len(K)]); alpha = np.zeros([len(tau), len(K)]); ReLambda = np.zeros([len(tau), len(K)]); ImLambda = np.zeros([len(tau), len(K)]);
 CondStab = np.zeros([len(tau), len(K)]);
 for i in range(len(tau)):
@@ -115,7 +115,7 @@ discrP	= None																	# does not apply to parametric plots
 rescale = None																	# set this in case you want to plot against a rescaled loopP variable
 
 paramsDict = {'h': h, 'hp': hp, 'w': w, 'K': K, 'wc': wc, 'Omeg': OmegInTauVsK, 'alpha': alpha, 'CondStab': CondStab,
-			'tau': tau, 'zeta': z, 'psi': psi, 'beta': beta, 'loopP1': loopP1, 'loopP2': loopP2, 'discrP': discrP}
+			'tau': tau, 'zeta': z, 'psi': psi, 'beta': beta, 'loopP1': loopP1, 'loopP2': loopP2, 'discrP': discrP, 'ReLambSynctools': ReLambda, 'ImLambSynctools': ImLambda}
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ plot Omega as parameter plot in the tau - K plot
 

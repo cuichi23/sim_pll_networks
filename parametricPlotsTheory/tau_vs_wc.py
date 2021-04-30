@@ -23,15 +23,15 @@ import synctools_interface_lib as synctools
 import coupling_fct_lib as coupfct
 
 dictNet={
-	'Nx': 2,																	# oscillators in x-direction
-	'Ny': 1,																	# oscillators in y-direction
-	'mx': 1	,																	# twist/chequerboard in x-direction (depends on closed or open boundary conditions)
-	'my': -999,																	# twist/chequerboard in y-direction
+	'Nx': 3,																	# oscillators in x-direction
+	'Ny': 3,																	# oscillators in y-direction
+	'mx': 0	,																	# twist/chequerboard in x-direction (depends on closed or open boundary conditions)
+	'my': 0,																	# twist/chequerboard in y-direction
 	'Tsim': 100,
-	'topology': 'ring',															# 1d) ring, chain, 2d) square-open, square-periodic, hexagonal...
+	'topology': 'square-periodic',															# 1d) ring, chain, 2d) square-open, square-periodic, hexagonal...
 																				# 3) global, entrainOne, entrainAll, entrainPLLsHierarch, compareEntrVsMutual
-	'zeta': -1, 																# real part of eigenvalue of slowest decaying perturbation mode for the set of parameters, also a fct. of tau!
-	'psi': np.pi,																# real part of eigenvalue of slowest decaying perturbation
+	'zeta': [-1/2, 1/4], 														# real part of eigenvalue of slowest decaying perturbation mode for the set of parameters, also a fct. of tau!
+	'psi': [np.pi, np.pi],														# real part of eigenvalue of slowest decaying perturbation
 	'computeFreqAndStab': True													# compute linear stability and global frequency if possible: True or False
 }
 
@@ -58,12 +58,14 @@ psi		= dictNet['psi']														# imaginary part of complex representation of
 h  		= dictPLL['coup_fct_sig']
 hp 		= dictPLL['derivative_coup_fct']
 
-beta 	= np.pi																	# choose according to choice of mx, my and the topology!
+beta 	= 0#np.pi																	# choose according to choice of mx, my and the topology!
 
-tau 	= np.arange(0, 4, 0.1)
-wc  	= 2.0*np.pi*np.arange(0.0001, 0.5, 0.06285/(2.0*np.pi))
+tau 	= np.arange(0, 8, 0.1)
+wc  	= 2.0*np.pi*np.arange(0.0001, 0.5, 0.6285/(2.0*np.pi))
+# tau 	= np.arange(0, 8, 0.05)
+# wc  	= 2.0*np.pi*np.arange(0.0001, 0.5, 0.6285/(2.0*np.pi))
 
-fzeta = 1+np.sqrt(1-np.abs(z)**2)
+fzeta = 1+np.sqrt(1-np.abs(z[0])**2)
 #OmegInTauVsFc = []; alpha = []; ReLambda = []; ImLambda = [];
 OmegInTauVsFc = np.zeros([len(tau), len(wc)]); alpha = np.zeros([len(tau), len(wc)]); ReLambda = np.zeros([len(tau), len(wc)]); ImLambda = np.zeros([len(tau), len(wc)]);
 CondStab = np.zeros([len(tau), len(wc)]);
@@ -106,8 +108,8 @@ loopP2 	= 'wc'																	# y-axis
 discrP	= None																	# does not apply to parametric plots
 rescale = None																	# set this in case you want to plot against a rescaled loopP variable
 
-paramsDict = {'h': h, 'hp': hp, 'w': w, 'K': K, 'wc': wc, 'Omeg': OmegInTauVsFc, 'alpha': alpha, 'noInstCond1': Cond1, 'noInstCond2': Cond2,
-			'tau': tau, 'zeta': z, 'psi': psi, 'beta': beta, 'loopP1': loopP1, 'loopP2': loopP2, 'discrP': discrP}
+paramsDict = {'h': h, 'hp': hp, 'w': w, 'K': K, 'wc': wc, 'Omeg': OmegInTauVsFc, 'alpha': alpha, 'CondStab': CondStab,
+			'tau': tau, 'zeta': z, 'psi': psi, 'beta': beta, 'loopP1': loopP1, 'loopP2': loopP2, 'discrP': discrP, 'ReLambSynctools': ReLambda, 'ImLambSynctools': ImLambda}
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ plot Omega as parameter plot in the tau - wc plot
 

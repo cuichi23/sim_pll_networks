@@ -177,6 +177,7 @@ class SweepFactory(object):
 		self.topology 	= dictNet['topology']
 		self.c 			= 0                     								# just dummy variable here
 		self.v 			= dictPLL['div']
+		self.fric		= dictPLL['friction_coefficient']
 		self.dummy		= np.array([self.n])
 
 		# if parameters provided in rad*Hz
@@ -221,9 +222,11 @@ class SweepFactory(object):
 		elif type(self.c) is np.ndarray:
 			return 'c'
 		elif type(self.m) is np.ndarray:
-			return 'm'
+			return 'mx'
 		elif type(self.v) is np.ndarray:
 			return 'v'
+		elif type(self.fric) is np.ndarray:
+			return 'fric'
 		else:
 			return 'dummy'
 
@@ -247,9 +250,11 @@ class SweepFactory(object):
 		elif self.h == COUPLING_FUNCTION_SIN:									# inspect.getsourcelines(self.h)[0][0][27:33]
 			h_func = st.Sin(1.0 / (2.0 * np.pi))
 		elif self.h == COUPLING_FUNCTION_NEGCOS:								# inspect.getsourcelines(self.h)[0][0][27:34]
-			h_func = st.NegCos(1.0 / (2.0 * np.pi))
+			#h_func = st.NegCos(1.0 / (2.0 * np.pi))
+			h_func = st.Cos(1.0 / (2.0 * np.pi), -1.0)							# the -1.0 refers to a sign change of the amplitude!
 		elif self.h == COUPLING_FUNCTION_NEGSIN:								# inspect.getsourcelines(self.h)[0][0][27:34]
-			h_func = st.NegSin(1.0 / (2.0 * np.pi))
+			#h_func = st.NegSin(1.0 / (2.0 * np.pi))
+			h_func = st.Sin(1.0 / (2.0 * np.pi), -1.0)
 		#elif inspect.getsourcelines(self.h)[0][0][12:19] == COUPLING_FUNCTION_TRIANGSHIFT:
 		#	h_func = st.Triangle(1.0 / (2.0 * np.pi))
 		#elif inspect.getsourcelines(self.h)[0][0][12:19] == COUPLING_FUNCTION_SINCOS:
@@ -295,7 +300,7 @@ class SweepFactory(object):
 			raise Exception('Non-valid topology string')
 
 		# Initialize singel pll
-		pll = st.Pll(self.w, self.wc, self.v)										# hand over PLL parameters
+		pll = st.Pll(self.w, self.wc, self.v, self.fric)						# hand over PLL parameters
 
 		# Initialize system
 		pll_sys = st.PllSystem(pll, g)
@@ -404,6 +409,16 @@ class FlatStateList(object):
 			x = np.zeros(self.n)
 			for i in range(self.n):
 				x[i] = self.states[i].sys.pll.v
+			return x
+		else:
+			return None
+
+	def get_fric(self):
+		'''Returns an array of the number of oscillators of the states in the list'''
+		if self.n > 0:
+			x = np.zeros(self.n)
+			for i in range(self.n):
+				x[i] = self.states[i].sys.pll.fric
 			return x
 		else:
 			return None

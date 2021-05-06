@@ -183,7 +183,7 @@ def plotParametric(params):
 
 	params = preparePlotting(params)
 
-	labeldict 	= {'wc': r'$\frac{\omega_\textrm{c}}{\omega}$', 'tau': r'$\frac{\omega\tau}{2\pi}$', 'K': r'$K$',
+	labeldict 	= {'wc': r'$\frac{\omega_\textrm{c}}{\omega}$', 'tau': r'$\frac{\omega\tau}{2\pi}$', 'K': r'$\frac{K}{\omega}$', 'fric': r'$\gamma$',
 					'a': r'$\alpha$', 'Omeg': r'$\Omega$', 'zeta': r'$\zeta$', 'beta': r'$\beta$', 'alphaK': r'$2\alpha(K)$', 'alphaTau': r'$2\alpha(\tau)$'}
 
 	''' prepare colormap for scatter plot that is always in [0, 1] or [min(results), max(results)] '''
@@ -410,6 +410,13 @@ def prepareScatt(params):
 		params.update({'xscatt': scatt[:,0]/params['w']})
 		params.update({'yscatt': scatt[:,1]/params['w']})
 
+	elif( params['loopP1'] == 'K' and params['loopP2'] == 'fric' ):
+
+		print('Prepare %s vs %s plot!'%(params['loopP1'], params['loopP2']))
+		scatt = np.array(list(itertools.product(*np.array([params['x1'], params['x2']]))))
+		params.update({'xscatt': scatt[:,0]/params['w']})
+		params.update({'yscatt': scatt[:,1]})
+
 	elif( params['loopP1'] == 'tau' and params['loopP2'] == 'K' ):
 
 		print('Prepare %s vs %s plot!'%(params['loopP1'], params['loopP2']))
@@ -530,6 +537,7 @@ def evaluateEq(params):
 	Omeg	= params.get('Omeg')
 	alpha	= params.get('alpha')
 	beta	= params.get('beta')
+	fric	= params.get('fric')
 
 	loopP1	= params.get('loopP1')
 	loopP2	= params.get('loopP2')
@@ -544,9 +552,23 @@ def evaluateEq(params):
 				#a = K[k] * hp( -Omeg[k,l]*tau + beta )
 				#print('a_old:', a, '\ta_synctools:', alpha[k,l]); time.sleep(0.5)
 				a = alpha[k,l]
-				#sol, cond_noInst = equationGamma(tau, a, wc[l], zeta, psi)
+				#sol, cond_noInst = equationGamma(tau, a, wc[l], zeta, psi, K[k])
 				#sol.append(sol)
-				sol.append(equationGamma(tau, a, wc[l], zeta, psi))
+				sol.append(equationGamma(tau, a, wc[l], zeta, fric, psi, K[k]))
+
+	elif( loopP1 == 'K' and loopP2 == 'fric' ):
+
+		print('Calculate x=K and y=wc!')
+		for k in range(len(K)):
+			#print('K[k], Omeg[k]', K[k], Omeg[k])
+			#a = K[k] * hp( -Omeg[k]*tau + beta )
+			for l in range(len(fric)):
+				#a = K[k] * hp( -Omeg[k,l]*tau + beta )
+				#print('a_old:', a, '\ta_synctools:', alpha[k,l]); time.sleep(0.5)
+				a = alpha[k,l]
+				#sol, cond_noInst = equationGamma(tau, a, wc[l], zeta, psi, K[k])
+				#sol.append(sol)
+				sol.append(equationGamma(tau, a, wc, zeta, fric[l], psi, K[k]))
 
 	elif( loopP1 == 'wc' and loopP2 == 'K' ):
 
@@ -554,7 +576,7 @@ def evaluateEq(params):
 		for k in range(len(wc)):
 			for l in range(len(K)):
 				a = alpha[k,l]
-				sol.append(equationGamma(tau, a, wc[k], zeta, psi))
+				sol.append(equationGamma(tau, a, wc[k], zeta, fric, psi, K[l]))
 
 	elif( loopP1 == 'alpha' and loopP2 == 'wc' ):
 
@@ -573,7 +595,7 @@ def evaluateEq(params):
 				tautemp = tau
 			for l in range(len(wc)):
 				a = alpha[k,l]
-				sol.append(equationGamma(tautemp, a, wc[l], zeta, psi))
+				sol.append(equationGamma(tautemp, a, wc[l], zeta, fric, psi, K[k]))
 
 	elif( loopP1 == 'K' and loopP2 == 'tau' ):
 
@@ -581,7 +603,7 @@ def evaluateEq(params):
 		for k in range(len(K)):
 			for l in range(len(tau)):
 				a = alpha[k,l]
-				sol.append(equationGamma(tau[l], a, wc, zeta, psi))
+				sol.append(equationGamma(tau[l], a, wc, zeta, fric, psi, K[k]))
 
 	elif( loopP1 == 'tau' and loopP2 == 'K' ):
 
@@ -589,7 +611,7 @@ def evaluateEq(params):
 		for k in range(len(tau)):
 			for l in range(len(K)):
 				a = alpha[k,l]
-				sol.append(equationGamma(tau[k], a, wc, zeta, psi))
+				sol.append(equationGamma(tau[k], a, wc, zeta, fric, psi, K[l]))
 
 	elif( loopP1 == 'wc' and loopP2 == 'tau'):
 
@@ -598,7 +620,7 @@ def evaluateEq(params):
 			for l in range(len(tau)):
 				a = alpha[k,l]
 				if a > 0:
-					sol.append(equationGamma(tau[l], a, wc[k], zeta, psi))
+					sol.append(equationGamma(tau[l], a, wc[k], zeta, fric, psi, K))
 				else:
 					sol.append([0, 0, 0, 0])
 
@@ -608,7 +630,7 @@ def evaluateEq(params):
 		for k in range(len(tau)):
 			for l in range(len(wc)):
 				a = alpha[k,l]
-				sol.append(equationGamma(tau[k], a, wc[l], zeta, psi))
+				sol.append(equationGamma(tau[k], a, wc[l], zeta, fric, psi, K))
 
 	params.update({'y': np.array(sol)})
 
@@ -625,13 +647,16 @@ def evaluateEq(params):
 # ******************************************************************************
 
 # potentially cythonize!
-def equationSigma(tau, a, wc, zeta, gamma=0, psi=-np.pi):
+def equationSigma(tau, a, wc, zeta, fric=1, gamma=0, psi=-np.pi, K=1):
 	''' USE for gammas without the condition
 		np.abs( a*zeta*np.sin(gamma[i]*tau) ) <= gamma[i] and np.abs(gamma[i]) > zero_treshold '''
+
+	print('Recheck the fric term in the equations, whether it is added to the correct place!'); sys.exit()
+
 	# real zeta, approximation for small gamma*tau
 	#sigma = -wc/2.0 + 1.0/tau * lambertw( -0.5*np.exp( 0.5*wc*tau )*wc*a*zeta*tau**2 )
 	# real zeta, no approximation, need to calculate gamma assuming sigma=0, hence only valid for sigma << 1
-	sigma = -wc/2.0 + 1.0/tau * lambertw( -(0.5/gamma)*np.exp( 0.5*wc*tau )*np.sin(gamma*tau-psi)*wc*a*np.abs(zeta)*tau )
+	sigma = -wc/2.0 + 1.0/tau * lambertw( -(0.5/(gamma*fric))*np.exp( 0.5*wc*tau )*np.sin(gamma*tau-psi)*wc*a*np.abs(zeta)*tau )
 	# real zeta, approximation of setting sigma**2 to zero in real part of char. equation,
 	# need to calculate gamma assuming sigma=0, hence only valid for sigma << 1
 	#sigma = gamma**2/wc - a + 1.0/tau * lambertw( np.exp( -(gamma**2/wc - a)*tau )*zeta*np.cos(gamma*tau)*a*tau )
@@ -642,7 +667,7 @@ def equationSigma(tau, a, wc, zeta, gamma=0, psi=-np.pi):
 # ******************************************************************************
 
 # potentially cythonize!
-def equationGamma(tau, a, wc, zeta, psi=-np.pi):
+def equationGamma(tau, a, wc, zeta, fric=1, psi=-np.pi, K=1):
 
 	if isinstance(zeta, list) or isinstance(zeta, np.ndarray):
 		zetlen = len(zeta)
@@ -657,15 +682,16 @@ def equationGamma(tau, a, wc, zeta, psi=-np.pi):
 
 	for i in range(zetlen):
 
-		print('Compute gammas for set (tau, alpha, wc, zeta, psi):', tau, a, wc, zeta[i], psi[i])
+		print('Compute gammas for set (tau, alpha, K, wc, zeta, psi):', tau, a, K, wc, zeta[i], psi[i])
 
+		zero_treshold0 = 1E-8
 		zero_treshold1 = 1E-17
 		zero_treshold2 = 1E-17
 
 
 		#A = wc**2.0 - 2.0*np.abs(a)*wc
 		#B = (1.0-zeta**2.0)*(np.abs(a)*wc)**2.0
-		A = wc**2.0 - 2.0*a*wc
+		A = (fric*wc)**2.0 - 2.0*a*wc
 		B = (1.0-zeta[i]**2.0)*(a*wc)**2.0
 		# print('A:', A); print('B:', B);
 		gamma = np.array([ +np.sqrt(0.5*(-A+A*np.sqrt(1.0-4.0*B/(A**2.0)))), +np.sqrt(0.5*(-A-A*np.sqrt(1.0-4.0*B/(A**2.0)))),
@@ -679,15 +705,20 @@ def equationGamma(tau, a, wc, zeta, psi=-np.pi):
 
 			if np.abs(gamma[j]) > zero_treshold2:
 				if ( gamma[j] )**2 - np.abs(a)*wc*(1.0-np.abs(zeta[i])*np.cos( gamma[j]*tau-psi[i]) )  < 0.0: #if fullfilled, stable synced state!
-					if   gamma[j] > 0.0 and -wc*(gamma[j] + np.abs(a)*np.abs(zeta[i])*np.sin( gamma[j]*tau-psi[i]) ) < 0.0: #  wc+np.abs(a)*np.abs(zeta)*tau*np.abs( np.cos( gamma[j]*tau-psi) ) >0.0) or (    ( gamma[j] )**2 - np.abs(a)*wc*(1.0-np.abs(zeta)*np.abs( np.cos( gamma[j]*tau-psi) ) ) < 0.0 and  wc+np.abs(a)*np.abs(zeta)*tau*np.abs( np.cos( gamma[j]*tau-psi) ) >0.0):
+					if   gamma[j] > 0.0 and -wc*(gamma[j]*fric + np.abs(a)*np.abs(zeta[i])*np.sin( gamma[j]*tau-psi[i]) ) < 0.0: #  wc+np.abs(a)*np.abs(zeta)*tau*np.abs( np.cos( gamma[j]*tau-psi) ) >0.0) or (    ( gamma[j] )**2 - np.abs(a)*wc*(1.0-np.abs(zeta)*np.abs( np.cos( gamma[j]*tau-psi) ) ) < 0.0 and  wc+np.abs(a)*np.abs(zeta)*tau*np.abs( np.cos( gamma[j]*tau-psi) ) >0.0):
 						gamma[j] = None
-					elif gamma[j] < 0.0 and -wc*(gamma[j] - np.abs(a)*np.abs(zeta[i])*np.sin( gamma[j]*tau-psi[i]) ) > 0.0: #  wc+np.abs(a)*np.abs(zeta)*tau*np.abs( np.cos( gamma[j]*tau-psi) ) >0.0) or (    ( gamma[j] )**2 - np.abs(a)*wc*(1.0-np.abs(zeta)*np.abs( np.cos( gamma[j]*tau-psi) ) ) < 0.0 and  wc+np.abs(a)*np.abs(zeta)*tau*np.abs( np.cos( gamma[j]*tau-psi) ) >0.0):
+					elif gamma[j] < 0.0 and -wc*(gamma[j]*fric - np.abs(a)*np.abs(zeta[i])*np.sin( gamma[j]*tau-psi[i]) ) > 0.0: #  wc+np.abs(a)*np.abs(zeta)*tau*np.abs( np.cos( gamma[j]*tau-psi) ) >0.0) or (    ( gamma[j] )**2 - np.abs(a)*wc*(1.0-np.abs(zeta)*np.abs( np.cos( gamma[j]*tau-psi) ) ) < 0.0 and  wc+np.abs(a)*np.abs(zeta)*tau*np.abs( np.cos( gamma[j]*tau-psi) ) >0.0):
 						gamma[j] = None
 
 			elif np.abs(gamma[j]) < zero_treshold2:									# gamma = 0 means that there is no instability
 				gamma[j] = None
 
 		print('Result after condition:', gamma); #time.sleep(0.25)
+
+		# sigma = equationSigma(tau, a, wc, zeta[i], gamma[j], psi[i])
+		# if ( np.abs( sigma ) > zero_treshold0 and np.isnan(gamma[j]) == False ):
+		# 	print('Found gamma (%0.2f) that does not full fulfill sigma condition via Lambert W functions since sigma=%0.2f.'%(gamma[j], sigma))
+		# 	gamma[j] = -999
 
 		# ADD condition that checks whether gamma fulfill Re and Im part equation, or which is closer...
 

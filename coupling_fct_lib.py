@@ -13,7 +13,7 @@ from scipy.signal import square
 from scipy.stats import cauchy
 
 def neg_cosine(x):
-	return -np.cos(x)
+	return -1.0*np.cos(x)
 
 def cosine(x):
 	return np.cos(x)
@@ -26,7 +26,7 @@ def inverse_cosine(x):
 	np.arccos(x)
 
 def neg_sine(x):
-	return -np.sin(x)
+	return -1.0*np.sin(x)
 
 def sine(x):
 	return np.sin(x)
@@ -42,7 +42,7 @@ def triangular(x):
 	return sawtooth(x,width=0.5)
 
 def deriv_triangular(x):
-	return (2/np.pi)*square(x,duty=0.5)
+	return (2.0/np.pi)*square(x,duty=0.5)
 
 def square_wave(x):
 	return 0.5*(1.0+square(x,duty=0.5))

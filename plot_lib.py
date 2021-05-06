@@ -75,10 +75,10 @@ def prepareDictsForPlotting(dictPLL, dictNet):
 	if dictPLL['cutFc'] == None:
 		dictPLL.update({'cutFc': np.inf})
 
-	if dictPLL['intrF'] > 0:													# for f=0, there would otherwies be a float division by zero
-		F1=dictPLL['intrF']
-	else:
-		F1=dictPLL['intrF']+1E-3
+	if not np.abs(dictPLL['intrF']) > 1E-17:									# for f=0, there would otherwies be a float division by zero
+		dictPLL.update({'intrF': 1})
+		print('Since intrinsic frequency was zero: for plotting set to one to generate boundaries!')
+
 
 	return dictPLL, dictNet
 

@@ -42,13 +42,14 @@ dictPLL={
 	'coupK': 0.4,																# [random.uniform(0.3, 0.4) for i in range(dictNet['Nx']*dictNet['Ny'])],# coupling strength in Hz float or [random.uniform(minK, maxK) for i in range(dictNet['Nx']*dictNet['Ny'])]
 	'cutFc': 0.014,																# LF cut-off frequency in Hz, None for no LF, or e.g., N=9 with mean 0.015: [0.05,0.015,0.00145,0.001,0.0001,0.001,0.00145,0.015,0.05]
 	'div': 1,																	# divisor of divider (int)
+	'friction_coefficient': 2,													# friction coefficient of 2nd order Kuramoto models
 	'feedback_delay': 0,														# value of feedback delay in seconds
 	'feedback_delay_var': None, 												# variance of feedback delay
 	'transmission_delay': 0.65, 												# value of transmission delay in seconds, float (single), list (tau_k) or list of lists (tau_kl): np.random.uniform(min,max,size=[dictNet['Nx']*dictNet['Ny'],dictNet['Nx']*dictNet['Ny']]), OR [np.random.uniform(min,max) for i in range(dictNet['Nx']*dictNet['Ny'])]
 	# choose from coupfct.<ID>: sine, cosine, neg_sine, neg_cosine, triangular, deriv_triangular, square_wave, pfd, inverse_cosine, inverse_sine
-	'coup_fct_sig': coupfct.neg_cosine,											# coupling function h(x) for PLLs with ideally filtered PD signals:
-	'derivative_coup_fct': coupfct.sine,										# derivative h'(x) of coupling function h(x)
-	'inve_deriv_coup_fct': coupfct.inverse_sine									# inverse of derivative of coupling function
+	'coup_fct_sig': coupfct.sine,												# coupling function h(x) for PLLs with ideally filtered PD signals:
+	'derivative_coup_fct': coupfct.cosine,										# derivative h'(x) of coupling function h(x)
+	'inve_deriv_coup_fct': coupfct.inverse_cosine								# inverse of derivative of coupling function
 }
 
 #synctools.generate_delay_plot(dictPLL, dictNet, isRadians=False)
@@ -58,6 +59,7 @@ w 		= 2.0*np.pi*dictPLL['intrF']
 wc		= 2.0*np.pi*dictPLL['cutFc']
 z 		= dictNet['zeta']														# eigenvalue of the perturbation mode
 psi		= dictNet['psi']														# imaginary part of complex representation of zeta in polar coordinates
+fric 	= dictPLL['friction_coefficient']
 
 h  		= dictPLL['coup_fct_sig']
 hp 		= dictPLL['derivative_coup_fct']
@@ -67,7 +69,7 @@ beta 	= 0#np.pi																	# choose according to choice of mx, my and the t
 #tau 	= np.arange(0, 5, 0.1)# 2.5
 #K		= 2.0*np.pi*np.arange(0.001, 0.8, 0.6285/(2.0*np.pi) ) #0.001, 0.4
 tau 	= np.arange(0, 6, 0.005)# 2.5
-K		= 2.0*np.pi*np.arange(0.001, 0.8, 0.06285/(8.0*np.pi) ) #0.001, 0.4
+K		= 2.0*np.pi*np.arange(0.001, 0.8, 0.006285/(2.0*np.pi) ) #0.001, 0.4
 
 fzeta = 1+np.sqrt(1-np.abs(z[0])**2)
 OmegInTauVsK = np.zeros([len(tau), len(K)]); alpha = np.zeros([len(tau), len(K)]); ReLambda = np.zeros([len(tau), len(K)]); ImLambda = np.zeros([len(tau), len(K)]);
@@ -114,7 +116,7 @@ loopP2 	= 'K'																	# y-axis
 discrP	= None																	# does not apply to parametric plots
 rescale = None																	# set this in case you want to plot against a rescaled loopP variable
 
-paramsDict = {'h': h, 'hp': hp, 'w': w, 'K': K, 'wc': wc, 'Omeg': OmegInTauVsK, 'alpha': alpha, 'CondStab': CondStab,
+paramsDict = {'h': h, 'hp': hp, 'w': w, 'K': K, 'wc': wc, 'fric': fric, 'Omeg': OmegInTauVsK, 'alpha': alpha, 'CondStab': CondStab,
 			'tau': tau, 'zeta': z, 'psi': psi, 'beta': beta, 'loopP1': loopP1, 'loopP2': loopP2, 'discrP': discrP, 'ReLambSynctools': ReLambda, 'ImLambSynctools': ImLambda}
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ plot Omega as parameter plot in the tau - K plot

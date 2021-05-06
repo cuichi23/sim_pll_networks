@@ -22,14 +22,14 @@ import synctools_interface_lib as synctools
 import coupling_fct_lib as coupfct
 
 dictNet={
-	'Nx': 3,																	# oscillators in x-direction
-	'Ny': 3,																	# oscillators in y-direction
+	'Nx': 2,																	# oscillators in x-direction
+	'Ny': 1,																	# oscillators in y-direction
 	'mx': 0	,																	# twist/chequerboard in x-direction (depends on closed or open boundary conditions)
 	'my': 0,																	# twist/chequerboard in y-direction
 	'Tsim': 100,
-	'topology': 'square-periodic',															# 1d) ring, chain, 2d) square-open, square-periodic, hexagonal...
+	'topology': 'ring',															# 1d) ring, chain, 2d) square-open, square-periodic, hexagonal...
 																				# 3) global, entrainOne, entrainAll, entrainPLLsHierarch, compareEntrVsMutual
-	'zeta': [-1/2, 1/4], 														# real part of eigenvalue of slowest decaying perturbation mode for the set of parameters, also a fct. of tau!
+	'zeta': [-1], #[-1/2, 1/4], 														# real part of eigenvalue of slowest decaying perturbation mode for the set of parameters, also a fct. of tau!
 	'psi': [np.pi, np.pi],														# real part of eigenvalue of slowest decaying perturbation
 	'computeFreqAndStab': True													# compute linear stability and global frequency if possible: True or False
 }
@@ -41,18 +41,21 @@ dictPLL={
 	'coupK': 0.65,																# [random.uniform(0.3, 0.4) for i in range(dictNet['Nx']*dictNet['Ny'])],# coupling strength in Hz float or [random.uniform(minK, maxK) for i in range(dictNet['Nx']*dictNet['Ny'])]
 	'cutFc': 0.20,																# LF cut-off frequency in Hz, None for no LF, or e.g., N=9 with mean 0.015: [0.05,0.015,0.00145,0.001,0.0001,0.001,0.00145,0.015,0.05]
 	'div': 1,																	# divisor of divider (int)
+	'friction_coefficient': 1,													# friction coefficient of 2nd order Kuramoto models
 	'feedback_delay': 0,														# value of feedback delay in seconds
 	'feedback_delay_var': None, 												# variance of feedback delay
 	'transmission_delay': 2.95, 												# value of transmission delay in seconds, float (single), list (tau_k) or list of lists (tau_kl): np.random.uniform(min,max,size=[dictNet['Nx']*dictNet['Ny'],dictNet['Nx']*dictNet['Ny']]), OR [np.random.uniform(min,max) for i in range(dictNet['Nx']*dictNet['Ny'])]
 	# choose from coupfct.<ID>: sine, cosine, neg_sine, neg_cosine, triangular, deriv_triangular, square_wave, pfd, inverse_cosine, inverse_sine
-	'coup_fct_sig': coupfct.neg_cosine,											# coupling function h(x) for PLLs with ideally filtered PD signals:
-	'derivative_coup_fct': coupfct.sine											# derivative h'(x) of coupling function h(x)
+	'coup_fct_sig': coupfct.sine,												# coupling function h(x) for PLLs with ideally filtered PD signals:
+	'derivative_coup_fct': coupfct.cosine,										# derivative h'(x) of coupling function h(x)
+	'inve_deriv_coup_fct': coupfct.inverse_cosine								# inverse of derivative of coupling function
 }
 
 w 		= 2.0*np.pi*dictPLL['intrF']
 tau 	= dictPLL['transmission_delay']
 z 		= dictNet['zeta']														# eigenvalue of the perturbation mode
 psi		= dictNet['psi']														# imaginary part of complex representation of zeta in polar coordinates
+fric 	= dictPLL['friction_coefficient']
 
 h  		= dictPLL['coup_fct_sig']
 hp 		= dictPLL['derivative_coup_fct']
@@ -80,6 +83,7 @@ for i in range(len(K)):
 			#print('Found multistability of synchronized state, Omega:', para_mat[:,4], '\tfor (K, tau, beta)=(', dictPLL['coupK'], dictPLL['transmission_delay'], beta,')\nPick state with largest frequency!')
 			if dictPLL['analyzeFreq'] == 'max':
 				index = np.argmax(para_mat[:,4], axis=0)
+				#print('Picked largest frequency: ', para_mat[index,4], '  from set', para_mat[:,4])
 			elif dictPLL['analyzeFreq'] == 'min':
 				index = np.argmin(para_mat[:,4], axis=0)
 			elif dictPLL['analyzeFreq'] == 'middle':
@@ -107,7 +111,7 @@ loopP2 	= 'wc'																	# y-axis	otherwise, the Omega sorting will be INC
 discrP	= None																	# does not apply to parametric plots
 rescale = 'K_to_2alpha'															# set this in case you want to plot against a rescaled loopP variable
 
-paramsDict = {'h': h, 'hp': hp, 'w': w, 'K': K, 'wc': wc, 'Omeg': OmegInKvsFc, 'alpha': alpha, 'CondStab': CondStab,
+paramsDict = {'h': h, 'hp': hp, 'w': w, 'K': K, 'wc': wc, 'fric': fric, 'Omeg': OmegInKvsFc, 'alpha': alpha, 'CondStab': CondStab,
 			'tau': tau, 'zeta': z, 'psi': psi, 'beta': beta, 'loopP1': loopP1, 'loopP2': loopP2, 'discrP': discrP, 'ReLambSynctools': ReLambda, 'ImLambSynctools': ImLambda}
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ plot Omega as parameter plot in the K - wc plot

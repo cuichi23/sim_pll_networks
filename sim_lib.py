@@ -124,7 +124,7 @@ def simulateSystem(dictNet, dictPLL, dictAlgo=None):
 	plot.plotPhaseRela(dictPLL, dictNet, dictData)
 	plot.plotPhaseDiff(dictPLL, dictNet, dictData)
 	plot.plotClockTime(dictPLL, dictNet, dictData)
-	plot.plotPSD(dictPLL, dictNet, dictData, [], saveData=False)
+	#plot.plotPSD(dictPLL, dictNet, dictData, [], saveData=False)
 
 	plt.draw()
 	plt.show()

@@ -54,6 +54,7 @@ def getDicts(Fsim=125):
 		'gPDin_symmetric': True,												# set to True if G_kl == G_lk, False otherwise
 		'cutFc': 0.00166,														# LF cut-off frequency in Hz, here N=9 with mean 0.015: [0.05,0.015,0.00145,0.001,0.0001,0.001,0.00145,0.015,0.05]
 		'div': 512,																# divisor of divider (int)
+		'friction_coefficient': 1,												# friction coefficient of 2nd order Kuramoto models
 		'noiseVarVCO': 1E-9,													# variance of VCO GWN
 		'feedback_delay': 0,													# value of feedback delay in seconds
 		'feedback_delay_var': None, 											# variance of feedback delay
@@ -118,6 +119,7 @@ def getDicts(Fsim=125):
 		#except:
 		#	print('Could not compute linear stability and global frequency! Check synctools and case!')
 
+	check_consistency_initPert(dictNet)
 	print('Setup (dictNet, dictPLL):', dictNet, dictPLL)
 
 	return dictPLL, dictNet
@@ -135,3 +137,20 @@ def chooseSolution(para_mat):													# ask user-input for which solution to
 			print('Please provide input as integer choice!')
 
 	return int(choice)
+
+def check_consistency_initPert(dictNet):
+	if len(dictNet['phiPerturb']) != dictNet['Nx']*dictNet['Ny']:
+		a_true = True
+		while a_true:
+			# get user input for corrected set of perturbations
+			choice = [float(item) for item in input('Initial perturbation vectors´ length does not match number of oscillators (%i), provide new list [...]: '%(dictNet['Nx']*dictNet['Ny'])).split()]
+			dictNet.update({'phiPerturb': choice})
+			print('type(choice), len(choice)', type(choice), len(choice))
+			if len(dictNet['phiPerturb']) == dictNet['Nx']*dictNet['Ny']:
+				break
+			elif dictNet['phiPerturb'][0] == -999:
+				dictNet.update({'phiPerturb': np.zeros(dictNet['Nx']*dictNet['Ny']).tolist()})
+			else:
+				print('Please choose right numner of perturbations or the value -999 for no perturbation!')
+	else:
+		return None

@@ -117,21 +117,22 @@ class LowPass:
 
 		self.dt     = dictPLL['dt']												# set time-step
 		self.Fc 	= self.set_from_value_or_list(idx_self, dictPLL['cutFc'], dictNet['Nx']*dictNet['Ny']) # set cut-off frequency [Hz]
-		self.K_Hz	= self.set_from_value_or_list(idx_self, dictPLL['coupK'], dictNet['Nx']*dictNet['Ny']) # set coupling strength
-		self.intrF  = self.set_from_value_or_list(idx_self, dictPLL['intrF'], dictNet['Nx']*dictNet['Ny']) # intrinsic frequency of VCO - here needed for x_k^C(0)
+		self.K_Hz	= self.set_from_value_or_list(idx_self, dictPLL['coupK'], dictNet['Nx']*dictNet['Ny']) # set coupling strength [Hz]
+		self.intrF  = self.set_from_value_or_list(idx_self, dictPLL['intrF'], dictNet['Nx']*dictNet['Ny']) # intrinsic frequency of VCO - here needed for x_k^C(0) [Hz]
 		self.syncF  = dictPLL['syncF']											# provide freq. of synchronized state under investigation - here needed for x_k^C(0) [Hz]
 
 		self.idx		= idx_self
 		self.Omega  	= 2.0*np.pi*self.syncF									# angular frequency of synchronized state
 		self.K 	  		= 2.0*np.pi*self.K_Hz									# provide coupling strength - here needed for x_k^C(0)
 		self.instantF  	= None													# instantaneous frequency [Hz]
+		self.fric_coeff = self.set_from_value_or_list(idx_self, dictPLL['friction_coefficient'], dictNet['Nx']*dictNet['Ny']) # friction coefficient
 
 		self.y 			= None													# denotes the control signal, output of the LF: dictPLL['initCtrlSig']
 
 		if not self.Fc == None:
 			self.wc 	= 2.0*np.pi*self.Fc										# angular cut-off frequency of the loop filter for a=1, filter of first order
 			self.beta 	= self.dt*self.wc
-			self.evolve = lambda xPD: (1.0-self.beta)*self.y + self.beta*xPD
+			self.evolve = lambda xPD: (1.0-self.beta*self.fric_coeff)*self.y + self.beta*xPD
 		else:
 			print('No cut-off frequency defined (None), hence simulating without loop filter!')
 			self.evolve = lambda xPD: xPD
@@ -256,17 +257,18 @@ class PhaseDetectorCombiner:													# this class creates PD objects, these 
 	def __init__(self,idx_self,dictPLL,dictNet):
 		# print('Phasedetector and Combiner: sin(x)')
 		self.idx_self 		= idx_self											# assigns the index
+		self.K 				= 2.0*np.pi*self.set_from_value_or_list(idx_self, dictPLL['coupK'], dictNet['Nx']*dictNet['Ny']) # set coupling strength
 		self.div 			= dictPLL['div']									# set the divider
 		self.h 				= dictPLL['coup_fct_sig']							# set the type of PD coupling function
 		self.hp				= dictPLL['derivative_coup_fct']					# derivative of coupling function h
 		self.hf				= dictPLL['vco_out_sig']							# set the type of VCO output signal, needed for HF cases
 		self.a 				= dictPLL['antenna_sig']							# set the type of wireless signal
-		self.K2nd_k			= self.set_from_value_or_list(idx_self, dictPLL['coupStr_2ndHarm']/np.array(dictPLL['coupK']), dictNet['Nx']*dictNet['Ny']) # set coupling strength for injection of 2nd harmonic, divide by PLL coupling strength as this is later multiplied again
+		self.K2nd_k			= 2.0*np.pi*self.set_from_value_or_list(idx_self, dictPLL['coupStr_2ndHarm']/np.array(dictPLL['coupK']), dictNet['Nx']*dictNet['Ny']) # set coupling strength for injection of 2nd harmonic, divide by PLL coupling strength as this is later multiplied again
 		self.actRx			= 0													# PLL dynamic independent of antenna input
 
 		self.idx_neighbors 	= [n for n in dictPLL['G'].neighbors(self.idx_self)]# for networkx > v1.11
 		print('I am PLL %i, my neighbors have indexes:'%self.idx_self, self.idx_neighbors)
-		if isinstance(dictPLL['gPDin'], np.ndarray):
+		if isinstance(dictPLL['gPDin'], np.ndarray) or isinstance(dictPLL['gPDin'], list):
 			tempG_kl 		= [dictPLL['gPDin'][self.idx_self,i] for i in self.idx_neighbors]# pick the entries
 			self.G_kl		= np.array(tempG_kl)							# the gain of each individual input gain, together with heterogeneous coupling strength: K_kl
 			print('PD has different gains for each input signal! Hence: G_kl are introduced. CHECK THESE CASES AGAIN! self.G_kl[%i,l]'%self.idx_self, self.G_kl); #time.sleep(1)
@@ -280,13 +282,17 @@ class PhaseDetectorCombiner:													# this class creates PD objects, these 
 				self.compute	= lambda x_ext, ant_in, x_feed:  np.mean( self.G_kl * self.h( ( x_ext - x_feed ) / self.div ) + self.actRx * self.h( ant_in - x_feed / self.div ) )
 			elif dictPLL['antenna'] == False and dictPLL['extra_coup_sig'] == 'injection2ndHarm':
 				print('Setup PLL with injection locking signal!');
-				self.compute	= lambda x_ext, ant_in, x_feed:  np.mean( self.G_kl * self.h( ( 2 * x_ext - x_feed ) / self.div ) )
-				#self.compute	= lambda x_ext, ant_in, x_feed:  np.mean( self.G_kl * self.h( ( 2 * x_ext - x_feed ) / self.div ) ) + self.h( ( 2 * x_ext - x_feed ) / self.div )
-								#lambda x_ext, ant_in, x_feed:  - np.sum( self.G_kl * self.h( ( 2 * x_ext - x_feed ) / self.div ) ) - self.K2nd_k * self.h( 2.0*x_feed / self.div )
+				#self.compute	= lambda x_ext, ant_in, x_feed:  np.mean( self.G_kl * self.h( ( 2 * x_ext - x_feed ) / self.div ) )
+				self.compute	= lambda x_ext, ant_in, x_feed:  np.mean( self.G_kl * self.h( ( x_ext - x_feed ) / self.div ) ) - self.K2nd_k * self.h( ( 2 * x_feed ) / self.div )
+				#self.compute	= lambda x_ext, ant_in, x_feed:  np.mean( self.G_kl * self.h( ( x_ext - x_feed ) / self.div ) ) + np.mean( self.G_kl * self.K2nd_k * self.h( ( 2.0*x_ext - x_feed ) / self.div ) )
+				#self.compute	= lambda x_ext, ant_in, x_feed:  np.mean( self.G_kl * self.h( ( x_ext - x_feed ) / self.div ) ) - np.mean ( self.K2nd_k * self.h( ( 2 * np.append(x_ext, x_feed) ) / self.div ) )
+				#self.compute	= lambda x_ext, ant_in, x_feed:  - np.sum( self.G_kl * self.h( ( 2 * x_ext - x_feed ) / self.div ) ) - self.K2nd_k * self.h( 2.0*x_feed / self.div )
 			else:
+				print('Simulating coupling function of phase-differences.')
 				self.compute	= lambda x_ext, ant_in, x_feed:  np.mean( self.G_kl * self.h( ( x_ext - x_feed ) / self.div ) )
 
 		elif dictPLL['includeCompHF'] == True:
+			print('High frequency components actived!')
 
 			# depending on the coupling function this implements an XOR (triangular) or mixer PD (cos/sin) including the HF terms
 			if dictPLL['antenna'] == True and dictPLL['extra_coup_sig'] == None:
@@ -297,7 +303,7 @@ class PhaseDetectorCombiner:													# this class creates PD objects, these 
 				elif dictPLL['typeVCOsig'] == 'digitalHF':						# this becomes the coupling function for digital VCO output signals
 					self.compute= lambda x_ext, ant_in, x_feed: np.mean( self.G_kl * ( self.hf( x_ext / self.div )*(1.0-self.hf( x_feed / self.div ))
 																				+ (1.0-self.hf( x_ext / self.div ))*self.hf( x_feed / self.div ) )
-																		   		+ self.h( ant_in )*(1.0-self.hf( x_feed / self.div ))
+																				+ self.h( ant_in )*(1.0-self.hf( x_feed / self.div ))
 																				+ (1.0-self.hf( ant_in ))*self.hf( x_feed / self.div ))
 			elif dictPLL['antenna'] == False and dictPLL['extra_coup_sig'] == 'injection2ndHarm':
 				print('Setup PLL with injection locking signal!');

@@ -220,41 +220,41 @@ class Cos(CouplingFunction):
 	def min(self):
 		return -1.0
 
-class NegSin(CouplingFunction):
-	''' Periodic sine signal vertically centered around 0'''
-	def __init__(self, freq=1.0 / (2 * np.pi), amp=1.0):
-		self.freq = freq
-		self.amp = amp
+# class NegSin(CouplingFunction):
+# 	''' Periodic sine signal vertically centered around 0'''
+# 	def __init__(self, freq=1.0 / (2 * np.pi), amp=1.0):
+# 		self.freq = freq
+# 		self.amp = amp
+#
+# 	def __call__(self, t):
+# 		return self.amp * (-1) * np.sin(2 * np.pi * self.freq * t)
+#
+# 	def get_derivative(self):
+# 		return Cos(freq=self.freq, amp=self.amp*(-2.0*np.pi)*self.freq)
+#
+# 	def max(self):
+# 		return 1.0
+#
+# 	def min(self):
+# 		return -1.0
 
-	def __call__(self, t):
-		return self.amp * (-1) * np.sin(2 * np.pi * self.freq * t)
-
-	def get_derivative(self):
-		return Cos(freq=self.freq, amp=self.amp*(-2.0*np.pi)*self.freq)
-
-	def max(self):
-		return 1.0
-
-	def min(self):
-		return -1.0
-
-class NegCos(CouplingFunction):
-	''' Periodic sine signal vertically centered around 0'''
-	def __init__(self, freq=1.0 / (2 * np.pi), amp=1.0):
-		self.freq = freq
-		self.amp = amp
-
-	def __call__(self, t):
-		return self.amp * (-1) * np.cos(2 * np.pi * self.freq * t)
-
-	def get_derivative(self):
-		return Sin(freq=self.freq, amp=self.amp*2.0*np.pi*self.freq)
-
-	def max(self):
-		return 1.0
-
-	def min(self):
-		return -1.0
+# class NegCos(CouplingFunction):
+# 	''' Periodic sine signal vertically centered around 0'''
+# 	def __init__(self, freq=1.0 / (2 * np.pi), amp=1.0):
+# 		self.freq = freq
+# 		self.amp = amp
+#
+# 	def __call__(self, t):
+# 		return self.amp * (-1) * np.cos(2 * np.pi * self.freq * t)
+#
+# 	def get_derivative(self):
+# 		return Sin(freq=self.freq, amp=self.amp*2.0*np.pi*self.freq)
+#
+# 	def max(self):
+# 		return 1.0
+#
+# 	def min(self):
+# 		return -1.0
 
 class Triangle(CouplingFunction):
 	''' Periodic triangle signal vertically centered around 0'''
@@ -299,6 +299,11 @@ class PFD(CouplingFunction):
 	def __call__(self, t):
 		x = 2 * np.pi * self.freq * t
 		return self.amp * (np.sign(x)*(1+sawtooth(1*x*np.sign(x), width=1)))
+
+	def get_derivative(self):
+		print('Not yet imlemented! Do it!'); sys.exit()
+		amp = 2.0 * (2 * self.freq)
+		return Square(self.freq, amp)
 
 	def max(self):
 		return self.amp
@@ -456,10 +461,11 @@ class CubicOctagonal(Graph):
 # #############################################################################
 
 class Pll(object):
-	def __init__(self, w, wc, v):
+	def __init__(self, w, wc, v, fric):
 		self.w = w
 		self.wc = wc
 		self.v = v
+		self.fric = fric
 		self.b = 1.0 / wc
 
 
@@ -638,6 +644,7 @@ class SyncStateFactory(object):
 		kc = self.sys.g.k                                                       # coupling strength
 		w = self.sys.pll.w
 		v = self.sys.pll.v
+		fric = self.sys.pll.fric
 
 		# Determine min and max values for coupling sum function
 		h_min = self.sys.g.func.min()
@@ -648,8 +655,8 @@ class SyncStateFactory(object):
 		h_sum_max = c_bar_sum * h_max
 
 		# Determine search interval for s
-		s_min = kc * tau * h_sum_min + w * tau
-		s_max = kc * tau * h_sum_max + w * tau
+		s_min = kc/fric * tau * h_sum_min + w/fric * tau
+		s_max = kc/fric * tau * h_sum_max + w/fric * tau
 		s_min = s_min - 2  # add safety margin
 		s_max = s_max + 2
 		if s_min < 0:
@@ -663,7 +670,7 @@ class SyncStateFactory(object):
 			h_sum = lambda x: self.get_coupling_sum(0, k=k)
 
 		# Setup implicit equation for s
-		f = lambda x: kc * tau * h_sum(x) + w * tau - x
+		f = lambda x: kc/fric * tau * h_sum(x) + w/fric * tau - x
 
 		# Find sign changes as you go along curve
 		# Assumes that there are no double sign changes between two values of s
@@ -674,7 +681,7 @@ class SyncStateFactory(object):
 			for i in range(len(i_root)):
 				# Numerically solve the implicit equation for omega
 				s_tmp = optimize.brentq(f, s[i_root[i]], s[i_root[i] + 1])
-				omega.append(w + kc * h_sum(s_tmp))
+				omega.append(w/fric + kc/fric * h_sum(s_tmp))
 			return omega
 		else:
 			raise Exception('No global synchronization frequency found.')
@@ -752,14 +759,15 @@ class SyncState(object):
 		d_sum = np.sum(d[k, :])
 		tau = self.sys.g.tau
 		div = self.sys.pll.v
+		fric = self.sys.pll.fric
 		e, v = self.get_eigensystem()
 		for ie in range(len(e)):
-			func_root = self._plug_parameters_in_stability_function(b, kc, d_sum, tau, div, e[ie])
+			func_root = self._plug_parameters_in_stability_function(b, kc, d_sum, tau, div, fric, e[ie])
 			funcs.append(func_root)
 		return funcs
 
-	def _plug_parameters_in_stability_function(self, b, kc, d_sum, tau, div, e):
-		return lambda l: self._stability_function(l, b, kc, d_sum, tau, div, e)
+	def _plug_parameters_in_stability_function(self, b, kc, d_sum, tau, div, fric, e):
+		return lambda l: self._stability_function(l, b, kc, d_sum, tau, div, fric, e)
 
 	def get_coupling_derivative_matrix(self):
 		dphi = self.get_dphi_matrix()
@@ -790,11 +798,11 @@ class SyncState(object):
 		return e_tmp, v_tmp
 
 	@staticmethod
-	def _stability_function(l_vector, b, kc, d_sum, tau, div, eig_cx):
+	def _stability_function(l_vector, b, kc, d_sum, tau, div, fric, eig_cx):
 		x = np.zeros(2)
 		l_cx = l_vector[0] + 1j * l_vector[1]
 		#y = l_cx * (1 + b * l_cx) + kc * d_sum * ( 1 - np.exp(-l_cx * tau) * eig_cx ) # not valid for twist states
-		y = l_cx * (1 + b * l_cx) + kc * d_sum - kc * np.exp(-l_cx * tau) * eig_cx
+		y = l_cx * (fric + b * l_cx) + ( kc / div ) * d_sum - ( kc / div ) * np.exp(-l_cx * tau) * eig_cx
 		x[0] = np.real(y)
 		x[1] = np.imag(y)
 		return x

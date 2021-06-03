@@ -217,30 +217,42 @@ def plotParametric(params):
 	cmap_neg_alpha 	= colors.ListedColormap(['black'])
 	cmap_cond 		= colors.ListedColormap(['yellow'])
 
+	# try:
+	# 	plt.imshow(tempresults_ma.astype(float), interpolation='nearest', cmap=cmap_choice, aspect='auto', origin='lower',
+	# 			extent=(params['xscatt'].min(), params['xscatt'].max(), params['yscatt'].min(), params['yscatt'].max()),
+	# 			vmin=np.min(tempresults_ma[np.isnan(tempresults_ma)==False]), vmax=np.max(tempresults_ma[np.isnan(tempresults_ma)==False]) )
+	# 			#vmin=np.min(tempresults_ma), vmax=np.max(tempresults_ma) )
+	# 	plt.colorbar();
+	# 	plt.imshow(tempresults_ma1.astype(float), interpolation='nearest', cmap=cmap_neg_alpha, aspect='auto', origin='lower',
+	# 			extent=(params['xscatt'].min(), params['xscatt'].max(), params['yscatt'].min(), params['yscatt'].max()),
+	# 			vmin=np.min(tempresults_ma1), vmax=np.max(tempresults_ma1) )
+	# 	plt.imshow(tempcond.astype(float), interpolation='nearest', cmap=cmap_cond, aspect='auto', origin='lower',
+	# 			extent=(params['xscatt'].min(), params['xscatt'].max(), params['yscatt'].min(), params['yscatt'].max()),
+	# 			vmin=np.min(tempcond), vmax=np.max(tempcond) )
+	# except:
+	# 	print('Exception mode when plotting imshow!');
+	# 	plt.imshow(tempresults_ma.astype(float), interpolation='nearest', cmap=cmap_choice, aspect='auto', origin='lower',
+	# 			extent=(params['xscatt'].min(), params['xscatt'].max(), params['yscatt'].min(), params['yscatt'].max()),
+	# 			vmin=np.min(tempresults_ma), vmax=np.max(tempresults_ma) )
+	# 			#vmin=np.min(tempresults_ma), vmax=np.max(tempresults_ma) )
+	# 	plt.imshow(tempresults_ma1.astype(float), interpolation='nearest', cmap=cmap_neg_alpha, aspect='auto', origin='lower',
+	# 			extent=(params['xscatt'].min(), params['xscatt'].max(), params['yscatt'].min(), params['yscatt'].max()),
+	# 			vmin=np.min(tempresults_ma1), vmax=np.max(tempresults_ma1) )
+	# 	plt.imshow(tempcond.astype(float), interpolation='nearest', cmap=cmap_cond, aspect='auto', origin='lower',
+	# 			extent=(params['xscatt'].min(), params['xscatt'].max(), params['yscatt'].min(), params['yscatt'].max()),
+	# 			vmin=np.min(tempcond), vmax=np.max(tempcond) )
+
 	try:
-		plt.imshow(tempresults_ma.astype(float), interpolation='nearest', cmap=cmap_choice, aspect='auto', origin='lower',
-				extent=(params['xscatt'].min(), params['xscatt'].max(), params['yscatt'].min(), params['yscatt'].max()),
-				vmin=np.min(tempresults_ma[np.isnan(tempresults_ma)==False]), vmax=np.max(tempresults_ma[np.isnan(tempresults_ma)==False]) )
-				#vmin=np.min(tempresults_ma), vmax=np.max(tempresults_ma) )
+		plt.imshow(tempresults.astype(float), interpolation='nearest', cmap=cmap_choice, aspect='auto', origin='lower',
+					extent=(params['xscatt'].min(), params['xscatt'].max(), params['yscatt'].min(), params['yscatt'].max()),
+					vmin=np.min(tempresults[np.isnan(tempresults)==False]), vmax=np.max(tempresults[np.isnan(tempresults)==False]) )
+					#vmin=np.min(tempresults_ma), vmax=np.max(tempresults_ma) )
 		plt.colorbar();
-		plt.imshow(tempresults_ma1.astype(float), interpolation='nearest', cmap=cmap_neg_alpha, aspect='auto', origin='lower',
-				extent=(params['xscatt'].min(), params['xscatt'].max(), params['yscatt'].min(), params['yscatt'].max()),
-				vmin=np.min(tempresults_ma1), vmax=np.max(tempresults_ma1) )
-		plt.imshow(tempcond.astype(float), interpolation='nearest', cmap=cmap_cond, aspect='auto', origin='lower',
-				extent=(params['xscatt'].min(), params['xscatt'].max(), params['yscatt'].min(), params['yscatt'].max()),
-				vmin=np.min(tempcond), vmax=np.max(tempcond) )
 	except:
-		print('Exception mode when plotting imshow!');
-		plt.imshow(tempresults_ma.astype(float), interpolation='nearest', cmap=cmap_choice, aspect='auto', origin='lower',
-				extent=(params['xscatt'].min(), params['xscatt'].max(), params['yscatt'].min(), params['yscatt'].max()),
-				vmin=np.min(tempresults_ma), vmax=np.max(tempresults_ma) )
-				#vmin=np.min(tempresults_ma), vmax=np.max(tempresults_ma) )
-		plt.imshow(tempresults_ma1.astype(float), interpolation='nearest', cmap=cmap_neg_alpha, aspect='auto', origin='lower',
-				extent=(params['xscatt'].min(), params['xscatt'].max(), params['yscatt'].min(), params['yscatt'].max()),
-				vmin=np.min(tempresults_ma1), vmax=np.max(tempresults_ma1) )
-		plt.imshow(tempcond.astype(float), interpolation='nearest', cmap=cmap_cond, aspect='auto', origin='lower',
-				extent=(params['xscatt'].min(), params['xscatt'].max(), params['yscatt'].min(), params['yscatt'].max()),
-				vmin=np.min(tempcond), vmax=np.max(tempcond) )
+		plt.imshow(tempresults.astype(float), interpolation='nearest', cmap=cmap_choice, aspect='auto', origin='lower',
+					extent=(params['xscatt'].min(), params['xscatt'].max(), params['yscatt'].min(), params['yscatt'].max()),
+					vmin=np.min(tempresults[np.isnan(tempresults)==False]), vmax=np.max(tempresults[np.isnan(tempresults)==False]) )
+					#vmin=np.min(tempresults_ma), vmax=np.max(tempresults_ma) )
 
 	if ( params['loopP1'] == 'alphaK' and ( isinstance(params['K'], np.ndarray) or isinstance(params['K'], list)) ):
 		print('Plot condition region into the plot!')
@@ -267,8 +279,10 @@ def plotParametric(params):
 	cmap_choice = cm.RdYlBu														# cm.coolwarm
 	ytemp = params['yy']
 	for i in range(len(ytemp)):
-		if (ytemp[i] > 0 and np.isnan(ytemp[i])==False):
+		if   (ytemp[i] != -999 and np.isnan(ytemp[i])==False):
 			ytemp[i] = 1
+		elif (ytemp[i] == -999 and np.isnan(ytemp[i])==False):
+			ytemp[i] = -0.1
 
 	#ytemp[np.isnan(params['y'])==False] = 0
 	tempresults = ytemp.reshape((len(params['x1']), len(params['x2'])))   #np.flipud()
@@ -417,6 +431,20 @@ def prepareScatt(params):
 		params.update({'xscatt': scatt[:,0]/params['w']})
 		params.update({'yscatt': scatt[:,1]})
 
+	elif( params['loopP1'] == 'wc' and params['loopP2'] == 'fric' ):
+
+		print('Prepare %s vs %s plot!'%(params['loopP1'], params['loopP2']))
+		scatt = np.array(list(itertools.product(*np.array([params['x1'], params['x2']]))))
+		params.update({'xscatt': scatt[:,0]/params['w']})
+		params.update({'yscatt': scatt[:,1]})
+
+	elif( params['loopP1'] == 'tau' and params['loopP2'] == 'fric' ):
+
+		print('Prepare %s vs %s plot!'%(params['loopP1'], params['loopP2']))
+		scatt = np.array(list(itertools.product(*np.array([params['x1'], params['x2']]))))
+		params.update({'xscatt': scatt[:,0]*params['w']/(2.0*np.pi)})
+		params.update({'yscatt': scatt[:,1]})
+
 	elif( params['loopP1'] == 'tau' and params['loopP2'] == 'K' ):
 
 		print('Prepare %s vs %s plot!'%(params['loopP1'], params['loopP2']))
@@ -479,15 +507,15 @@ def prepareScatt(params):
 	ytemp = [];
 	for i in range(len(params['y'][:,0])):
 		if np.all(np.isnan(params['y'][i,:])==True):
-			ytemp.append(params['y'][i,0])
+			ytemp.append(params['y'][i,0])										# sync state must be stable
 		else:
-			ytemp.append(np.max(params['y'][i,np.isnan(params['y'][i,:])==False]))
+			ytemp.append(np.max(params['y'][i,np.isnan(params['y'][i,:])==False])) # this could also be a negative mu value
 
 	params.update({'yy': np.array(ytemp)})
 
 	ytemp 		= np.array(ytemp)
 	maxGamma 	= np.max(ytemp[np.isnan(ytemp)==False])							# for the case that one wants to set the negative alpha from -0.1 to max ytemp
-	ytemp[ytemp == -0.1] = maxGamma
+	ytemp[ytemp == -999] = maxGamma+1											# set the cases where alpha < 0 to the largest value of the colorbar
 
 	params.update({'y': np.array(ytemp)})
 	#params.update({'y': np.max(params['y'][:,:], axis=0)})
@@ -526,7 +554,7 @@ def prepare2D(params):
 
 def evaluateEq(params):
 
-	sol = [];
+	sol = []; solBF = [];
 
 	K 		= params.get('K')
 	wc 		= params.get('wc')
@@ -549,26 +577,39 @@ def evaluateEq(params):
 			#print('K[k], Omeg[k]', K[k], Omeg[k])
 			#a = K[k] * hp( -Omeg[k]*tau + beta )
 			for l in range(len(wc)):
-				#a = K[k] * hp( -Omeg[k,l]*tau + beta )
-				#print('a_old:', a, '\ta_synctools:', alpha[k,l]); time.sleep(0.5)
+				# aa = K[k] * hp( -Omeg[k,l]*tau + beta )
+				# print('a_old: ', aa, '\ta_synctools: ', alpha[k,l], '\tDelta: ', aa-alpha[k,l]); time.sleep(0.1)
+				# if np.abs(aa-alpha[k,l]) > 1E-16:
+				# 	print('UH OH!'); sys.exit()
 				a = alpha[k,l]
-				#sol, cond_noInst = equationGamma(tau, a, wc[l], zeta, psi, K[k])
+				#sol, cond_noInst = applyConditions(tau, a, wc[l], zeta, psi, K[k])
 				#sol.append(sol)
-				sol.append(equationGamma(tau, a, wc[l], zeta, fric, psi, K[k]))
+				sol.append(applyConditions(tau, a, wc[l], zeta, fric, psi, K[k]))
+				#solBF.append(equationGammaBF(tau, a, wc[l], zeta, fric, psi, K[k]))
 
 	elif( loopP1 == 'K' and loopP2 == 'fric' ):
 
-		print('Calculate x=K and y=wc!')
+		print('Calculate x=K and y=fric!')
 		for k in range(len(K)):
-			#print('K[k], Omeg[k]', K[k], Omeg[k])
-			#a = K[k] * hp( -Omeg[k]*tau + beta )
 			for l in range(len(fric)):
-				#a = K[k] * hp( -Omeg[k,l]*tau + beta )
-				#print('a_old:', a, '\ta_synctools:', alpha[k,l]); time.sleep(0.5)
 				a = alpha[k,l]
-				#sol, cond_noInst = equationGamma(tau, a, wc[l], zeta, psi, K[k])
-				#sol.append(sol)
-				sol.append(equationGamma(tau, a, wc, zeta, fric[l], psi, K[k]))
+				sol.append(applyConditions(tau, a, wc, zeta, fric[l], psi, K[k]))
+
+	elif( loopP1 == 'wc' and loopP2 == 'fric' ):
+
+		print('Calculate x=wc and y=fric!')
+		for k in range(len(wc)):
+			for l in range(len(fric)):
+				a = alpha[k,l]
+				sol.append(applyConditions(tau, a, wc[k], zeta, fric[l], psi, K))
+
+	elif( loopP1 == 'tau' and loopP2 == 'fric' ):
+
+		print('Calculate x=tau and y=fric!')
+		for k in range(len(tau)):
+			for l in range(len(fric)):
+				a = alpha[k,l]
+				sol.append(applyConditions(tau[k], a, wc, zeta, fric[l], psi, K))
 
 	elif( loopP1 == 'wc' and loopP2 == 'K' ):
 
@@ -576,7 +617,7 @@ def evaluateEq(params):
 		for k in range(len(wc)):
 			for l in range(len(K)):
 				a = alpha[k,l]
-				sol.append(equationGamma(tau, a, wc[k], zeta, fric, psi, K[l]))
+				sol.append(applyConditions(tau, a, wc[k], zeta, fric, psi, K[l]))
 
 	elif( loopP1 == 'alpha' and loopP2 == 'wc' ):
 
@@ -595,7 +636,7 @@ def evaluateEq(params):
 				tautemp = tau
 			for l in range(len(wc)):
 				a = alpha[k,l]
-				sol.append(equationGamma(tautemp, a, wc[l], zeta, fric, psi, K[k]))
+				sol.append(applyConditions(tautemp, a, wc[l], zeta, fric, psi, K[k]))
 
 	elif( loopP1 == 'K' and loopP2 == 'tau' ):
 
@@ -603,7 +644,7 @@ def evaluateEq(params):
 		for k in range(len(K)):
 			for l in range(len(tau)):
 				a = alpha[k,l]
-				sol.append(equationGamma(tau[l], a, wc, zeta, fric, psi, K[k]))
+				sol.append(applyConditions(tau[l], a, wc, zeta, fric, psi, K[k]))
 
 	elif( loopP1 == 'tau' and loopP2 == 'K' ):
 
@@ -611,7 +652,7 @@ def evaluateEq(params):
 		for k in range(len(tau)):
 			for l in range(len(K)):
 				a = alpha[k,l]
-				sol.append(equationGamma(tau[k], a, wc, zeta, fric, psi, K[l]))
+				sol.append(applyConditions(tau[k], a, wc, zeta, fric, psi, K[l]))
 
 	elif( loopP1 == 'wc' and loopP2 == 'tau'):
 
@@ -620,7 +661,7 @@ def evaluateEq(params):
 			for l in range(len(tau)):
 				a = alpha[k,l]
 				if a > 0:
-					sol.append(equationGamma(tau[l], a, wc[k], zeta, fric, psi, K))
+					sol.append(applyConditions(tau[l], a, wc[k], zeta, fric, psi, K))
 				else:
 					sol.append([0, 0, 0, 0])
 
@@ -630,9 +671,11 @@ def evaluateEq(params):
 		for k in range(len(tau)):
 			for l in range(len(wc)):
 				a = alpha[k,l]
-				sol.append(equationGamma(tau[k], a, wc[l], zeta, fric, psi, K))
+				sol.append(applyConditions(tau[k], a, wc[l], zeta, fric, psi, K))
 
 	params.update({'y': np.array(sol)})
+	if solBF:
+		params.update({'yBF': np.array(solBF)})
 
 	#print('params[*y*]', params['y'])
 
@@ -647,7 +690,7 @@ def evaluateEq(params):
 # ******************************************************************************
 
 # potentially cythonize!
-def equationSigma(tau, a, wc, zeta, fric=1, gamma=0, psi=-np.pi, K=1):
+def equationSigma(tau, a, wc, zeta, fric=1, gamma=0, psi=np.pi, K=1):
 	''' USE for gammas without the condition
 		np.abs( a*zeta*np.sin(gamma[i]*tau) ) <= gamma[i] and np.abs(gamma[i]) > zero_treshold '''
 
@@ -667,7 +710,17 @@ def equationSigma(tau, a, wc, zeta, fric=1, gamma=0, psi=-np.pi, K=1):
 # ******************************************************************************
 
 # potentially cythonize!
-def equationGamma(tau, a, wc, zeta, fric=1, psi=-np.pi, K=1):
+def equationSigmaSlopes(tau, a, wc, fric, gamma, zeta, psi):
+
+	sigma = -wc*fric/2.0 + 1.0/tau * lambertw( 0.5*np.exp( 0.5*fric*wc*tau )*np.abs(zeta)*np.cos(gamma*tau-psi)*wc*a*tau**2 )
+	#print('type(sigma)', type(sigma), '\tsigma_slopes:', sigma)
+
+	return sigma
+
+# ******************************************************************************
+
+# potentially cythonize!
+def applyConditions(tau, a, wc, zeta, fric=1, psi=np.pi, K=1):
 
 	if isinstance(zeta, list) or isinstance(zeta, np.ndarray):
 		zetlen = len(zeta)
@@ -676,67 +729,245 @@ def equationGamma(tau, a, wc, zeta, fric=1, psi=-np.pi, K=1):
 	else:
 		print('Error, zeta needs to be value or list!')
 
-	result_gamma = []
-	all_gamma	 = []
+	zero_treshold0 = 1E-8; zero_treshold1 = 1E-17; zero_treshold2 = 1E-17;
+
+	result_mu    = []
+	all_mu	 	 = []
 	cond_noInst  = []
+
+	solvStab = fct_lib.stabFunctions('cotanFct')								# create object to solve for the mu -- use: 'realPart', 'imagPart' or 'cotanFct'
+	solvStabRealC = fct_lib.stabFunctions('realPart')							# create object to solve for the mu -- use: 'realPart', 'imagPart' or 'cotanFct'
+	solvStabImagC = fct_lib.stabFunctions('imagPart')							# create object to solve for the mu -- use: 'realPart', 'imagPart' or 'cotanFct'
 
 	for i in range(zetlen):
 
-		print('Compute gammas for set (tau, alpha, K, wc, zeta, psi):', tau, a, K, wc, zeta[i], psi[i])
+		#print('Compute gammas for set (tau, alpha, K, wc, zeta, psi):', tau, a, K, wc, zeta[i], psi[i])
 
-		zero_treshold0 = 1E-8
-		zero_treshold1 = 1E-17
-		zero_treshold2 = 1E-17
+		mu = equationMuQuad(tau, a, wc, zeta[i], fric)							# mu's from quadratic equation
+		#mu = equationMuFromRealandImag(tau, zeta[i], psi[i], a, wc, fric, solvStabRealC, solvStabImagC)	# mu's from real and imag part of char. eq.
+
+		all_mu.append(mu); #cond_noInst.append(0);
+		#mu = (mu*tau)%2*np.pi; mu = mu / tau
+
+		#print('Result before condition:', mu); #time.sleep(0.25)
+
+		for j in range(len(mu)):												# this condition can also be checked in prepare2D
+
+			# if np.isnan(mu[j]) == False:
+			# 	muBFtemp = fct_lib.solveRootsFct(tau, psi[i], a, wc, fric, mu[j])
+			# else:
+			# 	muBFtemp = mu[j]
+
+			mu[j] = stabilityTest(tau, zeta[i], psi[i], a, wc, fric, mu[j], mu);
 
 
-		#A = wc**2.0 - 2.0*np.abs(a)*wc
-		#B = (1.0-zeta**2.0)*(np.abs(a)*wc)**2.0
-		A = (fric*wc)**2.0 - 2.0*a*wc
-		B = (1.0-zeta[i]**2.0)*(a*wc)**2.0
-		# print('A:', A); print('B:', B);
-		gamma = np.array([ +np.sqrt(0.5*(-A+A*np.sqrt(1.0-4.0*B/(A**2.0)))), +np.sqrt(0.5*(-A-A*np.sqrt(1.0-4.0*B/(A**2.0)))),
-						   -np.sqrt(0.5*(-A+A*np.sqrt(1.0-4.0*B/(A**2.0)))), -np.sqrt(0.5*(-A-A*np.sqrt(1.0-4.0*B/(A**2.0)))) ])
+		#print('Result after condition:', mu); #time.sleep(0.25)
 
-		all_gamma.append(gamma)
-		cond_noInst.append(0)
-		print('Result before condition:', gamma); #time.sleep(0.25)
+		result_mu.append(mu)
 
-		for j in range(len(gamma)):													# this condition can also be checked in prepare2D
+	mu = np.concatenate(result_mu).tolist()
 
-			if np.abs(gamma[j]) > zero_treshold2:
-				if ( gamma[j] )**2 - np.abs(a)*wc*(1.0-np.abs(zeta[i])*np.cos( gamma[j]*tau-psi[i]) )  < 0.0: #if fullfilled, stable synced state!
-					if   gamma[j] > 0.0 and -wc*(gamma[j]*fric + np.abs(a)*np.abs(zeta[i])*np.sin( gamma[j]*tau-psi[i]) ) < 0.0: #  wc+np.abs(a)*np.abs(zeta)*tau*np.abs( np.cos( gamma[j]*tau-psi) ) >0.0) or (    ( gamma[j] )**2 - np.abs(a)*wc*(1.0-np.abs(zeta)*np.abs( np.cos( gamma[j]*tau-psi) ) ) < 0.0 and  wc+np.abs(a)*np.abs(zeta)*tau*np.abs( np.cos( gamma[j]*tau-psi) ) >0.0):
-						gamma[j] = None
-					elif gamma[j] < 0.0 and -wc*(gamma[j]*fric - np.abs(a)*np.abs(zeta[i])*np.sin( gamma[j]*tau-psi[i]) ) > 0.0: #  wc+np.abs(a)*np.abs(zeta)*tau*np.abs( np.cos( gamma[j]*tau-psi) ) >0.0) or (    ( gamma[j] )**2 - np.abs(a)*wc*(1.0-np.abs(zeta)*np.abs( np.cos( gamma[j]*tau-psi) ) ) < 0.0 and  wc+np.abs(a)*np.abs(zeta)*tau*np.abs( np.cos( gamma[j]*tau-psi) ) >0.0):
-						gamma[j] = None
+	return mu
 
-			elif np.abs(gamma[j]) < zero_treshold2:									# gamma = 0 means that there is no instability
-				gamma[j] = None
+################################################################################
 
-		print('Result after condition:', gamma); #time.sleep(0.25)
+def equationMuQuad(tau, a, wc, zeta, fric=1):
 
-		# sigma = equationSigma(tau, a, wc, zeta[i], gamma[j], psi[i])
-		# if ( np.abs( sigma ) > zero_treshold0 and np.isnan(gamma[j]) == False ):
-		# 	print('Found gamma (%0.2f) that does not full fulfill sigma condition via Lambert W functions since sigma=%0.2f.'%(gamma[j], sigma))
-		# 	gamma[j] = -999
+	#A = wc**2.0 - 2.0*np.abs(a)*wc
+	#B = (1.0-zeta**2.0)*(np.abs(a)*wc)**2.0
+	A = (fric*wc)**2.0 - 2.0*a*wc
+	B = (1.0-np.abs(zeta)**2.0)*(a*wc)**2.0
+	# print('A:', A); print('B:', B);
+	mu = np.array([ +np.sqrt(0.5*(-A+A*np.sqrt(1.0-4.0*B/(A**2.0)))), +np.sqrt(0.5*(-A-A*np.sqrt(1.0-4.0*B/(A**2.0)))),
+					   -np.sqrt(0.5*(-A+A*np.sqrt(1.0-4.0*B/(A**2.0)))), -np.sqrt(0.5*(-A-A*np.sqrt(1.0-4.0*B/(A**2.0)))) ])
 
-		# ADD condition that checks whether gamma fulfill Re and Im part equation, or which is closer...
+	return mu
 
-			# if gamma[j] != 0:
-			# 	if ( gamma[j] )**2 - np.abs(a)*wc*(1.0-np.abs(zeta)*np.cos( gamma[j]*tau-psi) )  < 0.0:
-			# 		if   gamma[j] > 0.0 and -wc*(gamma[j] + np.abs(a)*np.abs(zeta)*np.sin( gamma[j]*tau-psi) ) < 0.0: #  wc+np.abs(a)*np.abs(zeta)*tau*np.abs( np.cos( gamma[j]*tau-psi) ) >0.0) or (    ( gamma[j] )**2 - np.abs(a)*wc*(1.0-np.abs(zeta)*np.abs( np.cos( gamma[j]*tau-psi) ) ) < 0.0 and  wc+np.abs(a)*np.abs(zeta)*tau*np.abs( np.cos( gamma[j]*tau-psi) ) >0.0):
-			# 			gamma[j] = None
-			# 		elif gamma[j] < 0.0 and -wc*(gamma[j] - np.abs(a)*np.abs(zeta)*np.sin( gamma[j]*tau-psi) ) > 0.0: #  wc+np.abs(a)*np.abs(zeta)*tau*np.abs( np.cos( gamma[j]*tau-psi) ) >0.0) or (    ( gamma[j] )**2 - np.abs(a)*wc*(1.0-np.abs(zeta)*np.abs( np.cos( gamma[j]*tau-psi) ) ) < 0.0 and  wc+np.abs(a)*np.abs(zeta)*tau*np.abs( np.cos( gamma[j]*tau-psi) ) >0.0):
-			# 			gamma[j] = None
+################################################################################
 
-		#print('Gammas left:', gamma); #time.sleep(1)
+def equationMuFromRealandImag(tau, zeta, psi, a, wc, fric, solvStabRealC, solvStabImagC):	# here we obtain the mu's from solving the real and imaginary parts of the char. eq. for sigma = 0
 
-		if a <= zero_treshold1:														# for alpha < 0, the state for the above parameters IS UNSTABLE
-			#print('Set gamma to zero since alpha<0!'); time.sleep(2)
-			gamma[:] = -0.1;
+	intervalNumbPiHalf = 10
+	muBFcota_initIndi  = np.zeros(intervalNumbPiHalf)
+	muBFreal_initIndi  = np.zeros(intervalNumbPiHalf)
+	muBFimag_initIndi  = np.zeros(intervalNumbPiHalf)
 
-		result_gamma.append(gamma)
+	scanRegimeReal = np.sqrt(a*wc)*(1.0+np.abs(zeta)/2.0)
+	scanRegimeImag = np.abs(zeta)*a / fric
+	for j in range(intervalNumbPiHalf):											# calculate numerically the mu using multiples of pi/2 as initial guesses
+		#muBFcota_initIndi[i,j] = solvStabCotan.solveRootsFct(tau, z[i], psi[i], alpha, wc, fric, j/2*np.pi)
+		muBFreal_initIndi[j] = solvStabRealC.solveRootsFct(tau, zeta, psi, a, wc, fric, j*scanRegimeReal/intervalNumbPiHalf)
+		muBFimag_initIndi[j] = solvStabImagC.solveRootsFct(tau, zeta, psi, a, wc, fric, j*scanRegimeImag/intervalNumbPiHalf)
 
-	gamma = np.concatenate(result_gamma).tolist()
+	mu = np.concatenate([muBFreal_initIndi, muBFimag_initIndi]).tolist()
 
-	return gamma#, all_gamma
+	return mu #np.unique(mu)#.tolist()
+
+################################################################################
+
+def stabilityTest(tau, zeta, psi, a, wc, fric, mu, muvec=[]):
+
+	zero_treshold0 = 1E-8; zero_treshold1 = 1E-16; zero_treshold2 = 1E-16;
+
+	temp1 = False; temp2 = False; temp3 = False;
+	rho				= np.abs(zeta) * np.cos( mu*tau-psi )
+	rhotilde		= np.abs(zeta) * np.sin( mu*tau-psi )
+	asymptReal		= mu**2-a*wc
+	conditionReal	= +mu**2   - a * wc * ( 1.0 - rho )
+	conditionImag	= -wc*(mu*fric + a * rhotilde)
+	conditionSlope  = (fric*wc)**2.0 - 2.0*a*wc
+	#sigReEqualSlope = equationSigmaSlopes(tau, a, wc, fric, mu, zeta, psi)  	# sigma at which slope of quadratic function and exp are equal
+	#slopeValsigSt1  = 2.0*sigReEqualSlope + wc*fric
+	#slopeValsigSt2  = -tau*a*wc*rho*np.exp(-sigReEqualSlope*tau)
+	#fctValsigStRe1  = sigReEqualSlope**2 + wc * fric * sigReEqualSlope
+	#fctValsigStRe2  = mu**2 - a * wc * (1.0 - rho * np.exp(-sigReEqualSlope*tau) )
+	################################################################
+	#sigImEqualSlope = -(1.0/tau)*np.log( 2*mu/(tau*wc*a*rhotilde) )				# sigma at which slope of linear and exp function are equal
+	#fctValsigStIm1  = 2.0*mu*sigImEqualSlope
+	#fctValsigStIm2  = -wc*(mu*fric+a*rhotilde*np.exp(-sigImEqualSlope*tau) )
+
+	# if a > 0:
+	#
+	# 	# conditions from real part
+	# 	if (asymptReal < 0 and rho > 0 and conditionReal < 0):
+	# 		temp1 = True
+	# 	elif (asymptReal < 0 and rho < 0):
+	# 		temp1 = True
+	#
+	# 	if (asymptReal > 0 and rho < 0 and conditionReal < 0):
+	# 		if np.abs(np.imag(sigReEqualSlope)) < zero_treshold0:
+	# 			if ( sigReEqualSlope > 0 and not fctValsigStRe2 > fctValsigStRe1 ):
+	# 				temp1 = True
+	# 			elif sigReEqualSlope < 0:
+	# 				temp1 = True
+	# 		else:
+	# 			temp1 = True
+	#
+	# 	elif not (asymptReal > 0 and rho > 0):
+	# 		temp1 = True
+
+	if np.abs(mu) > zero_treshold2 and a > 0:
+
+		# conditions from imaginary part
+		if   mu < 0 and rhotilde > 0 and conditionImag > 0.0:
+			#mu = None
+			temp2 = True														# no solution sigma > 0
+		elif mu < 0 and rhotilde < 0:
+			#if fctValsigStIm2 < fctValsigStIm1 and sigImEqualSlope < 0:		# this would be asking whether there is a solution/intersection for sigma < 0
+				#mu = None
+			temp2 = True														# no solution sigma > 0
+		elif mu > 0 and rhotilde < 0 and conditionImag < 0.0:
+			#mu = None
+			temp2 = True														# no solution sigma > 0
+		elif mu > 0 and rhotilde > 0:
+			#if fctValsigStIm2 > fctValsigStIm1 and sigImEqualSlope < 0:		# this would be asking whether there is a solution/intersection for sigma < 0
+				#mu = None
+			temp2 = True														# no solution sigma > 0
+
+	elif np.abs(mu) < zero_treshold2 and zeta == -1.0 and conditionSlope < 0.0: # mu = 0 means that we have to take a closer look here!!!
+		# mu = np.nan #mu = None
+		if fric*wc>=tau*a*wc:													# in these special cases we need to check the slopes of in the f(mu) vs mu plot
+			# mu = np.nan
+			temp3=True
+
+	elif  np.abs(mu) < zero_treshold2 and zeta == -1.0 and conditionSlope > 0.0:
+		# mu = np.nan
+		temp3=True
+
+	if temp2 or temp3: #if ( temp1 and temp2 ) or temp3:
+		mu = np.nan #mu = None
+
+	if a <= 0:
+		mu = -999;
+
+	return mu
+
+################################################################################
+
+# def equationGammaBF(tau, a, wc, zeta, fric=1, psi=np.pi, K=1):
+#
+# 	if isinstance(zeta, list) or isinstance(zeta, np.ndarray):
+# 		zetlen = len(zeta)
+# 	elif isinstance(zeta, int) or isinstance(zeta, float):
+# 		zetlen = 1; zeta = np.array([zeta]); psi = np.array([psi]);
+# 	else:
+# 		print('Error, zeta needs to be value or list!')
+#
+# 	result_muBF 	= []
+# 	all_mu	 	= []
+# 	cond_noInst  	= []
+# 	muBF		 	= []
+# 	muBFt	 	= []
+#
+# 	for i in range(zetlen):
+#
+# 		print('Compute muBFs for set (tau, alpha, K, wc, zeta, psi):', tau, a, K, wc, zeta[i], psi[i])
+#
+# 		zero_treshold0 = 1E-8
+# 		zero_treshold1 = 1E-17
+# 		zero_treshold2 = 1E-17
+#
+#
+# 		#A = wc**2.0 - 2.0*np.abs(a)*wc
+# 		#B = (1.0-zeta**2.0)*(np.abs(a)*wc)**2.0
+# 		A = (fric*wc)**2.0 - 2.0*a*wc
+# 		B = (1.0-np.abs(zeta[i])**2.0)*(a*wc)**2.0
+# 		# print('A:', A); print('B:', B);
+# 		mu = np.array([ +np.sqrt(0.5*(-A+A*np.sqrt(1.0-4.0*B/(A**2.0)))), +np.sqrt(0.5*(-A-A*np.sqrt(1.0-4.0*B/(A**2.0)))),
+# 						   -np.sqrt(0.5*(-A+A*np.sqrt(1.0-4.0*B/(A**2.0)))), -np.sqrt(0.5*(-A-A*np.sqrt(1.0-4.0*B/(A**2.0)))) ])
+#
+# 		all_mu.append(mu)
+# 		cond_noInst.append(0)
+#
+# 		print('Result before condition:', mu); #time.sleep(0.25)
+#
+# 		for j in range(len(mu)):												# this condition can also be checked in prepare2D
+#
+# 			if np.isnan(mu[j]) == False:
+# 				muBFtemp = fct_lib.solveRootsFct(tau, psi[i], a, wc, fric, mu[j])
+# 			else:
+# 				muBFtemp = mu[j]
+#
+# 			###########################################################
+#
+# 			# if np.abs(muBFtemp) > zero_treshold2:
+# 			# 	if ( muBFtemp )**2 - np.abs(a)*wc*(1.0-np.abs(zeta[i])*np.cos( muBFtemp*tau-psi[i]) )  < 0.0: #if fullfilled, stable synced state!
+# 			# 		if   muBFtemp > 0.0 and -wc*(muBFtemp*fric + np.abs(a)*np.abs(zeta[i])*np.sin( muBFtemp*tau-psi[i]) ) < 0.0: #  wc+np.abs(a)*np.abs(zeta)*tau*np.abs( np.cos( muBFtemp*tau-psi) ) >0.0) or (    ( muBFtemp )**2 - np.abs(a)*wc*(1.0-np.abs(zeta)*np.abs( np.cos( muBFtemp*tau-psi) ) ) < 0.0 and  wc+np.abs(a)*np.abs(zeta)*tau*np.abs( np.cos( muBFtemp*tau-psi) ) >0.0):
+# 			# 			muBFtemp = None
+# 			# 		elif muBFtemp < 0.0 and -wc*(muBFtemp*fric - np.abs(a)*np.abs(zeta[i])*np.sin( muBFtemp*tau-psi[i]) ) > 0.0: #  wc+np.abs(a)*np.abs(zeta)*tau*np.abs( np.cos( muBFtemp*tau-psi) ) >0.0) or (    ( muBFtemp )**2 - np.abs(a)*wc*(1.0-np.abs(zeta)*np.abs( np.cos( muBFtemp*tau-psi) ) ) < 0.0 and  wc+np.abs(a)*np.abs(zeta)*tau*np.abs( np.cos( muBFtemp*tau-psi) ) >0.0):
+# 			# 			muBFtemp = None
+# 			#
+# 			# elif np.abs(muBFtemp) < zero_treshold2:								# mu = 0 means that there is no instability
+# 			# 	muBFtemp = None
+# 			#
+# 			# if a <= 0:
+# 			# 	muBFtemp = -0.1;
+#
+# 			###########################################################
+#
+# 			if np.abs(muBFtemp) > zero_treshold2 and a > 0:
+# 				rho = np.abs(zeta[i])*np.cos( muBFtemp*tau-psi[i])
+# 				if   rho < 0:
+# 					if ( muBFtemp )**2 - np.abs(a)*wc*(1.0+np.abs(rho) ) < 0.0: #if fullfilled, stable synced state!
+# 						muBFtemp = None
+# 				elif rho > 0:
+# 					if ( muBFtemp )**2 - np.abs(a)*wc*(1.0-np.abs(rho) ) < 0.0: #if fullfilled, stable synced state!
+# 						muBFtemp = None
+#
+# 			elif np.abs(muBFtemp) < zero_treshold2 and a > 0:					# mu = 0 means that there is no instability -- criterium Earl and Strogatz holds
+# 				muBFtemp = None
+#
+# 			elif a <= 0:
+# 				muBFtemp = -0.1;
+#
+# 			###########################################################
+#
+# 			muBFt.append(muBFtemp)
+#
+# 		print('Gamma calculated from cotangent expression:', muBFt);
+#
+# 		result_muBF.append(muBFt)
+#
+# 	muBF = np.concatenate(result_muBF).tolist()
+#
+# 	return muBF

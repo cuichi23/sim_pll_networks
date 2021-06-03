@@ -59,17 +59,17 @@ annotationfont = {
 		}
 
 # plot parameter
-axisLabel = 44;
-tickSize  = 20;
-titleLabel= 10;
-dpi_val   = 150;
-figwidth  = 10;
-figheight = 5;
-
+axisLabel 			= 44;
+tickSize  			= 20;
+titleLabel			= 10;
+dpi_val   			= 150;
+figwidth  			= 10;
+figheight 			= 6;
+colormapSyncStab 	= cm.PuOr
 
 ################################################################################
 ################################################################################
-filename = 'results/params_tau_vs_K_12:53_2021_4_30'
+filename = 'results/params_tau_vs_K_15:28_2021_5_10'
 ################################################################################
 ################################################################################
 
@@ -80,7 +80,9 @@ print('Here we pick the largest gamma! Check when studying systems with N>2.')
 ytemp = [];
 for i in range(len(params['y'][:,0])):
 	if np.all(np.isnan(params['y'][i,:])==True):
-		ytemp.append(params['y'][i,0])
+		# print( (params['y'][i,:]) )
+		# ytemp.append(params['y'][i,0])
+		ytemp.append(1.1)
 	else:
 		ytemp.append(np.max(params['y'][i,np.isnan(params['y'][i,:])==False]))
 
@@ -105,7 +107,7 @@ cdict = {
 colormap  = matplotlib.colors.LinearSegmentedColormap('my_colormap', cdict, 1024)
 
 fig1 = plt.figure(num=1, figsize=(figwidth, figheight), dpi=dpi_val, facecolor='w', edgecolor='k')
-fig1.set_size_inches(8,6)
+fig1.set_size_inches(figwidth,figheight)
 
 plt.clf()
 ax = plt.subplot(1, 1, 1)
@@ -121,18 +123,22 @@ tempcond = np.transpose(tempcond)
 #tempresults_ma = tempresults
 tempresults_ma = ma.masked_where(tempresults < 0, tempresults)				# Create masked array
 tempresults_ma1 = ma.masked_where(tempresults >= 0, tempresults)			# Create masked array
+tempresults_ma11 = ma.masked_where(tempresults > 1., tempresults)			# Create masked array
 #print('tempresult_ma:', tempresults_ma)
 #print('initPhiPrime0:', initPhiPrime0)
-cmap_choice 	= cm.PuOr													# cm.coolwarm
-cmap_neg_alpha 	= colors.ListedColormap(['black'])
-cmap_cond 		= colors.ListedColormap(['yellow'])
-
+cmap_choice 	= cm.Blues													# cm.coolwarm
+cmap_neg_alpha 	= colors.ListedColormap(['brown'])
+cmap_cond 		= colors.ListedColormap(['cyan'])
+cmap_stabl 		= colors.ListedColormap(['lightcoral'])
 try:
 	plt.imshow(tempresults_ma.astype(float), interpolation='nearest', cmap=cmap_choice, aspect='auto', origin='lower',
 			extent=(params['xscatt'].min(), params['xscatt'].max(), params['yscatt'].min(), params['yscatt'].max()),
 			vmin=np.min(tempresults_ma[np.isnan(tempresults_ma)==False]), vmax=np.max(tempresults_ma[np.isnan(tempresults_ma)==False]) )
+	plt.imshow(tempresults_ma11.astype(float), interpolation='nearest', cmap=cmap_stabl, aspect='auto', origin='lower',
+			extent=(params['xscatt'].min(), params['xscatt'].max(), params['yscatt'].min(), params['yscatt'].max()),
+			vmin=np.min(tempresults_ma11[np.isnan(tempresults_ma11)==False]), vmax=np.max(tempresults_ma11[np.isnan(tempresults_ma11)==False]) )
 			#vmin=np.min(tempresults_ma), vmax=np.max(tempresults_ma) )
-	plt.colorbar();
+	#plt.colorbar();
 	plt.imshow(tempresults_ma1.astype(float), interpolation='nearest', cmap=cmap_neg_alpha, aspect='auto', origin='lower',
 			extent=(params['xscatt'].min(), params['xscatt'].max(), params['yscatt'].min(), params['yscatt'].max()),
 			vmin=np.min(tempresults_ma1), vmax=np.max(tempresults_ma1) )
@@ -144,6 +150,9 @@ except:
 	plt.imshow(tempresults_ma.astype(float), interpolation='nearest', cmap=cmap_choice, aspect='auto', origin='lower',
 			extent=(params['xscatt'].min(), params['xscatt'].max(), params['yscatt'].min(), params['yscatt'].max()),
 			vmin=np.min(tempresults_ma), vmax=np.max(tempresults_ma) )
+	plt.imshow(tempresults_ma11.astype(float), interpolation='nearest', cmap=cmap_stabl, aspect='auto', origin='lower',
+			extent=(params['xscatt'].min(), params['xscatt'].max(), params['yscatt'].min(), params['yscatt'].max()),
+			vmin=np.min(tempresults_ma11[np.isnan(tempresults_ma11)==False]), vmax=np.max(tempresults_ma11[np.isnan(tempresults_ma11)==False]) )
 			#vmin=np.min(tempresults_ma), vmax=np.max(tempresults_ma) )
 	plt.imshow(tempresults_ma1.astype(float), interpolation='nearest', cmap=cmap_neg_alpha, aspect='auto', origin='lower',
 			extent=(params['xscatt'].min(), params['xscatt'].max(), params['yscatt'].min(), params['yscatt'].max()),
@@ -168,7 +177,7 @@ plt.savefig('plots/imshow_%s_vs_%s_%d_%d_%d.png' %(params['loopP1'], params['loo
 ################################################################################
 
 fig2 = plt.figure(num=2, figsize=(figwidth, figheight), dpi=dpi_val, facecolor='w', edgecolor='k')
-fig2.set_size_inches(8,6)
+fig2.set_size_inches(figwidth,figheight)
 
 plt.clf()
 ax = plt.subplot(1, 1, 1)
@@ -215,29 +224,59 @@ if  ( params['loopP1'] == 'tau' and params['loopP2'] == 'wc' ):
 	paraPlot.makePlotsFromSynctoolsResults(100, params['x1'], params['x2'], params['Omeg'], params['w']/(2.0*np.pi), 1.0/params['w'], 1.0,
 					r'$\frac{\omega\tau}{2\pi}$', r'$\frac{\omega_\textrm{c}}{\omega}$', r'$\Omega$', 'tau', 'K', 'Omeg', None, cm.coolwarm)
 	paraPlot.makePlotsFromSynctoolsResults(101, params['x1'], params['x2'], params['ReLambSynctools'], params['w']/(2.0*np.pi), 1.0/params['w'], params['w']/(2.0*np.pi),
-					r'$\frac{\omega\tau}{2\pi}$', r'$\frac{\omega_\textrm{c}}{\omega}$', r'$\frac{\textrm{Re}(\lambda)\omega}{2\pi}$', 'tau', 'wc', 'ReLambda', None, cm.PuOr)
+					r'$\frac{\omega\tau}{2\pi}$', r'$\frac{\omega_\textrm{c}}{\omega}$', r'$\frac{\textrm{Re}(\lambda)\omega}{2\pi}$', 'tau', 'wc', 'ReLambda', None, colormapSyncStab)
 	paraPlot.makePlotsFromSynctoolsResults(102, params['x1'], params['x2'], params['ImLambSynctools'], params['w']/(2.0*np.pi), 1.0/params['w'], 1.0/params['w'],
-					r'$\frac{\omega\tau}{2\pi}$', r'$\frac{\omega_\textrm{c}}{\omega}$', r'$\frac{\textrm{Im}(\lambda)}{\omega}$', 'tau', 'wc', 'ImLambda', None, cm.PuOr)
+					r'$\frac{\omega\tau}{2\pi}$', r'$\frac{\omega_\textrm{c}}{\omega}$', r'$\frac{\textrm{Im}(\lambda)}{\omega}$', 'tau', 'wc', 'ImLambda', None, colormapSyncStab)
 
 elif( params['loopP1'] == 'tau' and params['loopP2'] == 'K' ):
 
 	paraPlot.makePlotsFromSynctoolsResults(100, params['x1'], params['x2'], params['Omeg'], params['w']/(2.0*np.pi), 1.0/params['w'], 1.0,
 					r'$\frac{\omega\tau}{2\pi}$', r'$\frac{K}{\omega}$', r'$\Omega$', 'tau', 'K', 'Omeg', None, cm.coolwarm)
 	paraPlot.makePlotsFromSynctoolsResults(101, params['x1'], params['x2'], params['ReLambSynctools'], params['w']/(2.0*np.pi), 1.0/params['w'], params['w']/(2.0*np.pi),
-					r'$\frac{\omega\tau}{2\pi}$', r'$\frac{K}{\omega}$', r'$\frac{\textrm{Re}(\lambda)\omega}{2\pi}$', 'tau', 'K', 'ReLambda', None, cm.PuOr)
+					r'$\frac{\omega\tau}{2\pi}$', r'$\frac{K}{\omega}$', r'$\frac{\textrm{Re}(\lambda)\omega}{2\pi}$', 'tau', 'K', 'ReLambda', None, colormapSyncStab)
 	paraPlot.makePlotsFromSynctoolsResults(102, params['x1'], params['x2'], params['ImLambSynctools'], params['w']/(2.0*np.pi), 1.0/params['w'], 1.0/params['w'],
-					r'$\frac{\omega\tau}{2\pi}$', r'$\frac{K}{\omega}$', r'$\frac{\textrm{Im}(\lambda)}{\omega}$', 'tau', 'K', 'ImLambda', None, cm.PuOr)
+					r'$\frac{\omega\tau}{2\pi}$', r'$\frac{K}{\omega}$', r'$\frac{\textrm{Im}(\lambda)}{\omega}$', 'tau', 'K', 'ImLambda', None, colormapSyncStab)
 
 elif( params['loopP1'] == 'K' and params['loopP2'] == 'wc' ):
 
 	paraPlot.makePlotsFromSynctoolsResults(100, params['x1'], params['x2'], params['Omeg'], 1.0/params['w'], 1.0/params['w'], 1.0,
 					r'$\frac{K}{\omega}$', r'$\frac{\omega_\textrm{c}}{\omega}$', r'$\Omega$', 'K', 'wc', 'Omeg', None, cm.coolwarm)
 	paraPlot.makePlotsFromSynctoolsResults(101, params['x1'], params['x2'], params['ReLambSynctools'], 1.0/params['w'], 1.0/params['w'], params['w']/(2.0*np.pi),
-					r'$\frac{K}{\omega}$', r'$\frac{\omega_\textrm{c}}{\omega}$', r'$\frac{\textrm{Re}(\lambda)\omega}{2\pi}$', 'K', 'wc', 'ReLambda', None, cm.PuOr)
+					r'$\frac{K}{\omega}$', r'$\frac{\omega_\textrm{c}}{\omega}$', r'$\frac{\textrm{Re}(\lambda)\omega}{2\pi}$', 'K', 'wc', 'ReLambda', None, colormapSyncStab)
 	paraPlot.makePlotsFromSynctoolsResults(102, params['x1'], params['x2'], params['ImLambSynctools'], 1.0/params['w'], 1.0/params['w'], 1.0/params['w'],
-					r'$\frac{K}{\omega}$', r'$\frac{\omega_\textrm{c}}{\omega}$', r'$\frac{\textrm{Im}(\lambda)}{\omega}$', 'K', 'wc', 'ImLambda', None, cm.PuOr)
+					r'$\frac{K}{\omega}$', r'$\frac{\omega_\textrm{c}}{\omega}$', r'$\frac{\textrm{Im}(\lambda)}{\omega}$', 'K', 'wc', 'ImLambda', None, colormapSyncStab)
 
+elif( params['loopP1'] == 'K' and params['loopP2'] == 'fric' ):
 
+	#		 makePlotsFromSynctoolsResults(figID, x, y,  z, rescale_x, rescale_y, rescale_z, x_label, y_label, z_label, x_identifier, y_identifier, z_identifier)
+	paraPlot.makePlotsFromSynctoolsResults(100, params['x1'], params['x2'], params['Omeg'], 1.0/w, 1, 1.0,
+					r'$\frac{K}{\omega}$', r'$\gamma$', r'$\Omega$', 'K', 'fric', 'Omeg', None, cm.coolwarm)
+	paraPlot.makePlotsFromSynctoolsResults(101, params['x1'], params['x2'], params['ReLambSynctools'], 1.0/w, 1, w/(2.0*np.pi),
+					r'$\frac{K}{\omega}$', r'$\gamma$', r'$\frac{\textrm{Re}(\lambda)\omega}{2\pi}$', 'K', 'fric', 'ReLambda', None, colormapSyncStab)
+	paraPlot.makePlotsFromSynctoolsResults(102, params['x1'], params['x2'], params['ImLambSynctools'], 1.0/w, 1, 1.0/w,
+					r'$\frac{K}{\omega}$', r'$\gamma$', r'$\frac{\textrm{Im}(\lambda)}{\omega}$', 'K', 'fric', 'ImLambda', None, colormapSyncStab)
+
+elif( params['loopP1'] == 'tau' and params['loopP2'] == 'fric' ):
+
+	#		 makePlotsFromSynctoolsResults(figID, x, y,  z, rescale_x, rescale_y, rescale_z, x_label, y_label, z_label, x_identifier, y_identifier, z_identifier)
+	paraPlot.makePlotsFromSynctoolsResults(100, params['x1'], params['x2'], params['Omeg'], 1.0/w, 1, 1.0,
+					r'$\frac{\omega\tau}{2\pi}$', r'$\gamma$', r'$\Omega$', 'K', 'fric', 'Omeg', None, cm.coolwarm)
+	paraPlot.makePlotsFromSynctoolsResults(101, params['x1'], params['x2'], params['ReLambSynctools'], 1.0/w, 1, w/(2.0*np.pi),
+					r'$\frac{\omega\tau}{2\pi}$', r'$\gamma$', r'$\frac{\textrm{Re}(\lambda)\omega}{2\pi}$', 'K', 'fric', 'ReLambda', None, colormapSyncStab)
+	paraPlot.makePlotsFromSynctoolsResults(102, params['x1'], params['x2'], params['ImLambSynctools'], 1.0/w, 1, 1.0/w,
+					r'$\frac{\omega\tau}{2\pi}$', r'$\gamma$', r'$\frac{\textrm{Im}(\lambda)}{\omega}$', 'K', 'fric', 'ImLambda', None, colormapSyncStab)
+
+elif( params['loopP1'] == 'wc' and params['loopP2'] == 'fric' ):
+
+	#		 makePlotsFromSynctoolsResults(figID, x, y,  z, rescale_x, rescale_y, rescale_z, x_label, y_label, z_label, x_identifier, y_identifier, z_identifier)
+	paraPlot.makePlotsFromSynctoolsResults(100, params['x1'], params['x2'], params['Omeg'], 1.0/w, 1, 1.0,
+					r'$\frac{\omega_\textrm{c}}{\omega}$', r'$\gamma$', r'$\Omega$', 'K', 'fric', 'Omeg', None, cm.coolwarm)
+	paraPlot.makePlotsFromSynctoolsResults(101, params['x1'], params['x2'], params['ReLambSynctools'], 1.0/w, 1, w/(2.0*np.pi),
+					r'$\frac{\omega_\textrm{c}}{\omega}$', r'$\gamma$', r'$\frac{\textrm{Re}(\lambda)\omega}{2\pi}$', 'K', 'fric', 'ReLambda', None, colormapSyncStab)
+	paraPlot.makePlotsFromSynctoolsResults(102, params['x1'], params['x2'], params['ImLambSynctools'], 1.0/w, 1, 1.0/w,
+					r'$\frac{\omega_\textrm{c}}{\omega}$', r'$\gamma$', r'$\frac{\textrm{Im}(\lambda)}{\omega}$', 'K', 'fric', 'ImLambda', None, colormapSyncStab)
+
+plt.draw(); #plt.show();
 
 plt.draw()
 plt.show()

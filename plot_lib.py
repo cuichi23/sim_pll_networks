@@ -453,6 +453,59 @@ def plotClockTime(dictPLL, dictNet, dictData):
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+def plotCtrlSigDny(dictPLL, dictNet, dictData):
+
+	dictPLL, dictNet = prepareDictsForPlotting(dictPLL, dictNet)
+
+	color		= ['blue', 'red', 'purple', 'cyan', 'green', 'yellow'] #'magenta'
+	linet		= ['-', '-.', '--', ':', 'densily dashdotdotted', 'densely dashed']
+
+	fig10 = plt.figure(num=10, figsize=(figwidth, figheight), dpi=dpi_val, facecolor='w', edgecolor='k')
+	fig10.canvas.set_window_title('time-series control voltage')		 		# plot the time evolution of the control signal
+
+	plt.plot(dictData['t'], dictData['ctrl'], linewidth=1, linestyle=linet[0])
+
+	plt.xlabel(r'$\frac{\omega t}{2\pi}$', fontdict = labelfont)
+	plt.ylabel(r'$V_\textrm{ctrl}(t)$', fontdict = labelfont)
+	# plt.legend()
+
+	plt.savefig('results/ctrlSig-t_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.pdf' %(np.mean(dictPLL['coupK']), np.mean(dictPLL['cutFc']), np.mean(dictPLL['syncF']), np.mean(dictPLL['transmission_delay']), np.mean(dictPLL['noiseVarVCO']), now.year, now.month, now.day))
+	plt.savefig('results/ctrlSig-t_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.png' %(np.mean(dictPLL['coupK']), np.mean(dictPLL['cutFc']), np.mean(dictPLL['syncF']), np.mean(dictPLL['transmission_delay']), np.mean(dictPLL['noiseVarVCO']), now.year, now.month, now.day), dpi=300)
+
+	return None
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+def plotOscSignal(dictPLL, dictNet, dictData, plotEveryDt=1):
+
+	dictPLL, dictNet = prepareDictsForPlotting(dictPLL, dictNet)
+
+	color		= ['blue', 'red', 'purple', 'cyan', 'green', 'yellow'] #'magenta'
+	linet		= ['-', '-.', '--', ':', 'densily dashdotdotted', 'densely dashed']
+
+	fig11 = plt.figure(num=11, figsize=(figwidth, figheight), dpi=dpi_val, facecolor='w', edgecolor='k')
+	fig11.canvas.set_window_title('time-series signals')		 		   # plot the time evolution of the control signal
+
+	ax11 = fig11.add_subplot(211)
+
+	for i in range(len(dictData['phi'][0,:])):
+		plt.plot((dictData['t'][::plotEveryDt]), dictPLL['vco_out_sig'](dictData['phi'][::plotEveryDt,i]), label='sig PLL%i' %(i))
+		plt.ylabel(r'$s( \theta(t) )$', fontdict = labelfont)
+
+	ax12 = fig11.add_subplot(212)
+
+	for i in range(len(dictData['phi'][0,:])):
+		plt.plot((dictData['t'][::plotEveryDt]), dictPLL['vco_out_sig'](dictData['phi'][::plotEveryDt,i]/dictPLL['div']), label='sig PLL%i' %(i))
+		plt.ylabel(r'$s( \theta(t)/ %i )$'%dictPLL['div'], fontdict = labelfont)
+
+
+	plt.savefig('results/sig_and_divSig-t_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.pdf' %(np.mean(dictPLL['coupK']), np.mean(dictPLL['cutFc']), np.mean(dictPLL['syncF']), np.mean(dictPLL['transmission_delay']), np.mean(dictPLL['noiseVarVCO']), now.year, now.month, now.day))
+	plt.savefig('results/sig_and_divSig-t_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.png' %(np.mean(dictPLL['coupK']), np.mean(dictPLL['cutFc']), np.mean(dictPLL['syncF']), np.mean(dictPLL['transmission_delay']), np.mean(dictPLL['noiseVarVCO']), now.year, now.month, now.day), dpi=300)
+
+	return None
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 def plotFreqAndOrderP(dictPLL, dictNet, dictData):
 
 	dictPLL, dictNet = prepareDictsForPlotting(dictPLL, dictNet)

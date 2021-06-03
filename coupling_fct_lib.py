@@ -44,7 +44,7 @@ def triangular(x):
 def deriv_triangular(x):
 	return (2.0/np.pi)*square(x,duty=0.5)
 
-def square_wave(x):
+def square_wave(x, duty=0.5):
 	return 0.5*(1.0+square(x,duty=0.5))
 
 def pfd(x):

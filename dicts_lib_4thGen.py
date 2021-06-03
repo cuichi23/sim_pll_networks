@@ -43,7 +43,9 @@ def getDicts(Fsim=125):
 		'phiPerturbRot': [],													# delta-perturbation on initial state -- in rotated space
 		'phiInitConfig': [],													# phase-configuration of sync state,  []: automatic, else provide list
 		'freq_beacons': 0.25,													# frequency of external sender beacons, either a float or a list
-		'test_case': False														# True: run testcase sim, False: run other simulation mode
+		'special_case': 'False',												# 'False', or 'test_case', 'timeDepInjectLockCoupStr', 'timeDepTransmissionDelay'
+		'typeOfTimeDependency': 'linear',										# 'exponential', 'linear', 'quadratic', 'triangle', 'cosine'
+		'min_max_rate_timeDepPara': [0, 0.5, 0.5/5]								# provide a list with min, max and rate of the time-dependent parameter
 	}
 
 	dictPLL={
@@ -113,7 +115,7 @@ def getDicts(Fsim=125):
 		sf = synctools.SweepFactory(dictPLL, dictNet, isRadians=isRadian)
 		fsl = sf.sweep()
 		para_mat = fsl.get_parameter_matrix(isRadians=False)				    # extract variables from the sweep, this matrix contains all cases
-		print('New parameter combinations with {intrF, coupK, cutFc, delay, Omega, ReLambda, ImLambda, TsimToPert1/e, Nx, Ny, mx, my, div}: \n', para_mat)
+		print('New parameter combinations with {intrF, coupK, cutFc, delay, Omega, ReLambda, ImLambda, TsimToPert1/e, Nx, Ny, mx, my, div}: \n', [*para_mat])
 		choice = chooseSolution(para_mat)
 		dictPLL.update({'syncF': para_mat[choice,4], 'ReLambda': para_mat[choice,5], 'ImLambda': para_mat[choice,6]})
 		#except:

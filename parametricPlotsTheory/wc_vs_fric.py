@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 import numpy as np
 import datetime, time
-import os, gc, sys
+import os, gc, sys, pickle
 now = datetime.datetime.now()
 
 # plot parameter
@@ -30,10 +30,10 @@ dictNet={
 	'Tsim': 100,
 	'topology': 'square-periodic',															# 1d) ring, chain, 2d) square-open, square-periodic, hexagonal...
 																				# 3) global, entrainOne, entrainAll, entrainPLLsHierarch, compareEntrVsMutual
-	'zeta': [-0.5, 0.25], #[-1],  #[-1/2, 1/4], 								# real part of eigenvalue of slowest decaying perturbation mode for the set of parameters, also a fct. of tau!
+	'zeta': [-0.5, 0.25], #[-1], 												# real part of eigenvalue of slowest decaying perturbation mode for the set of parameters, also a fct. of tau!
 	'psi': [np.pi, 0],															# real part of eigenvalue of slowest decaying perturbation
 	'computeFreqAndStab': True,													# compute linear stability and global frequency if possible: True or False
-	'calcSynctoolsStab': False													# also calclate stability from synctools - time consuming!
+	'calcSynctoolsStab': True													# also calclate stability from synctools - time consuming!
 }
 
 dictPLL={
@@ -54,31 +54,31 @@ dictPLL={
 }
 
 w 		= 2.0*np.pi*dictPLL['intrF']
+K		= 2.0*np.pi*dictPLL['coupK']
 tau 	= dictPLL['transmission_delay']
 z 		= dictNet['zeta']														# eigenvalue of the perturbation mode
 psi		= dictNet['psi']														# imaginary part of complex representation of zeta in polar coordinates
-fric 	= dictPLL['friction_coefficient']
 
 h  		= dictPLL['coup_fct_sig']
 hp 		= dictPLL['derivative_coup_fct']
 
 beta 	= 0																		# choose according to choice of mx, my and the topology!
 
-#K		= 2.0*np.pi*np.arange( 0.0001, 0.6, 0.06285/(4.0*np.pi) )
-#wc  	= 2.0*np.pi*np.arange( 0.0001, 0.6, 0.06285/(4.0*np.pi) )
-K		= 2.0*np.pi*np.arange( 0.0001, 0.6, 0.006285/(4.0*np.pi) )
-wc  	= 2.0*np.pi*np.arange( 0.0001, 1.2, 0.006285/(4.0*np.pi) )
+wc  	= 2.0*np.pi*np.arange( 0.0001, 0.6, 0.6285/(2.0*np.pi) )
+fric  	= np.arange( 0.25, 2, 0.1 )
+#wc  	= 2.0*np.pi*np.arange( 0.0001, 0.6, 0.006285/(8.0*np.pi) )
+#fric  	= np.arange( 0.25, 2, 0.0005 )
 
 fzeta = 1+np.sqrt(1-np.abs(z[0])**2)
-#OmegInKvsFc = []; alpha = []; ReLambda = []; ImLambda = [];
-OmegInKvsFc = np.zeros([len(K), len(wc)]); alpha = np.zeros([len(K), len(wc)]); ReLambda = np.zeros([len(K), len(wc)]); ImLambda = np.zeros([len(K), len(wc)]);
-CondStab = np.zeros([len(K), len(wc)]);
+#OmegInFcvsFric = []; alpha = []; ReLambda = []; ImLambda = [];
+OmegInFcvsFric = np.zeros([len(wc), len(fric)]); alpha = np.zeros([len(wc), len(fric)]); ReLambda = np.zeros([len(wc), len(fric)]); ImLambda = np.zeros([len(wc), len(fric)]);
+CondStab = np.zeros([len(wc), len(fric)]);
 t0 = time.time()
-for i in range(len(K)):
-	dictPLL.update({'coupK': K[i]/(2*np.pi)})									# set this temporarly to one value -- in Hz
-	for j in range(len(wc)):
+for i in range(len(wc)):
+	dictPLL.update({'cutFc': wc[i]/(2*np.pi)})								# set this temporarly to one value -- in Hz
+	for j in range(len(fric)):
 		isRadian 	= False														# set this False to get values returned in [Hz] instead of [rad * Hz]
-		dictPLL.update({'cutFc': wc[j]/(2*np.pi)})								# set this temporarly to one value -- in Hz
+		dictPLL.update({'friction_coefficient': fric[j]})						# set this temporarly to one value -- in Hz
 		sf 			= synctools.SweepFactory(dictPLL, dictNet, isRadians=isRadian)
 		fsl 		= sf.sweep()
 		if dictNet['calcSynctoolsStab']:
@@ -86,60 +86,52 @@ for i in range(len(K)):
 		else:
 			para_mat = fsl.get_parameter_matrix_nostab(isRadians=isRadian)
 		if len(para_mat[:,4]) > 1:
-			#print('tau set: ', tau, '\ttau returned: ', para_mat[:,3])
-			#print('K set: ', K[i]/(2*np.pi), '\tK returned: ', para_mat[0,1], '\t DELTA: ', K[i]/(2*np.pi)-para_mat[0,1])
-			#print('wc set: ', wc[j]/(2*np.pi), '\twc returned: ', para_mat[0,2], '\t DELTA: ', wc[j]/(2*np.pi)-para_mat[0,2])
 			#print('Found multistability of synchronized state, Omega:', para_mat[:,4], '\tfor (K, tau, beta)=(', dictPLL['coupK'], dictPLL['transmission_delay'], beta,')\nPick state with largest frequency!')
 			if dictPLL['analyzeFreq'] == 'max':
 				index = np.argmax(para_mat[:,4], axis=0)
-				#print('Picked largest frequency: ', para_mat[index,4], '  from set', para_mat[:,4])
 			elif dictPLL['analyzeFreq'] == 'min':
 				index = np.argmin(para_mat[:,4], axis=0)
 			elif dictPLL['analyzeFreq'] == 'middle':
 				index = np.where(para_mat[:,4]==sorted(para_mat[:,4])[1])[0][0]
-			OmegInKvsFc[i,j] = 2.0*np.pi*para_mat[index,4];
+			OmegInFcvsFric[i,j] = 2.0*np.pi*para_mat[index,4];
 			alpha[i,j] = ((2.0*np.pi*para_mat[index,1]/para_mat[index,12])*dictPLL['derivative_coup_fct']( (-2.0*np.pi*para_mat[index,4]*para_mat[index,3]+beta)/para_mat[index,12] ))
-			#print( 'alpha1: ', alpha[i,j], '\talpha2: ', K[i]/dictPLL['div']*dictPLL['derivative_coup_fct']( (-2.0*np.pi*para_mat[index,4]*tau+beta)/dictPLL['div'] ) )
 			ReLambda[i,j] = para_mat[index,5]
 			ImLambda[i,j] = para_mat[index,6]
 		else:
 			#print('Found one synchronized state, Omega:', para_mat[:,4], '\tfor (K, tau, beta)=(', dictPLL['coupK'], dictPLL['transmission_delay'], beta,').')
-			OmegInKvsFc[i,j] = 2.0*np.pi*para_mat[:,4][0];
+			OmegInFcvsFric[i,j] = 2.0*np.pi*para_mat[:,4][0];
 			alpha[i,j] = ((2.0*np.pi*para_mat[:,1]/para_mat[:,12])*dictPLL['derivative_coup_fct']( (-2.0*np.pi*para_mat[:,4]*para_mat[:,3]+beta)/para_mat[:,12] ))[0]
-			#print( 'alpha1: ', alpha[i,j], '\talpha2: ', K[i]/dictPLL['div']*dictPLL['derivative_coup_fct']( (-2.0*np.pi*para_mat[:,4]*tau+beta)/dictPLL['div'] ) )
 			ReLambda[i,j] = para_mat[:,5][0]
 			ImLambda[i,j] = para_mat[:,6][0]
-		if wc[j]*fric**2/(2*alpha[i,j]) > fzeta or wc[j]*fric**2/(2*alpha[i,j]) > 1:
+		if wc[i]*fric[j]**2/(2*alpha[i,j]) > fzeta or wc[i]*fric[j]**2/(2*alpha[i,j]) > 1: #wc*fric[j]**2/(2*alpha[i,j]) < fzeta and wc*fric[j]**2/(2*alpha[i,j]) > 1:
 			CondStab[i,j] = 1
 		else:
 			CondStab[i,j] = None
 
 print('Time computation in sweep_factory: ', (time.time()-t0), ' seconds');
 
-dictPLL.update({'coupK': K/(2*np.pi)})											# set coupling strength key in dictPLL back to the array
 dictPLL.update({'cutFc': wc/(2*np.pi)})											# set coupling strength key in dictPLL back to the array
+dictPLL.update({'friction_coefficient': fric})									# set coupling strength key in dictPLL back to the array
 
-loopP1	= 'K'																	# x-axis -- NOTE: this needs to have the same order as the loops above!
-loopP2 	= 'wc'																	# y-axis	otherwise, the Omega sorting will be INCORRECT!
+loopP1	= 'wc'																	# x-axis -- NOTE: this needs to have the same order as the loops above!
+loopP2 	= 'fric'																# y-axis	otherwise, the Omega sorting will be INCORRECT!
 discrP	= None																	# does not apply to parametric plots
 rescale = 'K_to_2alpha'															# set this in case you want to plot against a rescaled loopP variable
 
-paramsDict = {'h': h, 'hp': hp, 'w': w, 'K': K, 'wc': wc, 'fric': fric, 'Omeg': OmegInKvsFc, 'alpha': alpha, 'CondStab': CondStab,
+paramsDict = {'h': h, 'hp': hp, 'w': w, 'K': K, 'wc': wc, 'fric': fric, 'Omeg': OmegInFcvsFric, 'alpha': alpha, 'CondStab': CondStab,
 			'tau': tau, 'zeta': z, 'psi': psi, 'beta': beta, 'loopP1': loopP1, 'loopP2': loopP2, 'discrP': discrP, 'ReLambSynctools': ReLambda, 'ImLambSynctools': ImLambda}
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ plot Omega as parameter plot in the K - wc plot
 
 #		 makePlotsFromSynctoolsResults(figID, x, y,  z, rescale_x, rescale_y, rescale_z, x_label, y_label, z_label, x_identifier, y_identifier, z_identifier)
-paraPlot.makePlotsFromSynctoolsResults(100, K, wc, OmegInKvsFc, 1.0/w, 1.0/w, 1.0,
-				r'$\frac{K}{\omega}$', r'$\frac{\omega_\textrm{c}}{\omega}$', r'$\Omega$', 'K', 'wc', 'Omeg', None, cm.coolwarm)
+paraPlot.makePlotsFromSynctoolsResults(100, paramsDict['wc'], paramsDict['fric'], paramsDict['Omeg'], 1.0/w, 1, 1.0,
+				r'$\frac{\omega_\textrm{c}}{\omega}$', r'$\gamma$', r'$\Omega$', 'wc', 'fric', 'Omeg', None, cm.coolwarm)
 if dictNet['calcSynctoolsStab']:
-	paraPlot.makePlotsFromSynctoolsResults(101, K, wc, ReLambda, 1.0/w, 1.0/w, w/(2.0*np.pi),
-					r'$\frac{K}{\omega}$', r'$\frac{\omega_\textrm{c}}{\omega}$', r'$\frac{\textrm{Re}(\lambda)\omega}{2\pi}$', 'K', 'wc', 'ReLambda', None, cm.PuOr)
-	paraPlot.makePlotsFromSynctoolsResults(102, K, wc, ImLambda, 1.0/w, 1.0/w, 1.0/w,
-					r'$\frac{K}{\omega}$', r'$\frac{\omega_\textrm{c}}{\omega}$', r'$\frac{\textrm{Im}(\lambda)}{\omega}$', 'K', 'wc', 'ImLambda', None, cm.PuOr)
+	paraPlot.makePlotsFromSynctoolsResults(101, paramsDict['wc'], paramsDict['fric'], paramsDict['ReLambSynctools'], 1.0/w, 1, w/(2.0*np.pi),
+					r'$\frac{\omega_\textrm{c}}{\omega}$', r'$\gamma$', r'$\frac{\textrm{Re}(\lambda)\omega}{2\pi}$', 'wc', 'fric', 'ReLambda', None, cm.PuOr)
+	paraPlot.makePlotsFromSynctoolsResults(102, paramsDict['wc'], paramsDict['fric'], paramsDict['ImLambSynctools'], 1.0/w, 1, 1.0/w,
+					r'$\frac{\omega_\textrm{c}}{\omega}$', r'$\gamma$', r'$\frac{\textrm{Im}(\lambda)}{\omega}$', 'wc', 'fric', 'ImLambda', None, cm.PuOr)
 plt.draw(); #plt.show();
-
-print(paramsDict['wc'])
 
 paraPlot.plotParametric(paramsDict)
 

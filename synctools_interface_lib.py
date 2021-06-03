@@ -7,7 +7,7 @@ import os
 
 import matplotlib.pyplot as plt
 import numpy as np
-import inspect
+import inspect, copy
 
 import synctools_lib as st
 import coupling_fct_lib as coupfct
@@ -37,29 +37,46 @@ COUPLING_FUNCTION_NEGSIN		= coupfct.neg_sine								#'-np.sin'
 # #############################################################################
 
 
-def generate_delay_plot(dictPLL, dictNet, isRadians=True, filename=None):
+def generate_delay_plot(dictPLL, dictNet, isRadians=True, filename=None, max_delay_range=5.0):
 	# Setup sweep factory and create state list
-	n_points = 250
+	n_points = 50 * max_delay_range
 	if isRadians:
-		tau_max = 5.0 / (dictPLL['intrF'] / (2 * np.pi))
+		if dictPLL['transmission_delay'] > 0.5 * max_delay_range:
+			tau_min = ( dictPLL['transmission_delay'] - 0.5 * max_delay_range ) / (dictPLL['intrF'] / (2 * np.pi))
+			tau_max = ( dictPLL['transmission_delay'] + 0.5 * max_delay_range ) / (dictPLL['intrF'] / (2 * np.pi))
+		else:
+			tau_min = 0.0
+			tau_max = max_delay_range / (dictPLL['intrF'] / (2 * np.pi))
 		f  = dictPLL['intrF'] / (2 * np.pi)
 		fc = dictPLL['cutFc'] / (2 * np.pi)
 		kc = dictPLL['coupK'] / (2 * np.pi)
 	else:
-		tau_max = 5.0 / dictPLL['intrF']
+		if dictPLL['transmission_delay'] > 0.5 * max_delay_range:
+			tau_min = ( dictPLL['transmission_delay'] - 0.5 * max_delay_range ) / dictPLL['intrF']
+			tau_max = ( dictPLL['transmission_delay'] + 0.5 * max_delay_range ) / dictPLL['intrF']
+		else:
+
+			tau_min = 0.0
+			tau_max = max_delay_range / dictPLL['intrF']
 		f  = dictPLL['intrF']
 		fc = dictPLL['cutFc']
 		kc = dictPLL['coupK']
-	tau = np.linspace(0, tau_max, n_points)
+	tau = np.linspace(tau_min, tau_max, n_points); #print('tau_min, tau_max, tau: ', tau_min, tau_max, tau)
 	dictPLL.update({'transmission_delay': tau})
 	sf  = SweepFactory(dictPLL, dictNet, isRadians=isRadians)
 	fsl = sf.sweep()
+	if dictNet['mx'] == 0 and dictNet['my'] == -999:
+		dictTemp = copy.deepcopy(dictNet); dictTemp.update({'mx': 1});
+		sf1 = SweepFactory(dictPLL, dictTemp, isRadians=isRadians); fsl1 = sf1.sweep()
+	elif dictNet['mx'] == 1 and dictNet['my'] == -999:
+		dictTemp = copy.deepcopy(dictNet); dictTemp.update({'mx': 0});
+		sf1 = SweepFactory(dictPLL, dictTemp, isRadians=isRadians); fsl1 = sf1.sweep()
 
 	# Create parameter string
 	str_para = ''
-	str_para += 'k = %i   kx = %i   ky = %i' % (dictNet['mx'], dictNet['mx'], dictNet['my'])
+	str_para += 'v = %i   mx = %i   my = %i' % (dictPLL['div'], dictNet['mx'], dictNet['my'])
 	str_para += '\n%s topology' % dictNet['topology']
-	str_para += ' n = %i   nx = %i   ny = %i' % (dictNet['Nx']*dictNet['Ny'], dictNet['Nx'], dictNet['Ny'])
+	str_para += ' N = %i   Nx = %i   Ny = %i' % (dictNet['Nx']*dictNet['Ny'], dictNet['Nx'], dictNet['Ny'])
 	str_para += '\nF = %.2f Hz   Fc = %.2f Hz   Kc = %.2f Hz' % (f, fc, kc)
 
 	# Create figure
@@ -67,7 +84,9 @@ def generate_delay_plot(dictPLL, dictNet, isRadians=True, filename=None):
 
 	plt.subplot(2, 1, 1)
 	plt.title(str_para)
-	plt.plot(fsl.get_tau(), fsl.get_omega(), '.')
+	plt.plot(fsl.get_tau(), fsl.get_omega(), 'b.')
+	if ( dictNet['mx'] == 0 or dictNet['mx'] == 1 ) and dictNet['my'] == -999:
+		plt.plot(fsl1.get_tau(), fsl1.get_omega(), 'k+', alpha=0.5)
 	plt.grid(True, ls='--')
 	plt.xlabel('delay [s]')
 	plt.ylabel('sync. frequency [rad/s]')
@@ -76,6 +95,8 @@ def generate_delay_plot(dictPLL, dictNet, isRadians=True, filename=None):
 	plt.subplot(2, 1, 2)
 	plt.axhline(0, color='k')
 	plt.plot(fsl.get_tau(), np.real(fsl.get_l()), '.')
+	if ( dictNet['mx'] == 0 or dictNet['mx'] == 1 ) and dictNet['my'] == -999:
+		plt.plot(fsl1.get_tau(), fsl1.get_l(), 'k+', alpha=0.5)
 	plt.grid(True, ls='--')
 	plt.xlabel('delay [s]')
 	plt.ylabel('stability [rad/s]')
@@ -103,6 +124,8 @@ def generate_delay_plot(dictPLL, dictNet, isRadians=True, filename=None):
 	plt.subplot(2, 1, 1)
 	plt.title(str_para)
 	plt.plot(fsl.get_tau()*fsl.get_omega()/(2*np.pi), fsl.get_omega(), '.')
+	if ( dictNet['mx'] == 0 or dictNet['mx'] == 1 ) and dictNet['my'] == -999:
+		plt.plot(fsl1.get_tau()*fsl1.get_omega()/(2*np.pi), fsl1.get_omega(), 'k+', alpha=0.5)
 	plt.grid(True, ls='--')
 	plt.xlabel('Omega delay')
 	plt.ylabel('sync. frequency [rad/s]')
@@ -111,6 +134,8 @@ def generate_delay_plot(dictPLL, dictNet, isRadians=True, filename=None):
 	plt.subplot(2, 1, 2)
 	plt.axhline(0, color='k')
 	plt.plot(fsl.get_tau()*fsl.get_omega()/(2*np.pi), np.real(fsl.get_l()), '.')
+	if ( dictNet['mx'] == 0 or dictNet['mx'] == 1 ) and dictNet['my'] == -999:
+		plt.plot(fsl1.get_tau()*fsl1.get_omega()/(2*np.pi), np.real(fsl1.get_l()), 'k+', alpha=0.5)
 	plt.grid(True, ls='--')
 	plt.xlabel('Omega delay [s]')
 	plt.ylabel('stability [rad/s]')
@@ -126,6 +151,10 @@ def generate_delay_plot(dictPLL, dictNet, isRadians=True, filename=None):
 
 	# Save figure
 	if filename == None:
+		dt = datetime.datetime.now()
+		str_time = dt.strftime('%Y%m%d_%H%M%S')
+		filename = os.path.join('results', 'delayOmeg_plot_' + str_time)
+	else:
 		dt = datetime.datetime.now()
 		str_time = dt.strftime('%Y%m%d_%H%M%S')
 		filename = os.path.join('results', 'delayOmeg_plot_' + str_time)
@@ -362,7 +391,6 @@ class SweepFactory(object):
 			fsl.add_states(s)
 
 		return fsl
-
 
 # ##############################################################################
 
@@ -614,11 +642,11 @@ class FlatStateList(object):
 			return None
 
 	def get_phiConf(self):
-		'''Returns an array of the delay times of the states in the list'''
+		'''Returns an array of the phase configurations of the states in the list'''
 		if self.n > 0:
 			x = []
 			for i in range(self.n):
-				x.append( self.states[i].get_phi() )
+				x.append( self.states[i].state_def.get_phi() )
 			return np.array(x)
 		else:
 			return None
@@ -632,7 +660,8 @@ class FlatStateList(object):
 					   frequency is given in radians if True, otherwise in Hertz
 		'''
 		if self.n > 0:
-			x = np.zeros((self.n, 13))
+			phi_config_vec_len = len( self.get_phiConf()[0] ); #print('Lenght vector phi-configuation:', phi_config_vec_len)
+			x = np.zeros((self.n, 13+phi_config_vec_len))
 			x[:, 0] = self.get_w(isRadians=isRadians)
 			x[:, 1] = self.get_k(isRadians=isRadians)
 			x[:, 2] = self.get_wc(isRadians=isRadians)
@@ -646,7 +675,40 @@ class FlatStateList(object):
 			x[:, 10] = self.get_mx()
 			x[:, 11] = self.get_my()
 			x[:, 12] = self.get_v()
-			#x[:, 13] = self.get_phiConf().flatten()
+			#print('from get_phiConf: ', self.get_phiConf()[0])
+			x[:, 13:13+phi_config_vec_len] = self.get_phiConf()[0]
+			#print('phi configuration x[:, 13:%i]: '%(13+phi_config_vec_len), x[:, 13:])
+			return x
+		else:
+			return None
+
+	def get_parameter_matrix_nostab(self, isRadians=True):
+		'''Returns a matrix of the numeric parameters the states in the list
+
+		   Parameters
+		   ----------
+		   isRadians : bool
+					   frequency is given in radians if True, otherwise in Hertz
+		'''
+		if self.n > 0:
+			phi_config_vec_len = len( self.get_phiConf()[0] ); #print('Lenght vector phi-configuation:', phi_config_vec_len)
+			x = np.zeros((self.n, 13+phi_config_vec_len))
+			x[:, 0] = self.get_w(isRadians=isRadians)
+			x[:, 1] = self.get_k(isRadians=isRadians)
+			x[:, 2] = self.get_wc(isRadians=isRadians)
+			x[:, 3] = self.get_tau()
+			x[:, 4] = self.get_omega(isRadians=isRadians)
+			x[:, 5] = 1
+			x[:, 6] = 1
+			x[:, 7] = 100
+			x[:, 8] = self.get_nx()
+			x[:, 9] = self.get_ny()
+			x[:, 10] = self.get_mx()
+			x[:, 11] = self.get_my()
+			x[:, 12] = self.get_v()
+			#print('from get_phiConf: ', self.get_phiConf()[0])
+			x[:, 13:13+phi_config_vec_len] = self.get_phiConf()[0]
+			#print('phi configuration x[:, 13:%i]: '%(13+phi_config_vec_len), x[:, 13:])
 			return x
 		else:
 			return None

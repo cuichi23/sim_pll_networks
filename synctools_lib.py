@@ -488,6 +488,17 @@ class SyncStateDefinition(object):
 		self.sys = system
 
 	def get_phi(self):
+		# '''The static phase configuration matrix
+		#
+		#    phi_vec = ( phi[i] )_i
+		# '''
+		# n = self.sys.g.arr.get_n()
+		# phi = self.get_phi()
+		# dphi = np.zeros((n, n))
+		# for i in range(n):
+		# 	for j in range(n):
+		# 		dphi[i, j] = phi[j] - phi[i]
+		# return phi
 		raise NotImplementedError
 
 	def get_dphi_matrix(self):

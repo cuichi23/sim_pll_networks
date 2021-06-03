@@ -33,32 +33,34 @@ def getDicts(Fsim=125):
 		'Nx': 2,																# oscillators in x-direction
 		'Ny': 1,																# oscillators in y-direction
 		'mx': 0	,																# twist/chequerboard in x-direction (depends on closed or open boundary conditions)
-		'my': 0,																# twist/chequerboard in y-direction
+		'my': -999,																# twist/chequerboard in y-direction
 		'topology': 'ring',														# 1d) ring, chain, 2d) square-open, square-periodic, hexagonal...
 																				# 3) global, entrainOne, entrainAll, entrainPLLsHierarch, compareEntrVsMutual
-		'Tsim': 500,															# simulation time in multiples of the period
+		'Tsim': 2500,															# simulation time in multiples of the period
 		'computeFreqAndStab': True,												# compute linear stability and global frequency if possible: True or False
 		'phi_array_mult_tau': 1,												# how many multiples of the delay is stored of the phi time series
-		'phiPerturb': [0 0],#[0, -0.001, 0, 0, 0.001, 0, 0, -0.001, 0],				# delta-perturbation on initial state -- PROVIDE EITHER ONE OF THEM! if [] set to zero
+		'phiPerturb': [0, 0],#[0, -0.001, 0, 0, 0.001, 0, 0, -0.001, 0],		# delta-perturbation on initial state -- PROVIDE EITHER ONE OF THEM! if [] set to zero
 		'phiPerturbRot': [],													# delta-perturbation on initial state -- in rotated space
 		'phiInitConfig': [],													# phase-configuration of sync state,  []: automatic, else provide list
 		'freq_beacons': 0.25,													# frequency of external sender beacons, either a float or a list
-		'test_case': False														# True: run testcase sim, False: run other simulation mode
+		'special_case': 'timeDepTransmissionDelay',								# 'False', or 'test_case', 'timeDepInjectLockCoupStr', 'timeDepTransmissionDelay'
+		'typeOfTimeDependency': 'linear',										# 'exponential', 'linear', 'quadratic', 'triangle', 'cosine'
+		'min_max_rate_timeDepPara': [0.15, 3.85, 0.4/100]						# provide a list with min, max and rate of the time-dependent parameter
 	}
 
 	dictPLL={
 		'intrF': 1.0,															# intrinsic frequency in Hz
 		'syncF': 1.0,															# frequency of synchronized state in Hz
-		'coupK': 0.48,															#[random.uniform(0.3, 0.4) for i in range(dictNet['Nx']*dictNet['Ny'])],# coupling strength in Hz float or [random.uniform(minK, maxK) for i in range(dictNet['Nx']*dictNet['Ny'])]
+		'coupK': 0.2,															#[random.uniform(0.3, 0.4) for i in range(dictNet['Nx']*dictNet['Ny'])],# coupling strength in Hz float or [random.uniform(minK, maxK) for i in range(dictNet['Nx']*dictNet['Ny'])]
 		'gPDin': 1,																# gains of the different inputs to PD k from input l -- G_kl, see PD, set to 1 and all G_kl=1 (so far only implemented for some cases, check!): np.random.uniform(0.95,1.05,size=[dictNet['Nx']*dictNet['Ny'],dictNet['Nx']*dictNet['Ny']])
 		'gPDin_symmetric': True,												# set to True if G_kl == G_lk, False otherwise
-		'cutFc': 0.2,															# LF cut-off frequency in Hz, None for no LF, or e.g., N=9 with mean 0.015: [0.05,0.015,0.00145,0.001,0.0001,0.001,0.00145,0.015,0.05]
-		'div': 1,																# divisor of divider (int)
+		'cutFc': 0.5,															# LF cut-off frequency in Hz, None for no LF, or e.g., N=9 with mean 0.015: [0.05,0.015,0.00145,0.001,0.0001,0.001,0.00145,0.015,0.05]
+		'div': 2,																# divisor of divider (int)
 		'friction_coefficient': 1,												# friction coefficient of 2nd order Kuramoto models
-		'noiseVarVCO': 0,														# variance of VCO GWN
+		'noiseVarVCO': 1E-9,														# variance of VCO GWN
 		'feedback_delay': 0,													# value of feedback delay in seconds
 		'feedback_delay_var': None, 											# variance of feedback delay
-		'transmission_delay': 2.95, 											# value of transmission delay in seconds, float (single), list (tau_k) or list of lists (tau_kl): np.random.uniform(min,max,size=[dictNet['Nx']*dictNet['Ny'],dictNet['Nx']*dictNet['Ny']]), OR [np.random.uniform(min,max) for i in range(dictNet['Nx']*dictNet['Ny'])]
+		'transmission_delay': 1.75, 											# value of transmission delay in seconds, float (single), list (tau_k) or list of lists (tau_kl): np.random.uniform(min,max,size=[dictNet['Nx']*dictNet['Ny'],dictNet['Nx']*dictNet['Ny']]), OR [np.random.uniform(min,max) for i in range(dictNet['Nx']*dictNet['Ny'])]
 		'transmission_delay_var': None, 										# variance of transmission delays
 		'distribution_for_delays': None,										# from what distribution are random delays drawn?
 		# choose from coupfct.<ID>: sine, cosine, neg_sine, neg_cosine, triangular, deriv_triangular, square_wave, pfd, inverse_cosine, inverse_sine
@@ -113,19 +115,25 @@ def getDicts(Fsim=125):
 		sf = synctools.SweepFactory(dictPLL, dictNet, isRadians=isRadian)
 		fsl = sf.sweep()
 		para_mat = fsl.get_parameter_matrix(isRadians=False)				    # extract variables from the sweep, this matrix contains all cases
-		print('New parameter combinations with {intrF, coupK, cutFc, delay, Omega, ReLambda, ImLambda, TsimToPert1/e, Nx, Ny, mx, my, div}: \n', para_mat)
+		print('New parameter combinations with {intrF, coupK, cutFc, delay, Omega, ReLambda, ImLambda, TsimToPert1/e, Nx, Ny, mx, my, div}: \n', [*para_mat])
 		choice = chooseSolution(para_mat)
 		dictPLL.update({'syncF': para_mat[choice,4], 'ReLambda': para_mat[choice,5], 'ImLambda': para_mat[choice,6]})
 		print('Choice %i made. This state has global frequency Omega=%0.2f Hz, and ReLambda=%0.2f and ImLambda=%0.2f'%(choice, dictPLL['syncF'], dictPLL['ReLambda'], dictPLL['ImLambda']))
 		#except:
 		#	print('Could not compute linear stability and global frequency! Check synctools and case!')
 
+	dictNet = set_max_delay_for_time_dependentTau(dictPLL, dictNet)
 	check_consistency_initPert(dictNet)
 	print('Setup (dictNet, dictPLL):', dictNet, dictPLL)
 
 	return dictPLL, dictNet
 
 # ******************************************************************************
+
+def set_max_delay_for_time_dependentTau(dictPLL, dictNet):
+	if dictNet['special_case'] == 'timeDepTransmissionDelay':
+		dictNet.update({'max_delay_steps': int(np.round(dictNet['min_max_rate_timeDepPara'][1]/dictPLL['dt']))})
+	return dictNet
 
 def chooseSolution(para_mat):													# ask user-input for which solution to simulate
 	a_true = True

@@ -23,12 +23,12 @@ import evaluation_lib as eva
 gc.enable();
 
 ''' CREATE PLL LIST '''
-def generatePLLs(dictPLL, dictNet):	#mode,div,params['topology'],couplingfct,histtype,Nplls,dt,c,delay,feedback_delay,F,F_Omeg,K,Fc,y0,phiM,domega):
+def generatePLLs(dictPLL, dictNet, dictData):									#mode,div,params['topology'],couplingfct,histtype,Nplls,dt,c,delay,feedback_delay,F,F_Omeg,K,Fc,y0,phiM,domega):
 
 	dictPLL.update({'G': setupTopology(dictNet)})
 
 	pll_list = [ pll.PhaseLockedLoop(idx_pll,									# setup PLLs and store in a list as PLL class objects
-					pll.Delayer(idx_pll, dictPLL, dictNet),						# setup delayer object of PLL k; it organizes the delayed communications
+					pll.Delayer(idx_pll, dictPLL, dictNet, dictData),			# setup delayer object of PLL k; it organizes the delayed communications
 					pll.PhaseDetectorCombiner(idx_pll, dictPLL, dictNet),		# setup PDadder object of PLL k;
 					pll.LowPass(idx_pll, dictPLL, dictNet),						# setup LF(1st) object of PLL k;
 					pll.VoltageControlledOscillator(idx_pll,dictPLL, dictNet),	# setup VCO object of PLL k;
@@ -214,11 +214,47 @@ def generatePhi0(dictNet):
 
 ################################################################################
 
+def setupTimeDependentParameter(dictNet, dictPLL, dictData, parameter='coupStr_2ndHarm', afterTsimPercent=0.5, forAllPLLsDifferent=False):
 
+	if forAllPLLsDifferent:
+		time_series = np.zeros([ dictNet['Nx']*dictNet['Ny'], dictNet['max_delay_steps']+dictPLL['sim_time_steps'] ])
+	else:
+		time_series = np.zeros([ 1, dictNet['max_delay_steps']+dictPLL['sim_time_steps'] ])
+	#print('dictNet[*min_max_rate_timeDepPara*][1]:', dictNet['min_max_rate_timeDepPara'][1])
 
-################################################################################
+	sign = -1
+	if dictNet['typeOfTimeDependency'] == 'linear':
+		for i in range(len(time_series[:,0])):
+			sign = sign * (-1)
+			time_series[i,0:dictNet['max_delay_steps']+int(afterTsimPercent*dictPLL['sim_time_steps'])] = dictNet['min_max_rate_timeDepPara'][0];
+			for j in range(dictNet['max_delay_steps']+int(afterTsimPercent*dictPLL['sim_time_steps'])-1, dictNet['max_delay_steps']+dictPLL['sim_time_steps']-1):
+				if np.abs( time_series[i,j] - dictNet['min_max_rate_timeDepPara'][0] ) <= np.abs( dictNet['min_max_rate_timeDepPara'][1] - dictNet['min_max_rate_timeDepPara'][0] ):
+					time_series[i,j+1] = time_series[i,j] + sign * dictPLL['dt'] * dictNet['min_max_rate_timeDepPara'][2]
+					#print('time_series', time_series)
+				else:
+					time_series[i,j+1] = time_series[i,j]
 
+	elif dictNet['typeOfTimeDependency'] == 'exponential':
+		for i in range(len(time_series[:,0])):
+			tstep_annealing_start = dictNet['max_delay_steps']+int(afterTsimPercent*dictPLL['sim_time_steps'])
+			time_series[i,0:tstep_annealing_start] = dictNet['min_max_rate_timeDepPara'][0];
+			for j in range(tstep_annealing_start-1, dictNet['max_delay_steps']+dictPLL['sim_time_steps']-1):
+				if np.abs( time_series[i,j] - dictNet['min_max_rate_timeDepPara'][0] ) <= np.abs( dictNet['min_max_rate_timeDepPara'][1] - dictNet['min_max_rate_timeDepPara'][0] ):
+					print('j:', j, '\ttime = (j-j0)*dt=', (j-tstep_annealing_start+1)*dictPLL['dt'])
+					time_series[i,j+1] = time_series[i,j] + dictPLL['dt'] * dictNet['min_max_rate_timeDepPara'][1] * np.exp( -(j-tstep_annealing_start+1)*dictPLL['dt'] / dictNet['min_max_rate_timeDepPara'][2] ) / dictNet['min_max_rate_timeDepPara'][2]
+					print('time_series[%i,%i+1]'%(i,j), time_series[i,j+1], '\tincrement:', dictPLL['dt'] * dictNet['min_max_rate_timeDepPara'][1] * np.exp( -(j-tstep_annealing_start+1)*dictPLL['dt'] / ( dictNet['min_max_rate_timeDepPara'][2]/1 ) ) / dictNet['min_max_rate_timeDepPara'][2])
+					#time.sleep(0.2)
+				else:
+					time_series[i,j+1] = time_series[i,j]
 
+	else:
+		print('Unknown functional form. Introduce! °)°'); sys.exit()
+
+	dictData.update({'timeDependentParameter': time_series})
+
+	print('time-series: ', [*time_series])
+
+	return time_series
 
 ################################################################################
 
@@ -323,4 +359,49 @@ def setupTopology(dictNet):
 		# G = nx.convert_node_labels_to_integers(G)
 		G = nx.convert_node_labels_to_integers(G, first_label=0, ordering='sorted') # converts 2d coordinates to 1d index of integers, e.g., k=0,...,N-1
 
+	if dictNet['Nx']*dictNet['Ny'] < 36:
+		F=nx.adjacency_matrix(G)
+		print('nx.adjacency_matrix(G)', F.todense())
+		print('nx.adjacency_spectrum(G)/max(nx.adjacency_spectrum(G))', nx.adjacency_spectrum(G)/max(nx.adjacency_spectrum(G)))
+
 	return G
+
+def allInitPhaseCombinations(dictPLL, dictNet, paramDiscretization=10):
+
+	if dictNet['Nx']*dictNet['Ny'] == 2:
+		scanValues = np.zeros((dictNet['Nx']*dictNet['Ny'], paramDiscretization), dtype=np.float)			# create container for all points in the discretized rotated phase space, +/- pi around each dimension (unit area)
+		# scanValues[0,:] = np.linspace(phiMr[0]-(np.pi), phiMr[0]+(np.pi), paramDiscretization) 	# all entries are in rotated, and reduced phase space
+		# scanValues[1,:] = np.linspace(phiMr[1]-(np.pi), phiMr[1]+(np.pi), paramDiscretization) 	# all entries are in rotated, and reduced phase space
+		scanValues[0,:] = np.linspace(-(np.pi), +(np.pi), paramDiscretization) 	# all entries are in rotated, and reduced phase space NOTE: adjust unit cell accordingly!
+		scanValues[1,:] = np.linspace(-(np.pi), +(np.pi), paramDiscretization) 	# all entries are in rotated, and reduced phase space NOTE: adjust unit cell accordingly!
+		#print('row', i,'of matrix with all intervals of the rotated phase space:\n', scanValues[i,:], '\n')
+
+		_allPoints 		= itertools.product(*scanValues)
+		allPoints 		= list(_allPoints)										# scanValues is a list of lists: create a new list that gives all the possible combinations of items between the lists
+		allPoints 		= np.array(allPoints)									# convert the list to an array
+		# allPoints_unitCell  = []
+		# for point in allPoints:
+		# 	if unit_cell.is_inside(point, isRotated=True):
+		# 		allPoints_unitCell.append(point)
+		# allPoints			= np.array(allPoints_unitCell)
+	elif dictNet['Nx']*dictNet['Ny'] > 2:
+		# setup a matrix for all N variables/dimensions and create a cube around the origin with side lengths 2pi
+		scanValues = np.zeros((dictNet['Nx']*dictNet['Ny']-1,paramDiscretization), dtype=np.float)		# create container for all points in the discretized rotated phase space, +/- pi around each dimension (unit area)
+		for i in range (0, dictNet['Nx']*dictNet['Ny']-1):												# the different coordinates of the solution, discretize an interval plus/minus pi around each variable
+			# scanValues[i,:] = np.linspace(phiMr[i+1]-np.pi, phiMr[i+1]+np.pi, paramDiscretization) # all entries are in rotated, and reduced phase space
+			if i==0:															# theta2 (x-axis)
+				#scanValues[i,:] = np.linspace(-(np.pi), +(np.pi), paramDiscretization) 	# all entries are in rotated, and reduced phase space NOTE: adjust unit cell accordingly!
+				#scanValues[i,:] = np.linspace(-0.25*np.pi, 0.25*np.pi, paramDiscretization)
+				scanValues[i,:] = np.linspace(-1.0*np.pi, 1.0*np.pi, paramDiscretization)
+			else:																# theta3 (y-axis)
+				#scanValues[i,:] = np.linspace(-(1.35*np.pi), +(1.35*np.pi), paramDiscretization)
+				#scanValues[i,:] = np.linspace(-0.35*np.pi, 0.35*np.pi, paramDiscretization)
+				scanValues[i,:] = np.linspace(-1.35*np.pi, 1.35*np.pi, paramDiscretization)
+
+			#print('row', i,'of matrix with all intervals of the rotated phase space:\n', scanValues[i,:], '\n')
+
+		_allPoints 			= itertools.product(*scanValues)
+		allPoints 			= list(_allPoints)									# scanValues is a list of lists: create a new list that gives all the possible combinations of items between the lists
+		allPoints 			= np.array(allPoints) 								# convert the list to an array
+
+	return scanValues, allPoints

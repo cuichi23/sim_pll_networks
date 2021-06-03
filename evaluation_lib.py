@@ -12,7 +12,7 @@ import itertools
 from itertools import permutations as permu
 from itertools import combinations as combi
 import matplotlib
-import os
+import os, pickle
 if not os.environ.get('SGE_ROOT') == None:										# this environment variable is set within the queue network, i.e., if it exists, 'Agg' mode to supress output
 	print('NOTE: \"matplotlib.use(\'Agg\')\"-mode active, plots are not shown on screen, just saved to results folder!\n')
 	matplotlib.use('Agg') #'%pylab inline'
@@ -23,9 +23,11 @@ from mpl_toolkits.axes_grid1.inset_locator import zoomed_inset_axes
 from mpl_toolkits.axes_grid1.inset_locator import mark_inset
 import time
 import datetime
+now = datetime.datetime.now()
 import scipy
 from scipy import signal
 import integer_mult_period_signal_lib as findIntTinSig
+import plot_lib
 
 ''' Enable automatic carbage collector '''
 gc.enable();
@@ -99,80 +101,105 @@ def plotTest(params):
 	plt.draw()
 	plt.show()
 
+################################################################################
 
-def obtainOrderParam(dictPLL, dictNet, dictData):
-	''' MODIFIED KURAMOTO ORDER PARAMETERS '''
-	numb_av_T = 3;																			   # number of periods of free-running frequencies to average over
-	if dictPLL['intrF'] > 0:																				   # for f=0, there would otherwies be a float division by zero
-		F1=dictPLL['intrF']
-	else:
-		F1=dictPLL['intrF']+1E-3
 
-	if dictNet['topology'] == "square-periodic" or dictNet['topology'] == "hexagon-periodic" or dictNet['topology'] == "octagon-periodic":
-		r = oracle_mTwistOrderParameter2d(dictData['phi'][-int(numb_av_T*1.0/(F1*dictPLL['dt'])):, :], dictNet['Nx'], dictNet['Ny'], dictNet['mx'], dictNet['my'])
-		orderparam = oracle_mTwistOrderParameter2d(dictData['phi'][:, :], dictNet['Nx'], dictNet['Ny'], dictNet['mx'], dictNet['my'])
-	elif dictNet['topology'] == "square-open" or dictNet['topology'] == "hexagon" or dictNet['topology'] == "octagon":
-		if dictNet['mx']==1 and dictNet['my']==1:
-			ktemp=2
-		elif dictNet['mx']==1 and dictNet['my']==0:
-			ktemp=0
-		elif dictNet['mx']==0 and dictNet['my']==1:
-			ktemp=1
-		elif dictNet['mx']==0 and dictNet['my']==0:
-			ktemp=3
-		else:
-			ktemp=4;
-		"""
-				ktemp == 0 : x  checkerboard state
-				ktemp == 1 : y  checkerboard state
-				ktemp == 2 : xy checkerboard state
-				ktemp == 3 : in-phase synchronized
-			"""
-		r = oracle_CheckerboardOrderParameter2d(dictData['phi'][-int(numb_av_T*1.0/(F1*dictPLL['dt'])):, :], dictNet['Nx'], dictNet['Ny'], ktemp)
-		# ry = np.nonzero(rmat > 0.995)[0]
-		# rx = np.nonzero(rmat > 0.995)[1]
-		orderparam = oracle_CheckerboardOrderParameter2d(dictData['phi'][:, :], dictNet['Nx'], dictNet['Ny'], ktemp)
-	elif dictNet['topology'] == "compareEntrVsMutual":
-		rMut 	 = oracle_mTwistOrderParameter(dictData['phi'][-int(numb_av_T*1.0/(F1*dictPLL['dt'])):, 0:2], dictNet['mx']);
-		orderMut = oracle_mTwistOrderParameter(dictData['phi'][:, 0:2], dictNet['mx']);
-		rEnt 	 = oracle_mTwistOrderParameter(dictData['phi'][-int(numb_av_T*1.0/(F1*dictPLL['dt'])):, 2:4], dictNet['mx']);
-		orderEnt = oracle_mTwistOrderParameter(dictData['phi'][:, 2:4], dictNet['mx']);
-		if isPlottingTimeSeries:
-			figwidth  = 6; figheight = 5; t = np.arange(dictData['phi'].shape[0]); now = datetime.datetime.now();
-			fig0 = plt.figure(num=0, figsize=(figwidth, figheight), dpi=150, facecolor='w', edgecolor='k')
-			fig0.canvas.set_window_title('order parameters mutual and entrained')			   # plot orderparameter
-			plt.clf()
-			plt.plot((dictData['t']*dictPLL['dt']), orderMut,'b-',  label='2 mutual coupled PLLs' )
-			plt.plot((dictData['t']*dictPLL['dt']), orderEnt,'r--', label='one entrained PLL')
-			plt.plot(dictPLL['transmission_delay'], orderMut[int(round(dictPLL['transmission_delay']/dictPLL['dt']))], 'yo', ms=5)						   # mark where the simulation starts
-			plt.axvspan(dictData['t'][-int(2*1.0/(F1*dictPLL['dt']))]*dictPLL['dt'], dictData['t'][-1]*dictPLL['dt'], color='b', alpha=0.3)
-			plt.xlabel(r'$t$ $[s]$'); plt.legend();
-			plt.ylabel(r'$R( t,m = %d )$' % dictNet['mx'])
-			plt.savefig('results/orderparam_mutual_entrained_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.pdf' %(np.mean(dictPLL['coupK']), np.mean(dictPLL['cutFc']), np.mean(dictPLL['syncF']), np.mean(dictPLL['transmission_delay']), np.mean(dictPLL['noiseVarVCO']), now.year, now.month, now.day))
-			plt.savefig('results/orderparam_mutual_entrained_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.png' %(np.mean(dictPLL['coupK']), np.mean(dictPLL['cutFc']), np.mean(dictPLL['syncF']), np.mean(dictPLL['transmission_delay']), np.mean(dictPLL['noiseVarVCO']), now.year, now.month, now.day), dpi=300)
-			r = np.zeros(len(dictData['phi'][-int(numb_av_T*1.0/(F1*dictPLL['dt'])):,0]))
-			orderparam = np.zeros(len(dictData['phi'][:,0]))
-	elif dictNet['topology'] == "chain":
-		"""
-				dictNet['mx']  > 0 : x  checkerboard state
-				dictNet['mx'] == 0 : in-phase synchronized
-			"""
-		r = oracle_CheckerboardOrderParameter1d(dictData['phi'][-int(numb_av_T*1.0/(F1*dictPLL['dt'])):, :], dictNet['mx'])
-		orderparam = oracle_CheckerboardOrderParameter1d(dictData['phi'][:, :])							# calculate the order parameter for all times
-	elif ( dictNet['topology'] == "ring" or dictNet['topology'] == 'global'):
-		r = oracle_mTwistOrderParameter(dictData['phi'][-int(numb_av_T*1.0/(F1*dictPLL['dt'])):, :], dictNet['mx'])# calculate the m-twist order parameter for a time interval of 2 times the eigenperiod, ry is imaginary part
-		orderparam = oracle_mTwistOrderParameter(dictData['phi'][:, :], dictNet['mx'])					# calculate the m-twist order parameter for all times
-	elif ( dictNet['topology'] == "entrainOne" or dictNet['topology'] == "entrainAll" or dictNet['topology'] == "entrainPLLsHierarch"):
-		phi_constant_expected = dictNet['phiInitConfig'];
-		r = calcKuramotoOrderParEntrainSelfOrgState(dictData['phi'][-int(numb_av_T*1.0/(F1*dictPLL['dt'])):, :], phi_constant_expected);
-		orderparam = calcKuramotoOrderParEntrainSelfOrgState(dictData['phi'][:, :], phi_constant_expected);
-	# r = oracle_mTwistOrderParameter(dictData['phi'][-int(2*1.0/(F1*dictPLL['dt'])):, :], dictNet['mx'])			# calculate the m-twist order parameter for a time interval of 2 times the eigenperiod, ry is imaginary part
-	# orderparam = oracle_mTwistOrderParameter(dictData['phi'][:, :], dictNet['mx'])					# calculate the m-twist order parameter for all times
-	# print('mean of modulus of the order parameter, R, over 2T:', np.mean(r), ' last value of R', r[-1])
-	print('mean of modulus of the order parameter, R, over 2T:', np.mean(r), ' last value of R', r[-1])
+def prepareDictsForPlotting(dictPLL, dictNet):
 
-	return r, orderparam, F1
+	if dictPLL['cutFc'] == None:
+		dictPLL.update({'cutFc': np.inf})
 
+	if not np.abs(dictPLL['intrF']) > 1E-17:									# for f=0, there would otherwies be a float division by zero
+		dictPLL.update({'intrF': 1})
+		print('Since intrinsic frequency was zero: for plotting set to one to generate boundaries!')
+
+
+	return dictPLL, dictNet
+
+
+def saveDictionaries(dictToSave, name, K, tau, Fc, Nx, Ny, mx, my, topology):
+
+	if 'cutFc' in dictToSave:
+		if dictToSave['cutFc'] == None:
+			dictToSave.update({'cutFc': np.inf})
+			Fc = np.inf
+
+	N = int(Nx*Ny)
+	filename = 'results/%s_K%.3E_tau%.3E_Fc%.3E_mx%i_my%i_N%i_topo%s_%d:%d_%d_%d_%d'%(name, np.mean(K), np.mean(tau), np.mean(Fc), mx, my, N, topology, now.hour, now.minute, now.year, now.month, now.day)
+	f 		 = open(filename,'wb')
+	pickle.dump(dictToSave,f)
+	f.close()
+
+	return None
+
+################################################################################
+
+def calculateEigenvalues(dictNet, dictPLL):
+	''' Calculate eigenvalues zeta for networks of homogeneous PLL '''
+
+	if dictNet['topology'] == 'global':											# test wheter global coupling topology
+		print('All to all coupling topology identified!')
+		zeta = 1/(dictNet['Nx']*dictNet['Ny']-1)
+		dictNet.update({'zeta': zeta})
+
+	# if dictNet['Ny'] == 1:														# check whether 2D or 1D topology
+	# 	print('1d network topology identified!')
+	# 	if dictNet['topology'] == 'ring':
+	# 		zeta = 1
+	# 		dictNet.update({'zeta': zeta})
+	# 	elif dictNet['topology'] == 'chain':
+	# 		if dictNet['mx'] == 0:
+	# 			zeta = 1
+	# 			dictNet.update({'zeta': zeta})
+	# 		elif dictNet['mx'] > 0:
+	# 			zeta = np.cos(np.arange(0,dictNet['Nx'])*np.pi/(dictNet['Nx']-1))
+	# 			dictNet.update({'zeta': zeta})
+	# 	else:
+	# 		print('Coupling topology not yet implemented, add expression for eigenvalues or brute-force solve!')
+	#
+	# elif dictNet['Ny'] > 1:
+	# 	print('2d network topology identified!')
+	# 	if dictNet['topology'] == 'square-open':
+	# 		zeta = 1
+	# 		dictNet.update({'zeta': zeta})
+	# 	elif dictNet['topology'] == 'square-periodic':
+	# 		zeta = 1
+	# 		dictNet.update({'zeta': zeta})
+	# 	else:
+	# 		print('Coupling topology not yet implemented, add expression for eigenvalues or brute-force solve!')
+	#
+	return dictNet, dictPLL
+
+################################################################################
+
+''' CALCULATE SPECTRUM '''
+def calcSpectrum( phi, dictPLL, dictNet, percentOfTsim=0.75 ): #phi,Fsample,couplingfct,waveform=None,expectedFreq=-999,evalAllRealizations=False,decayTimeSlowestMode=None
+
+	Pxx_dBm=[]; Pxx_dBV=[]; f=[];
+	windowset='hamming' #'hamming' #'hamming', 'boxcar'
+	print('\nCurrent window option is', windowset, 'for waveform', inspect.getsourcelines(dictPLL['vco_out_sig'])[0][0],
+			'NOTE: in principle can always choose to be sin() for cleaner PSD in first harmonic approximation of the signal.')
+	print('Calculate spectrum for',1-percentOfTsim,'percent of the time-series. Implement better solution using decay times.')
+	try:
+		analyzeL= findIntTinSig.cutTimeSeriesOfIntegerPeriod(dictPLL['sampleF'], dictNet['Tsim'], dictPLL['syncF'],
+																np.max([dictPLL['coupK'], dictPLL['coupStr_2ndHarm']]), phi, percentOfTsim);
+		window	 	= scipy.signal.get_window('boxcar', int(dictPLL['sampleF']), fftbins=True);
+	except:
+		print('\n\nError in cutTimeSeriesOfIntegerPeriod-function! Not picking integer number of periods for PSD!\n\n')
+		analyzeL= [ int( dictNet['Tsim']*(1-percentOfTsim)*dictPLL['sampleF'] ), int( dictNet['Tsim']*dictPLL['sampleF'] )-1 ]
+		window	= scipy.signal.get_window(windowset, int(dictPLL['sampleF']), fftbins=True);
+
+	tsdata		= dictPLL['vco_out_sig'](phi[analyzeL[0]:analyzeL[1]])
+
+	ftemp, Vxx 	= scipy.signal.periodogram(tsdata, dictPLL['sampleF'], return_onesided=True, window=windowset, scaling='density', axis=0) #  returns Pxx with dimensions [V^2] if scaling='spectrum' and [V^2/Hz] if if scaling='density'
+	P0 = 1E-3; R=50; 															# for P0 in [mW/Hz] and R [ohm]
+
+	Pxx_dBm.append( 10*np.log10((Vxx/R)/P0) )
+	f.append( ftemp )
+
+	return f, Pxx_dBm
+
+################################################################################
 
 def rotate_phases(phi0, isInverse=False):
 	''' Rotates the phases such that the phase space direction phi_0 is rotated onto the main diagonal of the n dimensional phase space
@@ -317,6 +344,129 @@ class PhaseDifferenceCell(object):
 
 		return is_inside
 
+################################################################################
+
+''' GET FILTER STATUS IN SYNCHRONISED STATE '''
+def getFilterStatus(F,K,Fc,delay,Fsim,Tsim):
+	dt = 1.0/Fsim
+	Nsteps = int(Tsim*Fsim)
+	delay_steps = int(delay/dt)
+	pll_list = [ PhaseLockedLoop(
+					Delayer(delay,dt),
+					PhaseDetectorCombiner(idx_pll,[(idx_pll+1)%2]),
+					LowPass(Fc,dt,y=0),
+					VoltageControlledOscillator(F,K,dt,c=0,phi=0)
+					)  for idx_pll in range(2) ]
+	_  = simulatePhaseModel(Nsteps,2,pll_list)
+	return pll_list[0].lf.y
+
+################################################################################
+
+''' MODEL FITTING: DEMIR MODEL '''
+def fitModelDemir(f_model,d_model,fitrange=0):
+
+	f_peak = f_model[np.argmax(d_model)]										# find main peak
+
+	if fitrange != 0:															# mask data
+		ma = np.ma.masked_inside(f_model,f_peak-fitrange,f_peak+fitrange)
+		f_model_ma = f_model[ma.mask]
+		d_model_ma = d_model[ma.mask]
+	else:
+		f_model_ma = f_model
+		d_model_ma = d_model
+
+	A = np.sqrt(2)																# calculate power of main peak for sine wave
+	P_offset = 10*np.log10(A**2/2)
+
+	optimize_func = lambda p: P_offset + 10*np.log10( (p[0]**2 * p[1])/(np.pi * p[0]**4 * p[1]**2 + (f_model_ma-p[0])**2 )) # model fit
+	error_func = lambda p: optimize_func(p) - d_model_ma
+	p_init = (f_peak,1e-8)
+	p_final,success = leastsq(error_func,p_init[:])
+
+	f_model_ma = f_model														# restore data
+	d_model_ma = d_model
+
+	return f_model, optimize_func(p_final), p_final
+
+################################################################################
+################################################################################
+################################################################################
+
+def obtainOrderParam(dictPLL, dictNet, dictData):
+	''' MODIFIED KURAMOTO ORDER PARAMETERS '''
+	numb_av_T = 3;																			   # number of periods of free-running frequencies to average over
+	if dictPLL['intrF'] > 0:																				   # for f=0, there would otherwies be a float division by zero
+		F1=dictPLL['intrF']
+	else:
+		F1=dictPLL['intrF']+1E-3
+
+	if dictNet['topology'] == "square-periodic" or dictNet['topology'] == "hexagon-periodic" or dictNet['topology'] == "octagon-periodic":
+		r = oracle_mTwistOrderParameter2d(dictData['phi'][-int(numb_av_T*1.0/(F1*dictPLL['dt'])):, :], dictNet['Nx'], dictNet['Ny'], dictNet['mx'], dictNet['my'])
+		orderparam = oracle_mTwistOrderParameter2d(dictData['phi'][:, :], dictNet['Nx'], dictNet['Ny'], dictNet['mx'], dictNet['my'])
+	elif dictNet['topology'] == "square-open" or dictNet['topology'] == "hexagon" or dictNet['topology'] == "octagon":
+		if dictNet['mx']==1 and dictNet['my']==1:
+			ktemp=2
+		elif dictNet['mx']==1 and dictNet['my']==0:
+			ktemp=0
+		elif dictNet['mx']==0 and dictNet['my']==1:
+			ktemp=1
+		elif dictNet['mx']==0 and dictNet['my']==0:
+			ktemp=3
+		else:
+			ktemp=4;
+		"""
+				ktemp == 0 : x  checkerboard state
+				ktemp == 1 : y  checkerboard state
+				ktemp == 2 : xy checkerboard state
+				ktemp == 3 : in-phase synchronized
+			"""
+		r = oracle_CheckerboardOrderParameter2d(dictData['phi'][-int(numb_av_T*1.0/(F1*dictPLL['dt'])):, :], dictNet['Nx'], dictNet['Ny'], ktemp)
+		# ry = np.nonzero(rmat > 0.995)[0]
+		# rx = np.nonzero(rmat > 0.995)[1]
+		orderparam = oracle_CheckerboardOrderParameter2d(dictData['phi'][:, :], dictNet['Nx'], dictNet['Ny'], ktemp)
+	elif dictNet['topology'] == "compareEntrVsMutual":
+		rMut 	 = oracle_mTwistOrderParameter(dictData['phi'][-int(numb_av_T*1.0/(F1*dictPLL['dt'])):, 0:2], dictNet['mx']);
+		orderMut = oracle_mTwistOrderParameter(dictData['phi'][:, 0:2], dictNet['mx']);
+		rEnt 	 = oracle_mTwistOrderParameter(dictData['phi'][-int(numb_av_T*1.0/(F1*dictPLL['dt'])):, 2:4], dictNet['mx']);
+		orderEnt = oracle_mTwistOrderParameter(dictData['phi'][:, 2:4], dictNet['mx']);
+		if isPlottingTimeSeries:
+			figwidth  = 6; figheight = 5; t = np.arange(dictData['phi'].shape[0]); now = datetime.datetime.now();
+			fig0 = plt.figure(num=0, figsize=(figwidth, figheight), dpi=150, facecolor='w', edgecolor='k')
+			fig0.canvas.set_window_title('order parameters mutual and entrained')			   # plot orderparameter
+			plt.clf()
+			plt.plot((dictData['t']*dictPLL['dt']), orderMut,'b-',  label='2 mutual coupled PLLs' )
+			plt.plot((dictData['t']*dictPLL['dt']), orderEnt,'r--', label='one entrained PLL')
+			plt.plot(dictPLL['transmission_delay'], orderMut[int(round(dictPLL['transmission_delay']/dictPLL['dt']))], 'yo', ms=5)						   # mark where the simulation starts
+			plt.axvspan(dictData['t'][-int(2*1.0/(F1*dictPLL['dt']))]*dictPLL['dt'], dictData['t'][-1]*dictPLL['dt'], color='b', alpha=0.3)
+			plt.xlabel(r'$t$ $[s]$'); plt.legend();
+			plt.ylabel(r'$R( t,m = %d )$' % dictNet['mx'])
+			plt.savefig('results/orderparam_mutual_entrained_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.pdf' %(np.mean(dictPLL['coupK']), np.mean(dictPLL['cutFc']), np.mean(dictPLL['syncF']), np.mean(dictPLL['transmission_delay']), np.mean(dictPLL['noiseVarVCO']), now.year, now.month, now.day))
+			plt.savefig('results/orderparam_mutual_entrained_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.png' %(np.mean(dictPLL['coupK']), np.mean(dictPLL['cutFc']), np.mean(dictPLL['syncF']), np.mean(dictPLL['transmission_delay']), np.mean(dictPLL['noiseVarVCO']), now.year, now.month, now.day), dpi=300)
+			r = np.zeros(len(dictData['phi'][-int(numb_av_T*1.0/(F1*dictPLL['dt'])):,0]))
+			orderparam = np.zeros(len(dictData['phi'][:,0]))
+	elif dictNet['topology'] == "chain":
+		"""
+				dictNet['mx']  > 0 : x  checkerboard state
+				dictNet['mx'] == 0 : in-phase synchronized
+			"""
+		r = oracle_CheckerboardOrderParameter1d(dictData['phi'][-int(numb_av_T*1.0/(F1*dictPLL['dt'])):, :], dictNet['mx'])
+		orderparam = oracle_CheckerboardOrderParameter1d(dictData['phi'][:, :])							# calculate the order parameter for all times
+	elif ( dictNet['topology'] == "ring" or dictNet['topology'] == 'global'):
+		r = oracle_mTwistOrderParameter(dictData['phi'][-int(numb_av_T*1.0/(F1*dictPLL['dt'])):, :], dictNet['mx'])# calculate the m-twist order parameter for a time interval of 2 times the eigenperiod, ry is imaginary part
+		orderparam = oracle_mTwistOrderParameter(dictData['phi'][:, :], dictNet['mx'])					# calculate the m-twist order parameter for all times
+	elif ( dictNet['topology'] == "entrainOne" or dictNet['topology'] == "entrainAll" or dictNet['topology'] == "entrainPLLsHierarch"):
+		phi_constant_expected = dictNet['phiInitConfig'];
+		r = calcKuramotoOrderParEntrainSelfOrgState(dictData['phi'][-int(numb_av_T*1.0/(F1*dictPLL['dt'])):, :], phi_constant_expected);
+		orderparam = calcKuramotoOrderParEntrainSelfOrgState(dictData['phi'][:, :], phi_constant_expected);
+	# r = oracle_mTwistOrderParameter(dictData['phi'][-int(2*1.0/(F1*dictPLL['dt'])):, :], dictNet['mx'])			# calculate the m-twist order parameter for a time interval of 2 times the eigenperiod, ry is imaginary part
+	# orderparam = oracle_mTwistOrderParameter(dictData['phi'][:, :], dictNet['mx'])					# calculate the m-twist order parameter for all times
+	# print('mean of modulus of the order parameter, R, over 2T:', np.mean(r), ' last value of R', r[-1])
+	print('mean of modulus of the order parameter, R, over 2T:', np.mean(r), ' last value of R', r[-1])
+
+	return r, orderparam, F1
+
+################################################################################
+
 ''' CALCULATE KURAMOTO ORDER PARAMETER '''
 def calcPairwiseKurmOrder(phi):
 	'''Computes the Kuramoto order parameter r for in-phase synchronized states
@@ -351,6 +501,8 @@ def calcPairwiseKurmOrder(phi):
 
 	return r, psi
 
+################################################################################
+
 def calcKuramotoOrderParameter(phi):
 	'''Computes the Kuramoto order parameter r for in-phase synchronized states
 
@@ -382,6 +534,7 @@ def calcKuramotoOrderParameter(phi):
 
 	return r
 
+################################################################################
 
 ''' CALCULATE KURAMOTO ORDER PARAMETER FOR ENTRAINMENT OF SYNCED STATES'''
 def calcKuramotoOrderParEntrainSelfOrgState(phi, phi_constant_expected):
@@ -415,6 +568,7 @@ def calcKuramotoOrderParEntrainSelfOrgState(phi, phi_constant_expected):
 
 	return r
 
+################################################################################
 
 def mTwistOrderParameter(phi):
 	'''Computes the Fourier order parameter 'rm' for all m-twist synchronized states
@@ -447,6 +601,7 @@ def mTwistOrderParameter(phi):
 		rm = None
 	return rm
 
+################################################################################
 
 def _CheckerboardOrderParameter(phi):
 	'''Computes the 1d checkerboard order parameters for 1d states. Phi is supposed
@@ -458,6 +613,7 @@ def _CheckerboardOrderParameter(phi):
 	r = np.abs(r) / float(len(phi))
 	return r
 
+################################################################################
 
 def CheckerboardOrderParameter(phi):
 	'''Computes the 1d checkerboard order parameters for 1d states. Phi can be a 1d or 2d vector whose first index
@@ -472,6 +628,7 @@ def CheckerboardOrderParameter(phi):
 			r[it] = _CheckerboardOrderParameter(phi[it, :])
 		return r
 
+################################################################################
 
 def _mTwistOrderParameter2d(phi, nx, ny):
 	'''Computes the 2d twist order parameters for 2d states. Phi is supposed
@@ -494,6 +651,7 @@ def mTwistOrderParameter2d(phi, nx, ny):
 			r.append(_mTwistOrderParameter2d(phi[it, :], nx ,ny))
 		return np.array(r)
 
+################################################################################
 
 def _CheckerboardOrderParameter2d(phi, nx, ny):
 	'''Computes the 2d checkerboard order parameters for 2d states. Phi is supposed
@@ -509,6 +667,7 @@ def _CheckerboardOrderParameter2d(phi, nx, ny):
 	r = np.abs(r) / float(len(phi))
 	return r
 
+################################################################################
 
 def CheckerboardOrderParameter2d(phi, nx, ny):
 	'''Computes the 1d checkerboard order parameters for 1d states. Phi can be a 1d or 2d vector whose first index
@@ -522,6 +681,7 @@ def CheckerboardOrderParameter2d(phi, nx, ny):
 			r.append(CheckerboardOrderParameter2d(phi[it, :], nx, ny))
 		return np.array(r)
 
+################################################################################
 
 def oracle_mTwistOrderParameter(phi, k):  # , kx, ky
 	'''Computes the absolute value of k-th Fourier order parameter 'rm' for all m-twist synchronized states
@@ -553,6 +713,7 @@ def oracle_mTwistOrderParameter(phi, k):  # , kx, ky
 		rk = None
 	return rk
 
+################################################################################
 
 def oracle_CheckerboardOrderParameter1d(phi, k=1):
 	"""
@@ -566,6 +727,7 @@ def oracle_CheckerboardOrderParameter1d(phi, k=1):
 	else:
 		raise Exception('Non-valid value for k')
 
+################################################################################
 
 def oracle_mTwistOrderParameter2d(phi, nx, ny, kx, ky):
 	return mTwistOrderParameter2d(phi, nx, ny)[:, ky, kx]
@@ -585,73 +747,7 @@ def oracle_CheckerboardOrderParameter2d(phi, nx, ny, k):
 	else:
 		raise Exception('Non-valid value for k')
 
-
-''' CALCULATE SPECTRUM '''
-def calcSpectrum( phi, dictPLL, dictNet, percentOfTsim=0.75 ): #phi,Fsample,couplingfct,waveform=None,expectedFreq=-999,evalAllRealizations=False,decayTimeSlowestMode=None
-
-	Pxx_dBm=[]; Pxx_dBV=[]; f=[];
-	windowset='hamming' #'hamming' #'hamming', 'boxcar'
-	print('\nCurrent window option is', windowset, 'for waveform', inspect.getsourcelines(dictPLL['vco_out_sig'])[0][0],
-			'NOTE: in principle can always choose to be sin() for cleaner PSD in first harmonic approximation of the signal.')
-	print('Calculate spectrum for',1-percentOfTsim,'percent of the time-series. Implement better solution using decay times.')
-	try:
-		analyzeL= findIntTinSig.cutTimeSeriesOfIntegerPeriod(dictPLL['sampleF'], dictNet['Tsim'], dictPLL['syncF'],
-																np.max([dictPLL['coupK'], dictPLL['coupStr_2ndHarm']]), phi, percentOfTsim);
-		window	 	= scipy.signal.get_window('boxcar', int(dictPLL['sampleF']), fftbins=True);
-	except:
-		print('\n\nError in cutTimeSeriesOfIntegerPeriod-function! Not picking integer number of periods for PSD!\n\n')
-		analyzeL= [ int( dictNet['Tsim']*(1-percentOfTsim)*dictPLL['sampleF'] ), int( dictNet['Tsim']*dictPLL['sampleF'] )-1 ]
-		window	= scipy.signal.get_window(windowset, int(dictPLL['sampleF']), fftbins=True);
-
-	tsdata		= dictPLL['vco_out_sig'](phi[analyzeL[0]:analyzeL[1]])
-
-	ftemp, Vxx 	= scipy.signal.periodogram(tsdata, dictPLL['sampleF'], return_onesided=True, window=windowset, scaling='density', axis=0) #  returns Pxx with dimensions [V^2] if scaling='spectrum' and [V^2/Hz] if if scaling='density'
-	P0 = 1E-3; R=50; 															# for P0 in [mW/Hz] and R [ohm]
-
-	Pxx_dBm.append( 10*np.log10((Vxx/R)/P0) )
-	f.append( ftemp )
-
-	return f, Pxx_dBm
-
-''' GET FILTER STATUS IN SYNCHRONISED STATE '''
-def getFilterStatus(F,K,Fc,delay,Fsim,Tsim):
-	dt = 1.0/Fsim
-	Nsteps = int(Tsim*Fsim)
-	delay_steps = int(delay/dt)
-	pll_list = [ PhaseLockedLoop(
-					Delayer(delay,dt),
-					PhaseDetectorCombiner(idx_pll,[(idx_pll+1)%2]),
-					LowPass(Fc,dt,y=0),
-					VoltageControlledOscillator(F,K,dt,c=0,phi=0)
-					)  for idx_pll in range(2) ]
-	_  = simulatePhaseModel(Nsteps,2,pll_list)
-	return pll_list[0].lf.y
-
-''' MODEL FITTING: DEMIR MODEL '''
-def fitModelDemir(f_model,d_model,fitrange=0):
-
-	f_peak = f_model[np.argmax(d_model)]										# find main peak
-
-	if fitrange != 0:															# mask data
-		ma = np.ma.masked_inside(f_model,f_peak-fitrange,f_peak+fitrange)
-		f_model_ma = f_model[ma.mask]
-		d_model_ma = d_model[ma.mask]
-	else:
-		f_model_ma = f_model
-		d_model_ma = d_model
-
-	A = np.sqrt(2)																# calculate power of main peak for sine wave
-	P_offset = 10*np.log10(A**2/2)
-
-	optimize_func = lambda p: P_offset + 10*np.log10( (p[0]**2 * p[1])/(np.pi * p[0]**4 * p[1]**2 + (f_model_ma-p[0])**2 )) # model fit
-	error_func = lambda p: optimize_func(p) - d_model_ma
-	p_init = (f_peak,1e-8)
-	p_final,success = leastsq(error_func,p_init[:])
-
-	f_model_ma = f_model														# restore data
-	d_model_ma = d_model
-
-	return f_model, optimize_func(p_final), p_final
+################################################################################
 
 def shiftedColorMap(cmap, start=0, midpoint=0.5, stop=1.0, name='shiftedcmap'):
 	'''

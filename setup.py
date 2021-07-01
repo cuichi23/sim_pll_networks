@@ -11,6 +11,8 @@ from scipy.signal import sawtooth
 from scipy.signal import square
 from scipy.stats import cauchy
 
+import itertools
+
 #import matplotlib
 #import matplotlib.pyplot as plt
 import datetime
@@ -67,7 +69,8 @@ def generatePhi0(dictNet):
 	else:
 		print('Run single time-series and plot phase and frequency time series!')
 		initPhiPrime0 = 0.0
-		if dictNet['phiPerturbRot'] and not dictNet['phiPerturb']:
+		#print('dictNet[*phiPerturbRot*]', dictNet['phiPerturbRot'], 'dictNet[*phiPerturb*]', dictNet['phiPerturb'])
+		if len(dictNet['phiPerturbRot']) > 0 and len( dictNet['phiPerturb'] ) == 0:#dictNet['phiPerturbRot'] and not dictNet['phiPerturb']:
 			print('Parameters set, perturbations provided manually in rotated phase space of phases.')
 			#if len(dictNet['phiPerturbRot'].shape)==1:
 			if len(dictNet['phiPerturbRot'])==dictNet['Nx']*dictNet['Ny']:
@@ -90,7 +93,7 @@ def generatePhi0(dictNet):
 			# 		dictNet.update({'phiPerturb': eva.rotate_phases(dictNet['phiPerturbRot'].flatten(), isInverse=False)}) # rotate back into physical phase space for simulation
 			# 		print('dirac delta phase perturbation in ORIGINAL phase space:', dictNet['phiPerturb'], '\n')
 
-		elif dictNet['phiPerturb'] and not dictNet['phiPerturbRot']:
+		elif len(dictNet['phiPerturbRot']) == 0 and len( dictNet['phiPerturb'] ) > 0: #dictNet['phiPerturb'] and not dictNet['phiPerturbRot']:
 			print('Parameters set, perturbations provided manually in original phase space of phases.')
 			#if len(dictNet['phiPerturb'].shape)==1:
 			if len(dictNet['phiPerturb'])==dictNet['Nx']*dictNet['Ny']:
@@ -240,9 +243,9 @@ def setupTimeDependentParameter(dictNet, dictPLL, dictData, parameter='coupStr_2
 			time_series[i,0:tstep_annealing_start] = dictNet['min_max_rate_timeDepPara'][0];
 			for j in range(tstep_annealing_start-1, dictNet['max_delay_steps']+dictPLL['sim_time_steps']-1):
 				if np.abs( time_series[i,j] - dictNet['min_max_rate_timeDepPara'][0] ) <= np.abs( dictNet['min_max_rate_timeDepPara'][1] - dictNet['min_max_rate_timeDepPara'][0] ):
-					print('j:', j, '\ttime = (j-j0)*dt=', (j-tstep_annealing_start+1)*dictPLL['dt'])
+					#print('j:', j, '\ttime = (j-j0)*dt=', (j-tstep_annealing_start+1)*dictPLL['dt'])
 					time_series[i,j+1] = time_series[i,j] + dictPLL['dt'] * dictNet['min_max_rate_timeDepPara'][1] * np.exp( -(j-tstep_annealing_start+1)*dictPLL['dt'] / dictNet['min_max_rate_timeDepPara'][2] ) / dictNet['min_max_rate_timeDepPara'][2]
-					print('time_series[%i,%i+1]'%(i,j), time_series[i,j+1], '\tincrement:', dictPLL['dt'] * dictNet['min_max_rate_timeDepPara'][1] * np.exp( -(j-tstep_annealing_start+1)*dictPLL['dt'] / ( dictNet['min_max_rate_timeDepPara'][2]/1 ) ) / dictNet['min_max_rate_timeDepPara'][2])
+					#print('time_series[%i,%i+1]'%(i,j), time_series[i,j+1], '\tincrement:', dictPLL['dt'] * dictNet['min_max_rate_timeDepPara'][1] * np.exp( -(j-tstep_annealing_start+1)*dictPLL['dt'] / ( dictNet['min_max_rate_timeDepPara'][2]/1 ) ) / dictNet['min_max_rate_timeDepPara'][2])
 					#time.sleep(0.2)
 				else:
 					time_series[i,j+1] = time_series[i,j]
@@ -252,7 +255,7 @@ def setupTimeDependentParameter(dictNet, dictPLL, dictData, parameter='coupStr_2
 
 	dictData.update({'timeDependentParameter': time_series})
 
-	print('time-series: ', [*time_series])
+	print('time-series time-dependent parameter: ', [*time_series])
 
 	return time_series
 

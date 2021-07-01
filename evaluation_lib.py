@@ -109,7 +109,7 @@ def prepareDictsForPlotting(dictPLL, dictNet):
 	if dictPLL['cutFc'] == None:
 		dictPLL.update({'cutFc': np.inf})
 
-	if not np.abs(dictPLL['intrF']) > 1E-17:									# for f=0, there would otherwies be a float division by zero
+	if not np.abs(np.min(dictPLL['intrF'])) > 1E-17:									# for f=0, there would otherwies be a float division by zero
 		dictPLL.update({'intrF': 1})
 		print('Since intrinsic frequency was zero: for plotting set to one to generate boundaries!')
 
@@ -248,6 +248,8 @@ def rotate_phases(phi0, isInverse=False):
 	else:
 		return np.dot(np.transpose(r), phi0)									# transform back into physical phase space
 
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 def get_dphi_matrix(n):
 	m = np.zeros((n * (n - 1), n))
 	x0 = 0
@@ -264,6 +266,7 @@ def get_dphi_matrix(n):
 		x1 = np.mod(x1, n)
 	return m
 
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 def get_d_matrix(n):
 	'''Constructs a matrix to compute the phase differences from a
@@ -274,6 +277,8 @@ def get_d_matrix(n):
 		d[i, np.mod(i + 1, n)] = 1
 	return d
 
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 class PhaseDifferenceCell(object):
 	def __init__(self, n):
 		self.n = n
@@ -281,6 +286,8 @@ class PhaseDifferenceCell(object):
 		self.d_min = -np.pi
 		self.d_max = np.pi
 		self.d = get_d_matrix(n)
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 	def is_inside(self, x, isRotated=False):
 		# Check if vector has the correct length
@@ -304,6 +311,7 @@ class PhaseDifferenceCell(object):
 
 		return is_inside
 
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 	def is_inside_old(self, x, isRotated=False):
 		'''Checks if a vector is inside the phase difference unit cell.
@@ -395,10 +403,10 @@ def fitModelDemir(f_model,d_model,fitrange=0):
 def obtainOrderParam(dictPLL, dictNet, dictData):
 	''' MODIFIED KURAMOTO ORDER PARAMETERS '''
 	numb_av_T = 3;																			   # number of periods of free-running frequencies to average over
-	if dictPLL['intrF'] > 0:																				   # for f=0, there would otherwies be a float division by zero
-		F1=dictPLL['intrF']
+	if np.min(dictPLL['intrF']) > 0:																				   # for f=0, there would otherwies be a float division by zero
+		F1=np.min(dictPLL['intrF'])
 	else:
-		F1=dictPLL['intrF']+1E-3
+		F1=np.min(dictPLL['intrF'])+1E-3
 
 	if dictNet['topology'] == "square-periodic" or dictNet['topology'] == "hexagon-periodic" or dictNet['topology'] == "octagon-periodic":
 		r = oracle_mTwistOrderParameter2d(dictData['phi'][-int(numb_av_T*1.0/(F1*dictPLL['dt'])):, :], dictNet['Nx'], dictNet['Ny'], dictNet['mx'], dictNet['my'])
@@ -464,6 +472,181 @@ def obtainOrderParam(dictPLL, dictNet, dictData):
 	print('mean of modulus of the order parameter, R, over 2T:', np.mean(r), ' last value of R', r[-1])
 
 	return r, orderparam, F1
+
+################################################################################
+
+def evaluateSimulationIsing(poolData):
+
+	# plot parameter
+	axisLabel  = 9;
+	legendLab  = 6
+	tickSize   = 5;
+	titleLabel = 9;
+	dpi_val	   = 150;
+	figwidth   = 6;
+	figheight  = 5;
+	alpha 	   = 0.5;
+
+	#unit_cell = PhaseDifferenceCell(poolData[0][0]['dictNet']['Nx']*poolData[0][0]['dictNet']['Ny'])
+	treshold_statState = np.pi/15
+	plotEveryDt		   = 1;
+	numberColsPlt	   = 3;
+
+	fig16, ax16 = plt.subplots(int(np.ceil(len(poolData[0][:])/numberColsPlt)), numberColsPlt, figsize=(figwidth, figheight), dpi=dpi_val, facecolor='w', edgecolor='k')
+	fig16.canvas.set_window_title('Ising different initial conditions, fixed topology, phase relations')	# phase relations
+	fig16.suptitle(r'parameters: $f=$%0.2f Hz, $K=$%0.2f Hz/V, $K^\textrm{I}=$%0.2f Hz/V, $f_c=$%0.2f Hz, $\tau=$%0.2f s'%(poolData[0][0]['dictPLL']['intrF'], poolData[0][0]['dictPLL']['coupK'], poolData[0][0]['dictPLL']['coupStr_2ndHarm'], poolData[0][0]['dictPLL']['cutFc'], poolData[0][0]['dictPLL']['transmission_delay']))
+	fig16.subplots_adjust(hspace=0.4, wspace=0.4)
+	ax16 = ax16.ravel()
+
+	fig17, ax17 = plt.subplots(int(np.ceil(len(poolData[0][:])/numberColsPlt)), numberColsPlt, figsize=(figwidth, figheight), dpi=dpi_val, facecolor='w', edgecolor='k')
+	fig17.canvas.set_window_title('Ising different initial conditions, fixed topology, inst. frequencies')	# inst. frequencies
+	fig17.subplots_adjust(hspace=0.4, wspace=0.4)
+	ax17 = ax17.ravel()
+
+	fig18, ax18 = plt.subplots(int(np.ceil(len(poolData[0][:])/numberColsPlt)), numberColsPlt, figsize=(figwidth, figheight), dpi=dpi_val, facecolor='w', edgecolor='k')
+	fig18.canvas.set_window_title('Ising different initial conditions, fixed topology, order parameter')	# order parameter
+	fig18.subplots_adjust(hspace=0.4, wspace=0.4)
+	ax18 = ax18.ravel()
+
+	fig19, ax19 = plt.subplots(int(np.ceil(len(poolData[0][:])/numberColsPlt)), numberColsPlt, figsize=(figwidth, figheight), dpi=dpi_val, facecolor='w', edgecolor='k')
+	fig19.canvas.set_window_title('Ising different initial conditions, fixed topology, signals')			# signals
+	fig19.subplots_adjust(hspace=0.4, wspace=0.4)
+	ax19 = ax19.ravel()
+
+	print('poolData in eva.evaluateSimulationIsing(poolData):', poolData)
+
+	for i in range(len(poolData[0][:])):
+		deltaTheta = np.zeros([len(poolData[0][i]['dictData']['phi'][0,:]), len(poolData[0][i]['dictData']['phi'][:,0])]);
+		signalOut  = np.zeros([len(poolData[0][i]['dictData']['phi'][0,:]), len(poolData[0][i]['dictData']['phi'][:,0])]);
+
+		thetaDot 			= np.diff( poolData[0][i]['dictData']['phi'][:,:], axis=0 ) / poolData[0][i]['dictPLL']['dt']	# compute frequencies and order parameter
+		r, orderparam, F1 	= obtainOrderParam(poolData[0][i]['dictPLL'], poolData[0][i]['dictNet'], poolData[0][i]['dictData'])
+
+		ax18[i].plot( poolData[0][i]['dictData']['t'][::plotEveryDt], orderparam[::plotEveryDt] )
+
+		for j in range(len(poolData[0][i]['dictData']['phi'][0,:])):
+			deltaTheta[j] 	= poolData[0][i]['dictData']['phi'][:,0] - poolData[0][i]['dictData']['phi'][:,j] 				# calculate phase-differnce w.r.t. osci k=0
+			signalOut[j]	= poolData[0][i]['dictPLL']['vco_out_sig'](poolData[0][i]['dictData']['phi'][:,j])				# generate signals for all phase histories
+
+			ax16[i].plot( poolData[0][i]['dictData']['t'][::plotEveryDt], deltaTheta[j,::plotEveryDt], label='sig PLL%i' %(j))
+			ax19[i].plot( poolData[0][i]['dictData']['t'][::plotEveryDt], poolData[0][i]['dictPLL']['vco_out_sig'](poolData[0][i]['dictData']['phi'][::plotEveryDt,j]), label='sig PLL%i' %(j))
+			ax17[i].plot( poolData[0][i]['dictData']['t'][1::plotEveryDt], thetaDot[::plotEveryDt,j], label='sig PLL%i' %(j))
+
+		print('working on realization %i results from sim:'%i, poolData[0][i]['dictNet'], '\n', poolData[0][i]['dictPLL'], '\n', poolData[0][i]['dictData'],'\n\n')
+
+		ax16[i].set_xlabel(r'$t$ in $[s]$', 				fontsize=axisLabel)
+		ax16[i].set_ylabel(r'$\Delta\theta(t)$', 			fontsize=axisLabel)
+		ax17[i].set_xlabel(r'$t$ in $[s]$', 				fontsize=axisLabel)
+		ax17[i].set_ylabel(r'$\dot{\theta}(t)$ in radHz', 	fontsize=axisLabel)
+		ax18[i].set_xlabel(r'$t$ in $[s]$', 				fontsize=axisLabel)
+		ax18[i].set_ylabel(r'$R(t)$', 						fontsize=axisLabel)
+		ax19[i].set_xlabel(r'$t$ in $[s]$', 				fontsize=axisLabel)
+		ax19[i].set_ylabel(r'$s(t)$', 						fontsize=axisLabel)
+
+		ax16[i].tick_params(labelsize=tickSize)
+		ax17[i].tick_params(labelsize=tickSize)
+		ax18[i].tick_params(labelsize=tickSize)
+		ax19[i].tick_params(labelsize=tickSize)
+
+	ax16[0].legend(loc='upper right', fontsize=legendLab)
+	ax17[0].legend(loc='upper right', fontsize=legendLab)
+	ax18[0].legend(loc='upper right', fontsize=legendLab)
+	ax19[0].legend(loc='upper right', fontsize=legendLab)
+
+	plt.draw(); plt.show()
+
+	return None
+
+################################################################################
+
+def evaluateSimulationsChrisHoyer(poolData):
+
+	#print('poolData', poolData[0][0])
+
+	# plot parameter
+	axisLabel  = 60;
+	tickSize   = 35;
+	titleLabel = 10;
+	dpi_val	   = 150;
+	figwidth   = 6;
+	figheight  = 5;
+	alpha 	   = 0.5;
+
+	unit_cell = PhaseDifferenceCell(poolData[0][0]['dictNet']['Nx']*poolData[0][0]['dictNet']['Ny'])
+	treshold_statState = np.pi/15
+
+	fig16 = plt.figure(num=16, figsize=(figwidth, figheight), dpi=dpi_val, facecolor='w', edgecolor='k')
+	fig16.canvas.set_window_title('HF basin attraction plot - 2pi periodic')	# basin attraction plot
+	ax16 = fig16.add_subplot(111)
+
+	fig17 = plt.figure(num=17, figsize=(figwidth, figheight), dpi=dpi_val, facecolor='w', edgecolor='k')
+	fig17.canvas.set_window_title('HF basin attraction plot')			 		# basin attraction plot
+	ax17 = fig17.add_subplot(111)
+
+	fig18 = plt.figure(num=18, figsize=(figwidth, figheight), dpi=dpi_val, facecolor='w', edgecolor='k')
+	fig18.canvas.set_window_title('LF basin attraction plot - 2pi periodic')	# basin attraction plot
+	ax18 = fig18.add_subplot(111)
+
+	fig19 = plt.figure(num=19, figsize=(figwidth, figheight), dpi=dpi_val, facecolor='w', edgecolor='k')
+	fig19.canvas.set_window_title('LF basin attraction plot')			 		# basin attraction plot
+	ax19 = fig19.add_subplot(111)
+
+	for i in range(len(poolData[0][:])):
+		print('working on realization %i results from sim:'%i, poolData[0][i]['dictNet'], '\n', poolData[0][i]['dictPLL'], '\n', poolData[0][i]['dictData'],'\n\n')
+
+		#print('Check whether perturbation is inside unit-cell (evaluation.py)! phiS:', poolData[0][i]['dictNet']['phiPerturb'], '\tInside? True/False:', unit_cell.is_inside((poolData[0][i]['dictNet']['phiPerturb']), isRotated=False)); time.sleep(2)
+		#print('How about phi, is it a key to dictData?', 'phi' in poolData[0][i]['dictData'])
+		if unit_cell.is_inside((poolData[0][i]['dictNet']['phiPerturb']), isRotated=False):	# NOTE this case is for scanValues set only in -pi to pi, we so not plot outside the unit cell
+
+			deltaTheta 			= poolData[0][i]['dictData']['phi'][:,0] - poolData[0][i]['dictData']['phi'][:,1]
+			deltaThetaDot		= np.diff( deltaTheta, axis=0 ) / poolData[0][i]['dictPLL']['dt']
+			deltaThetaDiv 		= poolData[0][i]['dictData']['phi'][:,0]/poolData[0][i]['dictPLL']['div'] - poolData[0][i]['dictData']['phi'][:,1]/poolData[0][i]['dictPLL']['div']
+			deltaThetaDivDot	= np.diff( deltaThetaDiv, axis=0 ) / poolData[0][i]['dictPLL']['dt']
+
+			if np.abs( np.abs( (deltaTheta[-1]+np.pi)%(2.*np.pi)-np.pi ) - np.pi ) < treshold_statState:
+				color = 'r'
+			elif np.abs( (deltaTheta[-1]+np.pi)%(2.*np.pi)-np.pi ) - 0.0 < treshold_statState:
+				color = 'b'
+			else:
+				color = 'k'
+
+			ax16.plot((deltaTheta[1:]+np.pi)%(2.*np.pi)-np.pi, deltaThetaDot, '-', color=color, alpha=alpha, linewidth='1.2')	# plot trajectory
+			ax16.plot((deltaTheta[0]+np.pi)%(2.*np.pi)-np.pi, deltaThetaDot[0], 'o', color=color, alpha=alpha, linewidth='1.2')	# plot initial dot
+			ax16.plot((deltaTheta[-1]+np.pi)%(2.*np.pi)-np.pi, deltaThetaDot[-1], 'x', color=color, alpha=alpha, linewidth='1.2')# plot final state cross
+			#plot_lib.deltaThetaDot_vs_deltaTheta(poolData[0][i]['dictPLL'], poolData[0][i]['dictNet'], (deltaTheta[1:]+np.pi)%(2.*np.pi)-np.pi, deltaThetaDot, color, alpha)
+			ax17.plot(deltaTheta[1:], deltaThetaDot, '-', color=color, alpha=alpha, linewidth='1.2')			# plot trajectory
+			ax17.plot(deltaTheta[0], deltaThetaDot[0], 'o', color=color, alpha=alpha, linewidth='1.2')	# plot initial dot
+			ax17.plot(deltaTheta[-1], deltaThetaDot[-1], 'x', color=color, alpha=alpha, linewidth='1.2')	# plot final state cross
+
+			if np.abs( np.abs( (deltaThetaDiv[-1]+np.pi)%(2.*np.pi)-np.pi ) - np.pi ) < treshold_statState:
+				color = 'r'
+			elif np.abs( (deltaThetaDiv[-1]+np.pi)%(2.*np.pi)-np.pi ) - 0.0 < treshold_statState:
+				color = 'b'
+			else:
+				color = 'k'
+
+			ax18.plot((deltaThetaDiv[1:]+np.pi)%(2.*np.pi)-np.pi, deltaThetaDivDot, '-', color=color, alpha=alpha, linewidth='1.2')		# plot trajectory
+			ax18.plot((deltaThetaDiv[0]+np.pi)%(2.*np.pi)-np.pi, deltaThetaDivDot[0], 'o', color=color, alpha=alpha, linewidth='1.2')	# plot initial dot
+			ax18.plot((deltaThetaDiv[-1]+np.pi)%(2.*np.pi)-np.pi, deltaThetaDivDot[-1], 'x', color=color, alpha=alpha, linewidth='1.2')	# plot final state cross
+			#plot_lib.deltaThetaDivDot_vs_deltaThetaDiv(poolData[0][i]['dictPLL'], poolData[0][i]['dictNet'], (deltaThetaDiv[1:]+np.pi)%(2.*np.pi)-np.pi, deltaThetaDivDot, color, alpha)
+			ax19.plot(deltaThetaDiv[1:], deltaThetaDivDot, '-', color=color, alpha=alpha, linewidth='1.2')			# plot trajectory
+			ax19.plot(deltaThetaDiv[0], deltaThetaDivDot[0], 'o', color=color, alpha=alpha, linewidth='1.2')		# plot initial dot
+			ax19.plot(deltaThetaDiv[-1], deltaThetaDivDot[-1], 'x', color=color, alpha=alpha, linewidth='1.2')	# plot final state cross
+
+	#plt.xlabel(r'$\Delta\theta(t)$')
+	#plt.ylabel(r'$\Delta\dot{\theta}(t)$')
+	ax16.set_xlabel(r'$\Delta\theta(t)$ mod $2\pi$', fontsize=axisLabel)
+	ax16.set_ylabel(r'$\Delta\dot{\theta}(t)$', fontsize=axisLabel)
+	ax17.set_xlabel(r'$\Delta\theta(t)$', fontsize=axisLabel)
+	ax17.set_ylabel(r'$\Delta\dot{\theta}(t)$', fontsize=axisLabel)
+	ax18.set_xlabel(r'$\Delta\theta(t)/v$ mod $2\pi$', fontsize=axisLabel)
+	ax18.set_ylabel(r'$\Delta\dot{\theta}(t)/v$', fontsize=axisLabel)
+	ax19.set_xlabel(r'$\Delta\theta(t)/v$', fontsize=axisLabel)
+	ax19.set_ylabel(r'$\Delta\dot{\theta}(t)/v$', fontsize=axisLabel)
+
+	plt.draw(); plt.show()
+
+	return None
 
 ################################################################################
 

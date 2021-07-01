@@ -90,6 +90,11 @@ def getDicts(Fsim=125):
 		'percentPeriodsAverage': 0.7											# average of *percentPeriodsAverage* % of simulated periods
 	}
 
+	dictAlgo={
+		'bruteForceBasinStabMethod': 'listOfInitialPhaseConfigurations',		# pick method for setting realizations 'classicBruteForceMethodRotatedSpace', 'listOfInitialPhaseConfigurations'
+		'paramDiscretization': 3												# parameter discetization for brute force parameter space scans
+	}
+
 	# calculate other parameters and test for incompatibilities
 	dictPLL.update({'dt': 1.0/dictPLL['sampleF']})
 	if ( isinstance(dictPLL['gPDin'], np.ndarray) and dictPLL['gPDin_symmetric']):
@@ -131,7 +136,7 @@ def getDicts(Fsim=125):
 	check_consistency_initPert(dictNet)
 	print('Setup (dictNet, dictPLL):', dictNet, dictPLL)
 
-	return dictPLL, dictNet
+	return dictPLL, dictNet, dictAlgo
 
 # ******************************************************************************
 

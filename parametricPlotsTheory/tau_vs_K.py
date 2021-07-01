@@ -29,21 +29,21 @@ dictNet={
 	'mx': 0	,																	# twist/chequerboard in x-direction (depends on closed or open boundary conditions)
 	'my': 0,																	# twist/chequerboard in y-direction
 	'Tsim': 100,
-	'topology': 'square-periodic',#'square-open',													# 1d) ring, chain, 2d) square-open, square-periodic, hexagonal...
+	'topology': 'square-open',#'square-open',													# 1d) ring, chain, 2d) square-open, square-periodic, hexagonal...
 																				# 3) global, entrainOne, entrainAll, entrainPLLsHierarch, compareEntrVsMutual
-	'zeta': [-0.5, 0.25], #[-1, -0.5, 0.5],		#[-0.5, 0.25],								# real part of eigenvalue of slowest decaying perturbation mode for the set of parameters, also a fct. of tau!
-	'psi': [np.pi, 0],#[np.pi, np.pi, 0.0],		#[np.pi, 0],								# real part of eigenvalue of slowest decaying perturbation
+	'zeta': [-1, -0.5, 0.5],		#[-0.5, 0.25],								# real part of eigenvalue of slowest decaying perturbation mode for the set of parameters, also a fct. of tau!
+	'psi': [np.pi, np.pi, 0.0],		#[np.pi, 0],								# real part of eigenvalue of slowest decaying perturbation
 	'computeFreqAndStab': True,													# compute linear stability and global frequency if possible: True or False
-	'calcSynctoolsStab': False													# also calclate stability from synctools - time consuming!
+	'calcSynctoolsStab': True													# also calclate stability from synctools - time consuming!
 }
 
 dictPLL={
 	'analyzeFreq': 'max',														# choose from 'max', 'min', 'middle' --> which of up to three multistable Omega to analyze
 	'intrF': 1.0,																# intrinsic frequency in Hz
 	'syncF': 1.0,																# frequency of synchronized state in Hz
-	'coupK': 0.4, #0.0004,															# [random.uniform(0.3, 0.4) for i in range(dictNet['Nx']*dictNet['Ny'])],# coupling strength in Hz float or [random.uniform(minK, maxK) for i in range(dictNet['Nx']*dictNet['Ny'])]
-	'cutFc': 0.014, # 0.0008 ,#0.1,														# LF cut-off frequency in Hz, None for no LF, or e.g., N=9 with mean 0.015: [0.05,0.015,0.00145,0.001,0.0001,0.001,0.00145,0.015,0.05]
-	'div': 1, #1024,																# divisor of divider (int)
+	'coupK': 0.2, #0.0004,														# [random.uniform(0.3, 0.4) for i in range(dictNet['Nx']*dictNet['Ny'])],# coupling strength in Hz float or [random.uniform(minK, maxK) for i in range(dictNet['Nx']*dictNet['Ny'])]
+	'cutFc': 0.00035, # 0.0008 ,#0.1,											# LF cut-off frequency in Hz, None for no LF, or e.g., N=9 with mean 0.015: [0.05,0.015,0.00145,0.001,0.0001,0.001,0.00145,0.015,0.05]
+	'div': 64, #1024,															# divisor of divider (int)
 	'friction_coefficient': 1,													# friction coefficient of 2nd order Kuramoto models
 	'feedback_delay': 0,														# value of feedback delay in seconds
 	'feedback_delay_var': None, 												# variance of feedback delay
@@ -68,12 +68,19 @@ hp 		= dictPLL['derivative_coup_fct']
 
 beta 	= 0#np.pi																# choose according to choice of mx, my and the topology!
 
-#tau 	= np.arange(8000, 11100, 1)# 2.5
-#K		= 2.0*np.pi*np.arange(0.001, 0.8, 0.06285/(2.0*np.pi) ) #0.001, 0.4
-tau 	= np.arange(0, 16, 0.01)# 2.5
-K		= 2.0*np.pi*np.arange(0.001, 0.8, 0.006285/(2.0*np.pi) ) #0.001, 0.4
+# tau1 	= np.arange(0, 16, 1)
+# spacer  = np.zeros(10)
+# tau2 	= np.arange(60000, 60016, 1)
+# tau     = np.concatenate((tau1, spacer, tau2))
 
-fzeta = 1+np.sqrt(1-np.abs(z[0])**2)
+#tau 	= np.arange(120900, 121100, 0.25)# 2.5
+#K		= 2.0*np.pi*np.arange(0.0001, 0.1, 0.06285/(4.0*np.pi) ) #0.001, 0.4
+#tau 	= np.arange(120900, 121100, 0.05)# 2.5
+#K		= 2.0*np.pi*np.arange(0.0001, 0.08, 0.006285/(2.0*np.pi) ) #0.001, 0.4
+tau 	= np.arange(0, 16, 0.05)# 2.5
+K		= 2.0*np.pi*np.arange(0.001, 0.8, 0.06285/(2.0*np.pi) ) #0.001, 0.4
+
+fzeta = 1-np.sqrt(1-np.abs(z[0])**2)
 OmegInTauVsK = np.zeros([len(tau), len(K)]); alpha = np.zeros([len(tau), len(K)]); ReLambda = np.zeros([len(tau), len(K)]); ImLambda = np.zeros([len(tau), len(K)]);
 CondStab = np.zeros([len(tau), len(K)]);
 t0 = time.time()
@@ -88,9 +95,9 @@ for i in range(len(tau)):
 			para_mat = fsl.get_parameter_matrix(isRadians=isRadian)
 		else:
 			para_mat = fsl.get_parameter_matrix_nostab(isRadians=isRadian)
-		if len(para_mat[:,4]) > 1:
+		if len(para_mat[:,4]) > 1:												# if there are more than one solution/state
 			#print('Found multistability of synchronized state, Omega:', para_mat[:,4], '\tfor (K, tau, beta)=(', dictPLL['coupK'], dictPLL['transmission_delay'], beta,')\nPick state with largest frequency!')
-			if dictPLL['analyzeFreq'] == 'max':
+			if dictPLL['analyzeFreq'] == 'max':									# pick the frequency
 				index = np.argmax(para_mat[:,4], axis=0)
 			elif dictPLL['analyzeFreq'] == 'min':
 				index = np.argmin(para_mat[:,4], axis=0)
@@ -101,17 +108,25 @@ for i in range(len(tau)):
 			alpha[i,j]    = ((2.0*np.pi*para_mat[index,1]/para_mat[index,12])*dictPLL['derivative_coup_fct']( (-2.0*np.pi*para_mat[index,4]*para_mat[index,3]+beta)/para_mat[index,12] ))
 			ReLambda[i,j] = para_mat[index,5]
 			ImLambda[i,j] = para_mat[index,6]
-		else:
+		else:																	# if there is only one solution/state
 			#print('Found one synchronized state, Omega:', para_mat[:,4], '\tfor (K, tau, beta)=(', dictPLL['coupK'], dictPLL['transmission_delay'], beta,').')
 			OmegInTauVsK[i,j] = 2.0*np.pi*para_mat[:,4][0];
 			#print('Picked frequency [Hz]: ', OmegInTauVsK[i,j]/(2.0*np.pi), '\tdivision: ', para_mat[:,12], '\tK [Hz]: ', para_mat[:,1])
 			alpha[i,j]    = ((2.0*np.pi*para_mat[:,1]/para_mat[:,12])*dictPLL['derivative_coup_fct']( (-2.0*np.pi*para_mat[:,4]*para_mat[:,3]+beta)/para_mat[:,12] ))[0]
 			ReLambda[i,j] = para_mat[:,5][0]
 			ImLambda[i,j] = para_mat[:,6][0]
-		if wc*fric**2/(2*alpha[i,j]) > fzeta or wc*fric**2/(2*alpha[i,j]) > 1:
+		diff1zeta = wc*fric**2/(2*alpha[i,j]) - ( 1 - np.sqrt(1 - np.abs(np.array(z))**2) )
+		diff2	  = wc*fric**2/(2*alpha[i,j]) - 1
+		if np.all(diff1zeta > 0):
+			CondStab[i,j] = 0
+		elif diff2 > 0:
 			CondStab[i,j] = 1
 		else:
 			CondStab[i,j] = None
+		# if wc*fric**2/(2*alpha[i,j]) > fzeta or wc*fric**2/(2*alpha[i,j]) > 1:
+		# 	CondStab[i,j] = 1
+		# else:
+		# 	CondStab[i,j] = None
 
 print('Time computation in sweep_factory: ', (time.time()-t0), ' seconds');
 #print('OmegInTauVsK', OmegInTauVsK, '\ttype(OmegInTauVsK)', type(OmegInTauVsK))

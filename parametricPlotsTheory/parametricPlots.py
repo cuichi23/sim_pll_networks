@@ -74,6 +74,14 @@ figwidth  = 10;
 figheight = 5;
 
 def preparePlotting(params):
+	''' Prepares the plotting, first calculates the gamma and tests them against the conditions
+		to determine stability, then calls plotting function
+
+	   Parameters
+	   ----------
+	   params : dict
+				   contains all information about the system to be analyzed
+	'''
 
 	# calculate gamma
 	params = evaluateEq(params)
@@ -84,17 +92,24 @@ def preparePlotting(params):
 	else:
 		params = prepareScatt(params)
 
-	#print('params[*y*]',  params['y'])
-	#print('params[*x1*]', params['x1'])
-	#print('params[*x2*]', params['x2'])
-	#print('shape(params[*x1*]), params[*x2*]', np.shape(params['x1']), np.shape(params['x2']))
-
 	return params
 
 # ******************************************************************************
 
 def makePlotsFromSynctoolsResults(figID, x, y, z, rescale_x, rescale_y, rescale_z, x_label, y_label, z_label,
 										x_identifier, y_identifier, z_identifier, mask_treshold=None, colormap=cm.coolwarm):
+	''' Plots imshow plots of the parameter space results obtained with, e.g., the synctools library
+
+	   Parameters
+	   ----------
+		figID										id for the figure, int
+		x, y, z										the data, z denotes the color in the x-y plane, floats or ints
+		rescale_x, rescale_y, rescale_z				a rescaling factor for each dimension
+		x_label, y_label, z_label					the data labels of all axis and color information, type string
+		x_identifier, y_identifier, z_identifier	abtract identifiers of the data, type string
+		mask_treshold=None							a masking treshold, float
+		colormap=cm.coolwarm						the colormap used by imshow, colormap object
+	'''
 
 	fig = plt.figure(num=figID, figsize=(figwidth, figheight), dpi=dpi_val, facecolor='w', edgecolor='k')
 	fig.set_size_inches(8,6)
@@ -138,23 +153,17 @@ def makePlotsFromSynctoolsResults(figID, x, y, z, rescale_x, rescale_y, rescale_
 # ******************************************************************************
 
 def shiftedColorMap(cmap, min_val, max_val, name):
-	'''Function to offset the "center" of a colormap. Useful for data with a negative min and positive max and you want the middle of the colormap's dynamic range to be at zero. Adapted from https://stackoverflow.com/questions/7404116/defining-the-midpoint-of-a-colormap-in-matplotlib
+	''' Function to offset the "center" of a colormap. Useful for data with a negative min and positive max and you want the middle of the colormap's dynamic range to be at zero.
+		Adapted from https://stackoverflow.com/questions/7404116/defining-the-midpoint-of-a-colormap-in-matplotlib
 
 	Input
 	-----
 	  cmap : The matplotlib colormap to be altered.
-	  start : Offset from lowest point in the colormap's range.
-		  Defaults to 0.0 (no lower ofset). Should be between
-		  0.0 and `midpoint`.
-	  midpoint : The new center of the colormap. Defaults to
-		  0.5 (no shift). Should be between 0.0 and 1.0. In
-		  general, this should be  1 - vmax/(vmax + abs(vmin))
-		  For example if your data range from -15.0 to +5.0 and
-		  you want the center of the colormap at 0.0, `midpoint`
-		  should be set to  1 - 5/(5 + 15)) or 0.75
-	  stop : Offset from highets point in the colormap's range.
-		  Defaults to 1.0 (no upper ofset). Should be between
-		  `midpoint` and 1.0.'''
+	  start : Offset from lowest point in the colormap's range. Defaults to 0.0 (no lower ofset). Should be between 0.0 and `midpoint`.
+	  midpoint : The new center of the colormap. Defaults to 0.5 (no shift). Should be between 0.0 and 1.0. In general, this should be  1 - vmax/(vmax + abs(vmin))
+		  For example if your data range from -15.0 to +5.0 and you want the center of the colormap at 0.0, `midpoint` should be set to  1 - 5/(5 + 15)) or 0.75
+	  stop : Offset from highets point in the colormap's range. Defaults to 1.0 (no upper ofset). Should be between `midpoint` and 1.0.'''
+
 	epsilon = 0.001
 	start, stop = 0.0, 1.0
 	min_val, max_val = min(0.0, min_val), max(0.0, max_val) 					# Edit #2
@@ -180,6 +189,13 @@ def shiftedColorMap(cmap, min_val, max_val, name):
 # ******************************************************************************
 
 def plotParametric(params):
+	''' Plots imshow plots of the parameter space results obtained from applying the conditions
+
+	   Parameters
+	   ----------
+	   params : dict
+				   contains all information about the system to be analyzed, as well as the data
+	'''
 
 	params = preparePlotting(params)
 
@@ -338,6 +354,13 @@ def plotParametric(params):
 # ******************************************************************************
 
 def plot2D(params):
+	''' Plots 2D plots of parameter dependence of the real part from results obtained from applying the conditions
+
+	   Parameters
+	   ----------
+	   params : dict
+				   contains all information about the system to be analyzed, as well as the data
+	'''
 
 	params		= preparePlotting(params)
 
@@ -400,6 +423,13 @@ def plot2D(params):
 # ******************************************************************************
 
 def prepareScatt(params):
+	''' Prepares the scatter and imshow plot, rescales and organizes the data, saves the data
+
+	   Parameters
+	   ----------
+	   params : dict
+				   contains all information about the system to be analyzed, as well as the data
+	'''
 
 	if  ( params['loopP1'] == 'tau' and params['loopP2'] == 'wc' ):
 
@@ -527,6 +557,13 @@ def prepareScatt(params):
 # ******************************************************************************
 
 def prepare2D(params):
+	''' Prepares the 2D plots, rescales and organizes the data, saves the data
+
+	   Parameters
+	   ----------
+	   params : dict
+				   contains all information about the system to be analyzed, as well as the data
+	'''
 
 	# pick out maximum value of the gamma solutions
 	params.update({'y': np.max(params['y'][:,:], axis=1)})
@@ -553,6 +590,13 @@ def prepare2D(params):
 # ******************************************************************************
 
 def evaluateEq(params):
+	''' Organizes and calls the mu-solution and applies the conditions to obtain the raw results to be plotted
+
+	   Parameters
+	   ----------
+	   params : dict
+				   contains all information about the system to be analyzed, as well as the data
+	'''
 
 	sol = []; solBF = [];
 
@@ -711,6 +755,13 @@ def equationSigma(tau, a, wc, zeta, fric=1, gamma=0, psi=np.pi, K=1):
 
 # potentially cythonize!
 def equationSigmaSlopes(tau, a, wc, fric, gamma, zeta, psi):
+	''' description
+
+	   Parameters
+	   ----------
+	   name : type
+				   decription
+	'''
 
 	sigma = -wc*fric/2.0 + 1.0/tau * lambertw( 0.5*np.exp( 0.5*fric*wc*tau )*np.abs(zeta)*np.cos(gamma*tau-psi)*wc*a*tau**2 )
 	#print('type(sigma)', type(sigma), '\tsigma_slopes:', sigma)
@@ -721,6 +772,13 @@ def equationSigmaSlopes(tau, a, wc, fric, gamma, zeta, psi):
 
 # potentially cythonize!
 def applyConditions(tau, a, wc, zeta, fric=1, psi=np.pi, K=1):
+	''' description
+
+	   Parameters
+	   ----------
+	   name : type
+				   decription
+	'''
 
 	if isinstance(zeta, list) or isinstance(zeta, np.ndarray):
 		zetlen = len(zeta)
@@ -772,6 +830,13 @@ def applyConditions(tau, a, wc, zeta, fric=1, psi=np.pi, K=1):
 ################################################################################
 
 def equationMuQuad(tau, a, wc, zeta, fric=1):
+	''' description
+
+	   Parameters
+	   ----------
+	   name : type
+				   decription
+	'''
 
 	#A = wc**2.0 - 2.0*np.abs(a)*wc
 	#B = (1.0-zeta**2.0)*(np.abs(a)*wc)**2.0
@@ -786,6 +851,13 @@ def equationMuQuad(tau, a, wc, zeta, fric=1):
 ################################################################################
 
 def equationMuFromRealandImag(tau, zeta, psi, a, wc, fric, solvStabRealC, solvStabImagC):	# here we obtain the mu's from solving the real and imaginary parts of the char. eq. for sigma = 0
+	''' description
+
+	   Parameters
+	   ----------
+	   name : type
+				   decription
+	'''
 
 	intervalNumbPiHalf = 10
 	muBFcota_initIndi  = np.zeros(intervalNumbPiHalf)
@@ -806,6 +878,13 @@ def equationMuFromRealandImag(tau, zeta, psi, a, wc, fric, solvStabRealC, solvSt
 ################################################################################
 
 def stabilityTest(tau, zeta, psi, a, wc, fric, mu, muvec=[]):
+	''' description
+
+	   Parameters
+	   ----------
+	   name : type
+				   decription
+	'''
 
 	zero_treshold0 = 1E-8; zero_treshold1 = 1E-16; zero_treshold2 = 1E-16;
 

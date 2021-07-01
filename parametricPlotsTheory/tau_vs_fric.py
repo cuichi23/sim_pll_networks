@@ -66,10 +66,9 @@ beta 	= 0																		# choose according to choice of mx, my and the topolo
 
 #tau 	= np.arange(0, 16, 0.1)
 #fric  	= np.arange( 0.25, 2, 0.1 )
-tau		= np.arange(0, 16, 0.005)
-fric  	= np.arange( 0.25, 2, 0.01 )
+tau		= np.arange(0, 16, 0.0005)
+fric  	= np.arange( 0.25, 2, 0.0005 )
 
-fzeta = 1+np.sqrt(1-np.abs(z[0])**2)
 #OmegInTauvsFric = []; alpha = []; ReLambda = []; ImLambda = [];
 OmegInTauvsFric = np.zeros([len(tau), len(fric)]); alpha = np.zeros([len(tau), len(fric)]); ReLambda = np.zeros([len(tau), len(fric)]); ImLambda = np.zeros([len(tau), len(fric)]);
 CondStab = np.zeros([len(tau), len(fric)]);
@@ -103,10 +102,21 @@ for i in range(len(tau)):
 			alpha[i,j] = ((2.0*np.pi*para_mat[:,1]/para_mat[:,12])*dictPLL['derivative_coup_fct']( (-2.0*np.pi*para_mat[:,4]*para_mat[:,3]+beta)/para_mat[:,12] ))[0]
 			ReLambda[i,j] = para_mat[:,5][0]
 			ImLambda[i,j] = para_mat[:,6][0]
-		if wc*fric[j]**2/(2*alpha[i,j]) > fzeta or wc*fric[j]**2/(2*alpha[i,j]) > 1: #wc*fric[j]**2/(2*alpha[i,j]) < fzeta and wc*fric[j]**2/(2*alpha[i,j]) > 1:
+		diff1zeta = wc*fric[j]**2/(2*alpha[i,j]) - ( 1 - np.sqrt(1 - np.abs(np.array(z))**2) )
+		diff2	  = wc*fric[j]**2/(2*alpha[i,j]) - 1
+		if np.all(diff1zeta > 0):
+			CondStab[i,j] = 0
+		elif diff2 > 0:
 			CondStab[i,j] = 1
 		else:
 			CondStab[i,j] = None
+		# if wc*fric[j]**2/(2*alpha[i,j]) > fzeta[k]:
+		# 	CondStab[i,j] = 0
+		# elif wc*fric[j]**2/(2*alpha[i,j]) > 1:
+		# 	CondStab[i,j] = 1
+		# else:
+		# 	CondStab[i,j] = None
+
 
 print('Time computation in sweep_factory: ', (time.time()-t0), ' seconds');
 

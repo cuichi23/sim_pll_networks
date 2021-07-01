@@ -104,10 +104,18 @@ for i in range(len(tau)):
 			alpha[i,j] = ((2.0*np.pi*para_mat[:,1]/para_mat[:,12])*dictPLL['derivative_coup_fct']( (-2.0*np.pi*para_mat[:,4]*para_mat[:,3]+beta)/para_mat[:,12] ))[0]
 			ReLambda[i,j] = para_mat[:,5][0]
 			ImLambda[i,j] = para_mat[:,6][0]
-		if wc[j]*fric**2/(2*alpha[i,j]) > fzeta or wc[j]*fric**2/(2*alpha[i,j]) > 1:	#wc[j]/(2*alpha[i,j]) < fzeta and wc[j]/(2*alpha[i,j]) > 1:
+		diff1zeta = wc[j]*fric**2/(2*alpha[i,j]) - ( 1 - np.sqrt(1 - np.abs(np.array(z))**2) )
+		diff2	  = wc[j]*fric**2/(2*alpha[i,j]) - 1
+		if np.all(diff1zeta > 0):
+			CondStab[i,j] = 0
+		elif diff2 > 0:
 			CondStab[i,j] = 1
 		else:
 			CondStab[i,j] = None
+		# if wc[j]*fric**2/(2*alpha[i,j]) > fzeta or wc[j]*fric**2/(2*alpha[i,j]) > 1:	#wc[j]/(2*alpha[i,j]) < fzeta and wc[j]/(2*alpha[i,j]) > 1:
+		# 	CondStab[i,j] = 1
+		# else:
+		# 	CondStab[i,j] = None
 
 print('Time computation in sweep_factory: ', (time.time()-t0), ' seconds');
 

@@ -21,6 +21,7 @@ from mpl_toolkits.axes_grid1.inset_locator import mark_inset
 import time
 import pickle
 
+sys.path.append('..') 															# adds higher directory to python modules path
 import synctools_interface_lib as synctools
 from function_lib import solveLinStab
 import function_lib as fct_lib
@@ -69,7 +70,7 @@ colormapSyncStab 	= cm.PuOr
 
 ################################################################################
 ################################################################################
-filename = 'results/params_tau_vs_K_15:28_2021_5_10'
+filename = 'results/params_tau_vs_K_13:49_2021_6_9'
 ################################################################################
 ################################################################################
 

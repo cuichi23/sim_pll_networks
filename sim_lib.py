@@ -205,6 +205,7 @@ def evolveSystemOnTsimArray_varInjectLockCoupStrength(dictNet, dictPLL, phi, clo
 	t = np.arange( 0, dictNet['max_delay_steps']+dictPLL['sim_time_steps'] ) * dictPLL['dt']
 	plt.plot(t, injectLockCoupStrVal_vs_time)
 	plt.draw(); plt.show()
+
 	t_first_pert = 450;
 
 	clkStore = np.empty([dictNet['max_delay_steps']+dictPLL['sim_time_steps'], dictNet['Nx']*dictNet['Ny']])
@@ -223,8 +224,9 @@ def evolveSystemOnTsimArray_varInjectLockCoupStrength(dictNet, dictPLL, phi, clo
 		clock_counter[(idx_time+1)%dictNet['phi_array_len'],:] = [pll.clock_halfperiods_count(idx_time%dictNet['phi_array_len'],phi[(idx_time+1)%dictNet['phi_array_len'],pll.idx_self]) for pll in pll_list]
 		#print('clock count for all:', clock_counter[-1])
 		if idx_time*dictPLL['dt'] > t_first_pert and idx_time*dictPLL['dt'] < t_first_pert+2*dictPLL['dt']:
+			print('Perturbation added at t=', idx_time*dictPLL['dt'], '!')
 			[pll.vco.add_perturbation( np.random.uniform(-np.pi, np.pi) ) for pll in pll_list]
-			t_first_pert = t_first_pert + 50;
+			t_first_pert = t_first_pert + 500;
 
 		clkStore[idx_time+1,:] = clock_counter[(idx_time+1)%dictNet['phi_array_len'],:]
 		phiStore[idx_time+1,:] = phi[(idx_time+1)%dictNet['phi_array_len'],:]

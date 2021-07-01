@@ -12,6 +12,9 @@ from scipy.signal import square
 from scipy.stats import cauchy
 from operator import add, sub
 
+from multiprocessing import Pool, freeze_support
+import itertools
+
 import matplotlib
 import matplotlib.pyplot as plt
 import datetime
@@ -26,6 +29,50 @@ now = datetime.datetime.now()
 
 ''' Enable automatic carbage collector '''
 gc.enable();
+
+def distributeProcesses(dictNet, dictPLL, dictAlgo=None):
+
+	t0 = time.time()
+	if dictAlgo['bruteForceBasinStabMethod'] == 'classicBruteForceMethodRotatedSpace' or dictAlgo['bruteForceBasinStabMethod'] == 'testNetworkMotifIsing': # classic approach with LP-adaptation developed with J. Asmus, D. Platz
+		scanValues, allPoints = setup.allInitPhaseCombinations(dictPLL, dictNet, paramDiscretization=dictAlgo['paramDiscretization']) # set paramDiscretization for the number of points to be simulated
+		print('allPoints:', [allPoints], '\nscanValues', scanValues); Nsim = allPoints.shape[0]; print('multiprocessing', Nsim, 'realizations')
+
+	elif dictAlgo['bruteForceBasinStabMethod'] == 'listOfInitialPhaseConfigurations':	# so far for N=2, work it out for N>2
+		scanValues = np.linspace(-np.pi, np.pi, dictAlgo['paramDiscretization'])
+		print('scanValues', scanValues); Nsim = len(scanValues); print('multiprocessing', Nsim, 'realizations')
+
+	global number_period_dyn;
+	number_period_dyn 	= 20.5;
+	initPhiPrime0		= 0;
+
+	np.random.seed()
+	poolData = [];																# should this be recasted to be an np.array?
+	freeze_support()
+	pool = Pool(processes=7)													# create a Pool object, pick number of processes
+
+	#def multihelper(phiSr, initPhiPrime0, dictNet, dictPLL, phi, clock_counter, pll_list):
+	if dictAlgo['bruteForceBasinStabMethod'] == 'classicBruteForceMethodRotatedSpace':
+		poolData.append( pool.map(multihelper_star, zip( 							# this makes a map of all parameter combinations that have to be simulated, itertools.repeat() names the constants
+						itertools.product(*scanValues), itertools.repeat(initPhiPrime0), itertools.repeat(dictNet), itertools.repeat(dictPLL), itertools.repeat(dictAlgo) ) ) )
+	elif dictAlgo['bruteForceBasinStabMethod'] == 'listOfInitialPhaseConfigurations' or dictAlgo['bruteForceBasinStabMethod'] == 'testNetworkMotifIsing':
+		poolData.append( pool.map(multihelper_star, zip( 							# this makes a map of all parameter combinations that have to be simulated, itertools.repeat() names the constants
+						itertools.product(allPoints), itertools.repeat(initPhiPrime0), itertools.repeat(dictNet), itertools.repeat(dictPLL), itertools.repeat(dictAlgo) ) ) )
+
+
+	print('time needed for execution of simulations in multiproc mode: ', (time.time()-t0), ' seconds'); #sys.exit()
+
+	eva.saveDictionaries(poolData, 'poolData', dictPLL['coupK'], dictPLL['transmission_delay'], dictPLL['cutFc'], dictNet['Nx'], dictNet['Ny'], dictNet['mx'], dictNet['my'], dictNet['topology'])	   # save the dicts
+
+	if dictAlgo['bruteForceBasinStabMethod']   == 'testNetworkMotifIsing':
+		eva.evaluateSimulationIsing(poolData)
+	elif dictAlgo['bruteForceBasinStabMethod'] == 'listOfInitialPhaseConfigurations':
+		eva.evaluateSimulationsChrisHoyer(poolData)
+	elif dictAlgo['bruteForceBasinStabMethod'] == 'classicBruteForceMethodRotatedSpace':
+		print('Implement evaluation as in the old version! Copy plots, etc...'); sys.exit()
+
+	return poolData
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 ''' SIMULATE NETWORK '''
 def simulateSystem(dictNet, dictPLL, dictAlgo=None):
@@ -58,70 +105,21 @@ def simulateSystem(dictNet, dictPLL, dictAlgo=None):
 
 	dictNet.update({'max_delay_steps': max_delay_steps, 'phi_array_len': phi_array_len})
 
-	#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-	scanValues, allPoints = setup.allInitPhaseCombinations(dictPLL, dictNet, paramDiscretization=10)
-	global number_period_dyn; number_period_dyn = 20.5;	initPhiPrime0 = 0;
-
-	Nsim = allPoints.shape[0]; print('multiprocessing', Nsim, 'realizations')
-	pool_data=[];																# should this be recated to be an np.array?
-	freeze_support()
-	pool = Pool(processes=7)													# create a Pool object
-
-	#def multihelper(phiSr, initPhiPrime0, dictNet, dictPLL, phi, clock_counter, pll_list):
-	pool_data.append( pool.map(multihelper_star, zip( 							# this makes a map of all parameter combinations that have to be simulated, itertools.repeat() names the constants
-						itertools.product(*scanValues), itertools.repeat(initPhiPrime0), itertools.repeat(dictNet), itertools.repeat(dictPLL), itertools.repeat(phi),
-						itertools.repeat(clock_counter), itertools.repeat(pll_list) ) ) )
-
-	results=[]; results_t=[]; phi=[]; omega_0=[]; K_0=[]; delays_0=[];
-	for i in range(Nsim):
-		''' evaluate dictionaries '''
-		results.append( [ pool_data[0][i]['mean_order'],  pool_data[0][i]['last_orderP'], pool_data[0][i]['stdev_orderP'] ] )
-		#results = np.concatenate(results, pool_data[0][i]['orderP_t'] )
-		results_t.append( [ pool_data[0][i]['orderP_t'] ] )
-		#print('type(results_t)', type(results_t), ' len(results_t)', len(results_t), ' len(results_t[0][0])', len(results_t[0][0]))
-		# phi.append( pool_data[0][i]['phases'] )
-		omega_0.append( pool_data[0][i]['intrinfreq'] )
-		K_0.append( pool_data[0][i]['coupling_strength'] )
-		delays_0.append( pool_data[0][i]['transdelays'] )
-		# cPD_t.append( pool_data[0][i]['cPD'] )
-
-	now = datetime.datetime.now()
-	# print('np.shape(results_t)', np.shape(results_t), 'np.shape(np.stack(results_t))', np.shape(np.stack(results_t)))
-	''' SAVE RESULTS '''
-	np.savez('results/orderparam_K%.2f_Fc%.2f_FOm%.2f_div%.2f_tau%.2f_%d_%d_%d.npz' %(K, Fc, F_Omeg, div, delay, now.year, now.month, now.day), results=results)
-	np.savez('results/orderparam_t_K%.2f_Fc%.2f_FOm%.2f_div%.2f_tau%.2f_%d_%d_%d.npz' %(K, Fc, F_Omeg, div, delay, now.year, now.month, now.day), results=results_t)
-	np.savez('results/allInitPerturbPoints_K%.2f_Fc%.2f_FOm%.2f_div%.2f_tau%.2f_%d_%d_%d.npz' %(K, Fc, F_Omeg, div, delay, now.year, now.month, now.day), allPoints=allPoints)
-	del pool_data; del _allPoints;											# emtpy pool data, allPoints variables to free memory
-
-	print( 'size {omega_0, K_0, delays_0, results}:', sys.getsizeof(omega_0), '\t', sys.getsizeof(K_0), '\t', sys.getsizeof(delays_0), '\t', sys.getsizeof(results), '\n' )
-	omega_0=np.array(omega_0); K_0=np.array(K_0); results=np.array(results);
-	# np.savez('results/phases_K%.2f_Fc%.2f_FOm%.2f_tau%.2f_%d_%d_%d.npz' %(K, Fc, F_Omeg, delay, now.year, now.month, now.day), phi=phi) # save phases of trajectories
-	# phi=np.array(phi);
-	# delays_0=np.array(delays_0);
-
-	#print( list( pool.map(multihelper_star, itertools.izip( 				# this makes a map of all parameter combinations that have to be simulated, itertools.repeat() names the constants
-	#					itertools.product(*scanValues), itertools.repeat(initPhiPrime0), itertools.repeat(topology), itertools.repeat(F), itertools.repeat(Nsteps), itertools.repeat(dt),
-	#					itertools.repeat(c),itertools.repeat(Fc), itertools.repeat(F_Omeg), itertools.repeat(K), itertools.repeat(N), itertools.repeat(k), itertools.repeat(delay), itertools.repeat(feedback_delay),
-	#					itertools.repeat(phiM), itertools.repeat(plot_Phases_Freq) ) ) ) )
-	#print('results:', results)
-	print('time needed for execution of simulations in multiproc mode: ', (time.time()-t0), ' seconds')
-
-	#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-def prepareSimRealization(init_phi, initPhiPrime0, dictNet, dictPLL, phi, clock_counter, pll_list, dictData=None, dictAlgo=None):
-
 	# set initial phase configuration and history -- performed such that any configuration can be obtained when simulations starts
 	#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	''' SET INITIAL HISTORY AND PERTURBATION '''
 	# start by setting last entries to initial phase configuration, i.e., phiInitConfig + phiPerturb
-	if not dictNet['phiPerturb']:
+
+	print('The perturbation will be set to dictNet[*phiPerturb*]=', dictNet['phiPerturb'], ', and dictNet[*phiInitConfig*]=', dictNet['phiInitConfig'])
+
+	if not ( isinstance(dictNet['phiPerturb'], list) or isinstance(dictNet['phiPerturb'], np.ndarray) ):
 		print('All initial perturbations set to zero as none were supplied!')
-		dictNet['phiPerturb']		= [0 for i in range(len(phi[0,:]))]
-		phi[dictNet['max_delay_steps'],:] = list( map(add, dictNet['phiInitConfig'], dictNet['phiPerturb']) ) # set phase-configuration phiInitConfig at t=0 + the perturbation phiPerturb
+		dictNet['phiPerturb']				= [0 for i in range(len(phi[0,:]))]
+		phi[dictNet['max_delay_steps'],:] 	= list( map(add, dictNet['phiInitConfig'], dictNet['phiPerturb']) ) # set phase-configuration phiInitConfig at t=0 + the perturbation phiPerturb
 	elif ( len(phi[0,:]) == len(dictNet['phiInitConfig']) and len(phi[0,:]) == len(dictNet['phiPerturb']) ):
-		phi[dictNet['max_delay_steps'],:] = list( map(add, dictNet['phiInitConfig'], dictNet['phiPerturb']) ) # set phase-configuration phiInitConfig at t=0 + the perturbation phiPerturb
+		phi[dictNet['max_delay_steps'],:] 	= list( map(add, dictNet['phiInitConfig'], dictNet['phiPerturb']) ) # set phase-configuration phiInitConfig at t=0 + the perturbation phiPerturb
 	else:
+		print('len(phi[0,:])', len(phi[0,:]), '\t len(dictNet[*phiInitConfig*])', len(dictNet['phiInitConfig']))
 		print('Provide initial phase-configuration of length %i to setup simulation!' %len(phi[dictNet['max_delay_steps'],:])); sys.exit()
 
 	#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -169,35 +167,34 @@ def prepareSimRealization(init_phi, initPhiPrime0, dictNet, dictPLL, phi, clock_
 		dictData = evolveSystemOnTsimArray(dictNet, dictPLL, phi, clock_counter, pll_list, dictData)
 	elif dictPLL['sim_time_steps']*dictPLL['dt'] > 1E6 and dictNet['phi_array_mult_tau'] == 1 and dictNet['special_case'] == 'False':
 		dictData = evolveSystemOnTauArray(dictNet, dictPLL, phi, clock_counter, pll_list, dictData)
-	elif dictNet['special_case'] == 'test_case':
-		print('Simulating testcase scenario!'); time.sleep(2)
-		dictData = evolveSystemTestCases(dictNet, dictPLL, phi, clock_counter, pll_list, dictData)
-	elif dictNet['special_case'] == 'timeDepTransmissionDelay':
-		dictData = evolveSystemOnTsimArray_varDelaySaveCtrlSig(dictNet, dictPLL, phi, clock_counter, pll_list, dictData)
-		plot.plotCtrlSigDny(dictPLL, dictNet, dictData)
+	#elif dictNet['special_case'] == 'test_case':
+	#	print('Simulating testcase scenario!'); time.sleep(2)
+	#	dictData = evolveSystemTestCases(dictNet, dictPLL, phi, clock_counter, pll_list, dictData)
+	#elif dictNet['special_case'] == 'timeDepTransmissionDelay':
+	#	dictData = evolveSystemOnTsimArray_varDelaySaveCtrlSig(dictNet, dictPLL, phi, clock_counter, pll_list, dictData)
+	#	plot.plotCtrlSigDny(dictPLL, dictNet, dictData)
 	elif dictNet['special_case'] == 'timeDepInjectLockCoupStr':
-		dictData = evolveSystemOnTsimArray_varInjectLockCoupStrength(dictNet, dictPLL, phi, clock_counter, pll_list, dictData)
+		dictData = evolveSystemOnTsimArray_varInjectLockCoupStrength(dictNet, dictPLL, phi, clock_counter, pll_list, dictData, dictAlgo)
 
-	# eva.saveDictionaries(dictPLL, 'dictPLL',   dictPLL['coupK'], dictPLL['transmission_delay'], dictPLL['cutFc'], dictNet['Nx'], dictNet['Ny'], dictNet['mx'], dictNet['my'], dictNet['topology'])	   # save the dicts
-	# eva.saveDictionaries(dictNet, 'dictNet',   dictPLL['coupK'], dictPLL['transmission_delay'], dictPLL['cutFc'], dictNet['Nx'], dictNet['Ny'], dictNet['mx'], dictNet['my'], dictNet['topology'])	   # save the dicts
-	# eva.saveDictionaries(dictData, 'dictData', dictPLL['coupK'], dictPLL['transmission_delay'], dictPLL['cutFc'], dictNet['Nx'], dictNet['Ny'], dictNet['mx'], dictNet['my'], dictNet['topology'])	   # save the dicts
+	# run evaluations
+	r, orderParam, F1 	= eva.obtainOrderParam(dictPLL, dictNet, dictData)
+	dictData.update({'orderParam': orderParam, 'R': r})
+	#dynFreq, phaseDiff	= calculateFreqPhaseDiff(dictData)
+	#dictData.update({'dynFreq': dynFreq, 'phaseDiff': phaseDiff})
 
 	# plot.plotPhasesInf(dictPLL, dictNet, dictData)
-	# plot.plotPhases2pi(dictPLL, dictNet, dictData)
 	# plot.plotFrequency(dictPLL, dictNet, dictData)
 	# plot.plotOrderPara(dictPLL, dictNet, dictData)
-	# plot.plotPhaseRela(dictPLL, dictNet, dictData)
 	# plot.plotPhaseDiff(dictPLL, dictNet, dictData)
-	# plot.plotClockTime(dictPLL, dictNet, dictData)
-	# plot.plotOscSignal(dictPLL, dictNet, dictData)
-	#plot.plotPSD(dictPLL, dictNet, dictData, [], saveData=False)
 
-	# plt.draw()
-	# plt.show()
+	plt.draw()
+	#plt.show()
 
-	return dictNet, dictPLL, phi, clock_counter, pll_list, dictData
+	realizationDict = {'dictNet': dictNet, 'dictPLL': dictPLL, 'dictData': dictData}
 
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	return realizationDict
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 def evolveSystemOnTauArray(dictNet, dictPLL, phi, clock_counter, pll_list, dictData=None, dictAlgo=None):
 
@@ -249,24 +246,132 @@ def evolveSystemOnTsimArray(dictNet, dictPLL, phi, clock_counter, pll_list, dict
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-def multihelper(phiSr, initPhiPrime0, dictNet, dictPLL, phi, clock_counter, pll_list):
+def evolveSystemOnTsimArray_varInjectLockCoupStrength(dictNet, dictPLL, phi, clock_counter, pll_list, dictData=None, dictAlgo=None):
 
-	global number_period_dyn; number_period_dyn = 20.5;
-	if N > 2:
-		phiSr = np.insert(phiSr, 0, initPhiPrime0)												# insert the first variable in the rotated space, constant initPhiPrime0
-	phiS = eva.rotate_phases(phiSr, isInverse=False)											# rotate back into physical phase space
-	# print('TEST in multihelper, phiS:', phiS, ' and phiSr:', phiSr)
-	unit_cell = eva.PhaseDifferenceCell(N)
-	# SO anpassen, dass auch gegen verschobene Einheitszelle geprueft werden kann (e.g. if not k==0...)
-	# ODER reicht schon:
-	# if not unit_cell.is_inside(( phiS ), isRotated=False):   ???
-	# if not unit_cell.is_inside((phiS-phiM), isRotated=False):					# and not N == 2:	# +phiM
-	if not unit_cell.is_inside((phiS), isRotated=False):						# NOTE this case is for scanValues set only in -pi to pi
-		return {'mean_order': -1., 'last_orderP': -1., 'stdev_orderP': np.zeros(1), 'phases': dictNet['phiInitConfig'],
-		 		'intrinfreq': np.zeros(1), 'coupling_strength': np.zeros(1), 'transdelays': dictPLL['transmission_delay'], 'orderP_t': np.zeros(int(number_period_dyn/(dictPLL['F']*dictPLL['dt'])))-1.0}
+	injectLockCoupStrVal_vs_time = setup.setupTimeDependentParameter(dictNet, dictPLL, dictData, parameter='coupStr_2ndHarm', afterTsimPercent=0.35, forAllPLLsDifferent=False)[0]
+
+	t = np.arange( 0, dictNet['max_delay_steps']+dictPLL['sim_time_steps'] ) * dictPLL['dt']
+	if not dictAlgo['bruteForceBasinStabMethod'] == 'testNetworkMotifIsing':
+		plt.figure(1234);
+		plt.plot(t, injectLockCoupStrVal_vs_time)
+		plt.draw(); plt.show()
+
+	t_first_pert = 1450;
+
+	clkStore = np.empty([dictNet['max_delay_steps']+dictPLL['sim_time_steps'], dictNet['Nx']*dictNet['Ny']])
+	phiStore = np.empty([dictNet['max_delay_steps']+dictPLL['sim_time_steps'], dictNet['Nx']*dictNet['Ny']])
+	phiStore[0:dictNet['max_delay_steps']+1,:] = phi[0:dictNet['max_delay_steps']+1,:]
+	#line = []; tlive = np.arange(0,dictNet['phi_array_len']-1)*dictPLL['dt']
+	for idx_time in range(dictNet['max_delay_steps'],dictNet['max_delay_steps']+dictPLL['sim_time_steps']-1,1):
+
+		#print('[pll.next(idx_time,dictNet['phi_array_len'],phi) for pll in pll_list]:', [pll.next(idx_time,dictNet['phi_array_len'],phi) for pll in pll_list])
+		#print('Current state: phi[(idx_time)%dictNet['phi_array_len'],:]', phi[(idx_time)%dictNet['phi_array_len'],:], '\t(idx_time)%dictNet['phi_array_len']',(idx_time)%dictNet['phi_array_len']); sys.exit()
+		#print('(idx_time+1)%dictNet['phi_array_len']', ((idx_time+1)%dictNet['phi_array_len'])*dictPLL['dt']); #time.sleep(0.5)
+		phi[(idx_time+1)%dictNet['phi_array_len'],:] = [pll.next(idx_time,dictNet['phi_array_len'],phi) for pll in pll_list] # now the network is iterated, starting at t=0 with the history as prepared above
+		#print('injectionLock:', [pll.pdc.compute(np.zeros(dictNet['Nx']*dictNet['Ny']-1), 0, np.zeros(dictNet['Nx']*dictNet['Ny']-1), idx_time) for pll in pll_list])
+		[pll.pdc.evolveCouplingStrengthInjectLock(injectLockCoupStrVal_vs_time[idx_time],dictNet) for pll in pll_list]
+		#[print('at time t=', idx_time*dictPLL['dt'] , 'K_inject2ndHarm=', injectLockCoupStrVal_vs_time[idx_time]) for pll in pll_list]
+		clock_counter[(idx_time+1)%dictNet['phi_array_len'],:] = [pll.clock_halfperiods_count(idx_time%dictNet['phi_array_len'],phi[(idx_time+1)%dictNet['phi_array_len'],pll.idx_self]) for pll in pll_list]
+		#print('clock count for all:', clock_counter[-1])
+		if idx_time*dictPLL['dt'] > t_first_pert and idx_time*dictPLL['dt'] < t_first_pert+2*dictPLL['dt']:
+			print('Perturbation added at t=', idx_time*dictPLL['dt'], '!')
+			[pll.vco.add_perturbation( np.random.uniform(-np.pi, np.pi) ) for pll in pll_list]
+			t_first_pert = t_first_pert + 500;
+
+		clkStore[idx_time+1,:] = clock_counter[(idx_time+1)%dictNet['phi_array_len'],:]
+		phiStore[idx_time+1,:] = phi[(idx_time+1)%dictNet['phi_array_len'],:]
+		#phidot = (phi[1:,0]-phi[:-1,0])/(2*np.pi*dictPLL['dt'])
+		#line = livplt.live_plotter(tlive, phidot, line)
+
+	t = np.arange(0,len(phiStore[0:dictNet['max_delay_steps']+dictPLL['sim_time_steps'],0]))*dictPLL['dt']
+	dictData.update({'t': t, 'phi': phiStore, 'clock': clkStore})
+
+	return dictData
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+def evolveSystemOnTsimArray_varDelaySaveCtrlSig(dictNet, dictPLL, phi, clock_counter, pll_list, dictData=None, dictAlgo=None):
+
+	clkStore = np.empty([dictNet['max_delay_steps']+dictPLL['sim_time_steps'], dictNet['Nx']*dictNet['Ny']])
+	phiStore = np.empty([dictNet['max_delay_steps']+dictPLL['sim_time_steps'], dictNet['Nx']*dictNet['Ny']])
+	ctlStore = np.empty([dictNet['max_delay_steps']+dictPLL['sim_time_steps'], dictNet['Nx']*dictNet['Ny']])
+	phiStore[0:dictNet['max_delay_steps']+1,:] = phi[0:dictNet['max_delay_steps']+1,:]
+	ctlStore[0:dictNet['max_delay_steps'],:] = 0; ctlStore[dictNet['max_delay_steps']+1,:] = [pll.lf.y for pll in pll_list];
+	#line = []; tlive = np.arange(0,dictNet['phi_array_len']-1)*dictPLL['dt']
+	for idx_time in range(dictNet['max_delay_steps'],dictNet['max_delay_steps']+dictPLL['sim_time_steps']-1,1):
+
+		#print('[pll.next(idx_time,dictNet['phi_array_len'],phi) for pll in pll_list]:', [pll.next(idx_time,dictNet['phi_array_len'],phi) for pll in pll_list])
+		#print('Current state: phi[(idx_time)%dictNet['phi_array_len'],:]', phi[(idx_time)%dictNet['phi_array_len'],:], '\t(idx_time)%dictNet['phi_array_len']',(idx_time)%dictNet['phi_array_len']); sys.exit()
+		#print('(idx_time+1)%dictNet['phi_array_len']', ((idx_time+1)%dictNet['phi_array_len'])*dictPLL['dt']); #time.sleep(0.5)
+		phi[(idx_time+1)%dictNet['phi_array_len'],:] = [pll.next(idx_time,dictNet['phi_array_len'],phi) for pll in pll_list] # now the network is iterated, starting at t=0 with the history as prepared above
+
+		clock_counter[(idx_time+1)%dictNet['phi_array_len'],:] = [pll.clock_halfperiods_count(idx_time%dictNet['phi_array_len'],phi[(idx_time+1)%dictNet['phi_array_len'],pll.idx_self]) for pll in pll_list]
+		#print('clock count for all:', clock_counter[-1])
+
+		clkStore[idx_time+1,:] = clock_counter[(idx_time+1)%dictNet['phi_array_len'],:]
+		phiStore[idx_time+1,:] = phi[(idx_time+1)%dictNet['phi_array_len'],:]
+		ctlStore[idx_time+1,:] = [pll.lf.monitor_ctrl() for pll in pll_list]
+		#phidot = (phi[1:,0]-phi[:-1,0])/(2*np.pi*dictPLL['dt'])
+		#line = livplt.live_plotter(tlive, phidot, line)
+
+	t = np.arange(0,len(phiStore[0:dictNet['max_delay_steps']+dictPLL['sim_time_steps'],0]))*dictPLL['dt']
+	dictData.update({'t': t, 'phi': phiStore, 'clock': clkStore, 'ctrl': ctlStore})
+
+	return dictData
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+def multihelper(iterConfig, initPhiPrime0, dictNet, dictPLL, dictAlgo):
+
+	if dictAlgo['bruteForceBasinStabMethod'] == 'classicBruteForceMethodRotatedSpace':	# classic approach with LP-adaptation developed with J. Asmus, D. Platz
+		phiSr = list(iterConfig)
+		global number_period_dyn; number_period_dyn = 20.5;
+		if dictNet['Nx']*dictNet['Ny'] > 2:
+			phiSr = np.insert(phiSr, 0, initPhiPrime0)								# insert the first variable in the rotated space, constant initPhiPrime0
+		phiS = eva.rotate_phases(phiSr, isInverse=False)							# rotate back into physical phase space
+		# print('TEST in multihelper, phiS:', phiS, ' and phiSr:', phiSr)
+		unit_cell = eva.PhaseDifferenceCell(dictNet['Nx']*dictNet['Ny'])
+		# SO anpassen, dass auch gegen verschobene Einheitszelle geprueft werden kann (e.g. if not k==0...)
+		# ODER reicht schon:
+		# if not unit_cell.is_inside(( phiS ), isRotated=False):   ???
+		# if not unit_cell.is_inside((phiS-phiM), isRotated=False):					# and not N == 2:	# +phiM
+
+		dictNetRea = dictNet.copy()
+		dictNetRea.update({'phiPerturb': phiS}) # 'phiPerturbRot': phiSr})
+		#print('dictNet[*phiPerturb*]', dictNet['phiPerturb'])
+
+		#print('Check whether perturbation is inside unit-cell! phiS:', dictNetRea['phiPerturb'], '\tInside? True/False:', unit_cell.is_inside((dictNetRea['phiPerturb']), isRotated=False)); time.sleep(2)
+		if not unit_cell.is_inside((dictNetRea['phiPerturb']), isRotated=False):	# NOTE this case is for scanValues set only in -pi to pi
+			print('Set dummy solution! Detected case outside of unit-cell.')
+			dictData = {'mean_order': -1., 'last_orderP': -1., 'stdev_orderP': np.zeros(1), 'phases': dictNet['phiInitConfig'],
+					 		'intrinfreq': np.zeros(1), 'coupling_strength': np.zeros(1), 'transdelays': dictPLL['transmission_delay'], 'orderP_t': np.zeros(int(number_period_dyn/(dictPLL['intrF']*dictPLL['dt'])))-1.0}
+			realizationDict = {'dictNet': dictNetRea, 'dictPLL': dictPLL, 'dictData': dictData}
+			return realizationDict
+		else:
+			return simulateSystem(dictNetRea, dictPLL, dictAlgo)
+
+	elif dictAlgo['bruteForceBasinStabMethod'] == 'listOfInitialPhaseConfigurations':					 # so far for N=2, work it out for N>2
+		temp   =  list(iterConfig)
+		#print('iterConfig:', iterConfig, '\ttemp[0]:', temp[0])
+		config = [0, temp[0]]
+		dictNetRea = dictNet.copy()
+		dictNetRea.update({'phiInitConfig': config, 'phiPerturb': np.zeros(dictNet['Nx']*dictNet['Ny']), 'phiPerturbRot': np.zeros(dictNet['Nx']*dictNet['Ny'])})
+
+		return simulateSystem(dictNetRea, dictPLL, dictAlgo)
+
+	elif dictAlgo['bruteForceBasinStabMethod'] == 'testNetworkMotifIsing':
+		temp   =  list(iterConfig)
+		#print('iterConfig:', iterConfig, '\ttemp[0]:', temp[0])
+		config = [0]
+		[config.append(entry) for entry in temp[0]]
+		dictNetRea = dictNet.copy()
+		dictNetRea.update({'phiInitConfig': config, 'phiPerturb': np.zeros(dictNet['Nx']*dictNet['Ny']), 'phiPerturbRot': np.zeros(dictNet['Nx']*dictNet['Ny'])})
+		print('dictNetRea[*phiInitConfig*]:', dictNetRea['phiInitConfig'])
+
+		return simulateSystem(dictNetRea, dictPLL, dictAlgo)
+
 	else:
-		np.random.seed()
-		return evolveSystemOnTauArray(dictNet, dictPLL, phi, clock_counter, pll_list, dictData=None, dictAlgo=None)
+		print('No case fullfilled in multihelper in multisim_lib!'); sys.exit()
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

@@ -11,6 +11,7 @@ import networkx as nx
 from scipy.signal import sawtooth
 from scipy.signal import square
 from scipy.stats import cauchy
+from scipy.integrate import solve_ivp
 
 #import matplotlib
 import matplotlib.pyplot as plt
@@ -117,11 +118,12 @@ class LowPass:
 	"""A lowpass filter class"""
 	def __init__(self,idx_self,dictPLL,dictNet):								#,Fc,dt,K,F_Omeg,F,cLF=0,Trelax=0,y=0,y_old=0):
 
-		self.dt     = dictPLL['dt']												# set time-step
-		self.Fc 	= self.set_from_value_or_list(idx_self, dictPLL['cutFc'], dictNet['Nx']*dictNet['Ny']) # set cut-off frequency [Hz]
-		self.K_Hz	= self.set_from_value_or_list(idx_self, dictPLL['coupK'], dictNet['Nx']*dictNet['Ny']) # set coupling strength [Hz]
-		self.intrF  = self.set_from_value_or_list(idx_self, dictPLL['intrF'], dictNet['Nx']*dictNet['Ny']) # intrinsic frequency of VCO - here needed for x_k^C(0) [Hz]
-		self.syncF  = dictPLL['syncF']											# provide freq. of synchronized state under investigation - here needed for x_k^C(0) [Hz]
+		self.dt      = dictPLL['dt']											# set time-step
+		self.Fc 	 = self.set_from_value_or_list(idx_self, dictPLL['cutFc'], dictNet['Nx']*dictNet['Ny']) # set cut-off frequency [Hz]
+		self.K_Hz	 = self.set_from_value_or_list(idx_self, dictPLL['coupK'], dictNet['Nx']*dictNet['Ny']) # set coupling strength [Hz]
+		self.intrF   = self.set_from_value_or_list(idx_self, dictPLL['intrF'], dictNet['Nx']*dictNet['Ny']) # intrinsic frequency of VCO - here needed for x_k^C(0) [Hz]
+		self.syncF   = dictPLL['syncF']											# provide freq. of synchronized state under investigation - here needed for x_k^C(0) [Hz]
+		self.LForder = dictPLL['orderLF']										# provides the LF order
 
 		self.idx		= idx_self
 		self.Omega  	= 2.0*np.pi*self.syncF									# angular frequency of synchronized state
@@ -130,14 +132,24 @@ class LowPass:
 		self.fric_coeff = self.set_from_value_or_list(idx_self, dictPLL['friction_coefficient'], dictNet['Nx']*dictNet['Ny']) # friction coefficient
 
 		self.y 			= None													# denotes the control signal, output of the LF: dictPLL['initCtrlSig']
+		self.dydt		= None													# denotes the time derivative of the control signal, output of the LF: dictPLL['initCtrlSig']
 
-		if not self.Fc == None:
+		if not self.Fc == None and self.LForder > 0:
 			self.wc 	= 2.0*np.pi*self.Fc										# angular cut-off frequency of the loop filter for a=1, filter of first order
 			self.beta 	= self.dt*self.wc
-			self.evolve = lambda xPD: (1.0-self.beta*self.fric_coeff)*self.y + self.beta*xPD
-		else:
+			if   self.LForder == 1:
+				print('First order loop filter, a=1.')
+				self.evolve = lambda xPD: (1.0-self.beta*self.fric_coeff)*self.y + self.beta*xPD
+			elif self.LForder == 2:
+				print('Second order loop filter, a=2.')
+				self.evolve = lambda xPD: self.solve_2nd_orderOrdDiffEq(xPD)
+			elif self.LForder > 2:
+				print('Loop filters of order higher two are NOT implemented. Aborting!'); sys.exit()
+		elif self.Fc == None:
 			print('No cut-off frequency defined (None), hence simulating without loop filter!')
 			self.evolve = lambda xPD: xPD
+		else:
+			print('Problem in LF class!'); sys.exit()
 
 	#***************************************************************************
 
@@ -152,12 +164,33 @@ class LowPass:
 		else:
 			print('Error in LF constructor setting a variable!'); sys.exit()
 
-	def set_initial_control_signal(self,inst_Freq):								# set the control signal for the last time step of the history, in the case the history is a synched state
+	def controlSig(self, t, z, b, xPD):
+		x = z[0]
+		y = z[1]
+		return [y, (1.0/b**2)*(xPD-x)-(2/b)*y-self.dydt-self.y*(1+2.0/b)]
 
+	def solve_2nd_orderOrdDiffEq(self, xPD):
+																				# optional: try to implement via odeint as shown here: https://www.epythonguru.com/2020/07/second-order-differential-equation.html
+		a 	 = self.LForder; b = 1 / ( 2.0*np.pi*self.Fc * a )					# https://www.electronics-tutorials.ws/filter/filter_2.html	QUESTION CHRIS: cut-off freq wc = 1 / RC or w(@-3dB) = wc sqrt( 2^(1/n) -1 )
+		t 	 = np.array([0, self.dt])
+		func = lambda t, z: self.controlSig(t, z, b, xPD)
+
+		sol = solve_ivp(func, [t[0], t[-1]], [self.y, self.dydt], method='RK45', t_eval=t, dense_output=False, events=None, vectorized=False, rtol = 1e-5)
+		#print('sol: ', sol)
+		y 	 		= sol.y[0][1]												# control signal value at time t
+		self.dydt   = sol.y[1][1]												# derivative of control signal at time t
+		# print('self.y:', self.y, '\ty: ', y, '\tdydt:', self.dydt); time.sleep(1)
+		return y
+
+	def set_initial_control_signal(self,inst_Freq,prior_inst_Freq):				# set the control signal for the last time step of the history, in the case the history is a synched state
+
+		#print('REWORK: setting of initial time-derivative of control signal in case of second order LFs.')
 		self.instantF = inst_Freq												# calculate the instantaneous frequency for the last time step of the history
 		#self.y = (self.F_Omeg - self.F) / (self.K)								# calculate the state of the LF at the last time step of the history, it is needed for the simulation of the network
 		if self.K != 0:															# this if-call is fine, since it will only be evaluated once
-			self.y = (self.instantF - self.intrF) / (self.K_Hz)					# calculate the state of the LF at the last time step of the history, it is needed for the simulation of the network
+			self.y 	  = (self.instantF - self.intrF) / (self.K_Hz)				# calculate the state of the LF at the last time step of the history, it is needed for the simulation of the network
+			yNminus1  = (prior_inst_Freq - self.intrF) / (self.K_Hz)			# calculate the state of the LF at the last time step of the history, it is needed for the simulation of the network
+			self.dydt = (self.y - yNminus1) / self.dt							# calculate the change of the state of the LF at the last time step of the history
 			#print('Set initial ctrl signal! self.instantF, self.intrF, self.K_Hz', self.instantF, ' ', self.intrF, ' ', self.K_Hz)
 		else:
 			self.y = 0.0
@@ -180,6 +213,7 @@ class LowPass:
 class VoltageControlledOscillator:
 	"""A voltage controlled oscillator class"""
 	def __init__(self,idx_self,dictPLL,dictNet):
+		self.idx_self 	= idx_self												# assigns the index
 		self.Omega 		= 2.0*np.pi*dictPLL['syncF']							# set angular frequency of synchronized state under investigation
 		self.omega 		= 2.0*np.pi*self.set_from_value_or_list(idx_self, dictPLL['intrF'], dictNet['Nx']*dictNet['Ny']) # set intrinsic frequency of the VCO
 		self.K 			= 2.0*np.pi*self.set_from_value_or_list(idx_self, dictPLL['coupK'], dictNet['Nx']*dictNet['Ny']) # set coupling strength
@@ -224,6 +258,12 @@ class VoltageControlledOscillator:
 			return set_vars														# set value for all
 		else:
 			print('Error in VCO constructor setting a variable!'); sys.exit()
+
+	def evolveCouplingStrength(self,new_value_or_list,dictNet):
+
+		self.K	= 2.0*np.pi*self.set_from_value_or_list(self.idx_self, new_value_or_list/self.K, dictNet['Nx']*dictNet['Ny'])
+		#print('Injection lock coupling strength for PLL%i changed, new value:'%self.idx_self, self.K2nd_k); #time.sleep(1)
+		return None
 
 	def next(self,x_ctrl):														# compute change of phase per time-step due to intrinsic frequency and noise (if non-zero variance)
 		self.d_phi 	= self.evolvePhi(self.omega, self.K, x_ctrl, self.c, self.dt)
@@ -290,12 +330,17 @@ class PhaseDetectorCombiner:													# this class creates PD objects, these 
 				print('Setup PLL with injection locking signal! Initial self.K2nd_k=', self.K2nd_k, 'Hz');
 				if self.omega == 0 and not dictPLL['syncF'] == 0:
 					self.omega = 2*np.pi*dictPLL['syncF']
+
+				#self.compute	= lambda x_ext, ant_in, x_feed, idx_time: np.mean( self.G_kl * self.h( ( x_ext - x_feed ) / self.div ) ) - self.K2nd_k * self.h( ( 2.0 * self.omega * idx_time * self.dt ) / self.div )
+				#self.compute	= lambda x_ext, ant_in, x_feed, idx_time: np.sum( self.G_kl * self.h( ( x_ext - x_feed ) / self.div ) ) - self.K2nd_k * self.h( 2.0 * x_feed / self.div )
+				#self.compute	= lambda x_ext, ant_in, x_feed, idx_time: np.mean( self.G_kl * self.h( ( x_ext - x_feed ) / self.div ) ) - self.K2nd_k * self.h( -( 2.0 * ( self.omega * idx_time * self.dt ) - x_feed ) / self.div )
+				#self.compute	= lambda x_ext, ant_in, x_feed, idx_time: np.mean( self.G_kl * self.h( ( x_ext - x_feed ) / self.div ) ) - self.K2nd_k * self.h( ( 2.0 * ( self.omega * idx_time * self.dt - x_feed ) ) / self.div )
+				self.compute	= lambda x_ext, ant_in, x_feed, idx_time: np.mean( self.G_kl * self.h( ( x_ext - x_feed ) / self.div ) ) - np.mean( self.K2nd_k * self.h( ( 2.0 * ( x_ext - x_feed ) ) / self.div ) )
+
 				#self.compute	= self.coupling_function_InjectLocking();
-				#self.compute	= lambda x_ext, ant_in, x_feed, idx_time:    np.array(self.G_kl)@self.h( ( x_ext - x_feed ) / self.div ) - self.K2nd_k * self.h( ( 2.0 * self.omega * idx_time  * self.dt ) / self.div )
-				self.compute	= lambda x_ext, ant_in, x_feed, idx_time:   np.mean( self.G_kl * self.h( ( x_ext - x_feed ) / self.div ) ) - self.K2nd_k * self.h( ( 2.0 * self.omega * idx_time * self.dt ) / self.div )
-				#self.compute	= lambda x_ext, ant_in, x_feed, idx_time:  np.mean( self.G_kl * self.h( ( x_ext - x_feed ) / self.div ) ) + np.mean( self.G_kl * self.K2nd_k * self.h( ( 2.0*x_ext - x_feed ) / self.div ) )
+				#self.compute	= lambda x_ext, ant_in, x_feed, idx_time:  np.array(self.G_kl)@self.h( ( x_ext - x_feed ) / self.div ) - self.K2nd_k * self.h( ( 2.0 * self.omega * idx_time  * self.dt ) / self.div )
+				#self.compute	= lambda x_ext, ant_in, x_feed, idx_time:  np.mean( self.G_kl * self.h( ( x_ext - x_feed ) / self.div ) ) - np.mean( self.G_kl * self.K2nd_k * self.h( ( 2.0*x_ext - x_feed ) / self.div ) )
 				#self.compute	= lambda x_ext, ant_in, x_feed, idx_time:  np.mean( self.G_kl * self.h( ( x_ext - x_feed ) / self.div ) ) - np.mean ( self.K2nd_k * self.h( ( 2 * np.append(x_ext, x_feed) ) / self.div ) )
-				#self.compute	= lambda x_ext, ant_in, x_feed, idx_time:  - np.sum( self.G_kl * self.h( ( 2 * x_ext - x_feed ) / self.div ) ) - self.K2nd_k * self.h( 2.0*x_feed / self.div )
 				#self.compute	= lambda x_ext, ant_in, x_feed, idx_time:  np.mean( self.G_kl * self.h( ( 2 * x_ext - x_feed ) / self.div ) )
 			else:
 				print('Simulating coupling function of phase-differences.')

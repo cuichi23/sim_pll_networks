@@ -21,6 +21,8 @@ from mpl_toolkits.axes_grid1.inset_locator import mark_inset
 import time
 import pickle
 
+sys.path.append('..')
+
 import synctools_interface_lib as synctools
 from function_lib import solveLinStab
 import function_lib as fct_lib
@@ -67,18 +69,18 @@ titleLabel			= 10;
 dpi_val   			= 150;
 figwidth  			= 10;
 figheight 			= 6;
-labelpadxaxis			= 10;
-labelpadyaxis			= 20
+labelpadxaxis		= 10;
+labelpadyaxis		= 20
 colormapSyncStab 	= colormap_diver.PuOr_7.mpl_colormap
 
 ################################################################################
 ################################################################################
-filename = 'results/params_tau_vs_fric_19:20_2021_6_3'
+filename = 'results/params_tau_vs_K_19:34_2021_7_9'
 ################################################################################
 ################################################################################
 
 params 	 = pickle.load(open(filename, 'rb'))
-#print(params)
+#print(params); sys.exit()
 ################################################################################
 print('Here we pick the largest gamma! Check when studying systems with N>2.')
 ytemp = [];
@@ -108,7 +110,7 @@ if ( params['loopP1'] == 'K' and params['loopP2'] == 'fric' ):
 				CondStab[i,j] = 0
 			elif params['wc']*params['x2'][j]**2/(2*params['alpha'][i,j]) > 1:
 				CondStab[i,j] = 1
-			
+
 			else:
 				CondStab[i,j] = None
 
@@ -154,11 +156,11 @@ elif ( params['loopP1'] == 'K' and params['loopP2'] == 'wc' ):
 	#print(len(params['x2']))
 	for i in range(len(params['x1'])):
 		for j in range(len(params['x2'])):
-			
-			
+
+
 			if (params['x2'][j]*params['fric']**2)/(2*params['alpha'][i,j]) > fzeta:
 				CondStab[i,j] = 0
-			elif (params['x2'][j]*params['fric']**2)/(2*params['alpha'][i,j]) > 1:	
+			elif (params['x2'][j]*params['fric']**2)/(2*params['alpha'][i,j]) > 1:
 				CondStab[i,j] = 1
 			else:
 				CondStab[i,j] = None

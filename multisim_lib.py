@@ -34,12 +34,18 @@ def distributeProcesses(dictNet, dictPLL, dictAlgo=None):
 
 	t0 = time.time()
 	if dictAlgo['bruteForceBasinStabMethod'] == 'classicBruteForceMethodRotatedSpace' or dictAlgo['bruteForceBasinStabMethod'] == 'testNetworkMotifIsing': # classic approach with LP-adaptation developed with J. Asmus, D. Platz
-		scanValues, allPoints = setup.allInitPhaseCombinations(dictPLL, dictNet, paramDiscretization=dictAlgo['paramDiscretization']) # set paramDiscretization for the number of points to be simulated
+		scanValues, allPoints = setup.allInitPhaseCombinations(dictPLL, dictNet, dictAlgo, paramDiscretization=dictAlgo['paramDiscretization']) # set paramDiscretization for the number of points to be simulated
 		print('allPoints:', [allPoints], '\nscanValues', scanValues); Nsim = allPoints.shape[0]; print('multiprocessing', Nsim, 'realizations')
 
 	elif dictAlgo['bruteForceBasinStabMethod'] == 'listOfInitialPhaseConfigurations':	# so far for N=2, work it out for N>2
-		scanValues = np.linspace(-np.pi, np.pi, dictAlgo['paramDiscretization'])
-		print('scanValues', scanValues); Nsim = len(scanValues); print('multiprocessing', Nsim, 'realizations')
+		if isinstance(dictPLL['intrF'], np.float) or isinstance(dictPLL['intrF'], np.int):
+			scanValues = np.linspace(-np.pi, np.pi, dictAlgo['paramDiscretization'])
+			print('scanValues', scanValues); Nsim = len(scanValues); print('multiprocessing', Nsim, 'realizations')
+		elif isinstance(dictPLL['intrF'], np.ndarray) or isinstance(dictPLL['intrF'], list):
+			scanValues, allPoints = setup.allInitPhaseCombinations(dictPLL, dictNet, dictAlgo, paramDiscretization=dictAlgo['paramDiscretization'])
+			print('allPoints:', [allPoints], '\nscanValues', scanValues); Nsim = allPoints.shape[0]; print('multiprocessing', Nsim, 'realizations')
+		else:
+			print('2 modes: iterate for no detuning over phase-differences, or detuning and phase-differences! Choose one.'); sys.exit()
 
 	global number_period_dyn;
 	number_period_dyn 	= 20.5;
@@ -55,8 +61,12 @@ def distributeProcesses(dictNet, dictPLL, dictAlgo=None):
 		poolData.append( pool.map(multihelper_star, zip( 							# this makes a map of all parameter combinations that have to be simulated, itertools.repeat() names the constants
 						itertools.product(*scanValues), itertools.repeat(initPhiPrime0), itertools.repeat(dictNet), itertools.repeat(dictPLL), itertools.repeat(dictAlgo) ) ) )
 	elif dictAlgo['bruteForceBasinStabMethod'] == 'listOfInitialPhaseConfigurations' or dictAlgo['bruteForceBasinStabMethod'] == 'testNetworkMotifIsing':
-		poolData.append( pool.map(multihelper_star, zip( 							# this makes a map of all parameter combinations that have to be simulated, itertools.repeat() names the constants
-						itertools.product(allPoints), itertools.repeat(initPhiPrime0), itertools.repeat(dictNet), itertools.repeat(dictPLL), itertools.repeat(dictAlgo) ) ) )
+		if isinstance(dictPLL['intrF'], np.float) or isinstance(dictPLL['intrF'], np.int):
+			poolData.append( pool.map(multihelper_star, zip( 							# this makes a map of all parameter combinations that have to be simulated, itertools.repeat() names the constants
+							itertools.product(scanValues), itertools.repeat(initPhiPrime0), itertools.repeat(dictNet), itertools.repeat(dictPLL), itertools.repeat(dictAlgo) ) ) )
+		elif isinstance(dictPLL['intrF'], np.ndarray) or isinstance(dictPLL['intrF'], list):
+			poolData.append( pool.map(multihelper_star, zip( 							# this makes a map of all parameter combinations that have to be simulated, itertools.repeat() names the constants
+							itertools.product(scanValues[0], scanValues[1]), itertools.repeat(initPhiPrime0), itertools.repeat(dictNet), itertools.repeat(dictPLL), itertools.repeat(dictAlgo) ) ) )
 
 
 	print('time needed for execution of simulations in multiproc mode: ', (time.time()-t0), ' seconds'); #sys.exit()
@@ -78,8 +88,6 @@ def distributeProcesses(dictNet, dictPLL, dictAlgo=None):
 def simulateSystem(dictNet, dictPLL, dictAlgo=None):
 #mode,div,Nplls,F,F_Omeg,K,Fc,delay,feedback_delay,dt,c,Nsteps,topology,couplingfct,histtype,phiS,phiM,domega,diffconstK,diffconstSendDelay,cPD,Nx=0,Ny=0,Trelax=0,Kadiab_value_r=0):
 
-	t0 = time.time()
-
 	np.random.seed()															# restart pseudo random-number generator
 	dictData = {}																# setup dictionary that hold all the data
 	if not dictNet['phiInitConfig']:											# if no custom phase configuration is provided, generate it
@@ -95,7 +103,7 @@ def simulateSystem(dictNet, dictPLL, dictAlgo=None):
 	# prepare container for the phases
 	if max_delay_steps == 0:
 		print('No delay case, not yet tested, see sim_lib.py! Setting container length to that of Tsim/dt!'); #sys.exit()
-		phi_array_len = dictPLL['sim_time_steps']								# length of phi contrainer in case the delay is zero
+		phi_array_len = dictPLL['sim_time_steps']								# length of phi contrainer in case the delay is zero; the +int(dictPLL['orderLF']) is necessary to cover filter up to order dictPLL['orderLF']
 	else:
 		phi_array_len = 1+int(dictNet['phi_array_mult_tau'])*max_delay_steps	# length of phi contrainer, must be at least 1 delay length if delay > 0
 	phi 		  = np.empty([phi_array_len, dictNet['Nx']*dictNet['Ny']])		# prepare container for phase time series of all PLLs and with length tau_max
@@ -104,23 +112,19 @@ def simulateSystem(dictNet, dictPLL, dictAlgo=None):
 		pll_list[i].delayer.phi_array_len = phi_array_len
 
 	dictNet.update({'max_delay_steps': max_delay_steps, 'phi_array_len': phi_array_len})
-
 	# set initial phase configuration and history -- performed such that any configuration can be obtained when simulations starts
 	#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	''' SET INITIAL HISTORY AND PERTURBATION '''
 	# start by setting last entries to initial phase configuration, i.e., phiInitConfig + phiPerturb
-
-	print('The perturbation will be set to dictNet[*phiPerturb*]=', dictNet['phiPerturb'], ', and dictNet[*phiInitConfig*]=', dictNet['phiInitConfig'])
-
-	if not ( isinstance(dictNet['phiPerturb'], list) or isinstance(dictNet['phiPerturb'], np.ndarray) ):
+	if not dictNet['phiPerturb']:
 		print('All initial perturbations set to zero as none were supplied!')
-		dictNet['phiPerturb']				= [0 for i in range(len(phi[0,:]))]
-		phi[dictNet['max_delay_steps'],:] 	= list( map(add, dictNet['phiInitConfig'], dictNet['phiPerturb']) ) # set phase-configuration phiInitConfig at t=0 + the perturbation phiPerturb
+		dictNet['phiPerturb']  = [0 for i in range(len(phi[0,:]))]				# updates the phiPerturb list in dictNet
+		phi[max_delay_steps,:] = list( map(add, dictNet['phiInitConfig'], dictNet['phiPerturb']) ) # set phase-configuration phiInitConfig at t=0 + the perturbation phiPerturb
 	elif ( len(phi[0,:]) == len(dictNet['phiInitConfig']) and len(phi[0,:]) == len(dictNet['phiPerturb']) ):
-		phi[dictNet['max_delay_steps'],:] 	= list( map(add, dictNet['phiInitConfig'], dictNet['phiPerturb']) ) # set phase-configuration phiInitConfig at t=0 + the perturbation phiPerturb
+		phi[max_delay_steps,:] = list( map(add, dictNet['phiInitConfig'], dictNet['phiPerturb']) ) # set phase-configuration phiInitConfig at t=0 + the perturbation phiPerturb
+			# print('SET INITIAL HISTORY AND PERTURBATION: phi[max_delay_steps+int(dictPLL[*orderLF*]),:]=', phi[max_delay_steps+int(dictPLL['orderLF']),:])
 	else:
-		print('len(phi[0,:])', len(phi[0,:]), '\t len(dictNet[*phiInitConfig*])', len(dictNet['phiInitConfig']))
-		print('Provide initial phase-configuration of length %i to setup simulation!' %len(phi[dictNet['max_delay_steps'],:])); sys.exit()
+		print('Provide initial phase-configuration of length %i to setup simulation!' %len(phi[max_delay_steps,:])); sys.exit()
 
 	#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	''' SET THE INTERNAL PHI VARS OF THE VCO TO THEIR INITIAL VALUE '''
@@ -154,10 +158,22 @@ def simulateSystem(dictNet, dictPLL, dictAlgo=None):
 	#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	''' SET INITIAL CONTROL SIGNAL, ACCORDING AND CONSISTENT TO HISTORY WRITTEN, CORRECT INTERNAL PHASES OF VCO AND CLOCK '''
 	for i in range(len(pll_list)):
-		pll_list[i].lf.set_initial_control_signal( ( phi[dictNet['max_delay_steps']-0,i]-phi[dictNet['max_delay_steps']-1,i] ) / (2.0*np.pi*dictPLL['dt']) )
-		# print('Set internal initial VCO phi at t-dt for PLL %i:'%i, phi[dictNet['max_delay_steps'],i])
-		pll_list[i].vco.phi = phi[dictNet['max_delay_steps'],i]
-		pll_list[i].counter.phase_init = phi[dictNet['max_delay_steps'],i]
+		if max_delay_steps >= int(dictPLL['orderLF']):
+			pll_list[i].lf.set_initial_control_signal( ( phi[max_delay_steps-0,i]-phi[max_delay_steps-1,i] ) / (2.0*np.pi*dictPLL['dt']),
+													   ( phi[max_delay_steps-1,i]-phi[max_delay_steps-2,i] ) / (2.0*np.pi*dictPLL['dt']) )
+		elif max_delay_steps < int(dictPLL['orderLF']) and ( int(dictPLL['orderLF']) == 2 or int(dictPLL['orderLF']) == 1 ):
+			if dictPLL['typeOfHist'] == 'freeRunning':							# set the frequencyies in the past to determine the LF filter state for no delay
+				inst_freq_lastStep			= dictPLL['intrF'] + np.random.normal(loc=0.0, scale=np.sqrt( dictPLL['noiseVarVCO'] * dictPLL['dt'] ))
+				inst_freq_prior_to_lastStep = dictPLL['intrF'] + np.random.normal(loc=0.0, scale=np.sqrt( dictPLL['noiseVarVCO'] * dictPLL['dt'] ))
+			elif dictPLL['typeOfHist'] == 'syncState':
+				inst_freq_lastStep			 = dictPLL['syncF'] + np.random.normal(loc=0.0, scale=np.sqrt( dictPLL['noiseVarVCO'] * dictPLL['dt'] ))
+				inst_freq_prior_to_lastStep = dictPLL['syncF'] + np.random.normal(loc=0.0, scale=np.sqrt( dictPLL['noiseVarVCO'] * dictPLL['dt'] ))
+			pll_list[i].lf.set_initial_control_signal( inst_freq_lastStep, inst_freq_prior_to_lastStep )
+		else:
+			print('in simPLL.lib: Higher order LFs are net yet supported!')
+		# print('Set internal initial VCO phi at t-dt for PLL %i:'%i, phi[max_delay_steps,i])
+		pll_list[i].vco.phi = phi[max_delay_steps,i]
+		pll_list[i].counter.phase_init = phi[max_delay_steps,i]
 
 	#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	''' NOW SIMULATE THE SYSTEM AFTER HISTORY IS SET '''
@@ -248,7 +264,7 @@ def evolveSystemOnTsimArray(dictNet, dictPLL, phi, clock_counter, pll_list, dict
 
 def evolveSystemOnTsimArray_varInjectLockCoupStrength(dictNet, dictPLL, phi, clock_counter, pll_list, dictData=None, dictAlgo=None):
 
-	injectLockCoupStrVal_vs_time = setup.setupTimeDependentParameter(dictNet, dictPLL, dictData, parameter='coupStr_2ndHarm', afterTsimPercent=0.35, forAllPLLsDifferent=False)[0]
+	injectLockCoupStrVal_vs_time = setup.setupTimeDependentParameter(dictNet, dictPLL, dictData, parameter='coupStr_2ndHarm', afterTsimPercent=0.0, forAllPLLsDifferent=False)[0]
 
 	t = np.arange( 0, dictNet['max_delay_steps']+dictPLL['sim_time_steps'] ) * dictPLL['dt']
 	if not dictAlgo['bruteForceBasinStabMethod'] == 'testNetworkMotifIsing':
@@ -256,7 +272,7 @@ def evolveSystemOnTsimArray_varInjectLockCoupStrength(dictNet, dictPLL, phi, clo
 		plt.plot(t, injectLockCoupStrVal_vs_time)
 		plt.draw(); plt.show()
 
-	t_first_pert = 1450;
+	t_first_pert = 150;
 
 	clkStore = np.empty([dictNet['max_delay_steps']+dictPLL['sim_time_steps'], dictNet['Nx']*dictNet['Ny']])
 	phiStore = np.empty([dictNet['max_delay_steps']+dictPLL['sim_time_steps'], dictNet['Nx']*dictNet['Ny']])
@@ -352,12 +368,18 @@ def multihelper(iterConfig, initPhiPrime0, dictNet, dictPLL, dictAlgo):
 
 	elif dictAlgo['bruteForceBasinStabMethod'] == 'listOfInitialPhaseConfigurations':					 # so far for N=2, work it out for N>2
 		temp   =  list(iterConfig)
-		#print('iterConfig:', iterConfig, '\ttemp[0]:', temp[0])
+		#print('iterConfig:', iterConfig, '\ttemp[0]:', temp[0], '\ttemp[1]:', temp[1])
+		dictPLLRea = dictPLL.copy()
+		if isinstance(dictPLL['intrF'], list):
+			meanIntF = np.mean(dictPLL['intrF'])
+			dictPLLRea.update({'intrF': [meanIntF-temp[1], meanIntF+temp[1]]})
+			#print('Intrinsic frequencies:', dictPLLRea['intrF'], '\tfor detuning', 2*temp[1]); time.sleep(2)
+
 		config = [0, temp[0]]
 		dictNetRea = dictNet.copy()
 		dictNetRea.update({'phiInitConfig': config, 'phiPerturb': np.zeros(dictNet['Nx']*dictNet['Ny']), 'phiPerturbRot': np.zeros(dictNet['Nx']*dictNet['Ny'])})
 
-		return simulateSystem(dictNetRea, dictPLL, dictAlgo)
+		return simulateSystem(dictNetRea, dictPLLRea, dictAlgo)
 
 	elif dictAlgo['bruteForceBasinStabMethod'] == 'testNetworkMotifIsing':
 		temp   =  list(iterConfig)

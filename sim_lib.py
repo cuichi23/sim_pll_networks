@@ -48,7 +48,7 @@ def simulateSystem(dictNet, dictPLL, dictAlgo=None):
 	# prepare container for the phases
 	if max_delay_steps == 0:
 		print('No delay case, not yet tested, see sim_lib.py! Setting container length to that of Tsim/dt!'); #sys.exit()
-		phi_array_len = dictPLL['sim_time_steps']								# length of phi contrainer in case the delay is zero
+		phi_array_len = dictPLL['sim_time_steps']								# length of phi contrainer in case the delay is zero; the +int(dictPLL['orderLF']) is necessary to cover filter up to order dictPLL['orderLF']
 	else:
 		phi_array_len = 1+int(dictNet['phi_array_mult_tau'])*max_delay_steps	# length of phi contrainer, must be at least 1 delay length if delay > 0
 	phi 		  = np.empty([phi_array_len, dictNet['Nx']*dictNet['Ny']])		# prepare container for phase time series of all PLLs and with length tau_max
@@ -63,16 +63,16 @@ def simulateSystem(dictNet, dictPLL, dictAlgo=None):
 	# start by setting last entries to initial phase configuration, i.e., phiInitConfig + phiPerturb
 	if not dictNet['phiPerturb']:
 		print('All initial perturbations set to zero as none were supplied!')
-		dictNet['phiPerturb']		= [0 for i in range(len(phi[0,:]))]
+		dictNet['phiPerturb']  = [0 for i in range(len(phi[0,:]))]				# updates the phiPerturb list in dictNet
 		phi[max_delay_steps,:] = list( map(add, dictNet['phiInitConfig'], dictNet['phiPerturb']) ) # set phase-configuration phiInitConfig at t=0 + the perturbation phiPerturb
 	elif ( len(phi[0,:]) == len(dictNet['phiInitConfig']) and len(phi[0,:]) == len(dictNet['phiPerturb']) ):
 		phi[max_delay_steps,:] = list( map(add, dictNet['phiInitConfig'], dictNet['phiPerturb']) ) # set phase-configuration phiInitConfig at t=0 + the perturbation phiPerturb
+			# print('SET INITIAL HISTORY AND PERTURBATION: phi[max_delay_steps+int(dictPLL[*orderLF*]),:]=', phi[max_delay_steps+int(dictPLL['orderLF']),:])
 	else:
 		print('Provide initial phase-configuration of length %i to setup simulation!' %len(phi[max_delay_steps,:])); sys.exit()
-
 	#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	''' SET THE INTERNAL PHI VARS OF THE VCO TO THEIR INITIAL VALUE '''
-	for i in range(len(pll_list)):
+	for i in range(len(pll_list)):												# set initial phases at time equivalent to the time-delay, then setup the history from there
 		pll_list[i].vco.phi = phi[max_delay_steps,i]
 	#print('VCOs internal phis are set to:', [pll.vco.phi for pll in pll_list])
 
@@ -84,7 +84,7 @@ def simulateSystem(dictNet, dictPLL, dictAlgo=None):
 	elif dictPLL['typeOfHist'] == 'syncState':									# in the 'syncstate' case the oscillators evolve as if synced and then receive a delta perturbation
 		phi[max_delay_steps-1,:] = list( map(sub, [pll.setup_hist_reverse() for pll in pll_list], dictNet['phiPerturb']) )  # since we want a delta perturbation, the perturbation is removed towards the prior step
 		for i in range(len(pll_list)):
-			pll_list[i].vco.phi = phi[max_delay_steps-1,i]						# set this step as initial for reverse history setup
+			pll_list[i].vco.phi = phi[max_delay_steps-1,i]	# set this step as initial for reverse history setup
 		for i in range(max_delay_steps-1,0,-1):
 			#print('i-1',i-1)
 			phi[i-1,:] = [pll.setup_hist_reverse() for pll in pll_list]
@@ -102,7 +102,19 @@ def simulateSystem(dictNet, dictPLL, dictAlgo=None):
 	#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	''' SET INITIAL CONTROL SIGNAL, ACCORDING AND CONSISTENT TO HISTORY WRITTEN, CORRECT INTERNAL PHASES OF VCO AND CLOCK '''
 	for i in range(len(pll_list)):
-		pll_list[i].lf.set_initial_control_signal( ( phi[max_delay_steps-0,i]-phi[max_delay_steps-1,i] ) / (2.0*np.pi*dictPLL['dt']) )
+		if max_delay_steps >= int(dictPLL['orderLF']):
+			pll_list[i].lf.set_initial_control_signal( ( phi[max_delay_steps-0,i]-phi[max_delay_steps-1,i] ) / (2.0*np.pi*dictPLL['dt']),
+													   ( phi[max_delay_steps-1,i]-phi[max_delay_steps-2,i] ) / (2.0*np.pi*dictPLL['dt']) )
+		elif max_delay_steps < int(dictPLL['orderLF']) and ( int(dictPLL['orderLF']) == 2 or int(dictPLL['orderLF']) == 1 ):
+			if dictPLL['typeOfHist'] == 'freeRunning':							# set the frequencyies in the past to determine the LF filter state for no delay
+				inst_freq_lastStep			= dictPLL['intrF'] + np.random.normal(loc=0.0, scale=np.sqrt( dictPLL['noiseVarVCO'] * dictPLL['dt'] ))
+				inst_freq_prior_to_lastStep = dictPLL['intrF'] + np.random.normal(loc=0.0, scale=np.sqrt( dictPLL['noiseVarVCO'] * dictPLL['dt'] ))
+			elif dictPLL['typeOfHist'] == 'syncState':
+				inst_freq_lastStep			 = dictPLL['syncF'] + np.random.normal(loc=0.0, scale=np.sqrt( dictPLL['noiseVarVCO'] * dictPLL['dt'] ))
+				inst_freq_prior_to_lastStep = dictPLL['syncF'] + np.random.normal(loc=0.0, scale=np.sqrt( dictPLL['noiseVarVCO'] * dictPLL['dt'] ))
+			pll_list[i].lf.set_initial_control_signal( inst_freq_lastStep, inst_freq_prior_to_lastStep )
+		else:
+			print('in simPLL.lib: Higher order LFs are net yet supported!')
 		# print('Set internal initial VCO phi at t-dt for PLL %i:'%i, phi[max_delay_steps,i])
 		pll_list[i].vco.phi = phi[max_delay_steps,i]
 		pll_list[i].counter.phase_init = phi[max_delay_steps,i]
@@ -123,6 +135,9 @@ def simulateSystem(dictNet, dictPLL, dictAlgo=None):
 		plot.plotCtrlSigDny(dictPLL, dictNet, dictData)
 	elif dictNet['special_case'] == 'timeDepInjectLockCoupStr':
 		dictData = evolveSystemOnTsimArray_varInjectLockCoupStrength(dictNet, dictPLL, phi, clock_counter, pll_list, dictData)
+	elif dictNet['special_case'] == 'timeDepChangeOfCoupStr':
+		dictData = evolveSystemOnTsimArray_timeDepChangeOfCoupStrength(dictNet, dictPLL, phi, clock_counter, pll_list, dictData)
+		plot.plotOrderPvsTimeDepPara(dictPLL, dictNet, dictData)
 
 	print('Time needed for execution of simulation: ', (time.time()-t0), ' seconds')
 
@@ -138,12 +153,12 @@ def simulateSystem(dictNet, dictPLL, dictAlgo=None):
 	plot.plotPhaseDiff(dictPLL, dictNet, dictData)
 	plot.plotClockTime(dictPLL, dictNet, dictData)
 	plot.plotOscSignal(dictPLL, dictNet, dictData)
-	#plot.plotPSD(dictPLL, dictNet, dictData, [], saveData=False)
+	plot.plotPSD(dictPLL, dictNet, dictData, [], saveData=False)
 
 	plt.draw()
 	plt.show()
 
-	return None
+	return dictNet, dictPLL, dictData
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -197,9 +212,48 @@ def evolveSystemOnTsimArray(dictNet, dictPLL, phi, clock_counter, pll_list, dict
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+def evolveSystemOnTsimArray_timeDepChangeOfCoupStrength(dictNet, dictPLL, phi, clock_counter, pll_list, dictData=None, dictAlgo=None):
+
+	couplingStrVal_vs_time = setup.setupTimeDependentParameter(dictNet, dictPLL, dictData, parameter='coupK', afterTsimPercent=0.2, forAllPLLsDifferent=False)[0]
+
+	plt.figure(1234);
+	t = np.arange( 0, dictNet['max_delay_steps']+dictPLL['sim_time_steps'] ) * dictPLL['dt']
+	plt.plot(t, couplingStrVal_vs_time)
+	plt.draw(); plt.show()
+
+	t_first_pert = 450;
+
+	clkStore = np.empty([dictNet['max_delay_steps']+dictPLL['sim_time_steps'], dictNet['Nx']*dictNet['Ny']])
+	phiStore = np.empty([dictNet['max_delay_steps']+dictPLL['sim_time_steps'], dictNet['Nx']*dictNet['Ny']])
+	phiStore[0:dictNet['max_delay_steps']+1,:] = phi[0:dictNet['max_delay_steps']+1,:]
+	#line = []; tlive = np.arange(0,dictNet['phi_array_len']-1)*dictPLL['dt']
+	for idx_time in range(dictNet['max_delay_steps'],dictNet['max_delay_steps']+dictPLL['sim_time_steps']-1,1):
+
+		#print('[pll.next(idx_time,dictNet['phi_array_len'],phi) for pll in pll_list]:', [pll.next(idx_time,dictNet['phi_array_len'],phi) for pll in pll_list])
+		#print('Current state: phi[(idx_time)%dictNet['phi_array_len'],:]', phi[(idx_time)%dictNet['phi_array_len'],:], '\t(idx_time)%dictNet['phi_array_len']',(idx_time)%dictNet['phi_array_len']); sys.exit()
+		#print('(idx_time+1)%dictNet['phi_array_len']', ((idx_time+1)%dictNet['phi_array_len'])*dictPLL['dt']); #time.sleep(0.5)
+		phi[(idx_time+1)%dictNet['phi_array_len'],:] = [pll.next(idx_time,dictNet['phi_array_len'],phi) for pll in pll_list] # now the network is iterated, starting at t=0 with the history as prepared above
+		#print('injectionLock:', [pll.pdc.compute(np.zeros(dictNet['Nx']*dictNet['Ny']-1), 0, np.zeros(dictNet['Nx']*dictNet['Ny']-1), idx_time) for pll in pll_list])
+		[pll.vco.evolveCouplingStrength(couplingStrVal_vs_time[idx_time],dictNet) for pll in pll_list]
+		#[print('at time t=', idx_time*dictPLL['dt'] , 'K_inject2ndHarm=', couplingStrVal_vs_time[idx_time]) for pll in pll_list]
+		clock_counter[(idx_time+1)%dictNet['phi_array_len'],:] = [pll.clock_halfperiods_count(idx_time%dictNet['phi_array_len'],phi[(idx_time+1)%dictNet['phi_array_len'],pll.idx_self]) for pll in pll_list]
+		#print('clock count for all:', clock_counter[-1])
+
+		clkStore[idx_time+1,:] = clock_counter[(idx_time+1)%dictNet['phi_array_len'],:]
+		phiStore[idx_time+1,:] = phi[(idx_time+1)%dictNet['phi_array_len'],:]
+		#phidot = (phi[1:,0]-phi[:-1,0])/(2*np.pi*dictPLL['dt'])
+		#line = livplt.live_plotter(tlive, phidot, line)
+
+	t = np.arange(0,len(phiStore[0:dictNet['max_delay_steps']+dictPLL['sim_time_steps'],0]))*dictPLL['dt']
+	dictData.update({'t': t, 'phi': phiStore, 'clock': clkStore, 'timeDepPara': couplingStrVal_vs_time})
+
+	return dictData
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 def evolveSystemOnTsimArray_varInjectLockCoupStrength(dictNet, dictPLL, phi, clock_counter, pll_list, dictData=None, dictAlgo=None):
 
-	injectLockCoupStrVal_vs_time = setup.setupTimeDependentParameter(dictNet, dictPLL, dictData, parameter='coupStr_2ndHarm', afterTsimPercent=0.35, forAllPLLsDifferent=False)[0]
+	injectLockCoupStrVal_vs_time = setup.setupTimeDependentParameter(dictNet, dictPLL, dictData, parameter='coupStr_2ndHarm', afterTsimPercent=0.0, forAllPLLsDifferent=False)[0]
 
 	plt.figure(1234);
 	t = np.arange( 0, dictNet['max_delay_steps']+dictPLL['sim_time_steps'] ) * dictPLL['dt']
@@ -234,7 +288,7 @@ def evolveSystemOnTsimArray_varInjectLockCoupStrength(dictNet, dictPLL, phi, clo
 		#line = livplt.live_plotter(tlive, phidot, line)
 
 	t = np.arange(0,len(phiStore[0:dictNet['max_delay_steps']+dictPLL['sim_time_steps'],0]))*dictPLL['dt']
-	dictData.update({'t': t, 'phi': phiStore, 'clock': clkStore})
+	dictData.update({'t': t, 'phi': phiStore, 'clock': clkStore, 'timeDepPara': injectLockCoupStrVal_vs_time})
 
 	return dictData
 

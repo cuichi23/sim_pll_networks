@@ -50,7 +50,7 @@ labelfont = {
 		'family' : 'sans-serif',
 		'color'  : 'black',
 		'weight' : 'normal',
-		'size'   : 16,
+		'size'   : 42,
 		}
 
 annotationfont = {
@@ -61,12 +61,14 @@ annotationfont = {
 		}
 
 # plot parameter
-axisLabel = 60;
-tickSize  = 35;
-titleLabel= 10;
-dpi_val	  = 150;
-figwidth  = 6;
-figheight = 5;
+axisLabel 			= 60;
+tickSize  			= 25;
+titleLabel			= 10;
+dpi_val	  			= 150;
+figwidth  			= 6;
+figheight 			= 5;
+plot_size_inches_x 	= 18;
+plot_size_inches_y 	= 10;
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -102,15 +104,15 @@ def plotPSD(dictPLL, dictNet, dictData, plotList=[], saveData=False):
 	peak_power_val = [];
 	fig1 = plt.figure(num=1, figsize=(figwidth, figheight), dpi=dpi_val, facecolor='w', edgecolor='k')
 	fig1.canvas.set_window_title('spectral density of synchronized state')		# plot spectrum
-	fig1.set_size_inches(20,10)
+	fig1.set_size_inches(plot_size_inches_x, plot_size_inches_y)
 
 	for i in range(len(f)):
 		peak_freq_coup1 = np.argmax(Pxx_db[i]);									# find the principle peak of the free-running SLL
 		peak_freq1_val  = f[i][peak_freq_coup1];
 		peak_power_val.append(Pxx_db[i][peak_freq_coup1]);
 		plt.plot(f[i], Pxx_db[i], '-', label='PLL%i' %(plotList[i]))
-	plt.title(r'power spectrum $\Delta f=$%0.5E, peak at $Pxx^\textrm{peak}$=%0.2f' %((f[0][2]-f[0][1]), peak_power_val[0]), fontsize=axisLabel)
-	plt.xlabel('frequencies [Hz]', fontsize= axisLabel); plt.ylabel('P [dBm]', fontsize = axisLabel);
+	plt.title(r'power spectrum $\Delta f=$%0.5E, peak at $Pxx^\textrm{peak}$=%0.2f' %((f[0][2]-f[0][1]), peak_power_val[0]), fontdict = labelfont)
+	plt.xlabel('frequencies [Hz]', fontdict = labelfont); plt.ylabel('P [dBm]', fontdict = labelfont);
 	plt.tick_params(axis='both', which='major', labelsize=tickSize)
 	plt.legend()
 	plt.grid()
@@ -119,20 +121,18 @@ def plotPSD(dictPLL, dictNet, dictData, plotList=[], saveData=False):
 	except:
 		print('Could not determine peak_power_val!')
 	plt.xlim(0, 12.5*np.min(dictPLL['intrF']));
-	plt.savefig('results/powerdensity_dB_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.pdf' %(np.mean(dictPLL['coupK']), np.mean(dictPLL['cutFc']), np.mean(dictPLL['syncF']), np.mean(dictPLL['transmission_delay']), np.mean(dictPLL['noiseVarVCO']), now.year, now.month, now.day))
-	plt.savefig('results/powerdensity_dB_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.svg' %(np.mean(dictPLL['coupK']), np.mean(dictPLL['cutFc']), np.mean(dictPLL['syncF']), np.mean(dictPLL['transmission_delay']), np.mean(dictPLL['noiseVarVCO']), now.year, now.month, now.day), dpi=150)
-	plt.savefig('results/powerdensity_dB_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.png' %(np.mean(dictPLL['coupK']), np.mean(dictPLL['cutFc']), np.mean(dictPLL['syncF']), np.mean(dictPLL['transmission_delay']), np.mean(dictPLL['noiseVarVCO']), now.year, now.month, now.day), dpi=300)
+	plt.savefig('results/powerdensity_dB_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.svg' %(np.mean(dictPLL['coupK']), np.mean(dictPLL['cutFc']), np.mean(dictPLL['syncF']), np.mean(dictPLL['transmission_delay']), np.mean(dictPLL['noiseVarVCO']), now.year, now.month, now.day), dpi=dpi_val)
+	plt.savefig('results/powerdensity_dB_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.png' %(np.mean(dictPLL['coupK']), np.mean(dictPLL['cutFc']), np.mean(dictPLL['syncF']), np.mean(dictPLL['transmission_delay']), np.mean(dictPLL['noiseVarVCO']), now.year, now.month, now.day), dpi=dpi_val)
 	plt.xlim(peak_freq1_val-1.2*np.min(dictPLL['coupK']),peak_freq1_val+1.2*np.max(dictPLL['coupK']));
 	plt.plot(f[0][peak_freq_coup1-int(0.1*np.min(dictPLL['intrF'])/(f[0][2]-f[0][1]))], Pxx_db[0][peak_freq_coup1], 'r*',
 			 f[0][peak_freq_coup1+int(0.1*np.min(dictPLL['intrF'])/(f[0][2]-f[0][1]))], Pxx_db[0][peak_freq_coup1], 'r*')
-	plt.savefig('results/powerdensity1stHarm_dBm_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.pdf' %(np.mean(dictPLL['coupK']), np.mean(dictPLL['cutFc']), np.mean(dictPLL['syncF']), np.mean(dictPLL['transmission_delay']), np.mean(dictPLL['noiseVarVCO']), now.year, now.month, now.day))
-	plt.savefig('results/powerdensity1stHarm_dBm_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.svg' %(np.mean(dictPLL['coupK']), np.mean(dictPLL['cutFc']), np.mean(dictPLL['syncF']), np.mean(dictPLL['transmission_delay']), np.mean(dictPLL['noiseVarVCO']), now.year, now.month, now.day), dpi=150)
-	plt.savefig('results/powerdensity1stHarm_dBm_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.png' %(np.mean(dictPLL['coupK']), np.mean(dictPLL['cutFc']), np.mean(dictPLL['syncF']), np.mean(dictPLL['transmission_delay']), np.mean(dictPLL['noiseVarVCO']), now.year, now.month, now.day), dpi=300)
+	plt.savefig('results/powerdensity1stHarm_dBm_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.svg' %(np.mean(dictPLL['coupK']), np.mean(dictPLL['cutFc']), np.mean(dictPLL['syncF']), np.mean(dictPLL['transmission_delay']), np.mean(dictPLL['noiseVarVCO']), now.year, now.month, now.day), dpi=dpi_val)
+	plt.savefig('results/powerdensity1stHarm_dBm_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.png' %(np.mean(dictPLL['coupK']), np.mean(dictPLL['cutFc']), np.mean(dictPLL['syncF']), np.mean(dictPLL['transmission_delay']), np.mean(dictPLL['noiseVarVCO']), now.year, now.month, now.day), dpi=dpi_val)
 	plt.xlim(0, 8.5*np.min(dictPLL['intrF']));
 
 	fig2 = plt.figure(num=2, figsize=(figwidth, figheight), dpi=dpi_val, facecolor='w', edgecolor='k')	# plot spectrum
 	fig2.canvas.set_window_title('one-sided spectral density')
-	fig2.set_size_inches(20,10);
+	fig2.set_size_inches(plot_size_inches_x, plot_size_inches_y);
 
 	xHz = 0.001; onsidedPSD_params = []; oneSidPSDwidthsm3dB = [];				# distance from the principle peak to measure damping
 	Freqres = f[0][3]-f[0][2]; linestyle = ['-', '--', '-', '--', '-', '--'];
@@ -196,11 +196,10 @@ def plotPSD(dictPLL, dictNet, dictData, plotList=[], saveData=False):
 	#plt.plot(10.0*np.log10(powerspecPLL1['f'][0][peak_freq_coup1:coup1_times_X].copy()-peak_freq1_val), !!!!! , 'y-', label=r'$1/f^2$')
 	plt.legend()
 	# plt.xlim([0,f01+20*max(Kvco1,Kvco2)]);	#plt.ylim(-100,0);
-	plt.xlabel(r'$10\log_{10}\left(f-f_{\rm peak}\right)$ [Hz]', fontsize=axisLabel); plt.ylabel(r'$P$ [dBm]', fontsize=axisLabel)
+	plt.xlabel(r'$10\log_{10}\left(f-f_{\rm peak}\right)$ [Hz]', fontdict = labelfont); plt.ylabel(r'$P$ [dBm]', fontdict = labelfont)
 	plt.tick_params(axis='both', which='major', labelsize=35); plt.grid();
-	plt.savefig('results/onsidedPSD_dBm_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.pdf' %(np.mean(dictPLL['coupK']), np.mean(dictPLL['cutFc']), np.mean(dictPLL['syncF']), np.mean(dictPLL['transmission_delay']), np.mean(dictPLL['noiseVarVCO']), now.year, now.month, now.day))
-	plt.savefig('results/onsidedPSD_dBm_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.svg' %(np.mean(dictPLL['coupK']), np.mean(dictPLL['cutFc']), np.mean(dictPLL['syncF']), np.mean(dictPLL['transmission_delay']), np.mean(dictPLL['noiseVarVCO']), now.year, now.month, now.day), dpi=150)
-	plt.savefig('results/onsidedPSD_dBm_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.png' %(np.mean(dictPLL['coupK']), np.mean(dictPLL['cutFc']), np.mean(dictPLL['syncF']), np.mean(dictPLL['transmission_delay']), np.mean(dictPLL['noiseVarVCO']), now.year, now.month, now.day), dpi=300)
+	plt.savefig('results/onsidedPSD_dBm_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.svg' %(np.mean(dictPLL['coupK']), np.mean(dictPLL['cutFc']), np.mean(dictPLL['syncF']), np.mean(dictPLL['transmission_delay']), np.mean(dictPLL['noiseVarVCO']), now.year, now.month, now.day), dpi=dpi_val)
+	plt.savefig('results/onsidedPSD_dBm_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.png' %(np.mean(dictPLL['coupK']), np.mean(dictPLL['cutFc']), np.mean(dictPLL['syncF']), np.mean(dictPLL['transmission_delay']), np.mean(dictPLL['noiseVarVCO']), now.year, now.month, now.day), dpi=dpi_val)
 
 	fig1 = plt.figure(num=1, figsize=(figwidth, figheight), dpi=dpi_val, facecolor='w', edgecolor='k')
 	for i in range (len(f)):
@@ -226,6 +225,7 @@ def plotPhases2pi(dictPLL, dictNet, dictData):
 
 	fig3 = plt.figure(num=3, figsize=(figwidth, figheight), dpi=dpi_val, facecolor='w', edgecolor='k')
 	fig3.canvas.set_window_title('phases')  									# plot the phase
+	fig3.set_size_inches(plot_size_inches_x, plot_size_inches_y)
 
 
 	plt.plot(dictData['t'], dictData['phi']%(2*np.pi), linewidth=1, linestyle=linet[0])
@@ -233,10 +233,11 @@ def plotPhases2pi(dictPLL, dictNet, dictData):
 
 	plt.xlabel(r'$\frac{\omega t}{2\pi}$', fontdict = labelfont)
 	plt.ylabel(r'$\theta(t)_{\textrm{mod}\,2\pi}$', fontdict = labelfont)
+	plt.tick_params(axis='both', which='major', labelsize=tickSize)
 	# plt.legend()
 
-	plt.savefig('results/phases2pi-t_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.pdf' %(np.mean(dictPLL['coupK']), np.mean(dictPLL['cutFc']), np.mean(dictPLL['syncF']), np.mean(dictPLL['transmission_delay']), np.mean(dictPLL['noiseVarVCO']), now.year, now.month, now.day))
-	plt.savefig('results/phases2pi-t_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.png' %(np.mean(dictPLL['coupK']), np.mean(dictPLL['cutFc']), np.mean(dictPLL['syncF']), np.mean(dictPLL['transmission_delay']), np.mean(dictPLL['noiseVarVCO']), now.year, now.month, now.day), dpi=300)
+	plt.savefig('results/phases2pi-t_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.svg' %(np.mean(dictPLL['coupK']), np.mean(dictPLL['cutFc']), np.mean(dictPLL['syncF']), np.mean(dictPLL['transmission_delay']), np.mean(dictPLL['noiseVarVCO']), now.year, now.month, now.day), dpi=dpi_val)
+	plt.savefig('results/phases2pi-t_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.png' %(np.mean(dictPLL['coupK']), np.mean(dictPLL['cutFc']), np.mean(dictPLL['syncF']), np.mean(dictPLL['transmission_delay']), np.mean(dictPLL['noiseVarVCO']), now.year, now.month, now.day), dpi=dpi_val)
 
 	return None
 
@@ -255,16 +256,18 @@ def plotPhasesInf(dictPLL, dictNet, dictData):
 
 	fig4 = plt.figure(num=4, figsize=(figwidth, figheight), dpi=dpi_val, facecolor='w', edgecolor='k')
 	fig4.canvas.set_window_title('phases')  							 		# plot the phase
+	fig4.set_size_inches(plot_size_inches_x, plot_size_inches_y)
 
 	plt.plot(dictData['t'], dictData['phi'], linewidth=1, linestyle=linet[0])
 	plt.plot(dictData['t'][dictNet['max_delay_steps']-1], dictData['phi'][int(dictNet['max_delay_steps'])-1,0]+0.05,'go')
 
 	plt.xlabel(r'$\frac{\omega t}{2\pi}$', fontdict = labelfont)
 	plt.ylabel(r'$\theta(t)$', fontdict = labelfont)
+	plt.tick_params(axis='both', which='major', labelsize=tickSize)
 	# plt.legend()
 
-	plt.savefig('results/phasesInf-t_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.pdf' %(np.mean(dictPLL['coupK']), np.mean(dictPLL['cutFc']), np.mean(dictPLL['syncF']), np.mean(dictPLL['transmission_delay']), np.mean(dictPLL['noiseVarVCO']), now.year, now.month, now.day))
-	plt.savefig('results/phasesInf-t_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.png' %(np.mean(dictPLL['coupK']), np.mean(dictPLL['cutFc']), np.mean(dictPLL['syncF']), np.mean(dictPLL['transmission_delay']), np.mean(dictPLL['noiseVarVCO']), now.year, now.month, now.day), dpi=300)
+	plt.savefig('results/phasesInf-t_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.svg' %(np.mean(dictPLL['coupK']), np.mean(dictPLL['cutFc']), np.mean(dictPLL['syncF']), np.mean(dictPLL['transmission_delay']), np.mean(dictPLL['noiseVarVCO']), now.year, now.month, now.day), dpi=dpi_val)
+	plt.savefig('results/phasesInf-t_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.png' %(np.mean(dictPLL['coupK']), np.mean(dictPLL['cutFc']), np.mean(dictPLL['syncF']), np.mean(dictPLL['transmission_delay']), np.mean(dictPLL['noiseVarVCO']), now.year, now.month, now.day), dpi=dpi_val)
 
 	return None
 
@@ -283,6 +286,7 @@ def plotFrequency(dictPLL, dictNet, dictData):
 
 	fig5 = plt.figure(num=5, figsize=(figwidth, figheight), dpi=dpi_val, facecolor='w', edgecolor='k')
 	fig5.canvas.set_window_title('frequency')  							 		# plot the phase
+	fig5.set_size_inches(plot_size_inches_x, plot_size_inches_y)
 
 	phidot = np.diff(dictData['phi'], axis=0)/dictPLL['dt'];
 	plt.plot(dictData['t'][0:-1], phidot, linewidth=1, linestyle=linet[0])
@@ -290,20 +294,21 @@ def plotFrequency(dictPLL, dictNet, dictData):
 
 	plt.xlabel(r'$\frac{\omega t}{2\pi}$', fontdict = labelfont)
 	plt.ylabel(r'$\theta(t)$', fontdict = labelfont)
+	plt.tick_params(axis='both', which='major', labelsize=tickSize)
 	# plt.legend()
 
 	plt.xlabel(r'$t\,[T_{\omega}]$', fontdict = labelfont)
 	plt.ylabel(r'$\dot{\phi}(t)$ [rad Hz]', fontdict = labelfont)
-	plt.savefig('results/freq-t_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.pdf' %(np.mean(dictPLL['coupK']), np.mean(dictPLL['cutFc']), np.mean(dictPLL['syncF']), np.mean(dictPLL['transmission_delay']), np.mean(dictPLL['noiseVarVCO']), now.year, now.month, now.day))
-	plt.savefig('results/freq-t_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.png' %(np.mean(dictPLL['coupK']), np.mean(dictPLL['cutFc']), np.mean(dictPLL['syncF']), np.mean(dictPLL['transmission_delay']), np.mean(dictPLL['noiseVarVCO']), now.year, now.month, now.day), dpi=300)
+	plt.savefig('results/freq-t_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.svg' %(np.mean(dictPLL['coupK']), np.mean(dictPLL['cutFc']), np.mean(dictPLL['syncF']), np.mean(dictPLL['transmission_delay']), np.mean(dictPLL['noiseVarVCO']), now.year, now.month, now.day), dpi=dpi_val)
+	plt.savefig('results/freq-t_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.png' %(np.mean(dictPLL['coupK']), np.mean(dictPLL['cutFc']), np.mean(dictPLL['syncF']), np.mean(dictPLL['transmission_delay']), np.mean(dictPLL['noiseVarVCO']), now.year, now.month, now.day), dpi=dpi_val)
 	plt.xlim([np.mean(dictPLL['transmission_delay']) - 25*1.0/(np.min(dictPLL['intrF'])), np.mean(dictPLL['transmission_delay']) + 35*1.0/(np.min(dictPLL['intrF']))]);
 	plt.ylim([0.99*np.min(phidot[0:int(np.round(np.mean(dictPLL['transmission_delay'])/dictPLL['dt'])+25*1.0/(np.min(dictPLL['intrF'])*dictPLL['dt']))-1,:]), 1.01*np.max(phidot[0:int(np.round(np.mean(dictPLL['transmission_delay'])/dictPLL['dt'])+25*1.0/(np.min(dictPLL['intrF'])*dictPLL['dt']))-1,:])]);
-	plt.savefig('results/freqInit-t_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.pdf' %(np.mean(dictPLL['coupK']), np.mean(dictPLL['cutFc']), np.mean(dictPLL['syncF']), np.mean(dictPLL['transmission_delay']), np.mean(dictPLL['noiseVarVCO']), now.year, now.month, now.day))
-	plt.savefig('results/freqInit-t_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.png' %(np.mean(dictPLL['coupK']), np.mean(dictPLL['cutFc']), np.mean(dictPLL['syncF']), np.mean(dictPLL['transmission_delay']), np.mean(dictPLL['noiseVarVCO']), now.year, now.month, now.day), dpi=300)
+	plt.savefig('results/freqInit-t_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.svg' %(np.mean(dictPLL['coupK']), np.mean(dictPLL['cutFc']), np.mean(dictPLL['syncF']), np.mean(dictPLL['transmission_delay']), np.mean(dictPLL['noiseVarVCO']), now.year, now.month, now.day), dpi=dpi_val)
+	plt.savefig('results/freqInit-t_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.png' %(np.mean(dictPLL['coupK']), np.mean(dictPLL['cutFc']), np.mean(dictPLL['syncF']), np.mean(dictPLL['transmission_delay']), np.mean(dictPLL['noiseVarVCO']), now.year, now.month, now.day), dpi=dpi_val)
 	plt.xlim([np.mean(dictPLL['transmission_delay']) - 25*1.0/(np.min(dictPLL['intrF'])), np.mean(dictPLL['transmission_delay']) + 400*1.0/(np.min(dictPLL['intrF']))]);
 	plt.ylim([np.min(phidot[int(np.mean(dictPLL['transmission_delay'])/dictPLL['dt'] - 25*1.0/(dictPLL['sampleF']/np.min(dictPLL['intrF']))):int(np.round(np.mean(dictPLL['transmission_delay'])/dictPLL['dt'])+400*1.0/(np.min(dictPLL['intrF'])*dictPLL['dt']))-1,:])-0.05, np.max(phidot[int(np.mean(dictPLL['transmission_delay'])/dictPLL['dt'] - 25*1.0/(dictPLL['sampleF']/np.min(dictPLL['intrF']))):int(np.round(np.mean(dictPLL['transmission_delay'])/dictPLL['dt'])+400*1.0/(np.min(dictPLL['intrF'])*dictPLL['dt']))-1,:])+0.05]);
-	plt.savefig('results/freqInit1-t_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.pdf' %(np.mean(dictPLL['coupK']), np.mean(dictPLL['cutFc']), np.mean(dictPLL['syncF']), np.mean(dictPLL['transmission_delay']), np.mean(dictPLL['noiseVarVCO']), now.year, now.month, now.day))
-	plt.savefig('results/freqInit1-t_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.png' %(np.mean(dictPLL['coupK']), np.mean(dictPLL['cutFc']), np.mean(dictPLL['syncF']), np.mean(dictPLL['transmission_delay']), np.mean(dictPLL['noiseVarVCO']), now.year, now.month, now.day), dpi=300)
+	plt.savefig('results/freqInit1-t_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.svg' %(np.mean(dictPLL['coupK']), np.mean(dictPLL['cutFc']), np.mean(dictPLL['syncF']), np.mean(dictPLL['transmission_delay']), np.mean(dictPLL['noiseVarVCO']), now.year, now.month, now.day), dpi=dpi_val)
+	plt.savefig('results/freqInit1-t_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.png' %(np.mean(dictPLL['coupK']), np.mean(dictPLL['cutFc']), np.mean(dictPLL['syncF']), np.mean(dictPLL['transmission_delay']), np.mean(dictPLL['noiseVarVCO']), now.year, now.month, now.day), dpi=dpi_val)
 	plt.xlim([0, dictData['t'][-1]]);
 	plt.ylim([np.min(phidot[int(np.mean(dictPLL['transmission_delay'])/dictPLL['dt']+0.5*dictPLL['sampleF']/np.min(dictPLL['intrF'])):,:])-0.05, np.max(phidot[int(np.mean(dictPLL['transmission_delay'])/dictPLL['dt']+0.5*dictPLL['sampleF']/np.min(dictPLL['intrF'])):,:])+0.05]);
 
@@ -318,6 +323,7 @@ def plotOrderPara(dictPLL, dictNet, dictData):
 
 	fig6 = plt.figure(num=6, figsize=(figwidth, figheight), dpi=dpi_val, facecolor='w', edgecolor='k')
 	fig6.canvas.set_window_title('order parameter over time')					# plot the order parameter in dependence of time
+	fig6.set_size_inches(plot_size_inches_x, plot_size_inches_y)
 
 	plt.plot(dictData['t'], orderparam)
 	plt.plot(np.mean(dictPLL['transmission_delay']), orderparam[int(round(np.mean(dictPLL['transmission_delay'])/dictPLL['dt']))], 'yo', ms=5)				# mark where the simulation starts
@@ -325,14 +331,19 @@ def plotOrderPara(dictPLL, dictNet, dictData):
 	plt.title(r'mean order parameter $\bar{R}=$%.2f, and $\bar{\sigma}=$%.4f' %(np.mean(orderparam[-int(round(dictPLL['timeSeriesAverTime']*1.0/(F1*dictPLL['dt']))):]), np.std(orderparam[-int(round(dictPLL['timeSeriesAverTime']*1.0/(F1*dictPLL['dt']))):])), fontdict = titlefont)
 	plt.xlabel(r'$t\,[T_{\omega}]$', fontdict = labelfont)
 	plt.ylabel(r'$R(t,m_x=%d,m_y=%d )$' %(dictNet['mx'],dictNet['my']), fontdict = labelfont)
-	plt.savefig('results/orderP-t_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.pdf' %(np.mean(dictPLL['coupK']), np.mean(dictPLL['cutFc']), np.mean(dictPLL['syncF']), np.mean(dictPLL['transmission_delay']), np.mean(dictPLL['noiseVarVCO']), now.year, now.month, now.day))
-	plt.savefig('results/orderP-t_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.png' %(np.mean(dictPLL['coupK']), np.mean(dictPLL['cutFc']), np.mean(dictPLL['syncF']), np.mean(dictPLL['transmission_delay']), np.mean(dictPLL['noiseVarVCO']), now.year, now.month, now.day), dpi=300)
-	plt.xlim([dictData['t'][-int(round(np.mean(dictPLL['transmission_delay'])/dictPLL['dt']+75*1.0/(F1*dictPLL['dt'])))], dictData['t'][-1]]); # plt.ylim([]);
-	plt.savefig('results/orderPFin-t_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.pdf' %(np.mean(dictPLL['coupK']), np.mean(dictPLL['cutFc']), np.mean(dictPLL['syncF']), np.mean(dictPLL['transmission_delay']), np.mean(dictPLL['noiseVarVCO']), now.year, now.month, now.day))
-	plt.savefig('results/orderPFin-t_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.png' %(np.mean(dictPLL['coupK']), np.mean(dictPLL['cutFc']), np.mean(dictPLL['syncF']), np.mean(dictPLL['transmission_delay']), np.mean(dictPLL['noiseVarVCO']), now.year, now.month, now.day), dpi=300)
+	plt.tick_params(axis='both', which='major', labelsize=tickSize)
+
+	plt.savefig('results/orderP-t_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.svg' %(np.mean(dictPLL['coupK']), np.mean(dictPLL['cutFc']), np.mean(dictPLL['syncF']), np.mean(dictPLL['transmission_delay']), np.mean(dictPLL['noiseVarVCO']), now.year, now.month, now.day))
+	plt.savefig('results/orderP-t_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.png' %(np.mean(dictPLL['coupK']), np.mean(dictPLL['cutFc']), np.mean(dictPLL['syncF']), np.mean(dictPLL['transmission_delay']), np.mean(dictPLL['noiseVarVCO']), now.year, now.month, now.day), dpi=dpi_val)
+	try:
+		plt.xlim([dictData['t'][-int(round(np.mean(dictPLL['transmission_delay'])/dictPLL['dt']+75*1.0/(F1*dictPLL['dt'])))], dictData['t'][-1]]); # plt.ylim([]);
+	except:
+		plt.xlim([0, 15])
+	plt.savefig('results/orderPFin-t_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.svg' %(np.mean(dictPLL['coupK']), np.mean(dictPLL['cutFc']), np.mean(dictPLL['syncF']), np.mean(dictPLL['transmission_delay']), np.mean(dictPLL['noiseVarVCO']), now.year, now.month, now.day))
+	plt.savefig('results/orderPFin-t_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.png' %(np.mean(dictPLL['coupK']), np.mean(dictPLL['cutFc']), np.mean(dictPLL['syncF']), np.mean(dictPLL['transmission_delay']), np.mean(dictPLL['noiseVarVCO']), now.year, now.month, now.day), dpi=dpi_val)
 	plt.xlim([0, np.mean(dictPLL['transmission_delay'])+125*1.0/(F1)]); # plt.ylim([]);
-	plt.savefig('results/orderPInit-t_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.pdf' %(np.mean(dictPLL['coupK']), np.mean(dictPLL['cutFc']), np.mean(dictPLL['syncF']), np.mean(dictPLL['transmission_delay']), np.mean(dictPLL['noiseVarVCO']), now.year, now.month, now.day))
-	plt.savefig('results/orderPInit-t_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.png' %(np.mean(dictPLL['coupK']), np.mean(dictPLL['cutFc']), np.mean(dictPLL['syncF']), np.mean(dictPLL['transmission_delay']), np.mean(dictPLL['noiseVarVCO']), now.year, now.month, now.day), dpi=300)
+	plt.savefig('results/orderPInit-t_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.svg' %(np.mean(dictPLL['coupK']), np.mean(dictPLL['cutFc']), np.mean(dictPLL['syncF']), np.mean(dictPLL['transmission_delay']), np.mean(dictPLL['noiseVarVCO']), now.year, now.month, now.day))
+	plt.savefig('results/orderPInit-t_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.png' %(np.mean(dictPLL['coupK']), np.mean(dictPLL['cutFc']), np.mean(dictPLL['syncF']), np.mean(dictPLL['transmission_delay']), np.mean(dictPLL['noiseVarVCO']), now.year, now.month, now.day), dpi=dpi_val)
 	#print('\nlast entry order parameter: R-1 = %.3e' % (orderparam[-1]-1) )
 	#print('\nlast entries order parameter: R = ', orderparam[-25:])
 
@@ -346,6 +357,8 @@ def plotPhaseRela(dictPLL, dictNet, dictData):
 
 	fig7 = plt.figure(num=7, figsize=(figwidth, figheight), dpi=dpi_val, facecolor='w', edgecolor='k')
 	fig7.canvas.set_window_title('phase relations')
+	fig7.set_size_inches(plot_size_inches_x, plot_size_inches_y)
+
 	if not dictNet['topology'] == 'compareEntrVsMutual':
 		plt.plot(dictData['t'][::dictPLL['sampleFplot']],((dictData['phi'][::dictPLL['sampleFplot'],0]-dictData['phi'][::dictPLL['sampleFplot'],1]+np.pi)%(2.*np.pi))-np.pi,label=r'$\phi_{0}-\phi_{1}$')			#math.fmod(phi[:,:], 2.*np.pi))
 		if not dictNet['Nx']*dictNet['Ny'] == 2:
@@ -360,9 +373,11 @@ def plotPhaseRela(dictPLL, dictNet, dictData):
 			plt.title(r'phases [rad]', fontdict = titlefont)
 		plt.xlabel(r'$t\,[T_{\omega}]$', fontdict = labelfont)
 		plt.ylabel(r'$\phi_k(t)-\phi_0(t)$', fontdict = labelfont)
+		plt.tick_params(axis='both', which='major', labelsize=tickSize)
+
 		plt.legend();
-		plt.savefig('results/phaseRela-t_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.pdf' %(np.mean(dictPLL['coupK']), np.mean(dictPLL['cutFc']), np.mean(dictPLL['syncF']), np.mean(dictPLL['transmission_delay']), np.mean(dictPLL['noiseVarVCO']), now.year, now.month, now.day))
-		plt.savefig('results/phaseRela-t_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.png' %(np.mean(dictPLL['coupK']), np.mean(dictPLL['cutFc']), np.mean(dictPLL['syncF']), np.mean(dictPLL['transmission_delay']), np.mean(dictPLL['noiseVarVCO']), now.year, now.month, now.day), dpi=300)
+		plt.savefig('results/phaseRela-t_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.svg' %(np.mean(dictPLL['coupK']), np.mean(dictPLL['cutFc']), np.mean(dictPLL['syncF']), np.mean(dictPLL['transmission_delay']), np.mean(dictPLL['noiseVarVCO']), now.year, now.month, now.day))
+		plt.savefig('results/phaseRela-t_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.png' %(np.mean(dictPLL['coupK']), np.mean(dictPLL['cutFc']), np.mean(dictPLL['syncF']), np.mean(dictPLL['transmission_delay']), np.mean(dictPLL['noiseVarVCO']), now.year, now.month, now.day), dpi=dpi_val)
 	else:
 		plt.plot(dictData['t'][-int(25*1.0/(F1*dt)):],((dictData['phi'][-int(25*1.0/(F1*dt)):,0]-dictData['phi'][-int(25*1.0/(F1*dt)):,1]+np.pi)%(2.*np.pi))-np.pi,'-',label=r'$\phi_{0}-\phi_{1}$ mutual')
 		plt.plot(dictData['t'][-int(25*1.0/(F1*dt)):],((dictData['phi'][-int(25*1.0/(F1*dt)):,3]-dictData['phi'][-int(25*1.0/(F1*dt)):,2]+np.pi)%(2.*np.pi))-np.pi,'--',label=r'$\phi_{3}-\phi_{2}$ entrain')
@@ -375,9 +390,11 @@ def plotPhaseRela(dictPLL, dictNet, dictData):
 		plt.title(r'phases-differences between the clocks', fontdict = titlefont)
 		plt.xlabel(r'$t\,[T_{\omega}]$', fontdict = labelfont)
 		plt.ylabel(r'$\phi_k(t)-\phi_0(t)$', fontdict = labelfont)
+		plt.tick_params(axis='both', which='major', labelsize=tickSize)
+
 		plt.legend();
-		plt.savefig('results/phaseRela-t_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.pdf' %(np.mean(dictPLL['coupK']), np.mean(dictPLL['cutFc']), np.mean(dictPLL['syncF']), np.mean(dictPLL['transmission_delay']), np.mean(dictPLL['noiseVarVCO']), now.year, now.month, now.day))
-		plt.savefig('results/phaseRela-t_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.png' %(np.mean(dictPLL['coupK']), np.mean(dictPLL['cutFc']), np.mean(dictPLL['syncF']), np.mean(dictPLL['transmission_delay']), np.mean(dictPLL['noiseVarVCO']), now.year, now.month, now.day), dpi=300)
+		plt.savefig('results/phaseRela-t_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.svg' %(np.mean(dictPLL['coupK']), np.mean(dictPLL['cutFc']), np.mean(dictPLL['syncF']), np.mean(dictPLL['transmission_delay']), np.mean(dictPLL['noiseVarVCO']), now.year, now.month, now.day))
+		plt.savefig('results/phaseRela-t_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.png' %(np.mean(dictPLL['coupK']), np.mean(dictPLL['cutFc']), np.mean(dictPLL['syncF']), np.mean(dictPLL['transmission_delay']), np.mean(dictPLL['noiseVarVCO']), now.year, now.month, now.day), dpi=dpi_val)
 
 
 	return None
@@ -390,6 +407,8 @@ def plotPhaseDiff(dictPLL, dictNet, dictData):
 
 	fig8 = plt.figure(num=8, figsize=(figwidth, figheight), dpi=dpi_val, facecolor='w', edgecolor='k')
 	fig8.canvas.set_window_title('phase configuration with respect to the phase of osci 0')
+	fig8.set_size_inches(plot_size_inches_x, plot_size_inches_y)
+
 	if len(dictData['phi'][:,0]) > dictPLL['treshold_maxT_to_plot'] * (1.0/(np.min(dictPLL['intrF'])*dictPLL['dt'])):	# (1.0/(np.min(dictPLL['intrF'])*dictPLL['dt'])) steps for one period
 		for i in range(len(dictData['phi'][0,:])):
 			labelname = r'$\phi_{%i}$-$\phi_{0}$' %(i);
@@ -401,8 +420,9 @@ def plotPhaseDiff(dictPLL, dictNet, dictData):
 																		np.mod(dictData['phi'][-10][2]-dictData['phi'][-10][0]+np.pi, 2.0*np.pi)-np.pi ), fontdict = titlefont)
 		else:
 			plt.title(r'phase differences $\Delta\phi_{10}=%.4f$ [rad]' %( np.mod(dictData['phi'][-10][1]-dictData['phi'][-10][0]+np.pi, 2.0*np.pi)-np.pi ), fontdict = titlefont)
-		plt.xlabel(r'$t\,[T_{\omega}]$', fontsize = axisLabel)
-		plt.ylabel(r'$\phi_k(t)-\phi_0(t)$', fontsize = axisLabel)
+		plt.xlabel(r'$t\,[T_{\omega}]$', fontdict = labelfont)
+		plt.ylabel(r'$\phi_k(t)-\phi_0(t)$', fontdict = labelfont)
+		plt.tick_params(axis='both', which='major', labelsize=tickSize)
 		plt.legend();
 	else:
 		shift2piWin = -np.pi/2													# this controls how the [0, 2pi) interval is shifted
@@ -417,11 +437,12 @@ def plotPhaseDiff(dictPLL, dictNet, dictData):
 																		np.mod(dictData['phi'][-10][2]-dictData['phi'][-10][0]+np.pi, 2.0*np.pi)-np.pi ), fontdict = titlefont)
 		else:
 			plt.title(r'phase differences $\Delta\phi_{10}=%.4f$ [rad]' %( np.mod(dictData['phi'][-10][1]-dictData['phi'][-10][0]+np.pi, 2.0*np.pi)-np.pi ), fontdict = titlefont)
-		plt.xlabel(r'$t\,[T_{\omega}]$', fontsize = axisLabel)
-		plt.ylabel(r'$\phi_k(t)-\phi_0(t)$', fontsize = axisLabel)
+		plt.xlabel(r'$t\,[T_{\omega}]$', fontdict = labelfont)
+		plt.ylabel(r'$\phi_k(t)-\phi_0(t)$', fontdict = labelfont)
+		plt.tick_params(axis='both', which='major', labelsize=tickSize)
 		plt.legend();
-	plt.savefig('results/phaseConf-t_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.pdf' %(np.mean(dictPLL['coupK']), np.mean(dictPLL['cutFc']), np.mean(dictPLL['syncF']), np.mean(dictPLL['transmission_delay']), np.mean(dictPLL['noiseVarVCO']), now.year, now.month, now.day))
-	plt.savefig('results/phaseConf-t_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.png' %(np.mean(dictPLL['coupK']), np.mean(dictPLL['cutFc']), np.mean(dictPLL['syncF']), np.mean(dictPLL['transmission_delay']), np.mean(dictPLL['noiseVarVCO']), now.year, now.month, now.day), dpi=300)
+	plt.savefig('results/phaseConf-t_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.svg' %(np.mean(dictPLL['coupK']), np.mean(dictPLL['cutFc']), np.mean(dictPLL['syncF']), np.mean(dictPLL['transmission_delay']), np.mean(dictPLL['noiseVarVCO']), now.year, now.month, now.day))
+	plt.savefig('results/phaseConf-t_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.png' %(np.mean(dictPLL['coupK']), np.mean(dictPLL['cutFc']), np.mean(dictPLL['syncF']), np.mean(dictPLL['transmission_delay']), np.mean(dictPLL['noiseVarVCO']), now.year, now.month, now.day), dpi=dpi_val)
 
 	return None
 
@@ -440,15 +461,17 @@ def plotClockTime(dictPLL, dictNet, dictData):
 
 	fig9 = plt.figure(num=9, figsize=(figwidth, figheight), dpi=dpi_val, facecolor='w', edgecolor='k')
 	fig9.canvas.set_window_title('clock time') 							 		# plot the clocks' time
+	fig9.set_size_inches(plot_size_inches_x, plot_size_inches_y)
 
 	plt.plot(dictData['t'], dictData['clock'], linewidth=1, linestyle=linet[0])
 
 	plt.xlabel(r'$\frac{\omega t}{2\pi}$', fontdict = labelfont)
 	plt.ylabel(r'count $\frac{T}{2}$', fontdict = labelfont)
+	plt.tick_params(axis='both', which='major', labelsize=tickSize)
 	# plt.legend()
 
-	plt.savefig('results/clockTime-t_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.pdf' %(np.mean(dictPLL['coupK']), np.mean(dictPLL['cutFc']), np.mean(dictPLL['syncF']), np.mean(dictPLL['transmission_delay']), np.mean(dictPLL['noiseVarVCO']), now.year, now.month, now.day))
-	plt.savefig('results/clockTime-t_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.png' %(np.mean(dictPLL['coupK']), np.mean(dictPLL['cutFc']), np.mean(dictPLL['syncF']), np.mean(dictPLL['transmission_delay']), np.mean(dictPLL['noiseVarVCO']), now.year, now.month, now.day), dpi=300)
+	plt.savefig('results/clockTime-t_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.svg' %(np.mean(dictPLL['coupK']), np.mean(dictPLL['cutFc']), np.mean(dictPLL['syncF']), np.mean(dictPLL['transmission_delay']), np.mean(dictPLL['noiseVarVCO']), now.year, now.month, now.day))
+	plt.savefig('results/clockTime-t_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.png' %(np.mean(dictPLL['coupK']), np.mean(dictPLL['cutFc']), np.mean(dictPLL['syncF']), np.mean(dictPLL['transmission_delay']), np.mean(dictPLL['noiseVarVCO']), now.year, now.month, now.day), dpi=dpi_val)
 
 	return None
 
@@ -463,15 +486,17 @@ def plotCtrlSigDny(dictPLL, dictNet, dictData):
 
 	fig10 = plt.figure(num=10, figsize=(figwidth, figheight), dpi=dpi_val, facecolor='w', edgecolor='k')
 	fig10.canvas.set_window_title('time-series control voltage')		 		# plot the time evolution of the control signal
+	fig10.set_size_inches(plot_size_inches_x, plot_size_inches_y)
 
 	plt.plot(dictData['t'], dictData['ctrl'], linewidth=1, linestyle=linet[0])
 
 	plt.xlabel(r'$\frac{\omega t}{2\pi}$', fontdict = labelfont)
 	plt.ylabel(r'$V_\textrm{ctrl}(t)$', fontdict = labelfont)
+	plt.tick_params(axis='both', which='major', labelsize=tickSize)
 	# plt.legend()
 
-	plt.savefig('results/ctrlSig-t_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.pdf' %(np.mean(dictPLL['coupK']), np.mean(dictPLL['cutFc']), np.mean(dictPLL['syncF']), np.mean(dictPLL['transmission_delay']), np.mean(dictPLL['noiseVarVCO']), now.year, now.month, now.day))
-	plt.savefig('results/ctrlSig-t_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.png' %(np.mean(dictPLL['coupK']), np.mean(dictPLL['cutFc']), np.mean(dictPLL['syncF']), np.mean(dictPLL['transmission_delay']), np.mean(dictPLL['noiseVarVCO']), now.year, now.month, now.day), dpi=300)
+	plt.savefig('results/ctrlSig-t_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.svg' %(np.mean(dictPLL['coupK']), np.mean(dictPLL['cutFc']), np.mean(dictPLL['syncF']), np.mean(dictPLL['transmission_delay']), np.mean(dictPLL['noiseVarVCO']), now.year, now.month, now.day))
+	plt.savefig('results/ctrlSig-t_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.png' %(np.mean(dictPLL['coupK']), np.mean(dictPLL['cutFc']), np.mean(dictPLL['syncF']), np.mean(dictPLL['transmission_delay']), np.mean(dictPLL['noiseVarVCO']), now.year, now.month, now.day), dpi=dpi_val)
 
 	return None
 
@@ -486,22 +511,25 @@ def plotOscSignal(dictPLL, dictNet, dictData, plotEveryDt=1):
 
 	fig11 = plt.figure(num=11, figsize=(figwidth, figheight), dpi=dpi_val, facecolor='w', edgecolor='k')
 	fig11.canvas.set_window_title('time-series signals')		 		   # plot the time evolution of the control signal
+	fig11.set_size_inches(plot_size_inches_x, plot_size_inches_y)
 
 	ax11 = fig11.add_subplot(211)
 
 	for i in range(len(dictData['phi'][0,:])):
 		plt.plot((dictData['t'][::plotEveryDt]), dictPLL['vco_out_sig'](dictData['phi'][::plotEveryDt,i]), label='sig PLL%i' %(i))
 		plt.ylabel(r'$s( \theta(t) )$', fontdict = labelfont)
+		plt.tick_params(axis='both', which='major', labelsize=tickSize)
 
 	ax12 = fig11.add_subplot(212)
 
 	for i in range(len(dictData['phi'][0,:])):
 		plt.plot((dictData['t'][::plotEveryDt]), dictPLL['vco_out_sig'](dictData['phi'][::plotEveryDt,i]/dictPLL['div']), label='sig PLL%i' %(i))
 		plt.ylabel(r'$s( \theta(t)/ %i )$'%dictPLL['div'], fontdict = labelfont)
+		plt.tick_params(axis='both', which='major', labelsize=tickSize)
 
 
-	plt.savefig('results/sig_and_divSig-t_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.pdf' %(np.mean(dictPLL['coupK']), np.mean(dictPLL['cutFc']), np.mean(dictPLL['syncF']), np.mean(dictPLL['transmission_delay']), np.mean(dictPLL['noiseVarVCO']), now.year, now.month, now.day))
-	plt.savefig('results/sig_and_divSig-t_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.png' %(np.mean(dictPLL['coupK']), np.mean(dictPLL['cutFc']), np.mean(dictPLL['syncF']), np.mean(dictPLL['transmission_delay']), np.mean(dictPLL['noiseVarVCO']), now.year, now.month, now.day), dpi=300)
+	plt.savefig('results/sig_and_divSig-t_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.svg' %(np.mean(dictPLL['coupK']), np.mean(dictPLL['cutFc']), np.mean(dictPLL['syncF']), np.mean(dictPLL['transmission_delay']), np.mean(dictPLL['noiseVarVCO']), now.year, now.month, now.day))
+	plt.savefig('results/sig_and_divSig-t_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.png' %(np.mean(dictPLL['coupK']), np.mean(dictPLL['cutFc']), np.mean(dictPLL['syncF']), np.mean(dictPLL['transmission_delay']), np.mean(dictPLL['noiseVarVCO']), now.year, now.month, now.day), dpi=dpi_val)
 
 	return None
 
@@ -513,6 +541,7 @@ def plotFreqAndOrderP(dictPLL, dictNet, dictData):
 
 	fig12 = plt.figure(num=12, figsize=(figwidth, figheight), dpi=dpi_val, facecolor='w', edgecolor='k')
 	fig12.canvas.set_window_title('time-series frequency and order parameter')	# frequency and order parameter
+	fig12.set_size_inches(plot_size_inches_x, plot_size_inches_y)
 
 	return None
 
@@ -524,6 +553,7 @@ def plotPhasesAndPhaseRelations(dictPLL, dictNet, dictData):
 
 	fig13 = plt.figure(num=13, figsize=(figwidth, figheight), dpi=dpi_val, facecolor='w', edgecolor='k')
 	fig13.canvas.set_window_title('time-series phases and phase-differences')	# time-series phases and phase-differences
+	fig13.set_size_inches(plot_size_inches_x, plot_size_inches_y)
 
 	return None
 
@@ -535,6 +565,7 @@ def plotFreqAndOrderP_cutAxis(dictPLL, dictNet, dictData):
 
 	fig14 = plt.figure(num=14, figsize=(figwidth, figheight), dpi=dpi_val, facecolor='w', edgecolor='k')
 	fig14.canvas.set_window_title('time-series frequency and order parameter')	# frequency and order parameter
+	fig14.set_size_inches(plot_size_inches_x, plot_size_inches_y)
 
 	return None
 
@@ -546,6 +577,7 @@ def plotPhasesAndPhaseRelations_cutAxis(dictPLL, dictNet, dictData):
 
 	fig15 = plt.figure(num=15, figsize=(figwidth, figheight), dpi=dpi_val, facecolor='w', edgecolor='k')
 	fig15.canvas.set_window_title('time-series phases and phase-differences')	# time-series phases and phase-differences
+	fig15.set_size_inches(plot_size_inches_x, plot_size_inches_y)
 
 	return None
 
@@ -555,17 +587,49 @@ def plotPhasesAndPhaseRelations_cutAxis(dictPLL, dictNet, dictData):
 def deltaThetaDot_vs_deltaTheta(dictPLL, dictNet, deltaTheta, deltaThetaDot, color, alpha):
 
 	#dictPLL, dictNet = prepareDictsForPlotting(dictPLL, dictNet)
+	fig16 = plt.figure(num=16, figsize=(figwidth, figheight), dpi=dpi_val, facecolor='w', edgecolor='k')
+	fig16.canvas.set_window_title('time-series phases and phase-differences')	# time-series phases and phase-differences
+
 
 	plt.plot(deltaTheta, deltaThetaDot, '-', color=color, alpha=alpha)			# plot trajectory
 	plt.plot(deltaTheta[0], deltaThetaDot[0], 'o', color=color, alpha=alpha)	# plot initial dot
 	plt.plot(deltaTheta[-1], deltaThetaDot[-1], 'x', color=color, alpha=alpha)	# plot final state cross
+
+	fig17 = plt.figure(num=17, figsize=(figwidth, figheight), dpi=dpi_val, facecolor='w', edgecolor='k')
+	fig17.canvas.set_window_title('time-series phases and phase-differences')	# time-series phases and phase-differences
+	fig17.set_size_inches(plot_size_inches_x, plot_size_inches_y)
+
+	plt.plot(deltaTheta[0], deltaThetaDot[0], 'o', color=color, alpha=alpha)	# plot initial dot
+
+	return None
+
+#############################################################################################################################################################################
+
+def plotOrderPvsTimeDepPara(dictPLL, dictNet, dictData):
+
+	#dictPLL, dictNet = prepareDictsForPlotting(dictPLL, dictNet)
+	r, orderparam, F1 = eva.obtainOrderParam(dictPLL, dictNet, dictData)
+
+	fig18 = plt.figure(num=18, figsize=(figwidth, figheight), dpi=dpi_val, facecolor='w', edgecolor='k')
+	fig18.canvas.set_window_title('order parameter as function of time-dependent parameter')	# time-series phases and phase-differences
+	fig18.set_size_inches(plot_size_inches_x, plot_size_inches_y)
+
+	plt.plot(dictData['timeDepPara'], orderparam, 'b-')
+
+	plt.xlabel(r'$K$', fontdict = labelfont)
+	plt.ylabel(r'$R(t)$', fontdict = labelfont)
+	plt.tick_params(axis='both', which='major', labelsize=tickSize)
+	# plt.legend()
+
+	plt.savefig('results/orderPvstimeDepPara_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.svg' %(np.mean(dictPLL['coupK']), np.mean(dictPLL['cutFc']), np.mean(dictPLL['syncF']), np.mean(dictPLL['transmission_delay']), np.mean(dictPLL['noiseVarVCO']), now.year, now.month, now.day))
+	plt.savefig('results/orderPvstimeDepPara_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.png' %(np.mean(dictPLL['coupK']), np.mean(dictPLL['cutFc']), np.mean(dictPLL['syncF']), np.mean(dictPLL['transmission_delay']), np.mean(dictPLL['noiseVarVCO']), now.year, now.month, now.day), dpi=dpi_val)
 
 	return None
 
 # ################################################################################################################################################################################
 #
 # fig110 = plt.figure()
-# fig110.set_size_inches(20,10)
+# fig110.set_size_inches(plot_size_inches_x, plot_size_inches_y)
 #
 # ax011 = fig110.add_subplot(211)
 #
@@ -587,12 +651,12 @@ def deltaThetaDot_vs_deltaTheta(dictPLL, dictNet, deltaTheta, deltaThetaDot, col
 # plt.xlim([0, t[-1]*dictPLL['dt']])
 # plt.grid();
 #
-# plt.savefig('results/freq_orderP_allT_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.png' %(np.mean(dictPLL['coupK']), np.mean(dictPLL['cutFc']), np.mean(dictPLL['syncF']), np.mean(dictPLL['transmission_delay']), np.mean(dictPLL['noiseVarVCO']), now.year, now.month, now.day), dpi=300)
-# plt.savefig('results/freq_orderP_allT_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.svg' %(np.mean(dictPLL['coupK']), np.mean(dictPLL['cutFc']), np.mean(dictPLL['syncF']), np.mean(dictPLL['transmission_delay']), np.mean(dictPLL['noiseVarVCO']), now.year, now.month, now.day), dpi=150)
+# plt.savefig('results/freq_orderP_allT_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.png' %(np.mean(dictPLL['coupK']), np.mean(dictPLL['cutFc']), np.mean(dictPLL['syncF']), np.mean(dictPLL['transmission_delay']), np.mean(dictPLL['noiseVarVCO']), now.year, now.month, now.day), dpi=dpi_val)
+# plt.savefig('results/freq_orderP_allT_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.svg' %(np.mean(dictPLL['coupK']), np.mean(dictPLL['cutFc']), np.mean(dictPLL['syncF']), np.mean(dictPLL['transmission_delay']), np.mean(dictPLL['noiseVarVCO']), now.year, now.month, now.day), dpi=dpi_val)
 # ax011.set_ylim([0, 1.05*np.max(phidot[::dictPLL['sampleFplot'],:]/(2.0*np.pi*F1))])
 # ax012.set_ylim([0, 1.05])
-# plt.savefig('results/freq_orderP_allT_2_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.png' %(np.mean(dictPLL['coupK']), np.mean(dictPLL['cutFc']), np.mean(dictPLL['syncF']), np.mean(dictPLL['transmission_delay']), np.mean(dictPLL['noiseVarVCO']), now.year, now.month, now.day), dpi=300)
-# plt.savefig('results/freq_orderP_allT_2_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.svg' %(np.mean(dictPLL['coupK']), np.mean(dictPLL['cutFc']), np.mean(dictPLL['syncF']), np.mean(dictPLL['transmission_delay']), np.mean(dictPLL['noiseVarVCO']), now.year, now.month, now.day), dpi=150)
+# plt.savefig('results/freq_orderP_allT_2_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.png' %(np.mean(dictPLL['coupK']), np.mean(dictPLL['cutFc']), np.mean(dictPLL['syncF']), np.mean(dictPLL['transmission_delay']), np.mean(dictPLL['noiseVarVCO']), now.year, now.month, now.day), dpi=dpi_val)
+# plt.savefig('results/freq_orderP_allT_2_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.svg' %(np.mean(dictPLL['coupK']), np.mean(dictPLL['cutFc']), np.mean(dictPLL['syncF']), np.mean(dictPLL['transmission_delay']), np.mean(dictPLL['noiseVarVCO']), now.year, now.month, now.day), dpi=dpi_val)
 #
 # ################################################################################################################################################################################
 # # plot instantaneous frequency and phase-differences
@@ -621,7 +685,7 @@ def deltaThetaDot_vs_deltaTheta(dictPLL, dictNet, deltaTheta, deltaThetaDot, col
 # xmin2 	= t[xstart2]*dictPLL['dt']; xmax2 	= t[xend2]*dictPLL['dt'];
 #
 # fig111 = plt.figure(figsize=(figwidth,figheight))
-# fig111.set_size_inches(20,10)
+# fig111.set_size_inches(plot_size_inches_x, plot_size_inches_y)
 #
 # ax111 = fig111.add_subplot(221)
 #
@@ -716,8 +780,8 @@ def deltaThetaDot_vs_deltaTheta(dictPLL, dictNet, deltaTheta, deltaThetaDot, col
 # ax122.plot((-d,+d), (1-d,1+d), **kwargs2)
 # ax122.plot((-d,+d), (-d,+d), **kwargs2)
 #
-# plt.savefig('results/freq_orderP_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.png' %(np.mean(dictPLL['coupK']), np.mean(dictPLL['cutFc']), np.mean(dictPLL['syncF']), np.mean(dictPLL['transmission_delay']), np.mean(dictPLL['noiseVarVCO']), now.year, now.month, now.day), dpi=300)
-# plt.savefig('results/freq_orderP_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.svg' %(np.mean(dictPLL['coupK']), np.mean(dictPLL['cutFc']), np.mean(dictPLL['syncF']), np.mean(dictPLL['transmission_delay']), np.mean(dictPLL['noiseVarVCO']), now.year, now.month, now.day), dpi=150)
+# plt.savefig('results/freq_orderP_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.png' %(np.mean(dictPLL['coupK']), np.mean(dictPLL['cutFc']), np.mean(dictPLL['syncF']), np.mean(dictPLL['transmission_delay']), np.mean(dictPLL['noiseVarVCO']), now.year, now.month, now.day), dpi=dpi_val)
+# plt.savefig('results/freq_orderP_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.svg' %(np.mean(dictPLL['coupK']), np.mean(dictPLL['cutFc']), np.mean(dictPLL['syncF']), np.mean(dictPLL['transmission_delay']), np.mean(dictPLL['noiseVarVCO']), now.year, now.month, now.day), dpi=dpi_val)
 #
 # multPrior = 5.0; multAfter = 20.0;
 # if np.mean(dictPLL['transmission_delay'])/dictPLL['dt'] > multPrior/(F1*dictPLL['dt']):
@@ -748,8 +812,8 @@ def deltaThetaDot_vs_deltaTheta(dictPLL, dictNet, deltaTheta, deltaThetaDot, col
 # ax121.set_xlim(xmin1, xmax1)
 # ax122.set_xlim(xmin2, xmax2)
 #
-# plt.savefig('results/freq_orderP_2_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.png' %(np.mean(dictPLL['coupK']), np.mean(dictPLL['cutFc']), np.mean(dictPLL['syncF']), np.mean(dictPLL['transmission_delay']), np.mean(dictPLL['noiseVarVCO']), now.year, now.month, now.day), dpi=300)
-# plt.savefig('results/freq_orderP_2_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.svg' %(np.mean(dictPLL['coupK']), np.mean(dictPLL['cutFc']), np.mean(dictPLL['syncF']), np.mean(dictPLL['transmission_delay']), np.mean(dictPLL['noiseVarVCO']), now.year, now.month, now.day), dpi=150)
+# plt.savefig('results/freq_orderP_2_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.png' %(np.mean(dictPLL['coupK']), np.mean(dictPLL['cutFc']), np.mean(dictPLL['syncF']), np.mean(dictPLL['transmission_delay']), np.mean(dictPLL['noiseVarVCO']), now.year, now.month, now.day), dpi=dpi_val)
+# plt.savefig('results/freq_orderP_2_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.svg' %(np.mean(dictPLL['coupK']), np.mean(dictPLL['cutFc']), np.mean(dictPLL['syncF']), np.mean(dictPLL['transmission_delay']), np.mean(dictPLL['noiseVarVCO']), now.year, now.month, now.day), dpi=dpi_val)
 #
 # ################################################################################################################################################################################
 # multPrior = 5.0; multAfter = 95.0;
@@ -777,7 +841,7 @@ def deltaThetaDot_vs_deltaTheta(dictPLL, dictNet, deltaTheta, deltaThetaDot, col
 # xmin2 	= t[xstart2]*dictPLL['dt']; xmax2 	= t[xend2]*dictPLL['dt'];
 #
 # fig211 = plt.figure(figsize=(figwidth,figheight))
-# fig211.set_size_inches(20,10)
+# fig211.set_size_inches(plot_size_inches_x, plot_size_inches_y)
 #
 # ax211 = fig211.add_subplot(221)
 #
@@ -872,8 +936,8 @@ def deltaThetaDot_vs_deltaTheta(dictPLL, dictNet, deltaTheta, deltaThetaDot, col
 # ax222.plot((-d,+d), (1-d,1+d), **kwargs2)
 # ax222.plot((-d,+d), (-d,+d), **kwargs2)
 #
-# plt.savefig('results/phases_phaseDiff_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.png' %(np.mean(dictPLL['coupK']), np.mean(dictPLL['cutFc']), np.mean(dictPLL['syncF']), np.mean(dictPLL['transmission_delay']), np.mean(dictPLL['noiseVarVCO']), now.year, now.month, now.day), dpi=300)
-# plt.savefig('results/phases_phaseDiff_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.svg' %(np.mean(dictPLL['coupK']), np.mean(dictPLL['cutFc']), np.mean(dictPLL['syncF']), np.mean(dictPLL['transmission_delay']), np.mean(dictPLL['noiseVarVCO']), now.year, now.month, now.day), dpi=150)
+# plt.savefig('results/phases_phaseDiff_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.png' %(np.mean(dictPLL['coupK']), np.mean(dictPLL['cutFc']), np.mean(dictPLL['syncF']), np.mean(dictPLL['transmission_delay']), np.mean(dictPLL['noiseVarVCO']), now.year, now.month, now.day), dpi=dpi_val)
+# plt.savefig('results/phases_phaseDiff_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.svg' %(np.mean(dictPLL['coupK']), np.mean(dictPLL['cutFc']), np.mean(dictPLL['syncF']), np.mean(dictPLL['transmission_delay']), np.mean(dictPLL['noiseVarVCO']), now.year, now.month, now.day), dpi=dpi_val)
 #
 # multPrior = 5.0; multAfter = 20.0;
 # if np.mean(dictPLL['transmission_delay'])/dictPLL['dt'] > multPrior/(F1*dictPLL['dt']):
@@ -907,7 +971,7 @@ def deltaThetaDot_vs_deltaTheta(dictPLL, dictNet, deltaTheta, deltaThetaDot, col
 # ax221.set_xlim(xmin1, xmax1)
 # ax222.set_xlim(xmin2, xmax2)
 #
-# plt.savefig('results/phases_phaseDiff_2_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.png' %(np.mean(dictPLL['coupK']), np.mean(dictPLL['cutFc']), np.mean(dictPLL['syncF']), np.mean(dictPLL['transmission_delay']), np.mean(dictPLL['noiseVarVCO']), now.year, now.month, now.day), dpi=300)
-# plt.savefig('results/phases_phaseDiff_2_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.svg' %(np.mean(dictPLL['coupK']), np.mean(dictPLL['cutFc']), np.mean(dictPLL['syncF']), np.mean(dictPLL['transmission_delay']), np.mean(dictPLL['noiseVarVCO']), now.year, now.month, now.day), dpi=150)
+# plt.savefig('results/phases_phaseDiff_2_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.png' %(np.mean(dictPLL['coupK']), np.mean(dictPLL['cutFc']), np.mean(dictPLL['syncF']), np.mean(dictPLL['transmission_delay']), np.mean(dictPLL['noiseVarVCO']), now.year, now.month, now.day), dpi=dpi_val)
+# plt.savefig('results/phases_phaseDiff_2_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.svg' %(np.mean(dictPLL['coupK']), np.mean(dictPLL['cutFc']), np.mean(dictPLL['syncF']), np.mean(dictPLL['transmission_delay']), np.mean(dictPLL['noiseVarVCO']), now.year, now.month, now.day), dpi=dpi_val)
 #
 # ################################################################################################################################################################################

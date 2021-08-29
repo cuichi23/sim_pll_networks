@@ -119,13 +119,11 @@ def prepareDictsForPlotting(dictPLL, dictNet):
 
 def saveDictionaries(dictToSave, name, K, tau, Fc, Nx, Ny, mx, my, topology):
 
-	if 'cutFc' in dictToSave:
-		if dictToSave['cutFc'] == None:
-			dictToSave.update({'cutFc': np.inf})
-			Fc = np.inf
+	if Fc == None:
+		Fc = np.inf
 
 	N = int(Nx*Ny)
-	filename = 'results/%s_K%.3E_tau%.3E_Fc%.3E_mx%i_my%i_N%i_topo%s_%d:%d_%d_%d_%d'%(name, np.mean(K), np.mean(tau), np.mean(Fc), mx, my, N, topology, now.hour, now.minute, now.year, now.month, now.day)
+	filename = 'results/%s_K%.3f_tau%.3f_Fc%.3f_mx%i_my%i_N%i_topo%s_%d:%d_%d_%d_%d'%(name, np.mean(K), np.mean(tau), np.mean(Fc), mx, my, N, topology, now.hour, now.minute, now.year, now.month, now.day)
 	f 		 = open(filename,'wb')
 	pickle.dump(dictToSave,f)
 	f.close()
@@ -181,9 +179,9 @@ def calcSpectrum( phi, dictPLL, dictNet, percentOfTsim=0.75 ): #phi,Fsample,coup
 			'NOTE: in principle can always choose to be sin() for cleaner PSD in first harmonic approximation of the signal.')
 	print('Calculate spectrum for',1-percentOfTsim,'percent of the time-series. Implement better solution using decay times.')
 	try:
-		analyzeL= findIntTinSig.cutTimeSeriesOfIntegerPeriod(dictPLL['sampleF'], dictNet['Tsim'], dictPLL['syncF'],
+		analyzeL = findIntTinSig.cutTimeSeriesOfIntegerPeriod(dictPLL['sampleF'], dictNet['Tsim'], dictPLL['syncF'],
 																np.max([dictPLL['coupK'], dictPLL['coupStr_2ndHarm']]), phi, percentOfTsim);
-		window	 	= scipy.signal.get_window('boxcar', int(dictPLL['sampleF']), fftbins=True);
+		window	 = scipy.signal.get_window('boxcar', int(dictPLL['sampleF']), fftbins=True);
 	except:
 		print('\n\nError in cutTimeSeriesOfIntegerPeriod-function! Not picking integer number of periods for PSD!\n\n')
 		analyzeL= [ int( dictNet['Tsim']*(1-percentOfTsim)*dictPLL['sampleF'] ), int( dictNet['Tsim']*dictPLL['sampleF'] )-1 ]
@@ -494,7 +492,8 @@ def evaluateSimulationIsing(poolData):
 
 	fig16, ax16 = plt.subplots(int(np.ceil(len(poolData[0][:])/numberColsPlt)), numberColsPlt, figsize=(figwidth, figheight), dpi=dpi_val, facecolor='w', edgecolor='k')
 	fig16.canvas.set_window_title('Ising different initial conditions, fixed topology, phase relations')	# phase relations
-	fig16.suptitle(r'parameters: $f=$%0.2f Hz, $K=$%0.2f Hz/V, $K^\textrm{I}=$%0.2f Hz/V, $f_c=$%0.2f Hz, $\tau=$%0.2f s'%(poolData[0][0]['dictPLL']['intrF'], poolData[0][0]['dictPLL']['coupK'], poolData[0][0]['dictPLL']['coupStr_2ndHarm'], poolData[0][0]['dictPLL']['cutFc'], poolData[0][0]['dictPLL']['transmission_delay']))
+	if isinstance( poolData[0][0]['dictPLL']['cutFc'], np.float):
+		fig16.suptitle(r'parameters: $f=$%0.2f Hz, $K=$%0.2f Hz/V, $K^\textrm{I}=$%0.2f Hz/V, $f_c=$%0.2f Hz, $\tau=$%0.2f s'%(poolData[0][0]['dictPLL']['intrF'], poolData[0][0]['dictPLL']['coupK'], poolData[0][0]['dictPLL']['coupStr_2ndHarm'], poolData[0][0]['dictPLL']['cutFc'], poolData[0][0]['dictPLL']['transmission_delay']))
 	fig16.subplots_adjust(hspace=0.4, wspace=0.4)
 	ax16 = ax16.ravel()
 
@@ -576,27 +575,42 @@ def evaluateSimulationsChrisHoyer(poolData):
 	treshold_statState = np.pi/15
 
 	fig16 = plt.figure(num=16, figsize=(figwidth, figheight), dpi=dpi_val, facecolor='w', edgecolor='k')
-	fig16.canvas.set_window_title('HF basin attraction plot - 2pi periodic')	# basin attraction plot
+	fig16.canvas.set_window_title('HF (VCO output) basin attraction plot - 2pi periodic')			# basin attraction plot
 	ax16 = fig16.add_subplot(111)
 
+	fig161 = plt.figure(num=161, figsize=(figwidth, figheight), dpi=dpi_val, facecolor='w', edgecolor='k')
+	fig161.canvas.set_window_title('HF (VCO output) basin attraction (diamond W>w, circle W<w)')	# basin attraction plot
+	ax161 = fig161.add_subplot(111)
+
 	fig17 = plt.figure(num=17, figsize=(figwidth, figheight), dpi=dpi_val, facecolor='w', edgecolor='k')
-	fig17.canvas.set_window_title('HF basin attraction plot')			 		# basin attraction plot
+	fig17.canvas.set_window_title('HF (VCO output) output basin attraction plot')			 		# basin attraction plot
 	ax17 = fig17.add_subplot(111)
 
 	fig18 = plt.figure(num=18, figsize=(figwidth, figheight), dpi=dpi_val, facecolor='w', edgecolor='k')
-	fig18.canvas.set_window_title('LF basin attraction plot - 2pi periodic')	# basin attraction plot
+	fig18.canvas.set_window_title('LF (cross-coupling) basin attraction plot - 2pi periodic')		# basin attraction plot
 	ax18 = fig18.add_subplot(111)
 
+	fig181 = plt.figure(num=181, figsize=(figwidth, figheight), dpi=dpi_val, facecolor='w', edgecolor='k')
+	fig181.canvas.set_window_title('LF (cross-coupling) basin attraction (diamond W>w, circle W<w)')# basin attraction plot
+	ax181 = fig181.add_subplot(111)
+
 	fig19 = plt.figure(num=19, figsize=(figwidth, figheight), dpi=dpi_val, facecolor='w', edgecolor='k')
-	fig19.canvas.set_window_title('LF basin attraction plot')			 		# basin attraction plot
+	fig19.canvas.set_window_title('LF (cross-coupling) basin attraction plot')			 			# basin attraction plot
 	ax19 = fig19.add_subplot(111)
 
 	for i in range(len(poolData[0][:])):
-		print('working on realization %i results from sim:'%i, poolData[0][i]['dictNet'], '\n', poolData[0][i]['dictPLL'], '\n', poolData[0][i]['dictData'],'\n\n')
+		#print('working on realization %i results from sim:'%i, poolData[0][i]['dictNet'], '\n', poolData[0][i]['dictPLL'], '\n', poolData[0][i]['dictData'],'\n\n')
 
 		#print('Check whether perturbation is inside unit-cell (evaluation.py)! phiS:', poolData[0][i]['dictNet']['phiPerturb'], '\tInside? True/False:', unit_cell.is_inside((poolData[0][i]['dictNet']['phiPerturb']), isRotated=False)); time.sleep(2)
 		#print('How about phi, is it a key to dictData?', 'phi' in poolData[0][i]['dictData'])
 		if unit_cell.is_inside((poolData[0][i]['dictNet']['phiPerturb']), isRotated=False):	# NOTE this case is for scanValues set only in -pi to pi, we so not plot outside the unit cell
+
+			# test whether frequency is larger or smaller than mean intrinsic frequency as a first distinction between multistable synced states with the same phase relations but
+			# different frequency -- for more than 3 multistable in- or anti-phase synched states that needs to be reworked
+			if ( poolData[0][i]['dictData']['phi'][-1,0] - poolData[0][i]['dictData']['phi'][-2,0] ) / poolData[0][i]['dictPLL']['dt'] > np.mean( poolData[0][i]['dictPLL']['intrF'] ):
+				initmarker = 'd'
+			else:
+				initmarker = 'o'
 
 			deltaTheta 			= poolData[0][i]['dictData']['phi'][:,0] - poolData[0][i]['dictData']['phi'][:,1]
 			deltaThetaDot		= np.diff( deltaTheta, axis=0 ) / poolData[0][i]['dictPLL']['dt']
@@ -610,13 +624,15 @@ def evaluateSimulationsChrisHoyer(poolData):
 			else:
 				color = 'k'
 
-			ax16.plot((deltaTheta[1:]+np.pi)%(2.*np.pi)-np.pi, deltaThetaDot, '-', color=color, alpha=alpha, linewidth='1.2')	# plot trajectory
-			ax16.plot((deltaTheta[0]+np.pi)%(2.*np.pi)-np.pi, deltaThetaDot[0], 'o', color=color, alpha=alpha, linewidth='1.2')	# plot initial dot
+			ax16.plot((deltaTheta[1:]+np.pi)%(2.*np.pi)-np.pi, deltaThetaDot, '-', color=color, alpha=alpha, linewidth='1.2')	 # plot trajectory
+			ax16.plot((deltaTheta[0]+np.pi)%(2.*np.pi)-np.pi, deltaThetaDot[0], 'o', color=color, alpha=alpha, linewidth='1.2')	 # plot initial dot
 			ax16.plot((deltaTheta[-1]+np.pi)%(2.*np.pi)-np.pi, deltaThetaDot[-1], 'x', color=color, alpha=alpha, linewidth='1.2')# plot final state cross
 			#plot_lib.deltaThetaDot_vs_deltaTheta(poolData[0][i]['dictPLL'], poolData[0][i]['dictNet'], (deltaTheta[1:]+np.pi)%(2.*np.pi)-np.pi, deltaThetaDot, color, alpha)
-			ax17.plot(deltaTheta[1:], deltaThetaDot, '-', color=color, alpha=alpha, linewidth='1.2')			# plot trajectory
-			ax17.plot(deltaTheta[0], deltaThetaDot[0], 'o', color=color, alpha=alpha, linewidth='1.2')	# plot initial dot
+			ax17.plot(deltaTheta[1:], deltaThetaDot, '-', color=color, alpha=alpha, linewidth='1.2')		# plot trajectory
+			ax17.plot(deltaTheta[0], deltaThetaDot[0], 'o', color=color, alpha=alpha, linewidth='1.2')		# plot initial dot
 			ax17.plot(deltaTheta[-1], deltaThetaDot[-1], 'x', color=color, alpha=alpha, linewidth='1.2')	# plot final state cross
+
+			ax161.plot((deltaTheta[0]+np.pi)%(2.*np.pi)-np.pi, deltaThetaDot[0], initmarker, color=color, alpha=alpha, linewidth='1.2') # plot initial dot
 
 			if np.abs( np.abs( (deltaThetaDiv[-1]+np.pi)%(2.*np.pi)-np.pi ) - np.pi ) < treshold_statState:
 				color = 'r'
@@ -629,9 +645,11 @@ def evaluateSimulationsChrisHoyer(poolData):
 			ax18.plot((deltaThetaDiv[0]+np.pi)%(2.*np.pi)-np.pi, deltaThetaDivDot[0], 'o', color=color, alpha=alpha, linewidth='1.2')	# plot initial dot
 			ax18.plot((deltaThetaDiv[-1]+np.pi)%(2.*np.pi)-np.pi, deltaThetaDivDot[-1], 'x', color=color, alpha=alpha, linewidth='1.2')	# plot final state cross
 			#plot_lib.deltaThetaDivDot_vs_deltaThetaDiv(poolData[0][i]['dictPLL'], poolData[0][i]['dictNet'], (deltaThetaDiv[1:]+np.pi)%(2.*np.pi)-np.pi, deltaThetaDivDot, color, alpha)
-			ax19.plot(deltaThetaDiv[1:], deltaThetaDivDot, '-', color=color, alpha=alpha, linewidth='1.2')			# plot trajectory
-			ax19.plot(deltaThetaDiv[0], deltaThetaDivDot[0], 'o', color=color, alpha=alpha, linewidth='1.2')		# plot initial dot
+			ax19.plot(deltaThetaDiv[1:], deltaThetaDivDot, '-', color=color, alpha=alpha, linewidth='1.2')		# plot trajectory
+			ax19.plot(deltaThetaDiv[0], deltaThetaDivDot[0], 'o', color=color, alpha=alpha, linewidth='1.2')	# plot initial dot
 			ax19.plot(deltaThetaDiv[-1], deltaThetaDivDot[-1], 'x', color=color, alpha=alpha, linewidth='1.2')	# plot final state cross
+
+			ax181.plot((deltaThetaDiv[0]+np.pi)%(2.*np.pi)-np.pi, deltaThetaDivDot[0], initmarker, color=color, alpha=alpha, linewidth='1.2') # plot initial dot
 
 	#plt.xlabel(r'$\Delta\theta(t)$')
 	#plt.ylabel(r'$\Delta\dot{\theta}(t)$')
@@ -643,6 +661,10 @@ def evaluateSimulationsChrisHoyer(poolData):
 	ax18.set_ylabel(r'$\Delta\dot{\theta}(t)/v$', fontsize=axisLabel)
 	ax19.set_xlabel(r'$\Delta\theta(t)/v$', fontsize=axisLabel)
 	ax19.set_ylabel(r'$\Delta\dot{\theta}(t)/v$', fontsize=axisLabel)
+	ax161.set_xlabel(r'$\Delta\theta(t)$ mod $2\pi$', fontsize=axisLabel)
+	ax161.set_ylabel(r'$\Delta\dot{\theta}(t)$', fontsize=axisLabel)
+	ax181.set_xlabel(r'$\Delta\theta(t)/v$ mod $2\pi$', fontsize=axisLabel)
+	ax181.set_ylabel(r'$\Delta\dot{\theta}(t)/v$', fontsize=axisLabel)
 
 	plt.draw(); plt.show()
 

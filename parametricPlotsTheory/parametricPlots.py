@@ -222,6 +222,9 @@ def plotParametric(params):
 	#tempcond2 = params['noInstCond2'].reshape((len(params['x1']), len(params['x2'])))
 	tempresults = np.transpose(tempresults)
 	tempcond = np.transpose(tempcond)
+	tempcondmask1 = ma.masked_where(tempcond < 0.5, tempcond)
+	tempcondmask2 = ma.masked_where(tempcond > 0.5, tempcond)
+
 	#tempcond2 = np.transpose(tempcond2)
 	#print('tempresults:', tempresults)
 	#tempresults_ma = tempresults
@@ -232,6 +235,7 @@ def plotParametric(params):
 	cmap_choice 	= cm.PuOr													# cm.coolwarm
 	cmap_neg_alpha 	= colors.ListedColormap(['black'])
 	cmap_cond 		= colors.ListedColormap(['yellow'])
+	cmap_cond1 		= colors.ListedColormap(['cyan'])
 
 	# try:
 	# 	plt.imshow(tempresults_ma.astype(float), interpolation='nearest', cmap=cmap_choice, aspect='auto', origin='lower',
@@ -263,6 +267,12 @@ def plotParametric(params):
 					extent=(params['xscatt'].min(), params['xscatt'].max(), params['yscatt'].min(), params['yscatt'].max()),
 					vmin=np.min(tempresults[np.isnan(tempresults)==False]), vmax=np.max(tempresults[np.isnan(tempresults)==False]) )
 					#vmin=np.min(tempresults_ma), vmax=np.max(tempresults_ma) )
+		plt.imshow(tempcondmask1.astype(float), interpolation='nearest', cmap=cmap_cond, aspect='auto', origin='lower',
+				extent=(params['xscatt'].min(), params['xscatt'].max(), params['yscatt'].min(), params['yscatt'].max()) )
+				#vmin=np.min(tempcond), vmax=np.max(tempcond) )
+		plt.imshow(tempcondmask2.astype(float), interpolation='nearest', cmap=cmap_cond1, aspect='auto', origin='lower',
+				extent=(params['xscatt'].min(), params['xscatt'].max(), params['yscatt'].min(), params['yscatt'].max()) )
+				#vmin=np.min(tempcond), vmax=np.max(tempcond) )
 		plt.colorbar();
 	except:
 		plt.imshow(tempresults.astype(float), interpolation='nearest', cmap=cmap_choice, aspect='auto', origin='lower',
@@ -905,26 +915,6 @@ def stabilityTest(tau, zeta, psi, a, wc, fric, mu, muvec=[]):
 	#fctValsigStIm1  = 2.0*mu*sigImEqualSlope
 	#fctValsigStIm2  = -wc*(mu*fric+a*rhotilde*np.exp(-sigImEqualSlope*tau) )
 
-	# if a > 0:
-	#
-	# 	# conditions from real part
-	# 	if (asymptReal < 0 and rho > 0 and conditionReal < 0):
-	# 		temp1 = True
-	# 	elif (asymptReal < 0 and rho < 0):
-	# 		temp1 = True
-	#
-	# 	if (asymptReal > 0 and rho < 0 and conditionReal < 0):
-	# 		if np.abs(np.imag(sigReEqualSlope)) < zero_treshold0:
-	# 			if ( sigReEqualSlope > 0 and not fctValsigStRe2 > fctValsigStRe1 ):
-	# 				temp1 = True
-	# 			elif sigReEqualSlope < 0:
-	# 				temp1 = True
-	# 		else:
-	# 			temp1 = True
-	#
-	# 	elif not (asymptReal > 0 and rho > 0):
-	# 		temp1 = True
-
 	if np.abs(mu) > zero_treshold2 and a > 0:
 
 		# conditions from imaginary part
@@ -960,93 +950,3 @@ def stabilityTest(tau, zeta, psi, a, wc, fric, mu, muvec=[]):
 		mu = -999;
 
 	return mu
-
-################################################################################
-
-# def equationGammaBF(tau, a, wc, zeta, fric=1, psi=np.pi, K=1):
-#
-# 	if isinstance(zeta, list) or isinstance(zeta, np.ndarray):
-# 		zetlen = len(zeta)
-# 	elif isinstance(zeta, int) or isinstance(zeta, float):
-# 		zetlen = 1; zeta = np.array([zeta]); psi = np.array([psi]);
-# 	else:
-# 		print('Error, zeta needs to be value or list!')
-#
-# 	result_muBF 	= []
-# 	all_mu	 	= []
-# 	cond_noInst  	= []
-# 	muBF		 	= []
-# 	muBFt	 	= []
-#
-# 	for i in range(zetlen):
-#
-# 		print('Compute muBFs for set (tau, alpha, K, wc, zeta, psi):', tau, a, K, wc, zeta[i], psi[i])
-#
-# 		zero_treshold0 = 1E-8
-# 		zero_treshold1 = 1E-17
-# 		zero_treshold2 = 1E-17
-#
-#
-# 		#A = wc**2.0 - 2.0*np.abs(a)*wc
-# 		#B = (1.0-zeta**2.0)*(np.abs(a)*wc)**2.0
-# 		A = (fric*wc)**2.0 - 2.0*a*wc
-# 		B = (1.0-np.abs(zeta[i])**2.0)*(a*wc)**2.0
-# 		# print('A:', A); print('B:', B);
-# 		mu = np.array([ +np.sqrt(0.5*(-A+A*np.sqrt(1.0-4.0*B/(A**2.0)))), +np.sqrt(0.5*(-A-A*np.sqrt(1.0-4.0*B/(A**2.0)))),
-# 						   -np.sqrt(0.5*(-A+A*np.sqrt(1.0-4.0*B/(A**2.0)))), -np.sqrt(0.5*(-A-A*np.sqrt(1.0-4.0*B/(A**2.0)))) ])
-#
-# 		all_mu.append(mu)
-# 		cond_noInst.append(0)
-#
-# 		print('Result before condition:', mu); #time.sleep(0.25)
-#
-# 		for j in range(len(mu)):												# this condition can also be checked in prepare2D
-#
-# 			if np.isnan(mu[j]) == False:
-# 				muBFtemp = fct_lib.solveRootsFct(tau, psi[i], a, wc, fric, mu[j])
-# 			else:
-# 				muBFtemp = mu[j]
-#
-# 			###########################################################
-#
-# 			# if np.abs(muBFtemp) > zero_treshold2:
-# 			# 	if ( muBFtemp )**2 - np.abs(a)*wc*(1.0-np.abs(zeta[i])*np.cos( muBFtemp*tau-psi[i]) )  < 0.0: #if fullfilled, stable synced state!
-# 			# 		if   muBFtemp > 0.0 and -wc*(muBFtemp*fric + np.abs(a)*np.abs(zeta[i])*np.sin( muBFtemp*tau-psi[i]) ) < 0.0: #  wc+np.abs(a)*np.abs(zeta)*tau*np.abs( np.cos( muBFtemp*tau-psi) ) >0.0) or (    ( muBFtemp )**2 - np.abs(a)*wc*(1.0-np.abs(zeta)*np.abs( np.cos( muBFtemp*tau-psi) ) ) < 0.0 and  wc+np.abs(a)*np.abs(zeta)*tau*np.abs( np.cos( muBFtemp*tau-psi) ) >0.0):
-# 			# 			muBFtemp = None
-# 			# 		elif muBFtemp < 0.0 and -wc*(muBFtemp*fric - np.abs(a)*np.abs(zeta[i])*np.sin( muBFtemp*tau-psi[i]) ) > 0.0: #  wc+np.abs(a)*np.abs(zeta)*tau*np.abs( np.cos( muBFtemp*tau-psi) ) >0.0) or (    ( muBFtemp )**2 - np.abs(a)*wc*(1.0-np.abs(zeta)*np.abs( np.cos( muBFtemp*tau-psi) ) ) < 0.0 and  wc+np.abs(a)*np.abs(zeta)*tau*np.abs( np.cos( muBFtemp*tau-psi) ) >0.0):
-# 			# 			muBFtemp = None
-# 			#
-# 			# elif np.abs(muBFtemp) < zero_treshold2:								# mu = 0 means that there is no instability
-# 			# 	muBFtemp = None
-# 			#
-# 			# if a <= 0:
-# 			# 	muBFtemp = -0.1;
-#
-# 			###########################################################
-#
-# 			if np.abs(muBFtemp) > zero_treshold2 and a > 0:
-# 				rho = np.abs(zeta[i])*np.cos( muBFtemp*tau-psi[i])
-# 				if   rho < 0:
-# 					if ( muBFtemp )**2 - np.abs(a)*wc*(1.0+np.abs(rho) ) < 0.0: #if fullfilled, stable synced state!
-# 						muBFtemp = None
-# 				elif rho > 0:
-# 					if ( muBFtemp )**2 - np.abs(a)*wc*(1.0-np.abs(rho) ) < 0.0: #if fullfilled, stable synced state!
-# 						muBFtemp = None
-#
-# 			elif np.abs(muBFtemp) < zero_treshold2 and a > 0:					# mu = 0 means that there is no instability -- criterium Earl and Strogatz holds
-# 				muBFtemp = None
-#
-# 			elif a <= 0:
-# 				muBFtemp = -0.1;
-#
-# 			###########################################################
-#
-# 			muBFt.append(muBFtemp)
-#
-# 		print('Gamma calculated from cotangent expression:', muBFt);
-#
-# 		result_muBF.append(muBFt)
-#
-# 	muBF = np.concatenate(result_muBF).tolist()
-#
-# 	return muBF

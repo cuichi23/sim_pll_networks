@@ -277,7 +277,5 @@ elif( params['loopP1'] == 'wc' and params['loopP2'] == 'fric' ):
 	paraPlot.makePlotsFromSynctoolsResults(102, params['x1'], params['x2'], params['ImLambSynctools'], 1.0/w, 1, 1.0/w,
 					r'$\frac{\omega_\textrm{c}}{\omega}$', r'$\gamma$', r'$\frac{\textrm{Im}(\lambda)}{\omega}$', 'K', 'fric', 'ImLambda', None, colormapSyncStab)
 
-plt.draw(); #plt.show();
-
 plt.draw()
 plt.show()

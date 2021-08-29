@@ -23,6 +23,8 @@ import parametricPlots as paraPlot
 import synctools_interface_lib as synctools
 import coupling_fct_lib as coupfct
 
+''' Set system and network parameters here, be careful as there are no sanity checks! This can be improved in the future. '''
+
 dictNet={
 	'Nx': 3,																	# oscillators in x-direction
 	'Ny': 3,																	# oscillators in y-direction
@@ -80,7 +82,7 @@ beta 	= 0#np.pi																# choose according to choice of mx, my and the to
 tau 	= np.arange(0, 16, 0.05)# 2.5
 K		= 2.0*np.pi*np.arange(0.001, 0.8, 0.06285/(2.0*np.pi) ) #0.001, 0.4
 
-fzeta = 1-np.sqrt(1-np.abs(z[0])**2)
+fzeta = 1+np.sqrt(1-np.max(np.abs(z))**2)
 OmegInTauVsK = np.zeros([len(tau), len(K)]); alpha = np.zeros([len(tau), len(K)]); ReLambda = np.zeros([len(tau), len(K)]); ImLambda = np.zeros([len(tau), len(K)]);
 CondStab = np.zeros([len(tau), len(K)]);
 t0 = time.time()
@@ -115,18 +117,20 @@ for i in range(len(tau)):
 			alpha[i,j]    = ((2.0*np.pi*para_mat[:,1]/para_mat[:,12])*dictPLL['derivative_coup_fct']( (-2.0*np.pi*para_mat[:,4]*para_mat[:,3]+beta)/para_mat[:,12] ))[0]
 			ReLambda[i,j] = para_mat[:,5][0]
 			ImLambda[i,j] = para_mat[:,6][0]
-		diff1zeta = wc*fric**2/(2*alpha[i,j]) - ( 1 - np.sqrt(1 - np.abs(np.array(z))**2) )
-		diff2	  = wc*fric**2/(2*alpha[i,j]) - 1
-		if np.all(diff1zeta > 0):
-			CondStab[i,j] = 0
-		elif diff2 > 0:
-			CondStab[i,j] = 1
-		else:
-			CondStab[i,j] = None
-		# if wc*fric**2/(2*alpha[i,j]) > fzeta or wc*fric**2/(2*alpha[i,j]) > 1:
+		# diff1zeta = wc*fric**2/(2*alpha[i,j]) - ( 1 - np.sqrt(1 - np.abs(np.array(z))**2) )
+		# diff2	  = wc*fric**2/(2*alpha[i,j]) - 1
+		# if np.all(diff1zeta > 0):
+		# 	CondStab[i,j] = 0
+		# elif diff2 > 0:
 		# 	CondStab[i,j] = 1
 		# else:
 		# 	CondStab[i,j] = None
+		if wc*fric**2/(2*alpha[i,j]) > fzeta:
+			CondStab[i,j] = 0
+ 		elif wc*fric**2/(2*alpha[i,j]) > 1:
+			CondStab[i,j] = 1
+		else:
+			CondStab[i,j] = None
 
 print('Time computation in sweep_factory: ', (time.time()-t0), ' seconds');
 #print('OmegInTauVsK', OmegInTauVsK, '\ttype(OmegInTauVsK)', type(OmegInTauVsK))

@@ -22,6 +22,8 @@ import parametricPlots as paraPlot
 import synctools_interface_lib as synctools
 import coupling_fct_lib as coupfct
 
+''' Set system and network parameters here, be careful as there are no sanity checks! This can be improved in the future. '''
+
 dictNet={
 	'Nx': 3,																	# oscillators in x-direction
 	'Ny': 3,																	# oscillators in y-direction
@@ -64,12 +66,12 @@ hp 		= dictPLL['derivative_coup_fct']
 
 beta 	= 0																		# choose according to choice of mx, my and the topology!
 
-#K		= 2.0*np.pi*np.arange( 0.0001, 0.6, 0.06285/(4.0*np.pi) )
-#wc  	= 2.0*np.pi*np.arange( 0.0001, 0.6, 0.06285/(4.0*np.pi) )
-K		= 2.0*np.pi*np.arange( 0.0001, 0.6, 0.006285/(4.0*np.pi) )
-wc  	= 2.0*np.pi*np.arange( 0.0001, 1.2, 0.006285/(4.0*np.pi) )
+K		= 2.0*np.pi*np.arange( 0.0001, 0.6, 0.06285/(4.0*np.pi) )
+wc  	= 2.0*np.pi*np.arange( 0.0001, 0.6, 0.06285/(4.0*np.pi) )
+#K		= 2.0*np.pi*np.arange( 0.0001, 0.6, 0.006285/(4.0*np.pi) )
+#wc  	= 2.0*np.pi*np.arange( 0.0001, 1.2, 0.006285/(4.0*np.pi) )
 
-fzeta = 1-np.sqrt(1-np.abs(z[0])**2)
+fzeta = 1+np.sqrt(1-np.max(np.abs(z))**2)
 #OmegInKvsFc = []; alpha = []; ReLambda = []; ImLambda = [];
 OmegInKvsFc = np.zeros([len(K), len(wc)]); alpha = np.zeros([len(K), len(wc)]); ReLambda = np.zeros([len(K), len(wc)]); ImLambda = np.zeros([len(K), len(wc)]);
 CondStab = np.zeros([len(K), len(wc)]);
@@ -109,18 +111,20 @@ for i in range(len(K)):
 			#print( 'alpha1: ', alpha[i,j], '\talpha2: ', K[i]/dictPLL['div']*dictPLL['derivative_coup_fct']( (-2.0*np.pi*para_mat[:,4]*tau+beta)/dictPLL['div'] ) )
 			ReLambda[i,j] = para_mat[:,5][0]
 			ImLambda[i,j] = para_mat[:,6][0]
-		diff1zeta = wc[j]*fric**2/(2*alpha[i,j]) - ( 1 - np.sqrt(1 - np.abs(np.array(z))**2) )
-		diff2	  = wc[j]*fric**2/(2*alpha[i,j]) - 1
-		if np.all(diff1zeta > 0):
-			CondStab[i,j] = 0
-		elif diff2 > 0:
-			CondStab[i,j] = 1
-		else:
-			CondStab[i,j] = None
-		# if wc[j]*fric**2/(2*alpha[i,j]) > fzeta or wc[j]*fric**2/(2*alpha[i,j]) > 1:
+		# diff1zeta = wc[j]*fric**2/(2*alpha[i,j]) - ( 1 - np.sqrt(1 - np.abs(np.array(z))**2) )
+		# diff2	  = wc[j]*fric**2/(2*alpha[i,j]) - 1
+		# if np.all(diff1zeta > 0):
+		# 	CondStab[i,j] = 0
+		# elif diff2 > 0:
 		# 	CondStab[i,j] = 1
 		# else:
 		# 	CondStab[i,j] = None
+		if wc[j]*fric**2/(2*alpha[i,j]) > fzeta:
+			CondStab[i,j] = 0
+ 		elif wc[j]*fric**2/(2*alpha[i,j]) > 1:
+			CondStab[i,j] = 1
+		else:
+			CondStab[i,j] = None
 
 print('Time computation in sweep_factory: ', (time.time()-t0), ' seconds');
 

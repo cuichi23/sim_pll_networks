@@ -22,6 +22,8 @@ import parametricPlots as paraPlot
 import synctools_interface_lib as synctools
 import coupling_fct_lib as coupfct
 
+''' Set system and network parameters here, be careful as there are no sanity checks! This can be improved in the future. '''
+
 dictNet={
 	'Nx': 3,																	# oscillators in x-direction
 	'Ny': 3,																	# oscillators in y-direction
@@ -69,7 +71,7 @@ fric  	= np.arange( 0.25, 2, 0.1 )
 #wc  	= 2.0*np.pi*np.arange( 0.0001, 0.6, 0.006285/(8.0*np.pi) )
 #fric  	= np.arange( 0.25, 2, 0.0005 )
 
-fzeta = 1-np.sqrt(1-np.abs(z[0])**2)
+fzeta = 1+np.sqrt(1-np.max(np.abs(z))**2)
 #OmegInFcvsFric = []; alpha = []; ReLambda = []; ImLambda = [];
 OmegInFcvsFric = np.zeros([len(wc), len(fric)]); alpha = np.zeros([len(wc), len(fric)]); ReLambda = np.zeros([len(wc), len(fric)]); ImLambda = np.zeros([len(wc), len(fric)]);
 CondStab = np.zeros([len(wc), len(fric)]);
@@ -103,18 +105,20 @@ for i in range(len(wc)):
 			alpha[i,j] = ((2.0*np.pi*para_mat[:,1]/para_mat[:,12])*dictPLL['derivative_coup_fct']( (-2.0*np.pi*para_mat[:,4]*para_mat[:,3]+beta)/para_mat[:,12] ))[0]
 			ReLambda[i,j] = para_mat[:,5][0]
 			ImLambda[i,j] = para_mat[:,6][0]
-		diff1zeta = wc[i]*fric[j]**2/(2*alpha[i,j]) - ( 1 - np.sqrt(1 - np.abs(np.array(z))**2) )
-		diff2	  = wc[i]*fric[j]**2/(2*alpha[i,j]) - 1
-		if np.all(diff1zeta > 0):
-			CondStab[i,j] = 0
-		elif diff2 > 0:
-			CondStab[i,j] = 1
-		else:
-			CondStab[i,j] = None
-		# if wc[i]*fric[j]**2/(2*alpha[i,j]) > fzeta or wc[i]*fric[j]**2/(2*alpha[i,j]) > 1: #wc*fric[j]**2/(2*alpha[i,j]) < fzeta and wc*fric[j]**2/(2*alpha[i,j]) > 1:
+		# diff1zeta = wc[i]*fric[j]**2/(2*alpha[i,j]) - ( 1 - np.sqrt(1 - np.abs(np.array(z))**2) )
+		# diff2	  = wc[i]*fric[j]**2/(2*alpha[i,j]) - 1
+		# if np.all(diff1zeta > 0):
+		# 	CondStab[i,j] = 0
+		# elif diff2 > 0:
 		# 	CondStab[i,j] = 1
 		# else:
 		# 	CondStab[i,j] = None
+		if wc[i]*fric[j]**2/(2*alpha[i,j]) > fzeta:
+			CondStab[i,j] = 0
+ 		elif wc[i]*fric[j]**2/(2*alpha[i,j]) > 1: #wc*fric[j]**2/(2*alpha[i,j]) < fzeta and wc*fric[j]**2/(2*alpha[i,j]) > 1:
+			CondStab[i,j] = 1
+		else:
+			CondStab[i,j] = None
 
 print('Time computation in sweep_factory: ', (time.time()-t0), ' seconds');
 

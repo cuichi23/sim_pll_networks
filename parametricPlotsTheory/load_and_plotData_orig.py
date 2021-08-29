@@ -21,6 +21,8 @@ from mpl_toolkits.axes_grid1.inset_locator import mark_inset
 import time
 import pickle
 
+sys.path.append('..')
+
 import synctools_interface_lib as synctools
 from function_lib import solveLinStab
 import function_lib as fct_lib

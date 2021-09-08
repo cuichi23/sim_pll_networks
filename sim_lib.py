@@ -61,15 +61,19 @@ def simulateSystem(dictNet, dictPLL, dictAlgo=None):
 	#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	''' SET INITIAL HISTORY AND PERTURBATION '''
 	# start by setting last entries to initial phase configuration, i.e., phiInitConfig + phiPerturb
-	if not dictNet['phiPerturb']:
+
+	print('The perturbation will be set to dictNet[*phiPerturb*]=', dictNet['phiPerturb'], ', and dictNet[*phiInitConfig*]=', dictNet['phiInitConfig'])
+
+	if not ( isinstance(dictNet['phiPerturb'], list) or isinstance(dictNet['phiPerturb'], np.ndarray) ):
 		print('All initial perturbations set to zero as none were supplied!')
-		dictNet['phiPerturb']  = [0 for i in range(len(phi[0,:]))]				# updates the phiPerturb list in dictNet
-		phi[max_delay_steps,:] = list( map(add, dictNet['phiInitConfig'], dictNet['phiPerturb']) ) # set phase-configuration phiInitConfig at t=0 + the perturbation phiPerturb
+		dictNet['phiPerturb']				= [0 for i in range(len(phi[0,:]))]
+		phi[dictNet['max_delay_steps'],:] 	= list( map(add, dictNet['phiInitConfig'], dictNet['phiPerturb']) ) # set phase-configuration phiInitConfig at t=0 + the perturbation phiPerturb
 	elif ( len(phi[0,:]) == len(dictNet['phiInitConfig']) and len(phi[0,:]) == len(dictNet['phiPerturb']) ):
-		phi[max_delay_steps,:] = list( map(add, dictNet['phiInitConfig'], dictNet['phiPerturb']) ) # set phase-configuration phiInitConfig at t=0 + the perturbation phiPerturb
-			# print('SET INITIAL HISTORY AND PERTURBATION: phi[max_delay_steps+int(dictPLL[*orderLF*]),:]=', phi[max_delay_steps+int(dictPLL['orderLF']),:])
+		phi[dictNet['max_delay_steps'],:] 	= list( map(add, dictNet['phiInitConfig'], dictNet['phiPerturb']) ) # set phase-configuration phiInitConfig at t=0 + the perturbation phiPerturb
 	else:
-		print('Provide initial phase-configuration of length %i to setup simulation!' %len(phi[max_delay_steps,:])); sys.exit()
+		print('len(phi[0,:])', len(phi[0,:]), '\t len(dictNet[*phiInitConfig*])', len(dictNet['phiInitConfig']))
+		print('Provide initial phase-configuration of length %i to setup simulation!' %len(phi[dictNet['max_delay_steps'],:])); sys.exit()
+
 	#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	''' SET THE INTERNAL PHI VARS OF THE VCO TO THEIR INITIAL VALUE '''
 	for i in range(len(pll_list)):												# set initial phases at time equivalent to the time-delay, then setup the history from there
@@ -110,7 +114,7 @@ def simulateSystem(dictNet, dictPLL, dictAlgo=None):
 				inst_freq_lastStep			= dictPLL['intrF'] + np.random.normal(loc=0.0, scale=np.sqrt( dictPLL['noiseVarVCO'] * dictPLL['dt'] ))
 				inst_freq_prior_to_lastStep = dictPLL['intrF'] + np.random.normal(loc=0.0, scale=np.sqrt( dictPLL['noiseVarVCO'] * dictPLL['dt'] ))
 			elif dictPLL['typeOfHist'] == 'syncState':
-				inst_freq_lastStep			 = dictPLL['syncF'] + np.random.normal(loc=0.0, scale=np.sqrt( dictPLL['noiseVarVCO'] * dictPLL['dt'] ))
+				inst_freq_lastStep			= dictPLL['syncF'] + np.random.normal(loc=0.0, scale=np.sqrt( dictPLL['noiseVarVCO'] * dictPLL['dt'] ))
 				inst_freq_prior_to_lastStep = dictPLL['syncF'] + np.random.normal(loc=0.0, scale=np.sqrt( dictPLL['noiseVarVCO'] * dictPLL['dt'] ))
 			pll_list[i].lf.set_initial_control_signal( inst_freq_lastStep, inst_freq_prior_to_lastStep )
 		else:

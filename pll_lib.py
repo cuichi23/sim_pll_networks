@@ -151,6 +151,10 @@ class LowPass:
 		else:
 			print('Problem in LF class!'); sys.exit()
 
+		a 	   = self.LForder;
+		self.b = 1 / ( 2.0*np.pi*self.Fc * a )									# https://www.electronics-tutorials.ws/filter/filter_2.html	QUESTION CHRIS: cut-off freq wc = 1 / RC or w(@-3dB) = wc sqrt( 2^(1/n) -1 )
+		self.t = np.array([0, self.dt])
+
 	#***************************************************************************
 
 	def set_from_value_or_list(self,idx_self,set_vars,numberPLLs):
@@ -164,18 +168,16 @@ class LowPass:
 		else:
 			print('Error in LF constructor setting a variable!'); sys.exit()
 
-	def controlSig(self, t, z, b, xPD):
+	def controlSig(self, t, z, xPD):
 		x = z[0]
 		y = z[1]
-		return [y, (1.0/b**2)*(xPD-x)-(2/b)*y-self.dydt-self.y*(1+2.0/b)]
+		return [y, (1.0/self.b**2)*(xPD-x)-(2/self.b)*y-self.dydt-self.y*(1+2.0/self.b)]
 
 	def solve_2nd_orderOrdDiffEq(self, xPD):
 																				# optional: try to implement via odeint as shown here: https://www.epythonguru.com/2020/07/second-order-differential-equation.html
-		a 	 = self.LForder; b = 1 / ( 2.0*np.pi*self.Fc * a )					# https://www.electronics-tutorials.ws/filter/filter_2.html	QUESTION CHRIS: cut-off freq wc = 1 / RC or w(@-3dB) = wc sqrt( 2^(1/n) -1 )
-		t 	 = np.array([0, self.dt])
-		func = lambda t, z: self.controlSig(t, z, b, xPD)
+		func = lambda t, z: self.controlSig(t, z, xPD)
 
-		sol = solve_ivp(func, [t[0], t[-1]], [self.y, self.dydt], method='RK45', t_eval=t, dense_output=False, events=None, vectorized=False, rtol = 1e-5)
+		sol = solve_ivp(func, [self.t[0], self.t[-1]], [self.y, self.dydt], method='RK45', t_eval=self.t, dense_output=False, events=None, vectorized=False, rtol = 1e-5)
 		#print('sol: ', sol)
 		y 	 		= sol.y[0][1]												# control signal value at time t
 		self.dydt   = sol.y[1][1]												# derivative of control signal at time t

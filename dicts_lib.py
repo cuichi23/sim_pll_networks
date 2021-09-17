@@ -36,10 +36,10 @@ def getDicts(Fsim=125):
 		'my': -999,																# twist/chequerboard in y-direction
 		'topology': 'ring',														# 1d) ring, chain, 2d) square-open, square-periodic, hexagonal...
 																				# 3) global, entrainOne, entrainAll, entrainPLLsHierarch, compareEntrVsMutual
-		'Tsim': 250,																# simulation time in multiples of the period
-		'computeFreqAndStab': True,											# compute linear stability and global frequency if possible: True or False
+		'Tsim': 250,															# simulation time in multiples of the period
+		'computeFreqAndStab': True,												# compute linear stability and global frequency if possible: True or False
 		'phi_array_mult_tau': 1,												# how many multiples of the delay is stored of the phi time series
-		'phiPerturb': [],#[0, -0.001, 0, 0, 0.001, 0, 0, -0.001, 0],			# delta-perturbation on initial state -- PROVIDE EITHER ONE OF THEM! if [] set to zero
+		'phiPerturb': [0, 0.1],#[0, -0.001, 0, 0, 0.001, 0, 0, -0.001, 0],		# delta-perturbation on initial state -- PROVIDE EITHER ONE OF THEM! if [] set to zero
 		'phiPerturbRot': [],													# delta-perturbation on initial state -- in rotated space
 		'phiInitConfig': [],													# phase-configuration of sync state,  []: automatic, else provide list
 		'freq_beacons': 0.25,													# frequency of external sender beacons, either a float or a list
@@ -49,23 +49,24 @@ def getDicts(Fsim=125):
 	}
 
 	dictPLL={
-		'intrF': 1.0,															# intrinsic frequency in Hz
+		'intrF': 1, #[0.95, 1.05],												# intrinsic frequency in Hz
 		'syncF': 1.0,															# frequency of synchronized state in Hz
-		'coupK': 0.4,															#[random.uniform(0.3, 0.4) for i in range(dictNet['Nx']*dictNet['Ny'])],# coupling strength in Hz float or [random.uniform(minK, maxK) for i in range(dictNet['Nx']*dictNet['Ny'])]
+		'coupK': 0.2,															#[random.uniform(0.3, 0.4) for i in range(dictNet['Nx']*dictNet['Ny'])],# coupling strength in Hz float or [random.uniform(minK, maxK) for i in range(dictNet['Nx']*dictNet['Ny'])]
 		'gPDin': 1,																# gains of the different inputs to PD k from input l -- G_kl, see PD, set to 1 and all G_kl=1 (so far only implemented for some cases, check!): np.random.uniform(0.95,1.05,size=[dictNet['Nx']*dictNet['Ny'],dictNet['Nx']*dictNet['Ny']])
 		'gPDin_symmetric': True,												# set to True if G_kl == G_lk, False otherwise
 		'cutFc': 0.014,	# LF cut-off frequency in Hz, None for no LF, or e.g., N=9 with mean 0.015: [0.05,0.015,0.00145,0.001,0.0001,0.001,0.00145,0.015,0.05], [0.0148, 0.0148, 0.0957, 0.0957, 0.0148, 0.0148, 0.0957, 0.0957, 0.0148, 0.0148, 0.0957, 0.0957, 0.0148, 0.0148, 0.0957, 0.0957] # [0.0148, 0.0957, 0.0148, 0.0957, 0.0148, 0.0957, 0.0148, 0.0957, 0.0148, 0.0957, 0.0148, 0.0957, 0.0148, 0.0957, 0.0148, 0.0957], #
 		'orderLF': 1,															# order of LF filter, either 1 or 2 at the moment (not compatible with synctools!)
 		'div': 1,																# divisor of divider (int)
-		'friction_coefficient': 1,												# friction coefficient of 2nd order Kuramoto models
-		'noiseVarVCO': 1E-9,													# variance of VCO GWN
+		'friction_coefficient': 2,												# friction coefficient of 2nd order Kuramoto models
+		'fric_coeff_PRE_vs_PRR': 'PRR',											# 'PRR': friction coefficient multiplied to instant. AND intrin. freq, 'PRE': friction coefficient multiplied only to instant. freq
+		'noiseVarVCO': 0E-9,													# variance of VCO GWN
 		'feedback_delay': 0,													# value of feedback delay in seconds
 		'feedback_delay_var': None, 											# variance of feedback delay
-		'transmission_delay': 0.52, 											    # value of transmission delay in seconds, float (single), list (tau_k) or list of lists (tau_kl): np.random.uniform(min,max,size=[dictNet['Nx']*dictNet['Ny'],dictNet['Nx']*dictNet['Ny']]), OR [np.random.uniform(min,max) for i in range(dictNet['Nx']*dictNet['Ny'])]
+		'transmission_delay': 0.1, 												# value of transmission delay in seconds, float (single), list (tau_k) or list of lists (tau_kl): np.random.uniform(min,max,size=[dictNet['Nx']*dictNet['Ny'],dictNet['Nx']*dictNet['Ny']]), OR [np.random.uniform(min,max) for i in range(dictNet['Nx']*dictNet['Ny'])]
 		'transmission_delay_var': None, 										# variance of transmission delays
 		'distribution_for_delays': None,										# from what distribution are random delays drawn?
 		# choose from coupfct.<ID>: sine, cosine, neg_sine, neg_cosine, triangular, deriv_triangular, square_wave, pfd, inverse_cosine, inverse_sine
-		'coup_fct_sig': coupfct.triangular,											# coupling function h(x) for PLLs with ideally filtered PD signals:
+		'coup_fct_sig': coupfct.sine, #coupfct.triangular,						# coupling function h(x) for PLLs with ideally filtered PD signals:
 		'derivative_coup_fct': coupfct.cosine,									# derivative h'(x) of coupling function h(x)
 		'includeCompHF': False,													# boolean True/False whether to simulate with HF components
 		'vco_out_sig': coupfct.square_wave,										# for HF case, e.g.: coupfct.sine or coupfct.square_wave
@@ -79,7 +80,7 @@ def getDicts(Fsim=125):
 		'antenna_sig': coupfct.sine,											# type of signal received by the antenna
 		'extra_coup_sig': None,													# choose from: 'injection2ndHarm', None
 		'coupStr_2ndHarm': 0.6,													# the coupling constant for the injection of the 2nd harmonic: float, will be indepent of 'coupK'
-		'typeOfHist': 'freeRunning',#'syncState',								# string, choose from: 'freeRunning', 'syncState'
+		'typeOfHist': 'syncState',#'freeRunning',								# string, choose from: 'freeRunning', 'syncState'
 		'sampleF': Fsim,														# sampling frequency
 		'sampleFplot': 5,														# sampling frequency for reduced plotting (every sampleFplot time step)
 		'treshold_maxT_to_plot': 1E6,											# maximum number of periods to plot for some plots
@@ -88,7 +89,8 @@ def getDicts(Fsim=125):
 
 	dictAlgo={
 		'bruteForceBasinStabMethod': 'listOfInitialPhaseConfigurations',		# pick method for setting realizations 'classicBruteForceMethodRotatedSpace', 'listOfInitialPhaseConfigurations'
-		'paramDiscretization': 3												# parameter discetization for brute force parameter space scans
+		'paramDiscretization': [5, 3],#3												# parameter discetization for brute force parameter space scans
+		'min_max_range_detuning': [0.95, 1.05]									# specifies within which min and max value to linspace the detuning
 	}
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	# calculate other parameters and test for incompatibilities
@@ -97,12 +99,12 @@ def getDicts(Fsim=125):
 
 		print('Generate symmetrical matrix for PD gains.')
 		dictPLL.update({'gPDin': (dictPLL['gPDin']@dictPLL['gPDin'].T)/np.max(dictPLL['gPDin']@dictPLL['gPDin'].T)})
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	if np.all(dictPLL['intrF']) > 1E-3:
 
-	if dictPLL['intrF'] > 1E-3:
-
-		dictNet.update({'Tsim': dictNet['Tsim']*(1.0/dictPLL['intrF'])})		# simulation time in multiples of the period of the uncoupled oscillators
+		dictNet.update({'Tsim': dictNet['Tsim']*(1.0/np.mean(dictPLL['intrF']))}) # simulation time in multiples of the period of the uncoupled oscillators
 		dictPLL.update({'sim_time_steps': int(dictNet['Tsim']/dictPLL['dt'])})
-		print('Total simulation time in multiples of the eigentfrequency:', int(dictNet['Tsim']*dictPLL['intrF']))
+		print('Total simulation time in multiples of the eigenfrequency:', int(dictNet['Tsim']*np.mean(dictPLL['intrF'])))
 	else:
 
 		print('Tsim not in multiples of T_omega, since F <= 1E-3')
@@ -111,6 +113,19 @@ def getDicts(Fsim=125):
 		print('Total simulation time in seconds:', int(dictNet['Tsim']))
 
 	dictPLL.update({'timeSeriesAverTime': int(dictPLL['percentPeriodsAverage']*dictNet['Tsim']*dictPLL['syncF'])})
+
+	#if dictPLL['typeVCOsig'] == 'analogHF' and inspect.getsourcelines(dictPLL['coup_fct_sig'])[0][0] == "dictPLL={'coup_fct_sig': lambda x: sawtooth(x,width=0.5)\n}"
+	#	print('Recheck paramater combinations in dictPLL: set to analogHF while coupling function of digital PLL choosen.'); sys.exit()
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	if ( isinstance(dictAlgo['paramDiscretization'], list) or isinstance(dictAlgo['paramDiscretization'], np.ndarray) ):
+		if ( isinstance(dictAlgo['min_max_range_detuning'], np.float) or isinstance(dictAlgo['min_max_range_detuning'], np.int) ):
+			print('NOTE: in multisim_lib, the case listOfInitialPhaseConfigurations needs a minimum and maximum intrinsic frequency, e.g., [wmin, wmax]! Please povide.'); sys.exit()
+
+			# Implement that here, see below for perturbations!
+
+			#dictAlgo.update({'min_max_range_detuning': [0.99*dictPLL['intrF'], 1.01*dictPLL['intrF']]})
+		else:
+ 			print('NOTE: in multisim_lib, the minimum and maximum intrinsic frequency, [wmin, wmax] are used to calculate all initial detunings (including that with 0).')
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	if dictPLL['extra_coup_sig'] != 'injection2ndHarm':
 		dictPLL.update({'coupStr_2ndHarm': 0})

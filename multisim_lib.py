@@ -38,14 +38,14 @@ def distributeProcesses(dictNet, dictPLL, dictAlgo=None):
 		print('allPoints:', [allPoints], '\nscanValues', scanValues); Nsim = allPoints.shape[0]; print('multiprocessing', Nsim, 'realizations')
 
 	elif dictAlgo['bruteForceBasinStabMethod'] == 'listOfInitialPhaseConfigurations':	# so far for N=2, work it out for N>2
-		if isinstance(dictPLL['intrF'], np.float) or isinstance(dictPLL['intrF'], np.int):
+		if ( isinstance(dictAlgo['paramDiscretization'], np.float) or isinstance(dictAlgo['paramDiscretization'], np.int) ) and ( isinstance(dictAlgo['min_max_range_detuning'], np.float) or isinstance(dictAlgo['min_max_range_detuning'], np.int) ):
 			scanValues = np.linspace(-np.pi, np.pi, dictAlgo['paramDiscretization'])
 			print('scanValues', scanValues); Nsim = len(scanValues); print('multiprocessing', Nsim, 'realizations')
-		elif isinstance(dictPLL['intrF'], np.ndarray) or isinstance(dictPLL['intrF'], list):
+		elif isinstance(dictAlgo['min_max_range_detuning'], np.ndarray) or isinstance(dictAlgo['min_max_range_detuning'], list):
 			scanValues, allPoints = setup.allInitPhaseCombinations(dictPLL, dictNet, dictAlgo, paramDiscretization=dictAlgo['paramDiscretization'])
 			print('allPoints:', [allPoints], '\nscanValues', scanValues); Nsim = allPoints.shape[0]; print('multiprocessing', Nsim, 'realizations')
 		else:
-			print('2 modes: iterate for no detuning over phase-differences, or detuning and phase-differences! Choose one.'); sys.exit()
+			print('2 modes: iterate for no detuning over phase-differences, or detuning and phase-differences! Choose one. HINT: if dictAlgo[*paramDiscretization*] is an instance of list or ndarray, there needs to be a list of intrinsic frequencies!'); sys.exit()
 
 	global number_period_dyn;
 	number_period_dyn 	= 20.5;
@@ -61,10 +61,10 @@ def distributeProcesses(dictNet, dictPLL, dictAlgo=None):
 		poolData.append( pool.map(multihelper_star, zip( 							# this makes a map of all parameter combinations that have to be simulated, itertools.repeat() names the constants
 						itertools.product(*scanValues), itertools.repeat(initPhiPrime0), itertools.repeat(dictNet), itertools.repeat(dictPLL), itertools.repeat(dictAlgo) ) ) )
 	elif dictAlgo['bruteForceBasinStabMethod'] == 'listOfInitialPhaseConfigurations' or dictAlgo['bruteForceBasinStabMethod'] == 'testNetworkMotifIsing':
-		if isinstance(dictPLL['intrF'], np.float) or isinstance(dictPLL['intrF'], np.int):
+		if isinstance(dictAlgo['min_max_range_detuning'], np.float) or isinstance(dictAlgo['min_max_range_detuning'], np.int):
 			poolData.append( pool.map(multihelper_star, zip( 							# this makes a map of all parameter combinations that have to be simulated, itertools.repeat() names the constants
 							itertools.product(scanValues), itertools.repeat(initPhiPrime0), itertools.repeat(dictNet), itertools.repeat(dictPLL), itertools.repeat(dictAlgo) ) ) )
-		elif isinstance(dictPLL['intrF'], np.ndarray) or isinstance(dictPLL['intrF'], list):
+		elif isinstance(dictAlgo['min_max_range_detuning'], np.ndarray) or isinstance(dictAlgo['min_max_range_detuning'], list):
 			poolData.append( pool.map(multihelper_star, zip( 							# this makes a map of all parameter combinations that have to be simulated, itertools.repeat() names the constants
 							itertools.product(scanValues[0], scanValues[1]), itertools.repeat(initPhiPrime0), itertools.repeat(dictNet), itertools.repeat(dictPLL), itertools.repeat(dictAlgo) ) ) )
 

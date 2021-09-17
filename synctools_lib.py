@@ -461,12 +461,13 @@ class CubicOctagonal(Graph):
 # #############################################################################
 
 class Pll(object):
-	def __init__(self, w, wc, v, fric):
-		self.w = w
-		self.wc = wc
-		self.v = v
-		self.fric = fric
-		self.b = 1.0 / wc
+	def __init__(self, w, wc, v, fric, fric_omega):
+		self.w 			= w
+		self.wc 		= wc
+		self.v 			= v
+		self.fric 		= fric
+		self.fric_omega = fric_omega
+		self.b 			= 1.0 / wc
 
 
 # #############################################################################
@@ -475,8 +476,8 @@ class Pll(object):
 
 class PllSystem(object):
 	def __init__(self, pll, graph):
-		self.pll = pll
-		self.g = graph
+		self.pll 	= pll
+		self.g 		= graph
 
 
 # #############################################################################
@@ -656,6 +657,8 @@ class SyncStateFactory(object):
 		w = self.sys.pll.w
 		v = self.sys.pll.v
 		fric = self.sys.pll.fric
+		fric_omega = self.sys.pll.fric_omega
+		#print('IN SYNCTOOLS: fric=', fric)
 
 		# Determine min and max values for coupling sum function
 		h_min = self.sys.g.func.min()
@@ -666,8 +669,8 @@ class SyncStateFactory(object):
 		h_sum_max = c_bar_sum * h_max
 
 		# Determine search interval for s
-		s_min = kc/fric * tau * h_sum_min + w/fric * tau
-		s_max = kc/fric * tau * h_sum_max + w/fric * tau
+		s_min = kc/fric * tau * h_sum_min + w/(fric*fric_omega) * tau
+		s_max = kc/fric * tau * h_sum_max + w/(fric*fric_omega) * tau
 		s_min = s_min - 2  # add safety margin
 		s_max = s_max + 2
 		if s_min < 0:
@@ -681,7 +684,7 @@ class SyncStateFactory(object):
 			h_sum = lambda x: self.get_coupling_sum(0, k=k)
 
 		# Setup implicit equation for s
-		f = lambda x: kc/fric * tau * h_sum(x) + w/fric * tau - x
+		f = lambda x: kc/fric * tau * h_sum(x) + w/(fric*fric_omega) * tau - x
 
 		# Find sign changes as you go along curve
 		# Assumes that there are no double sign changes between two values of s
@@ -692,7 +695,7 @@ class SyncStateFactory(object):
 			for i in range(len(i_root)):
 				# Numerically solve the implicit equation for omega
 				s_tmp = optimize.brentq(f, s[i_root[i]], s[i_root[i] + 1])
-				omega.append(w/fric + kc/fric * h_sum(s_tmp))
+				omega.append(w/(fric*fric_omega) + kc/fric * h_sum(s_tmp))
 			return omega
 		else:
 			raise Exception('No global synchronization frequency found.')

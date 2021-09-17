@@ -45,7 +45,8 @@ dictPLL={
 	'coupK': 0.65,																# [random.uniform(0.3, 0.4) for i in range(dictNet['Nx']*dictNet['Ny'])],# coupling strength in Hz float or [random.uniform(minK, maxK) for i in range(dictNet['Nx']*dictNet['Ny'])]
 	'cutFc': 0.05,																# LF cut-off frequency in Hz, None for no LF, or e.g., N=9 with mean 0.015: [0.05,0.015,0.00145,0.001,0.0001,0.001,0.00145,0.015,0.05]
 	'div': 1,																	# divisor of divider (int)
-	'friction_coefficient': 1,													# friction coefficient of 2nd order Kuramoto models
+	# set range below! #'friction_coefficient': 1,								# friction coefficient of 2nd order Kuramoto models
+	'fric_coeff_PRE_vs_PRR': 'PRE',												# 'PRR': friction coefficient multiplied to instant. AND intrin. freq, 'PRE': friction coefficient multiplied only to instant. freq
 	'feedback_delay': 0,														# value of feedback delay in seconds
 	'feedback_delay_var': None, 												# variance of feedback delay
 	'transmission_delay': 2.95, 												# value of transmission delay in seconds, float (single), list (tau_k) or list of lists (tau_kl): np.random.uniform(min,max,size=[dictNet['Nx']*dictNet['Ny'],dictNet['Nx']*dictNet['Ny']]), OR [np.random.uniform(min,max) for i in range(dictNet['Nx']*dictNet['Ny'])]
@@ -68,8 +69,8 @@ beta 	= 0																		# choose according to choice of mx, my and the topolo
 
 #K		= 2.0*np.pi*np.arange( 0.0001, 0.6, 0.06285/(2.0*np.pi) )
 #fric  	= np.arange( 0.25, 2, 0.01 )
-K		= 2.0*np.pi*np.arange( 0.0001, 0.6, 0.006285/(8.0*np.pi) )
-fric  	= np.arange( 0.25, 2, 0.001 )
+K		= 2.0*np.pi*np.arange( 0.0001, 0.6, 0.06285/(8.0*np.pi) )
+fric  	= np.arange( 0.25, 2, 0.01 )
 
 fzeta = 1+np.sqrt(1-np.max(np.abs(z))**2)
 #OmegInKvsFc = []; alpha = []; ReLambda = []; ImLambda = [];
@@ -115,7 +116,7 @@ for i in range(len(K)):
 		# 	CondStab[i,j] = None
 		if wc*fric[j]**2/(2*alpha[i,j]) > fzeta:
 			CondStab[i,j] = 0
- 		elif wc*fric[j]**2/(2*alpha[i,j]) > 1: #wc*fric[j]**2/(2*alpha[i,j]) < fzeta and wc*fric[j]**2/(2*alpha[i,j]) > 1:
+		elif wc*fric[j]**2/(2*alpha[i,j]) > 1: #wc*fric[j]**2/(2*alpha[i,j]) < fzeta and wc*fric[j]**2/(2*alpha[i,j]) > 1:
 			CondStab[i,j] = 1
 		else:
 			CondStab[i,j] = None

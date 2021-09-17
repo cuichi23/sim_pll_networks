@@ -385,9 +385,9 @@ def allInitPhaseCombinations(dictPLL, dictNet, dictAlgo, paramDiscretization=10)
 		print('Variable paramDiscretization needs to be integer or list of integers!'); sys.exit()
 
 	if dictNet['Nx']*dictNet['Ny'] == 2:
-		if dictAlgo['bruteForceBasinStabMethod'] == 'listOfInitialPhaseConfigurations' and isinstance(dictPLL['intrF'], list):
-			tempDetune = dictPLL['intrF'][1] - dictPLL['intrF'][0];
-			scanValueslist1 = list( np.linspace(-(np.pi), +(np.pi), paramDiscr[0]) ) 		# all entries are in rotated, and reduced phase space NOTE: adjust unit cell accordingly!
+		if dictAlgo['bruteForceBasinStabMethod'] == 'listOfInitialPhaseConfigurations' and ( isinstance(dictAlgo['min_max_range_detuning'], list) or isinstance(dictAlgo['min_max_range_detuning'], np.ndarray) ):
+			tempDetune = ( dictAlgo['min_max_range_detuning'][1] - dictAlgo['min_max_range_detuning'][0] ) / dictPLL['div'];
+			scanValueslist1 = list( np.linspace(-dictPLL['div']*(np.pi), +dictPLL['div']*(np.pi), paramDiscr[0]) ) 		# all entries are in rotated, and reduced phase space NOTE: adjust unit cell accordingly!
 			scanValueslist2 = list( np.linspace(-tempDetune, tempDetune, paramDiscr[1]) )	# all entries are in rotated, and reduced phase space NOTE: adjust unit cell accordingly!
 			#print('scanValueslist2', scanValueslist2)
 			scanValues = np.array([scanValueslist1, scanValueslist2])
@@ -429,5 +429,6 @@ def allInitPhaseCombinations(dictPLL, dictNet, dictAlgo, paramDiscretization=10)
 		_allPoints 			= itertools.product(*scanValues)
 		allPoints 			= list(_allPoints)									# scanValues is a list of lists: create a new list that gives all the possible combinations of items between the lists
 		allPoints 			= np.array(allPoints) 								# convert the list to an array
+	#print('scanValues:', scanValues, '\tallPoints:', allPoints); sys.exit()
 
 	return scanValues, allPoints

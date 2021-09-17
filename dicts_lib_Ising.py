@@ -61,6 +61,7 @@ def getDicts(Fsim=125):
 		'orderLF': 1,															# order of LF filter, either 1 or 2 at the moment
 		'div': 1,																# divisor of divider (int)
 		'friction_coefficient': 1,												# friction coefficient of 2nd order Kuramoto models
+		'fric_coeff_PRE_vs_PRR': 'PRE',											# 'PRR': friction coefficient multiplied to instant. AND intrin. freq, 'PRE': friction coefficient multiplied only to instant. freq
 		'noiseVarVCO': 1E-9,													# variance of VCO GWN
 		'feedback_delay': 0,													# value of feedback delay in seconds
 		'feedback_delay_var': None, 											# variance of feedback delay
@@ -91,7 +92,8 @@ def getDicts(Fsim=125):
 
 	dictAlgo={
 		'bruteForceBasinStabMethod': 'testNetworkMotifIsing',					# pick method for setting realizations 'classicBruteForceMethodRotatedSpace', 'listOfInitialPhaseConfigurations', 'testNetworkMotifIsing'
-		'paramDiscretization': 2												# parameter discetization for brute force parameter space scans
+		'paramDiscretization': 2,												# parameter discetization for brute force parameter space scans
+		'min_max_range_detuning': [0.95, 1.05]									# specifies within which min and max value to linspace the detuning
 	}
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	# calculate other parameters and test for incompatibilities

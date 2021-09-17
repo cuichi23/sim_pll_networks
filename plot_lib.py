@@ -61,12 +61,12 @@ annotationfont = {
 		}
 
 # plot parameter
-axisLabel 			= 60;
-tickSize  			= 25;
+axisLabel 			= 44;#60;
+tickSize  			= 30;#25;
 titleLabel			= 10;
 dpi_val	  			= 150;
-figwidth  			= 6;
-figheight 			= 5;
+figwidth  			= 10;#8;
+figheight 			= 6;
 plot_size_inches_x 	= 18;
 plot_size_inches_y 	= 10;
 

@@ -209,6 +209,11 @@ class SweepFactory(object):
 		self.fric		= dictPLL['friction_coefficient']
 		self.dummy		= np.array([self.n])
 
+		if dictPLL['fric_coeff_PRE_vs_PRR'] == 'PRR':							# distinguish between the Kuramoto model as in the PRR paper Wetzel, Metevier, Gupta or the PRE paper Prousalis, Wetzel
+			self.fric_omega = 1
+		elif dictPLL['fric_coeff_PRE_vs_PRR'] == 'PRE':
+			self.fric_omega = 1/self.fric
+
 		# if parameters provided in rad*Hz
 		if isRadians:
 			self.w    = dictPLL['intrF']
@@ -329,7 +334,7 @@ class SweepFactory(object):
 			raise Exception('Non-valid topology string')
 
 		# Initialize singel pll
-		pll = st.Pll(self.w, self.wc, self.v, self.fric)						# hand over PLL parameters
+		pll = st.Pll(self.w, self.wc, self.v, self.fric, self.fric_omega)		# hand over PLL parameters
 
 		# Initialize system
 		pll_sys = st.PllSystem(pll, g)

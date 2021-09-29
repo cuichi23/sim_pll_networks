@@ -37,7 +37,7 @@ def getDicts(Fsim=125):
 		'my': -999,																# twist/chequerboard in y-direction
 		'topology': 'ring',														# 1d) ring, chain, 2d) square-open, square-periodic, hexagonal...
 																				# 3) global, entrainOne, entrainAll, entrainPLLsHierarch, compareEntrVsMutual
-		'Tsim': 35000,															# simulation time in multiples of the period
+		'Tsim': 75000,															# simulation time in multiples of the period
 		'computeFreqAndStab': False,											# compute linear stability and global frequency if possible: True or False
 		'phi_array_mult_tau': 1,												# how many multiples of the delay is stored of the phi time series
 		'phiPerturb': [0, 0],													# delta-perturbation on initial state -- PROVIDE EITHER ONE OF THEM! if [] set to zero
@@ -90,9 +90,26 @@ def getDicts(Fsim=125):
 
 	dictAlgo={
 		'bruteForceBasinStabMethod': 'listOfInitialPhaseConfigurations',		# pick method for setting realizations 'classicBruteForceMethodRotatedSpace', 'listOfInitialPhaseConfigurations',
-		'paramDiscretization': [5, 3],#[15, 10],								# parameter discetization for brute force parameter space scans
-		'min_max_range_detuning': [0.95, 1.05]									# specifies within which min and max value to linspace the initial frequency difference (w.r.t. HF Frequency)
+		'paramDiscretization': [2, 6],#[15, 10],								# parameter discetization for brute force parameter space scans
+		'min_max_range_detuning': [0.8, 1.2]									# specifies within which min and max value to linspace the initial frequency difference (w.r.t. HF Frequency)
 	}
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	if dictPLL['coup_fct_sig'] == coupfct.triangular or dictPLL['coup_fct_sig'] == coupfct.deriv_triangular or dictPLL['coup_fct_sig'] == coupfct.square_wave or dictPLL['coup_fct_sig'] == coupfct.pfd:
+		if dictPLL['vco_out_sig'] == coupfct.sine:
+			print('A coupling function associated to oscillators with DIGITAL output is chosen. Current PSD choice is only to analyze first harmonic contribution! Switch to full digital [y]?')
+			choice = choose_yes_no()
+			if choice == 'y':
+				dictPLL.update({'vco_out_sig': coupfct.square_wave})
+			elif choice == 'n':
+				dictPLL.update({'vco_out_sig': coupfct.sine})
+	elif dictPLL['coup_fct_sig'] == coupfct.sine or dictPLL['coup_fct_sig'] == coupfct.cosine:
+		if dictPLL['vco_out_sig'] == coupfct.square_wave:
+			print('A coupling function associated to oscillators with ANALOG output is chosen. Current PSD choice is to analyze a square wave signal of the phase! Switch to sine wave [y]?')
+			choice = choose_yes_no()
+			if choice == 'y':
+				dictPLL.update({'vco_out_sig': coupfct.sine})
+			elif choice == 'n':
+				dictPLL.update({'vco_out_sig': coupfct.square_wave})
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	# calculate other parameters and test for incompatibilities
 	dictPLL.update({'dt': 1.0/dictPLL['sampleF']})
@@ -169,7 +186,7 @@ def getDicts(Fsim=125):
 		print('In dicts_<NAME>: Synctools prediction not available for second order LFs!'); sys.exit();
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-	check_consistency_initPert(dictNet)
+	dictNet = check_consistency_initPert(dictNet)
 	print('Setup (dictNet, dictPLL):', dictNet, dictPLL)
 
 	return dictPLL, dictNet, dictAlgo
@@ -224,3 +241,4 @@ def check_consistency_initPert(dictNet):
 			dictNet.update({'phiPerturb': (np.random.rand(dictNet['Nx']*dictNet['Ny'])*np.abs((upperPertBound-lowerPertBound))-lowerPertBound).tolist()})
 		else:
 			return None
+	return dictNet

@@ -30,7 +30,7 @@ dictNet={
 	'mx': 0	,																	# twist/chequerboard in x-direction (depends on closed or open boundary conditions)
 	'my': 0,																	# twist/chequerboard in y-direction
 	'Tsim': 100,
-	'topology': 'square-periodic',															# 1d) ring, chain, 2d) square-open, square-periodic, hexagonal...
+	'topology': 'square-periodic',												# 1d) ring, chain, 2d) square-open, square-periodic, hexagonal...
 																				# 3) global, entrainOne, entrainAll, entrainPLLsHierarch, compareEntrVsMutual
 	'zeta': [-0.5, 0.25], #[-1], 												# real part of eigenvalue of slowest decaying perturbation mode for the set of parameters, also a fct. of tau!
 	'psi': [np.pi, 0],															# real part of eigenvalue of slowest decaying perturbation
@@ -43,10 +43,10 @@ dictPLL={
 	'intrF': 1.0,																# intrinsic frequency in Hz
 	'syncF': 1.0,																# frequency of synchronized state in Hz
 	'coupK': 0.65,																# [random.uniform(0.3, 0.4) for i in range(dictNet['Nx']*dictNet['Ny'])],# coupling strength in Hz float or [random.uniform(minK, maxK) for i in range(dictNet['Nx']*dictNet['Ny'])]
-	'cutFc': 0.05,																# LF cut-off frequency in Hz, None for no LF, or e.g., N=9 with mean 0.015: [0.05,0.015,0.00145,0.001,0.0001,0.001,0.00145,0.015,0.05]
+	'cutFc': 0.2,																# LF cut-off frequency in Hz, None for no LF, or e.g., N=9 with mean 0.015: [0.05,0.015,0.00145,0.001,0.0001,0.001,0.00145,0.015,0.05]
 	'div': 1,																	# divisor of divider (int)
 	# set range below! #'friction_coefficient': 1,								# friction coefficient of 2nd order Kuramoto models
-	'fric_coeff_PRE_vs_PRR': 'PRE',												# 'PRR': friction coefficient multiplied to instant. AND intrin. freq, 'PRE': friction coefficient multiplied only to instant. freq
+	'fric_coeff_PRE_vs_PRR': 'PRR',												# 'PRR': friction coefficient multiplied to instant. AND intrin. freq, 'PRE': friction coefficient multiplied only to instant. freq
 	'feedback_delay': 0,														# value of feedback delay in seconds
 	'feedback_delay_var': None, 												# variance of feedback delay
 	'transmission_delay': 2.95, 												# value of transmission delay in seconds, float (single), list (tau_k) or list of lists (tau_kl): np.random.uniform(min,max,size=[dictNet['Nx']*dictNet['Ny'],dictNet['Nx']*dictNet['Ny']]), OR [np.random.uniform(min,max) for i in range(dictNet['Nx']*dictNet['Ny'])]
@@ -67,10 +67,10 @@ hp 		= dictPLL['derivative_coup_fct']
 
 beta 	= 0																		# choose according to choice of mx, my and the topology!
 
-#K		= 2.0*np.pi*np.arange( 0.0001, 0.6, 0.06285/(2.0*np.pi) )
+#K	= 2.0*np.pi*np.arange( 0.0001, 0.6, 0.06285/(2.0*np.pi) )
 #fric  	= np.arange( 0.25, 2, 0.01 )
-K		= 2.0*np.pi*np.arange( 0.0001, 0.6, 0.06285/(8.0*np.pi) )
-fric  	= np.arange( 0.25, 2, 0.01 )
+K	= 2.0*np.pi*np.arange( 0.0001, 0.6, 0.006285/(8.0*np.pi) )
+fric  	= np.arange( 0.25, 2, 0.001 )
 
 fzeta = 1+np.sqrt(1-np.max(np.abs(z))**2)
 #OmegInKvsFc = []; alpha = []; ReLambda = []; ImLambda = [];

@@ -1,3 +1,8 @@
+## @package PLL library
+#  Documentation for this module.
+#
+#  authors: Alexandros Pollakis, Daniel Platz, Deborah Schmidt, Lucas Wetzel (wetztel.lucas[at]gmail.com)
+
 #!/usr/bin/python
 from __future__ import division
 from __future__ import print_function
@@ -25,9 +30,8 @@ gc.enable();
 
 #%%cython --annotate -c=-O3 -c=-march=native
 
-''' CLASSES
-
-authors: Alexandros Pollakis, Lucas Wetzel [ lwetzel@pks.mpg.de ]
+'''PLL library
+authors: Alexandros Pollakis, Daniel Platz, Deborah Schmidt, Lucas Wetzel (lwetzel[at]pks.mpg.de)
 '''
 
 # # system/measurement
@@ -56,8 +60,32 @@ authors: Alexandros Pollakis, Lucas Wetzel [ lwetzel@pks.mpg.de ]
 
 # PLL
 class PhaseLockedLoop:
-	"""A phase-locked loop class"""
+	""" A phase-locked loop class, handles signal flow between the PLL components
+
+		Args:
+
+	    Returns:
+
+	    Raises:
+	"""
 	def __init__(self,idx_self,delayer,pdc,lf,vco,antenna,counter):				# sets PLL properties as given when an object of this class is created (see line 253), where pll_list is created
+		""" initialization of a PLL object
+
+			Args:
+				instance self.delayer 	delayer
+				instance self.pdc 		phase detector and combiner
+				instance self.lf 		loop filter
+				instance self.vco 		voltage controlled oscillator
+				instance self.antenna	antenna
+				instance self.counter	counter
+				integer self.idx_self	identity
+
+		    Returns:
+				PLL instance	PLL with defined cross-coupling time delays to its coupling neighbors in the network, intrinisc frequency, loop filter, coupling strength,
+								and many additional options such as additional injection of signals, noise, heterogeneity, etc.
+
+		    Raises:
+		"""
 		self.delayer 	= delayer
 		self.pdc 		= pdc
 		self.lf 		= lf
@@ -67,6 +95,23 @@ class PhaseLockedLoop:
 		self.idx_self	= idx_self
 
 	def next(self,idx_time,philength,phi):
+		""" Function that evolves the PLL forward in time by one increment based on the external signals and internal dynamics.
+			1) delayer obtains past states x_delayed of neighbors in the network coupled to this oscillator and current state x of the oscillator itself
+			2) from these states the input phase relations are evaluated by the phase detector and combiner which yields the PD signal x_comb (averaged over all inputs)
+			3) the PD signal x_comb is fed into the loop filter and yields the control signal x_ctrl
+			4) the voltage controlled oscillator's next function evolves the phases dependent on the control signal x_ctrl
+
+			Args:
+				int self		identity
+				int idx_time	current time within simulation
+				int philength	length of container that stores the phases of the oscillators, needed for organizing the cyclic memory to handle the delay
+				np.ndarray phi	holds the phases of all oscillators for at least the time [-tau_max, 0], denotes the memory necessary for the time delay
+
+		    Returns:
+				np.ndarray phi	updated with the next time increment
+
+		    Raises:
+		"""
 		x, x_delayed  	= self.delayer.next(idx_time%philength,phi,idx_time)	# this gets the values of a signal x at time t, and time t-tau, from the delayer (x is the matrix phi here)
 		x_comb 		  	= self.pdc.next(x,x_delayed,0,idx_time)					# the phase detector signal is computed, antenna input set to zero; COMBINER GETS ABSOLUTE TIME
 		x_ctrl		 	= self.lf.next(x_comb)									# the filtering at the loop filter is applied to the phase detector signal
@@ -74,18 +119,63 @@ class PhaseLockedLoop:
 		return phi#, x_ctrl
 
 	def clock_periods_count(self,idx_time,current_phi):							# count periods of oscillations
+		""" Function that counts the periods of oscillations that have passed for the oscillator. This enables the derivation of a time,
+			i.e., extends the oscillator to become a clock.
+
+			Args:
+				int self				identity
+				int idx_time			current time within simulation
+				np.ndarray current_phi	the current phase of the oscillator
+
+		    Returns:
+				int count 				the number of cycles counted
+
+		    Raises:
+		"""
 		count			= self.counter.read_periods(current_phi)
 		return count
 
 	def clock_halfperiods_count(self,idx_time,current_phi):						# count every half a period of the oscillations
+		""" Function that counts TWICE per period for oscillations of the oscillator, e.g., counting the falling and rising edge of digital signal.
+			This enables the derivation of a time, i.e., extends the oscillator to become a clock.
+
+			Args:
+				int self				identity
+				int idx_time			current time within simulation
+				np.ndarray current_phi	the current phase of the oscillator
+
+		    Returns:
+				int count 				the number of cycles counted
+
+		    Raises:
+		"""
 		count			= self.counter.read_halfperiods(current_phi)
 		return count
 
 	def clock_reset(self,current_phi):											# reset all clock counters
+		""" Function that resets the clock count of the oscillator.
+
+			Args:
+				int self				identity
+				np.ndarray current_phi	the current phase of the oscillator (as new reference for the zero count)
+
+		    Returns:
+				None
+
+		    Raises:
+		"""
 		count			= self.counter.reset(current_phi)
 		return None
 
 	def next_antenna(self,idx_time,philength,phi,ext_field):
+		""" Function that implements an additional input signal to the oscillator received via an antenna. NOT YET IMPLEMENTED.
+
+			Args:
+
+		    Returns:
+
+		    Raises:
+		"""
 		x, x_delayed  	= self.delayer.next(idx_time%philength,phi)				# this gets the values of a signal x at time t, and time t-tau, from the delayer (x is the matrix phi here)
 		antenna_rx		= self.antenna.listen(idx_time,ext_field)				# antenna listens to the external signal
 		x_comb 		  	= self.pdc.next(x,x_delayed,antenna_rx,idx_time)		# the phase detector signal is computed
@@ -94,20 +184,75 @@ class PhaseLockedLoop:
 		return phi
 
 	def setup_hist_reverse(self):												# set the initial history of the PLLs, all evolving with frequency Omega of synched state, provided at start
+		""" Function that sets the history of the oscillator using the voltage controlled oscillator. Given the required phase at the start of the simulation,
+			the function calls the VCO's function to set the history/memory backwards in time until the memory is filled.
+
+			Args:
+				int self		identity
+
+		    Returns:
+				np.array phi	an array with the memory of the particular oscillator, to be written into the phi container that holds all oscillators' phases
+
+		    Raises:
+		"""
 		phi 			= self.vco.set_initial_reverse()[0]						# [0] vector-entry zero of the two values saved to phi which is returned
 		return phi
 
 	def set_delta_pertubation(self,idx_time,phi,phiS,inst_Freq):
+		""" Function that applies a delta-like perturbation to the phase of the oscillator at the start of the simulation.
+			Corrects the internal state of the oscillator with respect to the perturbation, calculated the initial control signal.
+
+			Args:
+				int self				identity
+				int idx_time			current time within simulation
+				float phi				the current phase of the oscillator
+				phiS					the perturbation to the current phase
+				float inst_freq 		the instantaneous frequency of the oscillator
+
+		    Returns:
+				float phi				the current phase of the oscillator perturbed by phiS
+
+		    Raises:
+		"""
 		x_ctrl 			= self.lf.set_initial_control_signal(phi,inst_Freq)		# the filtering at the loop filter is applied to the phase detector signal
 		phi 			= self.vco.delta_perturbation(phi,phiS,x_ctrl)[0]
 		return phi
 
-	def next_magic(self):														# this is the closed-loop case of the free running PLL
-		x_ctrl 			= self.lf.y												# set control signal; here: lf.y = 0 at the beginning
+	def next_magic(self,idx_time,philength,phi):								# this is the closed-loop case of the free running PLL
+		""" Function that evolves the voltage controlled oscillator in a closed loop configuration when there is no external input, i.e., free-running closed loop PLL.
+			1) delayer obtains the current state x of the oscillator itself (potentially delayed by a feedback delay)
+			2) this state is fed in the phase detector and combiner for zero external signal which yields the PD signal x_comb
+			3) the PD signal x_comb is fed into the loop filter and yields the control signal x_ctrl
+			4) the voltage controlled oscillator's next function evolves the phases dependent on the control signal x_ctrl
+
+			Args:
+				int self		identity
+				int idx_time	current time within simulation
+				int philength	length of container that stores the phases of the oscillators, needed for organizing the cyclic memory to handle the delay
+				np.ndarray phi	holds the phases of all oscillators for at least the time [-tau_max, 0], denotes the memory necessary for the time delay
+
+		    Returns:
+				np.ndarray phi	updated with the next time increment
+
+		    Raises:
+		"""
+		x, x_delayed  	= self.delayer.next(idx_time%philength,phi,idx_time)	# this gets the values of a signal x at time t, and time t-tau, from the delayer (x is the matrix phi here)
+		x_comb 		  	= self.pdc.next(x,0,0,idx_time)							# the phase detector signal is computed, antenna input set to zero; COMBINER GETS ABSOLUTE TIME
+		x_ctrl		 	= self.lf.next(x_comb)									# the filtering at the loop filter is applied to the phase detector signal
 		phi 			= self.vco.next(x_ctrl)[0]								# [0] vector-entry zero of the two values returned
 		return phi
 
 	def next_free(self):														# evolve phase of the VCO as if there was no loop, hence x_ctrl = 0.0, i.e., only VCO
+		""" Function that evolves the voltage controlled oscillator when there is no external input, i.e., free-running open loop PLL.
+
+			Args:
+				int self				identity
+
+		    Returns:
+				float phi				the updated phase
+
+		    Raises:
+		"""
 		phi 			= self.vco.next(0.0)[0]
 		return phi
 
@@ -115,7 +260,14 @@ class PhaseLockedLoop:
 
 # LF: y = integral du x(t) * p(t-u)												# this can be expressed in terms of a differential equation with the help of the Laplace transform
 class LowPass:
-	"""A lowpass filter class"""
+	""" A lowpass filter class
+
+		Args:
+
+	    Returns:
+
+	    Raises:
+	"""
 	def __init__(self,idx_self,dictPLL,dictNet):								#,Fc,dt,K,F_Omeg,F,cLF=0,Trelax=0,y=0,y_old=0):
 
 		self.dt      = dictPLL['dt']											# set time-step
@@ -131,17 +283,17 @@ class LowPass:
 		self.instantF  	= None													# instantaneous frequency [Hz]
 		self.fric_coeff = self.set_from_value_or_list(idx_self, dictPLL['friction_coefficient'], dictNet['Nx']*dictNet['Ny']) # friction coefficient
 
-		self.y 			= None													# denotes the control signal, output of the LF: dictPLL['initCtrlSig']
-		self.dydt		= None													# denotes the time derivative of the control signal, output of the LF: dictPLL['initCtrlSig']
+		self.y 			= None													# denotes the control signal, output of the LF
+		self.dydt		= None													# denotes the time derivative of the control signal, output of the LF
 
 		if not self.Fc == None and self.LForder > 0:
 			self.wc 	= 2.0*np.pi*self.Fc										# angular cut-off frequency of the loop filter for a=1, filter of first order
 			self.beta 	= self.dt*self.wc
 			if   self.LForder == 1:
-				print('First order loop filter, a=1.')
+				print('I am the loop filter of PLL%i: first order, a=%i. Friction coefficient set to %0.2f.'%(self.idx, self.LForder, self.fric_coeff))
 				self.evolve = lambda xPD: (1.0-self.beta*self.fric_coeff)*self.y + self.beta*xPD
 			elif self.LForder == 2:
-				print('Second order loop filter, a=2.')
+				print('I am the loop filter of PLL%i: second order, a=%i. Friction coefficient set to %0.2f.'%(self.idx, self.LForder, self.fric_coeff))
 				self.evolve = lambda xPD: self.solve_2nd_orderOrdDiffEq(xPD)
 			elif self.LForder > 2:
 				print('Loop filters of order higher two are NOT implemented. Aborting!'); sys.exit()
@@ -152,7 +304,7 @@ class LowPass:
 			print('Problem in LF class!'); sys.exit()
 
 		a 	   = self.LForder;
-		self.b = 1 / ( 2.0*np.pi*self.Fc * a )									# https://www.electronics-tutorials.ws/filter/filter_2.html	QUESTION CHRIS: cut-off freq wc = 1 / RC or w(@-3dB) = wc sqrt( 2^(1/n) -1 )
+		self.b = 1.0 / ( 2.0*np.pi*self.Fc * a )								# https://www.electronics-tutorials.ws/filter/filter_2.html	QUESTION CHRIS: cut-off freq wc = 1 / RC or w(@-3dB) = wc sqrt( 2^(1/n) -1 )
 		self.t = np.array([0, self.dt])
 
 	#***************************************************************************
@@ -171,15 +323,16 @@ class LowPass:
 	def controlSig(self, t, z, xPD):
 		x = z[0]
 		y = z[1]
-		return [y, (1.0/self.b**2)*(xPD-x)-(2/self.b)*y-self.dydt-self.y*(1+2.0/self.b)]
+		# print('Solving control signal with 2nd order LF. Initial conditions are:', self.dydt, ',\t', self.y*(1+2.0/self.b)); time.sleep(2)
+		return [y, (1.0/self.b**2)*(xPD-x)-(2.0/self.b)*y]	# -self.y-(self.dydt+(2.0*self.y)/self.b)
 
 	def solve_2nd_orderOrdDiffEq(self, xPD):
 																				# optional: try to implement via odeint as shown here: https://www.epythonguru.com/2020/07/second-order-differential-equation.html
 		func = lambda t, z: self.controlSig(t, z, xPD)
 
-		sol = solve_ivp(func, [self.t[0], self.t[-1]], [self.y, self.dydt], method='RK45', t_eval=self.t, dense_output=False, events=None, vectorized=False, rtol = 1e-5)
+		sol = solve_ivp(func, [self.t[0], self.t[1]], [2*self.y/self.b, self.dydt], method='RK45', t_eval=self.t, dense_output=False, events=None, vectorized=False, rtol = 1e-5)
 		#print('sol: ', sol)
-		y 	 		= sol.y[0][1]												# control signal value at time t
+		y 			= sol.y[0][1]												# control signal value at time t
 		self.dydt   = sol.y[1][1]												# derivative of control signal at time t
 		# print('self.y:', self.y, '\ty: ', y, '\tdydt:', self.dydt); time.sleep(1)
 		return y
@@ -189,11 +342,11 @@ class LowPass:
 		#print('REWORK: setting of initial time-derivative of control signal in case of second order LFs.')
 		self.instantF = inst_Freq												# calculate the instantaneous frequency for the last time step of the history
 		#self.y = (self.F_Omeg - self.F) / (self.K)								# calculate the state of the LF at the last time step of the history, it is needed for the simulation of the network
-		if self.K != 0:															# this if-call is fine, since it will only be evaluated once
+		if self.K_Hz != 0:														# this if-call is fine, since it will only be evaluated once
 			self.y 	  = (self.instantF - self.intrF) / (self.K_Hz)				# calculate the state of the LF at the last time step of the history, it is needed for the simulation of the network
 			yNminus1  = (prior_inst_Freq - self.intrF) / (self.K_Hz)			# calculate the state of the LF at the last time step of the history, it is needed for the simulation of the network
 			self.dydt = (self.y - yNminus1) / self.dt							# calculate the change of the state of the LF at the last time step of the history
-			#print('Set initial ctrl signal! self.instantF, self.intrF, self.K_Hz', self.instantF, ' ', self.intrF, ' ', self.K_Hz)
+			print('Set initial ctrl signal! self.instantF, self.intrF, self.K_Hz', self.instantF, ' ', self.intrF, ' ', self.K_Hz)
 		else:
 			self.y = 0.0
 		#print('Set initial control signal of PLL %i to:' %self.idx, self.y)
@@ -213,11 +366,21 @@ class LowPass:
 
 # VCO: d_phi / d_t = omega + K * x
 class VoltageControlledOscillator:
-	"""A voltage controlled oscillator class"""
+	"""A voltage controlled oscillator class
+
+		Args:
+
+	    Returns:
+
+	    Raises:
+	"""
 	def __init__(self,idx_self,dictPLL,dictNet):
 		self.idx_self 	= idx_self												# assigns the index
 		self.Omega 		= 2.0*np.pi*dictPLL['syncF']							# set angular frequency of synchronized state under investigation
-		self.omega 		= 2.0*np.pi*self.set_from_value_or_list(idx_self, dictPLL['intrF'], dictNet['Nx']*dictNet['Ny']) # set intrinsic frequency of the VCO
+		if dictPLL['fric_coeff_PRE_vs_PRR'] == 'PRR':
+			self.omega 	= 2.0*np.pi*self.set_from_value_or_list(idx_self, dictPLL['intrF'], dictNet['Nx']*dictNet['Ny']) # set intrinsic frequency of the VCO
+		elif dictPLL['fric_coeff_PRE_vs_PRR'] == 'PRE':
+			self.omega 	= 2.0*np.pi*self.set_from_value_or_list(idx_self, dictPLL['intrF']/dictPLL['friction_coefficient'], dictNet['Nx']*dictNet['Ny']) # set intrinsic frequency of the VCO
 		self.K 			= 2.0*np.pi*self.set_from_value_or_list(idx_self, dictPLL['coupK'], dictNet['Nx']*dictNet['Ny']) # set coupling strength
 		self.c 			= self.set_from_value_or_list(idx_self, dictPLL['noiseVarVCO'], dictNet['Nx']*dictNet['Ny'])	 # noise strength -- provide the variance of the GWN process
 		self.dt 		= dictPLL['dt']											# set time step with which the equations are evolved
@@ -225,7 +388,17 @@ class VoltageControlledOscillator:
 		self.responVCO	= dictPLL['responseVCO']								# defines a nonlinar VCO response, either set to 'linear' or the nonlinear expression
 		self.idx		= idx_self
 
+		if 	 dictPLL['typeOfHist'] == 'syncState':								# set initial frequency according to the parameter in 1params.txt
+			print('I am the VCO of PLL%i with intrinsic frequency f=%0.2f Hz and K=%0.2f Hz, initially in a synchronized state.'%(self.idx_self, self.omega/(2.0*np.pi), self.K/(2.0*np.pi)))
+			self.init_freq = self.Omega
+		elif dictPLL['typeOfHist'] == 'freeRunning':
+			print('I am the VCO of PLL%i with intrinsic frequency f=%0.2f Hz and K=%0.2f Hz, initially in free running.'%(self.idx_self, self.omega/(2.0*np.pi), self.K/(2.0*np.pi)))
+			self.init_freq = self.omega
+		else:
+			print('\nSet typeOfHist dict entry correctly!'); sys.exit()
+
 		if self.c > 0:															# create noisy VCO output
+			print('VCO output noise is enabled!')
 			if self.responVCO == 'linear':										# this simulates a linear response of the VCO
 				self.evolvePhi = lambda w, K, x_ctrl, c, dt: ( w + K * x_ctrl ) * dt + np.random.normal(loc=0.0, scale=np.sqrt( c * dt ))
 			elif not self.responVCO == 'linear':								# this simulates a user defined nonlinear VCO response
@@ -236,13 +409,6 @@ class VoltageControlledOscillator:
 				self.evolvePhi = lambda w, K, x_ctrl, c, dt: ( w + K * x_ctrl ) * dt
 			elif not self.responVCO == 'linear':
 				self.evolvePhi = lambda w, K, x_ctrl, c, dt: self.responVCO(w, K, x_ctrl) * dt
-
-		if 	 dictPLL['typeOfHist'] == 'syncState':								# set initial frequency according to the parameter in 1params.txt
-			self.init_freq = self.Omega
-		elif dictPLL['typeOfHist'] == 'freeRunning':
-			self.init_freq = self.omega
-		else:
-			print('\nSet typeOfHist dict entry correctly!'); sys.exit()
 
 		test = self.evolvePhi(self.omega, self.K, 0.01, self.c, self.dt)
 		if not ( isinstance(test, float) or isinstance(test, int) ):
@@ -297,7 +463,14 @@ class VoltageControlledOscillator:
 # y = 1 / n * sum h( x_delayed_neighbours - x_self )
 # print('Phasedetector and Combiner: sawtooth')
 class PhaseDetectorCombiner:													# this class creates PD objects, these are responsible to detect the phase differences and combine the results
-	"""A phase detector and combiner class"""									# of different inputs (coupling partners)
+	"""A phase detector and combiner class
+
+		Args:
+
+	    Returns:
+
+	    Raises:
+	"""
 	def __init__(self,idx_self,dictPLL,dictNet):
 		# print('Phasedetector and Combiner: sin(x)')
 		self.idx_self 		= idx_self											# assigns the index
@@ -313,7 +486,7 @@ class PhaseDetectorCombiner:													# this class creates PD objects, these 
 		self.actRx			= 0													# PLL dynamic independent of antenna input
 
 		self.idx_neighbors 	= [n for n in dictPLL['G'].neighbors(self.idx_self)]# for networkx > v1.11
-		print('I am PLL %i, my neighbors have indexes:'%self.idx_self, self.idx_neighbors)
+		print('I am the phase detector of PLL%i, the frequency division is %i:'%(self.idx_self, self.div))
 		if isinstance(dictPLL['gPDin'], np.ndarray) or isinstance(dictPLL['gPDin'], list):
 			tempG_kl 		= [dictPLL['gPDin'][self.idx_self,i] for i in self.idx_neighbors]# pick the entries
 			self.G_kl		= np.array(tempG_kl)							# the gain of each individual input gain, together with heterogeneous coupling strength: K_kl
@@ -324,9 +497,10 @@ class PhaseDetectorCombiner:													# this class creates PD objects, these 
 			self.G_kl = 1
 
 		if dictPLL['includeCompHF'] == False:
-
+			print('High frequency components assumed to be ideally damped!')
 			# depending on the coupling function for the Kuramoto like model with ideally damped HF terms this implements an XOR (triangular) or mixer PD (cos/sin)
 			if dictPLL['antenna'] == True and dictPLL['extra_coup_sig'] == None:
+				print('Extra signal to coupling!')
 				self.compute	= lambda x_ext, ant_in, x_feed, idx_time:  np.mean( self.G_kl * self.h( ( x_ext - x_feed ) / self.div ) + self.actRx * self.h( ant_in - x_feed / self.div ) )
 			elif dictPLL['antenna'] == False and dictPLL['extra_coup_sig'] == 'injection2ndHarm':
 				print('Setup PLL with injection locking signal! Initial self.K2nd_k=', self.K2nd_k, 'Hz');
@@ -345,7 +519,7 @@ class PhaseDetectorCombiner:													# this class creates PD objects, these 
 				#self.compute	= lambda x_ext, ant_in, x_feed, idx_time:  np.mean( self.G_kl * self.h( ( x_ext - x_feed ) / self.div ) ) - np.mean ( self.K2nd_k * self.h( ( 2 * np.append(x_ext, x_feed) ) / self.div ) )
 				#self.compute	= lambda x_ext, ant_in, x_feed, idx_time:  np.mean( self.G_kl * self.h( ( 2 * x_ext - x_feed ) / self.div ) )
 			else:
-				print('Simulating coupling function of phase-differences.')
+				print('Simulating coupling function h(.) of the phase-differences as specified in dictPLL. The individial feed-forward path gains are G_%il=%0.2f'%(self.idx_self, self.G_kl))
 				self.compute	= lambda x_ext, ant_in, x_feed, idx_time:  np.mean( self.G_kl * self.h( ( x_ext - x_feed ) / self.div ) )
 
 		elif dictPLL['includeCompHF'] == True:
@@ -426,14 +600,21 @@ class PhaseDetectorCombiner:													# this class creates PD objects, these 
 
 # delayer
 class Delayer:
-	"""A delayer class"""
+	"""A delayer class
+
+		Args:
+
+	    Returns:
+
+	    Raises:
+	"""
 	def __init__(self,idx_self,dictPLL,dictNet,dictData): #delay,dt,feedback_delay,std_dist_delay)
 
 		self.dt				= dictPLL['dt']
 		self.idx_self		= idx_self
 		self.phi_array_len  = None												# this is being set after all (random) delays have been drawn
 		self.idx_neighbors = [n for n in dictPLL['G'].neighbors(self.idx_self)]# for networkx > v1.11
-		print('I am the delayer of PLL %i, my neighbors have indexes:'%self.idx_self, self.idx_neighbors)
+		print('\nI am the delayer of PLL%i, my neighbors have indexes:'%self.idx_self, self.idx_neighbors)
 		self.temp_array 	= np.zeros(dictNet['Nx']*dictNet['Ny'])				# use to collect tau_kl for PLL k
 
 		if ( ( isinstance(dictPLL['transmission_delay'], float) or isinstance(dictPLL['transmission_delay'], int) ) and not dictNet['special_case'] == 'timeDepTransmissionDelay'):
@@ -517,7 +698,14 @@ class Delayer:
 
 # antenna
 class Antenna:
-	"""A antenna class"""
+	"""A antenna class
+
+		Args:
+
+	    Returns:
+
+	    Raises:
+	"""
 	def __init__(self,idx_self,dictPLL,dictNet):
 
 		self.dt			 = dictPLL['dt']
@@ -551,7 +739,14 @@ class Antenna:
 
 # counter
 class Counter:
-	"""A counter class"""
+	"""A counter class
+
+		Args:
+
+	    Returns:
+
+	    Raises:
+	"""
 	def __init__(self,idx_self,dictPLL):
 
 		self.phase_init = 0

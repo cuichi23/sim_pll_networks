@@ -209,10 +209,10 @@ class SweepFactory(object):
 		self.fric		= dictPLL['friction_coefficient']
 		self.dummy		= np.array([self.n])
 
-		if dictPLL['fric_coeff_PRE_vs_PRR'] == 'PRR':							# distinguish between the Kuramoto model as in the PRR paper Wetzel, Metevier, Gupta or the PRE paper Prousalis, Wetzel
-			self.fric_omega = 1
-		elif dictPLL['fric_coeff_PRE_vs_PRR'] == 'PRE':
-			self.fric_omega = 1/self.fric
+		if dictPLL['fric_coeff_PRE_vs_PRR'] == 'PRE':							# distinguish between the Kuramoto model as in the PRR paper Wetzel, Metevier, Gupta or the PRE paper Prousalis, Wetzel
+			self.fric_omega = 1.0												# PRE: Omega = omega/gamma + K/gamma * h[-Omega Tau], while PRR: Omega = omega + K/gamma * h[-Omega Tau]
+		elif dictPLL['fric_coeff_PRE_vs_PRR'] == 'PRR':
+			self.fric_omega = 1.0/self.fric
 
 		# if parameters provided in rad*Hz
 		if isRadians:

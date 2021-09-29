@@ -36,13 +36,13 @@ def getDicts(Fsim=125):
 		'my': -999,																# twist/chequerboard in y-direction
 		'topology': 'ring',														# 1d) ring, chain, 2d) square-open, square-periodic, hexagonal...
 																				# 3) global, entrainOne, entrainAll, entrainPLLsHierarch, compareEntrVsMutual
-		'Tsim': 250,															# simulation time in multiples of the period
-		'computeFreqAndStab': True,												# compute linear stability and global frequency if possible: True or False
+		'Tsim': 15000,															# simulation time in multiples of the period
+		'computeFreqAndStab':  False,											# compute linear stability and global frequency if possible: True or False
 		'phi_array_mult_tau': 1,												# how many multiples of the delay is stored of the phi time series
-		'phiPerturb': [0, 0.1],#[0, -0.001, 0, 0, 0.001, 0, 0, -0.001, 0],		# delta-perturbation on initial state -- PROVIDE EITHER ONE OF THEM! if [] set to zero
-		'phiPerturbRot': [],													# delta-perturbation on initial state -- in rotated space
+		'phiPerturb': [],		#[0, -0.001, 0, 0, 0.001, 0, 0, -0.001, 0],		# delta-perturbation on initial state -- PROVIDE EITHER ONE OF THEM! if [] set to zero
+		'phiPerturbRot': [0., 0.1],													# delta-perturbation on initial state -- in rotated space
 		'phiInitConfig': [],													# phase-configuration of sync state,  []: automatic, else provide list
-		'freq_beacons': 0.25,													# frequency of external sender beacons, either a float or a list
+		'freq_beacons': 0.1,													# frequency of external sender beacons, either a float or a list
 		'special_case': 'False',#'timeDepTransmissionDelay',					# 'False', or 'test_case', 'timeDepInjectLockCoupStr', 'timeDepTransmissionDelay', 'timeDepChangeOfCoupStr'
 		'typeOfTimeDependency': 'linear',										# 'exponential', 'linear', 'quadratic', 'triangle', 'cosine'
 		'min_max_rate_timeDepPara': [0.15, 3.85, 0.4/100]						# provide a list with min, max and rate of the time-dependent parameter
@@ -55,21 +55,21 @@ def getDicts(Fsim=125):
 		'gPDin': 1,																# gains of the different inputs to PD k from input l -- G_kl, see PD, set to 1 and all G_kl=1 (so far only implemented for some cases, check!): np.random.uniform(0.95,1.05,size=[dictNet['Nx']*dictNet['Ny'],dictNet['Nx']*dictNet['Ny']])
 		'gPDin_symmetric': True,												# set to True if G_kl == G_lk, False otherwise
 		'cutFc': 0.014,	# LF cut-off frequency in Hz, None for no LF, or e.g., N=9 with mean 0.015: [0.05,0.015,0.00145,0.001,0.0001,0.001,0.00145,0.015,0.05], [0.0148, 0.0148, 0.0957, 0.0957, 0.0148, 0.0148, 0.0957, 0.0957, 0.0148, 0.0148, 0.0957, 0.0957, 0.0148, 0.0148, 0.0957, 0.0957] # [0.0148, 0.0957, 0.0148, 0.0957, 0.0148, 0.0957, 0.0148, 0.0957, 0.0148, 0.0957, 0.0148, 0.0957, 0.0148, 0.0957, 0.0148, 0.0957], #
-		'orderLF': 1,															# order of LF filter, either 1 or 2 at the moment (not compatible with synctools!)
+		'orderLF': 2,															# order of LF filter, either 1 or 2 at the moment (not compatible with synctools!)
 		'div': 1,																# divisor of divider (int)
-		'friction_coefficient': 2,												# friction coefficient of 2nd order Kuramoto models
-		'fric_coeff_PRE_vs_PRR': 'PRR',											# 'PRR': friction coefficient multiplied to instant. AND intrin. freq, 'PRE': friction coefficient multiplied only to instant. freq
-		'noiseVarVCO': 0E-9,													# variance of VCO GWN
+		'friction_coefficient': 1,												# friction coefficient of 2nd order Kuramoto models
+		'fric_coeff_PRE_vs_PRR': 'PRE',											# 'PRR': friction coefficient multiplied to instant. AND intrin. freq, 'PRE': friction coefficient multiplied only to instant. freq
+		'noiseVarVCO': 0,														# variance of VCO GWN
 		'feedback_delay': 0,													# value of feedback delay in seconds
 		'feedback_delay_var': None, 											# variance of feedback delay
-		'transmission_delay': 0.1, 												# value of transmission delay in seconds, float (single), list (tau_k) or list of lists (tau_kl): np.random.uniform(min,max,size=[dictNet['Nx']*dictNet['Ny'],dictNet['Nx']*dictNet['Ny']]), OR [np.random.uniform(min,max) for i in range(dictNet['Nx']*dictNet['Ny'])]
+		'transmission_delay': 0.25, #5.0, 												# value of transmission delay in seconds, float (single), list (tau_k) or list of lists (tau_kl): np.random.uniform(min,max,size=[dictNet['Nx']*dictNet['Ny'],dictNet['Nx']*dictNet['Ny']]), OR [np.random.uniform(min,max) for i in range(dictNet['Nx']*dictNet['Ny'])]
 		'transmission_delay_var': None, 										# variance of transmission delays
 		'distribution_for_delays': None,										# from what distribution are random delays drawn?
 		# choose from coupfct.<ID>: sine, cosine, neg_sine, neg_cosine, triangular, deriv_triangular, square_wave, pfd, inverse_cosine, inverse_sine
 		'coup_fct_sig': coupfct.sine, #coupfct.triangular,						# coupling function h(x) for PLLs with ideally filtered PD signals:
 		'derivative_coup_fct': coupfct.cosine,									# derivative h'(x) of coupling function h(x)
 		'includeCompHF': False,													# boolean True/False whether to simulate with HF components
-		'vco_out_sig': coupfct.square_wave,										# for HF case, e.g.: coupfct.sine or coupfct.square_wave
+		'vco_out_sig': coupfct.sine,										# for HF case, e.g.: coupfct.sine or coupfct.square_wave
 		'typeVCOsig': 'analogHF',												# 'analogHF' or 'digitalHF'
 		'responseVCO': 'linear',												# either string: 'linear' or a nonlinear function of omega, Kvco, e.g., lambda w, K, ...: expression
 		'antenna': False,														# boolean True/False whether antenna present for PLLs
@@ -80,18 +80,35 @@ def getDicts(Fsim=125):
 		'antenna_sig': coupfct.sine,											# type of signal received by the antenna
 		'extra_coup_sig': None,													# choose from: 'injection2ndHarm', None
 		'coupStr_2ndHarm': 0.6,													# the coupling constant for the injection of the 2nd harmonic: float, will be indepent of 'coupK'
-		'typeOfHist': 'syncState',#'freeRunning',								# string, choose from: 'freeRunning', 'syncState'
+		'typeOfHist': 'syncState',#'freeRunning',#								# string, choose from: 'freeRunning', 'syncState'
 		'sampleF': Fsim,														# sampling frequency
-		'sampleFplot': 5,														# sampling frequency for reduced plotting (every sampleFplot time step)
+		'sampleFplot': 1,														# sampling frequency for reduced plotting (every sampleFplot time step)
 		'treshold_maxT_to_plot': 1E6,											# maximum number of periods to plot for some plots
-		'percentPeriodsAverage': 0.7											# average of *percentPeriodsAverage* % of simulated periods
+		'percentPeriodsAverage': 0.25											# average of *percentPeriodsAverage* % of simulated periods
 	}
 
 	dictAlgo={
 		'bruteForceBasinStabMethod': 'listOfInitialPhaseConfigurations',		# pick method for setting realizations 'classicBruteForceMethodRotatedSpace', 'listOfInitialPhaseConfigurations'
-		'paramDiscretization': [5, 3],#3												# parameter discetization for brute force parameter space scans
+		'paramDiscretization': [5, 3],#3										# parameter discetization for brute force parameter space scans
 		'min_max_range_detuning': [0.95, 1.05]									# specifies within which min and max value to linspace the detuning
 	}
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	if dictPLL['coup_fct_sig'] == coupfct.triangular or dictPLL['coup_fct_sig'] == coupfct.deriv_triangular or dictPLL['coup_fct_sig'] == coupfct.square_wave or dictPLL['coup_fct_sig'] == coupfct.pfd:
+		if dictPLL['vco_out_sig'] == coupfct.sine:
+			print('A coupling function associated to oscillators with DIGITAL output is chosen. Current PSD choice is only to analyze first harmonic contribution! Switch to full digital [y]?')
+			choice = choose_yes_no()
+			if choice == 'y':
+				dictPLL.update({'vco_out_sig': coupfct.square_wave})
+			elif choice == 'n':
+				dictPLL.update({'vco_out_sig': coupfct.sine})
+	elif dictPLL['coup_fct_sig'] == coupfct.sine or dictPLL['coup_fct_sig'] == coupfct.cosine:
+		if dictPLL['vco_out_sig'] == coupfct.square_wave:
+			print('A coupling function associated to oscillators with ANALOG output is chosen. Current PSD choice is to analyze a square wave signal of the phase! Switch to sine wave [y]?')
+			choice = choose_yes_no()
+			if choice == 'y':
+				dictPLL.update({'vco_out_sig': coupfct.sine})
+			elif choice == 'n':
+				dictPLL.update({'vco_out_sig': coupfct.square_wave})
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	# calculate other parameters and test for incompatibilities
 	dictPLL.update({'dt': 1.0/dictPLL['sampleF']})
@@ -170,8 +187,9 @@ def getDicts(Fsim=125):
 	elif dictNet['computeFreqAndStab'] and dictPLL['orderLF'] > 1:
 		print('In dicts_<NAME>: Synctools prediction not available for second order LFs!'); sys.exit();
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 	dictNet = set_max_delay_for_time_dependentTau(dictPLL, dictNet)
-	check_consistency_initPert(dictNet)
+	dictNet = check_consistency_initPert(dictNet)
 	print('Setup (dictNet, dictPLL):', dictNet, dictPLL)
 
 	return dictPLL, dictNet, dictAlgo
@@ -182,6 +200,18 @@ def set_max_delay_for_time_dependentTau(dictPLL, dictNet):
 	if dictNet['special_case'] == 'timeDepTransmissionDelay':
 		dictNet.update({'max_delay_steps': int(np.round(dictNet['min_max_rate_timeDepPara'][1]/dictPLL['dt']))})
 	return dictNet
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+def choose_yes_no():															# ask user-input
+	a_true = True
+	while a_true:
+		# get user input which of the possible cases to simulate
+		choice = input('Choose [y]es or [n]o: ')
+		if isinstance(choice, str) and ( choice == 'y' or choice == 'n'):
+			break
+		else:
+			print('Please provide answer as indicated by brackets, i.e., from {y, n}!')
+
+	return str(choice)
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 def chooseSolution(para_mat):													# ask user-input for which solution to simulate
 	a_true = True
@@ -196,7 +226,7 @@ def chooseSolution(para_mat):													# ask user-input for which solution to
 	return int(choice)
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 def check_consistency_initPert(dictNet):
-	if len(dictNet['phiPerturb']) != dictNet['Nx']*dictNet['Ny']:
+	if len(dictNet['phiPerturb']) != dictNet['Nx']*dictNet['Ny'] and len(dictNet['phiPerturbRot']) != dictNet['Nx']*dictNet['Ny']:
 		userIn = input('No initial perturbation defined, choose from [manual, allzero, iid]: ')
 		if userIn == 'manual':
 			a_true = True
@@ -219,3 +249,4 @@ def check_consistency_initPert(dictNet):
 			dictNet.update({'phiPerturb': (np.random.rand(dictNet['Nx']*dictNet['Ny'])*np.abs((upperPertBound-lowerPertBound))-lowerPertBound).tolist()})
 		else:
 			return None
+	return dictNet

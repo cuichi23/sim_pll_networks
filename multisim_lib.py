@@ -116,7 +116,6 @@ def simulateSystem(dictNet, dictPLL, dictAlgo=None):
 	#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	''' SET INITIAL HISTORY AND PERTURBATION '''
 	# start by setting last entries to initial phase configuration, i.e., phiInitConfig + phiPerturb
-
 	print('The perturbation will be set to dictNet[*phiPerturb*]=', dictNet['phiPerturb'], ', and dictNet[*phiInitConfig*]=', dictNet['phiInitConfig'])
 
 	if not ( isinstance(dictNet['phiPerturb'], list) or isinstance(dictNet['phiPerturb'], np.ndarray) ):
@@ -129,26 +128,37 @@ def simulateSystem(dictNet, dictPLL, dictAlgo=None):
 		print('len(phi[0,:])', len(phi[0,:]), '\t len(dictNet[*phiInitConfig*])', len(dictNet['phiInitConfig']))
 		print('Provide initial phase-configuration of length %i to setup simulation!' %len(phi[dictNet['max_delay_steps'],:])); sys.exit()
 
+	## TESTS!
+	# plt.plot(phi[:,0], 'o'); plt.plot(phi[:,1], 'd'); plt.draw(); plt.show();
+
 	#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	''' SET THE INTERNAL PHI VARS OF THE VCO TO THEIR INITIAL VALUE '''
-	for i in range(len(pll_list)):
-		pll_list[i].vco.phi = phi[dictNet['max_delay_steps'],i]
-	#print('VCOs internal phis are set to:', [pll.vco.phi for pll in pll_list])
+	for i in range(len(pll_list)):												# set initial phases at time equivalent to the time-delay, then setup the history from there
+		pll_list[i].vco.phi = phi[max_delay_steps,i]
+	# print('VCOs internal phis are set to:', [pll.vco.phi for pll in pll_list]); sys.exit()
 
 	# if uncoupled history, just evolve backwards in time until the beginning of the phi container is reached
 	if dictPLL['typeOfHist'] == 'freeRunning':									# in the 'uncoupled' case the oscillators evolve to the perturbed state during the history
-		for i in range(dictNet['max_delay_steps']+1,0,-1):
+		for i in range(max_delay_steps+1,0,-1):
 			#print('i-1',i-1)
 			phi[i-1,:] = [pll.setup_hist_reverse() for pll in pll_list]
 	elif dictPLL['typeOfHist'] == 'syncState':									# in the 'syncstate' case the oscillators evolve as if synced and then receive a delta perturbation
-		phi[dictNet['max_delay_steps']-1,:] = list( map(sub, [pll.setup_hist_reverse() for pll in pll_list], dictNet['phiPerturb']) )  # since we want a delta perturbation, the perturbation is removed towards the prior step
+		# since we want a delta perturbation, the perturbation is removed towards the prior step
+		phi[max_delay_steps-1,:] = list( map(sub, [pll.setup_hist_reverse() for pll in pll_list], dictNet['phiPerturb']) ) # local container to help the setup
+
 		for i in range(len(pll_list)):
-			pll_list[i].vco.phi = phi[dictNet['max_delay_steps']-1,i]						# set this step as initial for reverse history setup
-		for i in range(dictNet['max_delay_steps']-1,0,-1):
+			pll_list[i].vco.phi = phi[max_delay_steps-1,i]						# set this step as initial for reverse history setup
+		# print('VCOs internal phis are set to:', [pll.vco.phi for pll in pll_list]); sys.exit()
+		for i in range(max_delay_steps-1,0,-1):
 			#print('i-1',i-1)
 			phi[i-1,:] = [pll.setup_hist_reverse() for pll in pll_list]
+		for i in range(len(pll_list)):
+			pll_list[i].vco.phi = phi[max_delay_steps,i]
 	else:
-		print('Specify the type of history, so far syncState or freeRunning supported!'); sys.exit()
+		print('Specify the type of history, syncState or freeRunning supported!'); sys.exit()
+
+	## TESTS!
+	#plt.plot(phi[:,0], 'o'); plt.plot(phi[:,1], 'd'); plt.draw(); plt.show();
 
 	#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	''' SHIFT ALL PHASES UP SUCH THAT AT t=-tau ALL ARE ABOVE ZERO '''
@@ -162,8 +172,12 @@ def simulateSystem(dictNet, dictPLL, dictAlgo=None):
 	''' SET INITIAL CONTROL SIGNAL, ACCORDING AND CONSISTENT TO HISTORY WRITTEN, CORRECT INTERNAL PHASES OF VCO AND CLOCK '''
 	for i in range(len(pll_list)):
 		if max_delay_steps >= int(dictPLL['orderLF']):
-			pll_list[i].lf.set_initial_control_signal( ( phi[max_delay_steps-0,i]-phi[max_delay_steps-1,i] ) / (2.0*np.pi*dictPLL['dt']),
+			#print('last freqs:', ( phi[max_delay_steps-0,i]-phi[max_delay_steps-1,i]-dictNet['phiPerturb'][i] ) / (2.0*np.pi*dictPLL['dt']), ( phi[max_delay_steps-1,i]-phi[max_delay_steps-2,i] ) / (2.0*np.pi*dictPLL['dt']));
+			pll_list[i].lf.set_initial_control_signal( ( phi[max_delay_steps-0,i]-phi[max_delay_steps-1,i]-dictNet['phiPerturb'][i] ) / (2.0*np.pi*dictPLL['dt']),
 													   ( phi[max_delay_steps-1,i]-phi[max_delay_steps-2,i] ) / (2.0*np.pi*dictPLL['dt']) )
+		# NOTE: very important, the delta-like phase perturbation needs to be accounted for when calculating the instantaneous frequency of the last time step before simulation,
+ 		#		here first argument of lf.set_initial_control_signal()
+
 		elif max_delay_steps < int(dictPLL['orderLF']) and ( int(dictPLL['orderLF']) == 2 or int(dictPLL['orderLF']) == 1 ):
 			if dictPLL['typeOfHist'] == 'freeRunning':							# set the frequencyies in the past to determine the LF filter state for no delay
 				inst_freq_lastStep			= dictPLL['intrF'] + np.random.normal(loc=0.0, scale=np.sqrt( dictPLL['noiseVarVCO'] * dictPLL['dt'] ))
@@ -175,8 +189,14 @@ def simulateSystem(dictNet, dictPLL, dictAlgo=None):
 		else:
 			print('in simPLL.lib: Higher order LFs are net yet supported!')
 		# print('Set internal initial VCO phi at t-dt for PLL %i:'%i, phi[max_delay_steps,i])
-		pll_list[i].vco.phi = phi[max_delay_steps,i]
+		#pll_list[i].vco.phi = phi[max_delay_steps,i]
 		pll_list[i].counter.phase_init = phi[max_delay_steps,i]
+
+	## TESTS!
+	# print('dictNet[*max_delay_steps*]', dictNet['max_delay_steps'], '\tmax_delay_steps:', max_delay_steps, '\tlen(phi): ', len(phi))
+	# print('history: ', phi[0:dictNet['max_delay_steps'],:])
+	# plt.plot(phi[:,0], 'o'); plt.plot(phi[:,1], 'd'); plt.draw(); plt.show();
+	#sys.exit()
 
 	#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	''' NOW SIMULATE THE SYSTEM AFTER HISTORY IS SET '''

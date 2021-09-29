@@ -658,7 +658,8 @@ class SyncStateFactory(object):
 		v = self.sys.pll.v
 		fric = self.sys.pll.fric
 		fric_omega = self.sys.pll.fric_omega
-		#print('IN SYNCTOOLS: fric=', fric)
+		#print('IN SYNCTOOLS: fric      =', fric)
+		#print('IN SYNCTOOLS: fric_omega=', fric_omega)
 
 		# Determine min and max values for coupling sum function
 		h_min = self.sys.g.func.min()

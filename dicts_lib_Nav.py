@@ -158,7 +158,7 @@ def getDicts(Fsim=125):
 		print('In dicts_<NAME>: Synctools prediction not available for second order LFs!'); sys.exit();
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-	check_consistency_initPert(dictNet)
+	dictNet = check_consistency_initPert(dictNet)
 	print('Setup (dictNet, dictPLL):', dictNet, dictPLL)
 
 	return dictPLL, dictNet, dictAlgo
@@ -201,3 +201,4 @@ def check_consistency_initPert(dictNet):
 			dictNet.update({'phiPerturb': (np.random.rand(dictNet['Nx']*dictNet['Ny'])*np.abs((upperPertBound-lowerPertBound))-lowerPertBound).tolist()})
 		else:
 			return None
+	return dictNet

@@ -26,15 +26,15 @@ import coupling_fct_lib as coupfct
 ''' Set system and network parameters here, be careful as there are no sanity checks! This can be improved in the future. '''
 
 dictNet={
-	'Nx': 3,																	# oscillators in x-direction
-	'Ny': 3,																	# oscillators in y-direction
+	'Nx': 2,																	# oscillators in x-direction
+	'Ny': 1,																	# oscillators in y-direction
 	'mx': 0	,																	# twist/chequerboard in x-direction (depends on closed or open boundary conditions)
-	'my': 0,																	# twist/chequerboard in y-direction
+	'my': -999,																	# twist/chequerboard in y-direction
 	'Tsim': 100,
-	'topology': 'square-open',#'square-open',													# 1d) ring, chain, 2d) square-open, square-periodic, hexagonal...
+	'topology': 'ring',#'square-open',#'square-open',													# 1d) ring, chain, 2d) square-open, square-periodic, hexagonal...
 																				# 3) global, entrainOne, entrainAll, entrainPLLsHierarch, compareEntrVsMutual
-	'zeta': [-1, -0.5, 0.5],		#[-0.5, 0.25],								# real part of eigenvalue of slowest decaying perturbation mode for the set of parameters, also a fct. of tau!
-	'psi': [np.pi, np.pi, 0.0],		#[np.pi, 0],								# real part of eigenvalue of slowest decaying perturbation
+	'zeta': [-1], #[-1, -0.5, 0.5],		#[-0.5, 0.25],								# real part of eigenvalue of slowest decaying perturbation mode for the set of parameters, also a fct. of tau!
+	'psi': [np.pi], #[np.pi, np.pi, 0.0],		#[np.pi, 0],								# real part of eigenvalue of slowest decaying perturbation
 	'computeFreqAndStab': True,													# compute linear stability and global frequency if possible: True or False
 	'calcSynctoolsStab': True													# also calclate stability from synctools - time consuming!
 }
@@ -44,9 +44,9 @@ dictPLL={
 	'intrF': 1.0,																# intrinsic frequency in Hz
 	'syncF': 1.0,																# frequency of synchronized state in Hz
 	'coupK': 0.2, #0.0004,														# [random.uniform(0.3, 0.4) for i in range(dictNet['Nx']*dictNet['Ny'])],# coupling strength in Hz float or [random.uniform(minK, maxK) for i in range(dictNet['Nx']*dictNet['Ny'])]
-	'cutFc': 0.00035, # 0.0008 ,#0.1,											# LF cut-off frequency in Hz, None for no LF, or e.g., N=9 with mean 0.015: [0.05,0.015,0.00145,0.001,0.0001,0.001,0.00145,0.015,0.05]
-	'div': 64, #1024,															# divisor of divider (int)
-	'friction_coefficient': 1,													# friction coefficient of 2nd order Kuramoto models
+	'cutFc': 0.014, # 0.0008 ,#0.1,											# LF cut-off frequency in Hz, None for no LF, or e.g., N=9 with mean 0.015: [0.05,0.015,0.00145,0.001,0.0001,0.001,0.00145,0.015,0.05]
+	'div': 1, #1024,															# divisor of divider (int)
+	'friction_coefficient': 2,													# friction coefficient of 2nd order Kuramoto models
 	'fric_coeff_PRE_vs_PRR': 'PRE',												# 'PRR': friction coefficient multiplied to instant. AND intrin. freq, 'PRE': friction coefficient multiplied only to instant. freq
 	'feedback_delay': 0,														# value of feedback delay in seconds
 	'feedback_delay_var': None, 												# variance of feedback delay
@@ -150,7 +150,7 @@ paramsDict = {'h': h, 'hp': hp, 'w': w, 'K': K, 'wc': wc, 'fric': fric, 'Omeg': 
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ plot Omega as parameter plot in the tau - K plot
 
-#		 makePlotsFromSynctoolsResults(figID, x, y,  z, rescale_x, rescale_y, rescale_z, x_label, y_label, z_label, x_identifier, y_identifier, z_identifier)
+# makePlotsFromSynctoolsResults(figID, x, y,  z, rescale_x, rescale_y, rescale_z, x_label, y_label, z_label, x_identifier, y_identifier, z_identifier)
 paraPlot.makePlotsFromSynctoolsResults(100, tau, K, OmegInTauVsK, w/(2.0*np.pi), 1.0/w, 1.0,
 				r'$\frac{\omega\tau}{2\pi}$', r'$\frac{K}{\omega}$', r'$\Omega$', 'tau', 'K', 'Omeg', None, cm.coolwarm)
 if dictNet['calcSynctoolsStab']:

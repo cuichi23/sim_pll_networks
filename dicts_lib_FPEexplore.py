@@ -98,6 +98,23 @@ def getDicts(Fsim=125):
 		'min_max_range_detuning': [0.95, 1.05]									# specifies within which min and max value to linspace the detuning
 	}
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	if dictPLL['coup_fct_sig'] == coupfct.triangular or dictPLL['coup_fct_sig'] == coupfct.deriv_triangular or dictPLL['coup_fct_sig'] == coupfct.square_wave or dictPLL['coup_fct_sig'] == coupfct.pfd:
+		if dictPLL['vco_out_sig'] == coupfct.sine:
+			print('A coupling function associated to oscillators with DIGITAL output is chosen. Current PSD choice is only to analyze first harmonic contribution! Switch to full digital [y]?')
+			choice = choose_yes_no()
+			if choice == 'y':
+				dictPLL.update({'vco_out_sig': coupfct.square_wave})
+			elif choice == 'n':
+				dictPLL.update({'vco_out_sig': coupfct.sine})
+	elif dictPLL['coup_fct_sig'] == coupfct.sine or dictPLL['coup_fct_sig'] == coupfct.cosine:
+		if dictPLL['vco_out_sig'] == coupfct.square_wave:
+			print('A coupling function associated to oscillators with ANALOG output is chosen. Current PSD choice is to analyze a square wave signal of the phase! Switch to sine wave [y]?')
+			choice = choose_yes_no()
+			if choice == 'y':
+				dictPLL.update({'vco_out_sig': coupfct.sine})
+			elif choice == 'n':
+				dictPLL.update({'vco_out_sig': coupfct.square_wave})
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	# calculate other parameters and test for incompatibilities
 	dictPLL.update({'dt': 1.0/dictPLL['sampleF']})
 	if ( isinstance(dictPLL['gPDin'], np.ndarray) and dictPLL['gPDin_symmetric']):
@@ -164,7 +181,7 @@ def getDicts(Fsim=125):
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 	dictNet = set_max_delay_for_time_dependentTau(dictPLL, dictNet)
-	check_consistency_initPert(dictNet)
+	dictNet = check_consistency_initPert(dictNet)
 	print('Setup (dictNet, dictPLL):', dictNet, dictPLL)
 
 	return dictPLL, dictNet, dictAlgo
@@ -212,3 +229,4 @@ def check_consistency_initPert(dictNet):
 			dictNet.update({'phiPerturb': (np.random.rand(dictNet['Nx']*dictNet['Ny'])*np.abs((upperPertBound-lowerPertBound))-lowerPertBound).tolist()})
 		else:
 			return None
+	return dictNet

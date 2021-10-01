@@ -171,7 +171,7 @@ def calculateEigenvalues(dictNet, dictPLL):
 ################################################################################
 
 ''' CALCULATE SPECTRUM '''
-def calcSpectrum( phi, dictPLL, dictNet, percentOfTsim=0.75 ): #phi,Fsample,couplingfct,waveform=None,expectedFreq=-999,evalAllRealizations=False,decayTimeSlowestMode=None
+def calcSpectrum( phi, dictPLL, dictNet, percentOfTsim=0.5 ): #phi,Fsample,couplingfct,waveform=None,expectedFreq=-999,evalAllRealizations=False,decayTimeSlowestMode=None
 
 	Pxx_dBm=[]; Pxx_dBV=[]; f=[];
 	windowset='hamming' #'hamming' #'hamming', 'boxcar'

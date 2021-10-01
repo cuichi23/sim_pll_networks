@@ -90,7 +90,7 @@ def getDicts(Fsim=125):
 	dictAlgo={
 		'bruteForceBasinStabMethod': 'listOfInitialPhaseConfigurations',		# pick method for setting realizations 'classicBruteForceMethodRotatedSpace', 'listOfInitialPhaseConfigurations'
 		'paramDiscretization': [5, 3],#3										# parameter discetization for brute force parameter space scans
-		'min_max_range_detuning': [0.95, 1.05]									# specifies within which min and max value to linspace the detuning
+		'min_max_range_parameter': [0.95, 1.05]									# specifies within which min and max value to linspace the detuning
 	}
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	if dictPLL['coup_fct_sig'] == coupfct.triangular or dictPLL['coup_fct_sig'] == coupfct.deriv_triangular or dictPLL['coup_fct_sig'] == coupfct.square_wave or dictPLL['coup_fct_sig'] == coupfct.pfd:
@@ -135,12 +135,12 @@ def getDicts(Fsim=125):
 	#	print('Recheck paramater combinations in dictPLL: set to analogHF while coupling function of digital PLL choosen.'); sys.exit()
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	if ( isinstance(dictAlgo['paramDiscretization'], list) or isinstance(dictAlgo['paramDiscretization'], np.ndarray) ):
-		if ( isinstance(dictAlgo['min_max_range_detuning'], np.float) or isinstance(dictAlgo['min_max_range_detuning'], np.int) ):
+		if ( isinstance(dictAlgo['min_max_range_parameter'], np.float) or isinstance(dictAlgo['min_max_range_parameter'], np.int) ):
 			print('NOTE: in multisim_lib, the case listOfInitialPhaseConfigurations needs a minimum and maximum intrinsic frequency, e.g., [wmin, wmax]! Please povide.'); sys.exit()
 
 			# Implement that here, see below for perturbations!
 
-			#dictAlgo.update({'min_max_range_detuning': [0.99*dictPLL['intrF'], 1.01*dictPLL['intrF']]})
+			#dictAlgo.update({'min_max_range_parameter': [0.99*dictPLL['intrF'], 1.01*dictPLL['intrF']]})
 		else:
  			print('NOTE: in multisim_lib, the minimum and maximum intrinsic frequency, [wmin, wmax] are used to calculate all initial detunings (including that with 0).')
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -160,10 +160,10 @@ def getDicts(Fsim=125):
 			dictPLLsyncTool.update({'coupK': 				np.mean(dictPLL['coupK'])})
 			dictPLLsyncTool.update({'transmission_delay': 	np.mean(dictPLL['transmission_delay'])})
 			#try:
-			isRadian = False														# set this False to get values returned in [Hz] instead of [rad * Hz]
+			isRadian = False													# set this False to get values returned in [Hz] instead of [rad * Hz]
 			sf = synctools.SweepFactory(dictPLLsyncTool, dictNet, isRadians=isRadian)
 			fsl = sf.sweep()
-			para_mat = fsl.get_parameter_matrix(isRadians=False)				    # extract variables from the sweep, this matrix contains all cases
+			para_mat = fsl.get_parameter_matrix(isRadians=isRadian)				# extract variables from the sweep, this matrix contains all cases
 			print('New parameter combinations with {intrF, coupK, cutFc, delay, Omega, ReLambda, ImLambda, TsimToPert1/e, Nx, Ny, mx, my, div}: \n', [*para_mat])
 			choice = chooseSolution(para_mat)
 			dictPLL.update({'syncF': para_mat[choice,4], 'ReLambda': para_mat[choice,5], 'ImLambda': para_mat[choice,6]})
@@ -177,7 +177,7 @@ def getDicts(Fsim=125):
 			isRadian = False													# set this False to get values returned in [Hz] instead of [rad * Hz]
 			sf = synctools.SweepFactory(dictPLL, dictNet, isRadians=isRadian)
 			fsl = sf.sweep()
-			para_mat = fsl.get_parameter_matrix(isRadians=False)				# extract variables from the sweep, this matrix contains all cases
+			para_mat = fsl.get_parameter_matrix(isRadians=isRadian)				# extract variables from the sweep, this matrix contains all cases
 			print('New parameter combinations with {intrF, coupK, cutFc, delay, Omega, ReLambda, ImLambda, TsimToPert1/e, Nx, Ny, mx, my, div}: \n', [*para_mat])
 			choice = chooseSolution(para_mat)
 			dictPLL.update({'syncF': para_mat[choice,4], 'ReLambda': para_mat[choice,5], 'ImLambda': para_mat[choice,6]})

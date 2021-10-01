@@ -656,6 +656,11 @@ class FlatStateList(object):
 		else:
 			return None
 
+	def get_coup_fct(self):
+		'''Returns the coupling function'''
+		h = self.states[0].sys.g.func.get_derivative()
+		return h
+
 	def get_parameter_matrix(self, isRadians=True):
 		'''Returns a matrix of the numeric parameters the states in the list
 
@@ -666,7 +671,9 @@ class FlatStateList(object):
 		'''
 		if self.n > 0:
 			phi_config_vec_len = len( self.get_phiConf()[0] ); #print('Lenght vector phi-configuation:', phi_config_vec_len)
-			x = np.zeros((self.n, 13+phi_config_vec_len))
+			x = np.zeros((self.n, 14+phi_config_vec_len))
+			h = self.get_coup_fct()
+			print('coupling function h=',h)
 			x[:, 0] = self.get_w(isRadians=isRadians)
 			x[:, 1] = self.get_k(isRadians=isRadians)
 			x[:, 2] = self.get_wc(isRadians=isRadians)
@@ -680,8 +687,9 @@ class FlatStateList(object):
 			x[:, 10] = self.get_mx()
 			x[:, 11] = self.get_my()
 			x[:, 12] = self.get_v()
+			x[:, 13] = ( self.get_k(isRadians=True) / self.get_v() ) * h( self.get_omega(isRadians=True)*self.get_tau() )
 			#print('from get_phiConf: ', self.get_phiConf()[0])
-			x[:, 13:13+phi_config_vec_len] = self.get_phiConf()[0]
+			x[:, 14:14+phi_config_vec_len] = self.get_phiConf()[0]
 			#print('phi configuration x[:, 13:%i]: '%(13+phi_config_vec_len), x[:, 13:])
 			return x
 		else:

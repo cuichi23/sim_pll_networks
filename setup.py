@@ -385,8 +385,8 @@ def allInitPhaseCombinations(dictPLL, dictNet, dictAlgo, paramDiscretization=10)
 		print('Variable paramDiscretization needs to be integer or list of integers!'); sys.exit()
 
 	if dictNet['Nx']*dictNet['Ny'] == 2:
-		if dictAlgo['bruteForceBasinStabMethod'] == 'listOfInitialPhaseConfigurations' and ( isinstance(dictAlgo['min_max_range_detuning'], list) or isinstance(dictAlgo['min_max_range_detuning'], np.ndarray) ):
-			tempDetune = ( dictAlgo['min_max_range_detuning'][1] - dictAlgo['min_max_range_detuning'][0] ) / dictPLL['div'];
+		if dictAlgo['bruteForceBasinStabMethod'] == 'listOfInitialPhaseConfigurations' and ( isinstance(dictAlgo['min_max_range_parameter'], list) or isinstance(dictAlgo['min_max_range_parameter'], np.ndarray) ):
+			tempDetune = ( dictAlgo['min_max_range_parameter'][1] - dictAlgo['min_max_range_parameter'][0] ) / dictPLL['div'];
 			scanValueslist1 = list( np.linspace(-dictPLL['div']*(np.pi), +dictPLL['div']*(np.pi), paramDiscr[0]) ) 		# all entries are in rotated, and reduced phase space NOTE: adjust unit cell accordingly!
 			scanValueslist2 = list( np.linspace(-tempDetune, tempDetune, paramDiscr[1]) )	# all entries are in rotated, and reduced phase space NOTE: adjust unit cell accordingly!
 			#print('scanValueslist2', scanValueslist2)

@@ -116,6 +116,8 @@ def simulateSystem(dictNet, dictPLL, dictAlgo=None):
 	t = np.arange(0,len(phi[:,0]))*dictPLL['dt']
 	params={'x': t, 'y': phi, 'label': 'phi', 'xlabel': 't', 'ylabel': 'phi', 'delay_steps': max_delay_steps, 'len_phi': phi_array_len-1, 'dt': dictPLL['dt']}
 	#eva.plotTest(params)
+	for i in range(len(pll_list)):												# update all internal VCO phi variables
+		pll_list[i].vco.phi = phi[max_delay_steps,i]
 
 	#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	''' SET INITIAL CONTROL SIGNAL, ACCORDING AND CONSISTENT TO HISTORY WRITTEN, CORRECT INTERNAL PHASES OF VCO AND CLOCK '''
@@ -183,6 +185,8 @@ def simulateSystem(dictNet, dictPLL, dictAlgo=None):
 	plot.plotOscSignal(dictPLL, dictNet, dictData)
 	plot.plotFreqAndPhaseDiff(dictPLL, dictNet, dictData)
 	plot.plotPSD(dictPLL, dictNet, dictData, [], saveData=False)
+
+	print('Time needed for simulation, evaluation and plotting: ', (time.time()-t0), ' seconds')
 
 	plt.draw()
 	plt.show()

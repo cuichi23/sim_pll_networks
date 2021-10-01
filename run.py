@@ -2,7 +2,7 @@
 from __future__ import division
 from __future__ import print_function
 
-import dicts_lib, dicts_lib_Ising, dicts_lib_3rdGen, dicts_lib_4thGen, dicts_lib_Nav, dicts_lib_FPEexplore
+import dicts_lib, dicts_lib_Ising, dicts_lib_3rdGen, dicts_lib_4thGen, dicts_lib_test, dicts_lib_Nav, dicts_lib_FPEexplore
 import synctools_interface_lib as synctools
 import multisim_lib
 import sim_lib
@@ -17,8 +17,9 @@ multiprocess = False
 #dictPLL, dictNet, dictAlgo            = dicts_lib_4thGen.getDicts()
 #dictPLL, dictNet, dictAlgo            = dicts_lib_3rdGen.getDicts()
 #dictPLL, dictNet, dictAlgo            = dicts_lib_Ising.getDicts()
+dictPLL, dictNet, dictAlgo            = dicts_lib_test.getDicts()
 #dictPLL, dictNet, dictAlgo            = dicts_lib_Nav.getDicts()
-dictPLL, dictNet, dictAlgo            = dicts_lib.getDicts()
+#dictPLL, dictNet, dictAlgo            = dicts_lib.getDicts()
 # print('dictPLL:', dictPLL)
 # print('dictNet:', dictNet)
 # print('dictNet:', dictAlgo)

@@ -265,7 +265,7 @@ class Triangle(CouplingFunction):
 		return signal.sawtooth(2 * np.pi * self.freq * t, width=0.5)
 
 	def get_derivative(self):
-		amp = 2.0 * (2 * self.freq)
+		amp = 2.0 * (2 * self.freq)												# NOTE: check the definition of frequency in __init__ of Triangle if confused
 		return Square(self.freq, amp)
 
 	def max(self):
@@ -277,12 +277,17 @@ class Triangle(CouplingFunction):
 class Square(CouplingFunction):													# only needed as the derivative of the triangular coupling function
 	'''Periodic square wave vertically centered around 0'''
 	def __init__(self, freq, amp):
+		#print('In Square class, freq=', freq)
 		self.freq = freq
 		self.amp = amp
 		#print('Test: amplitude of derivative of triangular coupling function is: (+/- 2/pi):', self.amp)
 
 	def __call__(self, t):
 		return self.amp * signal.square(2 * np.pi * self.freq * t, duty=0.5)
+
+	#def get_derivative(self):
+	#
+	#	return
 
 	def max(self):
 		return self.amp
@@ -637,7 +642,7 @@ class SyncStateFactory(object):
 	def get_coupling_sum(self, omega, k=1):
 		''' The sum of all coupling function interacting with oscillator k'''
 		tau = self.sys.g.tau
-		v = self.sys.pll.v
+		div = self.sys.pll.v
 		h = self.sys.g.func
 		dphi = self.get_dphi_matrix()[k, :]
 		c = self.sys.g.get_single_site_coupling(k)
@@ -645,9 +650,9 @@ class SyncStateFactory(object):
 		if omega.size > 1:														# here is the structure of the sum of terms for the calculation of Omega (implicit)
 			h_sum = np.zeros(omega.size)
 			for i in range(omega.size):
-				h_sum[i] = np.sum(c * h( (-tau * omega[i] + dphi) / v ))
+				h_sum[i] = np.sum(c * h( (-tau * omega[i] + dphi) / div ))
 		else:
-			h_sum = np.sum(c * h( (-tau * omega + dphi) / v ))
+			h_sum = np.sum(c * h( (-tau * omega + dphi) / div ))
 		return h_sum
 
 	def get_omega(self, k=1, ns=1000):
@@ -655,16 +660,16 @@ class SyncStateFactory(object):
 		tau = self.sys.g.tau
 		kc = self.sys.g.k                                                       # coupling strength
 		w = self.sys.pll.w
-		v = self.sys.pll.v
+		div = self.sys.pll.v
 		fric = self.sys.pll.fric
 		fric_omega = self.sys.pll.fric_omega
 		#print('IN SYNCTOOLS: fric      =', fric)
 		#print('IN SYNCTOOLS: fric_omega=', fric_omega)
 
 		# Determine min and max values for coupling sum function
-		h_min = self.sys.g.func.min()
-		h_max = self.sys.g.func.max()
-		c_bar = self.sys.g.get_single_site_coupling(k)
+		h_min = self.sys.g.func.min()											# minimum of coupling function
+		c_bar = self.sys.g.get_single_site_coupling(k)							# 1 / n_k
+		h_max = self.sys.g.func.max()											# maximum of coupling function
 		c_bar_sum = np.sum(c_bar)                                               # should be 1 for normalized coupling
 		h_sum_min = c_bar_sum * h_min
 		h_sum_max = c_bar_sum * h_max
@@ -672,10 +677,10 @@ class SyncStateFactory(object):
 		# Determine search interval for s
 		s_min = kc/fric * tau * h_sum_min + w/(fric*fric_omega) * tau
 		s_max = kc/fric * tau * h_sum_max + w/(fric*fric_omega) * tau
-		s_min = s_min - 2  # add safety margin
+		s_min = s_min - 2  														# add safety margin
 		s_max = s_max + 2
 		if s_min < 0:
-			s_min = 0.0   # exclude negative frequencies
+			s_min = 0.0   														# exclude negative frequencies
 		s = np.linspace(s_min, s_max, ns)
 
 		# Setup coupling sum function
@@ -789,7 +794,8 @@ class SyncState(object):
 		h = self.sys.g.func
 		dhdx = h.get_derivative()
 		c = self.sys.g.get_coupling_matrix()
-		return c * dhdx( (-self.omega * self.sys.g.tau + dphi) / self.sys.pll.v )
+		#print('self.sys.pll.v:', self.sys.pll.v)
+		return c * dhdx( (-self.omega * self.sys.g.tau + dphi) / self.sys.pll.v ) #( c / self.sys.pll.v ) * dhdx( (-self.omega * self.sys.g.tau + dphi) / self.sys.pll.v )
 
 	def get_eigensystem(self, cutoff=1e-6):
 		m = self.get_coupling_derivative_matrix()

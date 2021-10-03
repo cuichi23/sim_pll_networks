@@ -26,7 +26,7 @@ import time
 import setup
 
 ''' Enable automatic carbage collector '''
-gc.enable();
+gc.enable()
 
 #%%cython --annotate -c=-O3 -c=-march=native
 
@@ -34,232 +34,10 @@ gc.enable();
 authors: Alexandros Pollakis, Daniel Platz, Deborah Schmidt, Lucas Wetzel (lwetzel[at]pks.mpg.de)
 '''
 
-# # system/measurement
-# class Algorithm:
-# 	"""An algorithm class"""
-# 	def __init__(self,idx_self,pll1x,pll2x,pll1y,pll2y,pll1z,pll2z,algo):		# takes two PLLs and computes something
-# 		self.pll_listX	= [pll1x, pll2x]
-# 		self.pll_listY	= [pll1y, pll2y]
-# 		self.pll_listZ	= [pll1z, pll2z]
-# 		self.algorithm	= algo
-#
-# 	def next(self,idx_time,phi,ext_field):
-#
-# 		phi				= [pll1.next_antenna(idx_time,phi,ext_field) for pll in self.pll_listX]
-#
-# 		monitor_ctrl1	= self.pll1.lf.read_ctrl()
-# 		monitor_ctrl2	= self.pll2.lf.read_ctrl()
-# 		countPLL1 		= self.pll1.read_periods(phi)							# reads the current count of periods of PLL1
-# 		countPLL2 		= self.pll2.read_periods(phi)							# reads the current count of periods of PLL2
-#
-# 	return phiPLLpair, countPLL1, countPLL2,
-#
-# 	def init_counters(self,phi0):
-# 		self.pll1.reset(phi0)													# resets the counters of the PLLs, storing their current phase as new reference
-# 		self.pll2.reset(phi0)													# counter states are computed as np.floor((phi-phi0)/(2*np.pi))
-
-# PLL
-class PhaseLockedLoop:
-	""" A phase-locked loop class, handles signal flow between the PLL components
-
-		Args:
-
-	    Returns:
-
-	    Raises:
-	"""
-	def __init__(self,idx_self,delayer,pdc,lf,vco,antenna,counter):				# sets PLL properties as given when an object of this class is created (see line 253), where pll_list is created
-		""" initialization of a PLL object
-
-			Args:
-				instance self.delayer 	delayer
-				instance self.pdc 		phase detector and combiner
-				instance self.lf 		loop filter
-				instance self.vco 		voltage controlled oscillator
-				instance self.antenna	antenna
-				instance self.counter	counter
-				integer self.idx_self	identity
-
-		    Returns:
-				PLL instance	PLL with defined cross-coupling time delays to its coupling neighbors in the network, intrinisc frequency, loop filter, coupling strength,
-								and many additional options such as additional injection of signals, noise, heterogeneity, etc.
-
-		    Raises:
-		"""
-		self.delayer 	= delayer
-		self.pdc 		= pdc
-		self.lf 		= lf
-		self.vco 		= vco
-		self.antenna	= antenna
-		self.counter	= counter
-		self.idx_self	= idx_self
-
-	def next(self,idx_time,philength,phi):
-		""" Function that evolves the PLL forward in time by one increment based on the external signals and internal dynamics.
-			1) delayer obtains past states x_delayed of neighbors in the network coupled to this oscillator and current state x of the oscillator itself
-			2) from these states the input phase relations are evaluated by the phase detector and combiner which yields the PD signal x_comb (averaged over all inputs)
-			3) the PD signal x_comb is fed into the loop filter and yields the control signal x_ctrl
-			4) the voltage controlled oscillator's next function evolves the phases dependent on the control signal x_ctrl
-
-			Args:
-				int self		identity
-				int idx_time	current time within simulation
-				int philength	length of container that stores the phases of the oscillators, needed for organizing the cyclic memory to handle the delay
-				np.ndarray phi	holds the phases of all oscillators for at least the time [-tau_max, 0], denotes the memory necessary for the time delay
-
-		    Returns:
-				np.ndarray phi	updated with the next time increment
-
-		    Raises:
-		"""
-		x, x_delayed  	= self.delayer.next(idx_time%philength,phi,idx_time)	# this gets the values of a signal x at time t, and time t-tau, from the delayer (x is the matrix phi here)
-		x_comb 		  	= self.pdc.next(x,x_delayed,0,idx_time)					# the phase detector signal is computed, antenna input set to zero; COMBINER GETS ABSOLUTE TIME
-		x_ctrl		 	= self.lf.next(x_comb)									# the filtering at the loop filter is applied to the phase detector signal
-		phi 		  	= self.vco.next(x_ctrl)[0]								# the control signal is used to update the VCO and thereby evolving the phase
-		return phi#, x_ctrl
-
-	def clock_periods_count(self,idx_time,current_phi):							# count periods of oscillations
-		""" Function that counts the periods of oscillations that have passed for the oscillator. This enables the derivation of a time,
-			i.e., extends the oscillator to become a clock.
-
-			Args:
-				int self				identity
-				int idx_time			current time within simulation
-				np.ndarray current_phi	the current phase of the oscillator
-
-		    Returns:
-				int count 				the number of cycles counted
-
-		    Raises:
-		"""
-		count			= self.counter.read_periods(current_phi)
-		return count
-
-	def clock_halfperiods_count(self,idx_time,current_phi):						# count every half a period of the oscillations
-		""" Function that counts TWICE per period for oscillations of the oscillator, e.g., counting the falling and rising edge of digital signal.
-			This enables the derivation of a time, i.e., extends the oscillator to become a clock.
-
-			Args:
-				int self				identity
-				int idx_time			current time within simulation
-				np.ndarray current_phi	the current phase of the oscillator
-
-		    Returns:
-				int count 				the number of cycles counted
-
-		    Raises:
-		"""
-		count			= self.counter.read_halfperiods(current_phi)
-		return count
-
-	def clock_reset(self,current_phi):											# reset all clock counters
-		""" Function that resets the clock count of the oscillator.
-
-			Args:
-				int self				identity
-				np.ndarray current_phi	the current phase of the oscillator (as new reference for the zero count)
-
-		    Returns:
-				None
-
-		    Raises:
-		"""
-		count			= self.counter.reset(current_phi)
-		return None
-
-	def next_antenna(self,idx_time,philength,phi,ext_field):
-		""" Function that implements an additional input signal to the oscillator received via an antenna. NOT YET IMPLEMENTED.
-
-			Args:
-
-		    Returns:
-
-		    Raises:
-		"""
-		x, x_delayed  	= self.delayer.next(idx_time%philength,phi)				# this gets the values of a signal x at time t, and time t-tau, from the delayer (x is the matrix phi here)
-		antenna_rx		= self.antenna.listen(idx_time,ext_field)				# antenna listens to the external signal
-		x_comb 		  	= self.pdc.next(x,x_delayed,antenna_rx,idx_time)		# the phase detector signal is computed
-		x_ctrl		 	= self.lf.next(x_comb)									# the filtering at the loop filter is applied to the phase detector signal
-		phi 		  	= self.vco.next(x_ctrl)[0]								# the control signal is used to update the VCO and thereby evolving the phase
-		return phi
-
-	def setup_hist_reverse(self):												# set the initial history of the PLLs, all evolving with frequency Omega of synched state, provided at start
-		""" Function that sets the history of the oscillator using the voltage controlled oscillator. Given the required phase at the start of the simulation,
-			the function calls the VCO's function to set the history/memory backwards in time until the memory is filled.
-
-			Args:
-				int self		identity
-
-		    Returns:
-				np.array phi	an array with the memory of the particular oscillator, to be written into the phi container that holds all oscillators' phases
-
-		    Raises:
-		"""
-		phi 			= self.vco.set_initial_reverse()[0]						# [0] vector-entry zero of the two values saved to phi which is returned
-		return phi
-
-	def set_delta_pertubation(self,idx_time,phi,phiS,inst_Freq):
-		""" Function that applies a delta-like perturbation to the phase of the oscillator at the start of the simulation.
-			Corrects the internal state of the oscillator with respect to the perturbation, calculated the initial control signal.
-
-			Args:
-				int self				identity
-				int idx_time			current time within simulation
-				float phi				the current phase of the oscillator
-				phiS					the perturbation to the current phase
-				float inst_freq 		the instantaneous frequency of the oscillator
-
-		    Returns:
-				float phi				the current phase of the oscillator perturbed by phiS
-
-		    Raises:
-		"""
-		x_ctrl 			= self.lf.set_initial_control_signal(phi,inst_Freq)		# the filtering at the loop filter is applied to the phase detector signal
-		phi 			= self.vco.delta_perturbation(phi,phiS,x_ctrl)[0]
-		return phi
-
-	def next_magic(self,idx_time,philength,phi):								# this is the closed-loop case of the free running PLL
-		""" Function that evolves the voltage controlled oscillator in a closed loop configuration when there is no external input, i.e., free-running closed loop PLL.
-			1) delayer obtains the current state x of the oscillator itself (potentially delayed by a feedback delay)
-			2) this state is fed in the phase detector and combiner for zero external signal which yields the PD signal x_comb
-			3) the PD signal x_comb is fed into the loop filter and yields the control signal x_ctrl
-			4) the voltage controlled oscillator's next function evolves the phases dependent on the control signal x_ctrl
-
-			Args:
-				int self		identity
-				int idx_time	current time within simulation
-				int philength	length of container that stores the phases of the oscillators, needed for organizing the cyclic memory to handle the delay
-				np.ndarray phi	holds the phases of all oscillators for at least the time [-tau_max, 0], denotes the memory necessary for the time delay
-
-		    Returns:
-				np.ndarray phi	updated with the next time increment
-
-		    Raises:
-		"""
-		x, x_delayed  	= self.delayer.next(idx_time%philength,phi,idx_time)	# this gets the values of a signal x at time t, and time t-tau, from the delayer (x is the matrix phi here)
-		x_comb 		  	= self.pdc.next(x,0,0,idx_time)							# the phase detector signal is computed, antenna input set to zero; COMBINER GETS ABSOLUTE TIME
-		x_ctrl		 	= self.lf.next(x_comb)									# the filtering at the loop filter is applied to the phase detector signal
-		phi 			= self.vco.next(x_ctrl)[0]								# [0] vector-entry zero of the two values returned
-		return phi
-
-	def next_free(self):														# evolve phase of the VCO as if there was no loop, hence x_ctrl = 0.0, i.e., only VCO
-		""" Function that evolves the voltage controlled oscillator when there is no external input, i.e., free-running open loop PLL.
-
-			Args:
-				int self				identity
-
-		    Returns:
-				float phi				the updated phase
-
-		    Raises:
-		"""
-		phi 			= self.vco.next(0.0)[0]
-		return phi
-
 ################################################################################
 
 # LF: y = integral du x(t) * p(t-u)												# this can be expressed in terms of a differential equation with the help of the Laplace transform
-class LowPass:
+class LowPassFilter:
 	""" A lowpass filter class
 
 		Args:
@@ -365,7 +143,7 @@ class LowPass:
 ################################################################################
 
 # VCO: d_phi / d_t = omega + K * x
-class VoltageControlledOscillator:
+class SignalControlledOscillator:
 	"""A voltage controlled oscillator class
 
 		Args:
@@ -631,9 +409,9 @@ class Delayer:
 
 			print('Time dependent transmission delay set!')
 			time_dep_delay = setup.setupTimeDependentParameter(dictNet, dictPLL, dictData, parameter='transmission_delay', afterTsimPercent=0.25, forAllPLLsDifferent=False)
-			selfidx_or_ident = 0;												# this is the case if all transmission delays have the same time dependence
+			selfidx_or_ident = 0												# this is the case if all transmission delays have the same time dependence
 			if len(time_dep_delay[:,0]) == dictNet['Nx']*dictNet['Ny']:			# if there is a matrix, i.e., different time-dependencies for different delay, then use this
-				print('Test');
+				print('Test')
 				selfidx_or_ident = self.idx_self
 			dictPLL.update({'transmission_delay': time_dep_delay})
 			plt.figure(1234)
@@ -694,71 +472,170 @@ class Delayer:
 
 		return np.asarray(feedback_delayed_phase), np.asarray(transmission_delayed_phases) # x is is the time-series from which the values at t-tau_kl^f and t-tau_kl are returned
 
-################################################################################
-
-# antenna
-class Antenna:
-	"""A antenna class
-
-		Args:
-
-	    Returns:
-
-	    Raises:
-	"""
-	def __init__(self,idx_self,dictPLL,dictNet):
-
-		self.dt			 = dictPLL['dt']
-		self.posX 		 = dictPLL['posX']
-		self.posY 		 = dictPLL['posY']
-		self.posZ 		 = dictPLL['posZ']
-
-		self.signalRx	 = dictPLL['antenna_sig']
-		self.networkF	 = dictNet['freq_beacons']
-
-		self.stateListen = dictPLL['initAntennaState']
-		self.signalHeard = []
-
-	#***************************************************************************
-
-	def listen(self,idx_time,ext_field):
-
-		antenna_in = self.signalRx(self.networkF*idx_time*self.dt)
-		#antenna_in = 0
-		return antenna_in
-
-	def toggle_activation():
-
-		if self.stateListen:
-			self.stateListen = False
-		elif not self.stateListen:
-			self.stateListen = True
-		return None
 
 ################################################################################
 
 # counter
 class Counter:
 	"""A counter class
-
-		Args:
-
-	    Returns:
-
-	    Raises:
 	"""
 	def __init__(self,idx_self,dictPLL):
 
 		self.phase_init = 0
 
-	#***************************************************************************
-
 	def reset(self,phi0):
 		self.phase_init = phi0
 		return None
 
-	def read_periods(self,phi):
+	def read_periods(self, phi):
 		return np.floor((phi-self.phase_init)/(2.0*np.pi))
 
 	def read_halfperiods(self,phi):
 		return np.floor((phi-self.phase_init)/(np.pi))
+
+
+class PhaseLockedLoop:
+	""" This class represents an oscillator / phase-locked loop (PLL), handles signal flow between its components.
+		The oscillator can receive external signals and compare those with its own state, filter / process the result
+		of this comparison and adjust the output frequency accordingly.
+
+		This defines an oscillator, the cross coupling time delays with which it receives external signals from other
+		entities of the network, its intrinsic frequency, the properties of the loop filter or internal signal
+		processing, the interaction / coupling strength, and many additional options such as additional injection of
+		signals, noise, heterogeneity, etc.
+
+		It allows to implement first and second order Kuramoto models with delayed and non delayed coupling for
+		different coupling topologies, heterogeneous oscillators and dynamic and quenched noise.
+	"""
+	def __init__(self, id: int, delayer: Delayer, phase_detector_combiner: PhaseDetectorCombiner,
+				 low_pass_filter: LowPassFilter, signal_controlled_oscillator: SignalControlledOscillator,
+				 counter: Counter):
+		"""
+			Args:
+				delayer: 						organizes delayed coupling
+				phase_detector_combiner: 		extracts phase relations between feedback and external signals
+				low_pass_filter: 				filters high frequency components (first or second order low pass)
+				signal_controlled_oscillator 	determines instantaneous frequency of autonomous oscillator with respect to an input signal
+				counter:						derives a clock / time from the oscillators clocking signal
+				id:								identifier of the oscillator within the network
+
+		"""
+		self.delayer = delayer
+		self.phase_detector_combiner = phase_detector_combiner
+		self.low_pass_filter = low_pass_filter
+		self.signal_controlled_oscillator = signal_controlled_oscillator
+		self.counter = counter
+		self.id = id
+
+	def next(self, index_current_time: int, length_phase_memory: int, phase_memory: np.ndarray) -> np.ndarray:
+		""" Function that evolves the oscillator forward in time by one increment based on the external signals and internal dynamics.
+			1) delayer obtains past states of neighbors in the network coupled to this oscillator and the current state of the oscillator itself
+			2) from these states the input phase relations are evaluated by the phase detector and combiner which yields the PD signal (averaged over all inputs)
+			3) the PD signal is fed into the loop filter and yields the control signal
+			4) the voltage controlled oscillator evolves the phases according to the control signal
+
+			Args:
+				index_current_time:		current time within simulation
+				length_phase_memory:	length of container that stores the phases of the oscillators, needed for organizing the cyclic memory to handle the delay
+				phase_memory:			holds the phases of all oscillators for at least the time [-tau_max, 0], denotes the memory necessary for the time delay
+
+			Returns:
+				updated phase incrementing the time by one step
+
+			Raises:
+		"""
+		current_phase_state, delayed_phase_state = self.delayer.next(index_current_time % length_phase_memory, phase_memory, index_current_time)
+
+		phase_detector_output = self.phase_detector_combiner.next(current_phase_state, delayed_phase_state, 0, index_current_time)
+
+		control_signal = self.low_pass_filter.next(phase_detector_output)
+
+		updated_phase = self.signal_controlled_oscillator.next(control_signal)[0]
+		return updated_phase
+
+	def clock_periods_count(self, current_phase_state: np.ndarray) -> int:
+		""" Function that counts the periods of oscillations that have passed for the oscillator. This enables the derivation of a time,
+			i.e., extends the oscillator to become a clock.
+
+			Args:
+				current_phase_state:	the current phase of the oscillator
+
+			Returns:
+				the number of cycles counted
+		"""
+		return self.counter.read_periods(current_phase_state)
+
+	def clock_halfperiods_count(self, current_phase_state: np.ndarray) -> int:
+		""" Function that counts TWICE per period for oscillations of the oscillator, e.g., counting the falling and rising edge of digital signal.
+			This enables the derivation of a time, i.e., extends the oscillator to become a clock.
+
+			Args:
+				current_phase_state:	the current phase of the oscillator
+
+			Returns:
+				the number of half cycles counted
+		"""
+		return self.counter.read_halfperiods(current_phase_state)
+
+	def clock_reset(self, current_phase_state: np.ndarray) -> None:
+		""" Function that resets the clock count of the oscillator.
+
+			Args:
+				current_phase_state:	the current phase of the oscillator (as new reference for the zero count)
+		"""
+		self.counter.reset(current_phase_state)
+
+	def setup_hist_reverse(self) -> np.ndarray:
+		""" Function that sets the history of the oscillator using the voltage controlled oscillator. Given the required phase at the start of the simulation,
+			the function calls the VCO's function to set the history/memory backwards in time until the memory is filled.
+
+			Returns:
+				an array with the memory of the particular oscillator, to be written into the phi container that holds all oscillators' phases
+		"""
+		return self.signal_controlled_oscillator.set_initial_reverse()[0]
+
+	def set_delta_perturbation(self, current_phase_state, perturbation, instantaneous_frequency):
+		""" Function that applies a delta-like perturbation to the phase of the oscillator at the start of the simulation.
+			Corrects the internal state of the oscillator with respect to the perturbation, calculated the initial control signal.
+
+			Args:
+				current_phase_state:					the current phase of the oscillator
+				perturbation:							the perturbation to the current phase
+				instantaneous_frequency:		 		the instantaneous frequency of the oscillator
+
+			Returns:
+				the current perturbed phase of the oscillator
+		"""
+		# the filtering at the loop filter is applied to the phase detector signal
+		control_signal = self.low_pass_filter.set_initial_control_signal(current_phase_state, instantaneous_frequency)
+		return self.signal_controlled_oscillator.delta_perturbation(current_phase_state, perturbation, control_signal)[0]
+
+	def next_no_external_input(self, index_current_time: int, length_phase_memory: int, phase_memory: np.ndarray) -> np.ndarray:
+		""" Function that evolves the voltage controlled oscillator in a closed loop configuration when there is no external input, i.e., free-running closed loop PLL.
+			1) delayer obtains the current state of the oscillator itself (potentially delayed by a feedback delay)
+			2) this state is fed in the phase detector and combiner for zero external signal which yields the PD signal
+			3) the PD signal is fed into the loop filter and yields the control signal
+			4) the voltage controlled oscillator's next function evolves the phases dependent on the control signal
+
+			Args:
+				index_current_time:		current time within simulation
+				length_phase_memory:	length of container that stores the phases of the oscillators, needed for organizing the cyclic memory to handle the delay
+				phase_memory:			holds the phases of all oscillators for at least the time [-tau_max, 0], denotes the memory necessary for the time delay
+
+			Returns:
+				updated phase incrementing the time by one step
+
+			Raises:
+		"""
+		current_phase_state, delayed_phase_state = self.delayer.next(index_current_time % length_phase_memory, phase_memory, index_current_time)
+		phase_detector_output = self.phase_detector_combiner.next(current_phase_state, 0, 0, index_current_time)
+		control_signal = self.low_pass_filter.next(phase_detector_output)
+		return self.signal_controlled_oscillator.next(control_signal)[0]
+
+	def next_free_running_open_loop(self) -> np.ndarray:
+		""" Function that evolves the voltage controlled oscillator when there is no external input, i.e., free-running open loop PLL.
+
+			Returns:
+				the updated phase
+		"""
+		return self.signal_controlled_oscillator.next(0)[0]

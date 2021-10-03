@@ -83,7 +83,7 @@ def simulateSystem(dictNet, dictPLL, dictAlgo=None):
 	#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	''' SET THE INTERNAL PHI VARS OF THE VCO TO THEIR INITIAL VALUE '''
 	for i in range(len(pll_list)):												# set initial phases at time equivalent to the time-delay, then setup the history from there
-		pll_list[i].vco.phi = phi[max_delay_steps,i]
+		pll_list[i].signal_controlled_oscillator.phi = phi[max_delay_steps, i]
 	# print('VCOs internal phis are set to:', [pll.vco.phi for pll in pll_list]); sys.exit()
 
 	# if uncoupled history, just evolve backwards in time until the beginning of the phi container is reached
@@ -96,13 +96,13 @@ def simulateSystem(dictNet, dictPLL, dictAlgo=None):
 		phi[max_delay_steps-1,:] = list( map(sub, [pll.setup_hist_reverse() for pll in pll_list], dictNet['phiPerturb']) ) # local container to help the setup
 
 		for i in range(len(pll_list)):
-			pll_list[i].vco.phi = phi[max_delay_steps-1,i]						# set this step as initial for reverse history setup
+			pll_list[i].signal_controlled_oscillator.phi = phi[max_delay_steps - 1, i]						# set this step as initial for reverse history setup
 		# print('VCOs internal phis are set to:', [pll.vco.phi for pll in pll_list]); sys.exit()
 		for i in range(max_delay_steps-1,0,-1):
 			#print('i-1',i-1)
 			phi[i-1,:] = [pll.setup_hist_reverse() for pll in pll_list]
 		for i in range(len(pll_list)):
-			pll_list[i].vco.phi = phi[max_delay_steps,i]
+			pll_list[i].signal_controlled_oscillator.phi = phi[max_delay_steps, i]
 	else:
 		print('Specify the type of history, syncState or freeRunning supported!'); sys.exit()
 
@@ -117,15 +117,15 @@ def simulateSystem(dictNet, dictPLL, dictAlgo=None):
 	params={'x': t, 'y': phi, 'label': 'phi', 'xlabel': 't', 'ylabel': 'phi', 'delay_steps': max_delay_steps, 'len_phi': phi_array_len-1, 'dt': dictPLL['dt']}
 	#eva.plotTest(params)
 	for i in range(len(pll_list)):												# update all internal VCO phi variables
-		pll_list[i].vco.phi = phi[max_delay_steps,i]
+		pll_list[i].signal_controlled_oscillator.phi = phi[max_delay_steps, i]
 
 	#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	''' SET INITIAL CONTROL SIGNAL, ACCORDING AND CONSISTENT TO HISTORY WRITTEN, CORRECT INTERNAL PHASES OF VCO AND CLOCK '''
 	for i in range(len(pll_list)):
 		if max_delay_steps >= int(dictPLL['orderLF']):
 			#print('last freqs:', ( phi[max_delay_steps-0,i]-phi[max_delay_steps-1,i]-dictNet['phiPerturb'][i] ) / (2.0*np.pi*dictPLL['dt']), ( phi[max_delay_steps-1,i]-phi[max_delay_steps-2,i] ) / (2.0*np.pi*dictPLL['dt']));
-			pll_list[i].lf.set_initial_control_signal( ( phi[max_delay_steps-0,i]-phi[max_delay_steps-1,i]-dictNet['phiPerturb'][i] ) / (2.0*np.pi*dictPLL['dt']),
-													   ( phi[max_delay_steps-1,i]-phi[max_delay_steps-2,i] ) / (2.0*np.pi*dictPLL['dt']) )
+			pll_list[i].low_pass_filter.set_initial_control_signal((phi[max_delay_steps - 0, i] - phi[max_delay_steps - 1, i] - dictNet['phiPerturb'][i]) / (2.0 * np.pi * dictPLL['dt']),
+																   ( phi[max_delay_steps-1,i]-phi[max_delay_steps-2,i] ) / (2.0*np.pi*dictPLL['dt']))
 		# NOTE: very important, the delta-like phase perturbation needs to be accounted for when calculating the instantaneous frequency of the last time step before simulation,
  		#		here first argument of lf.set_initial_control_signal()
 
@@ -136,7 +136,7 @@ def simulateSystem(dictNet, dictPLL, dictAlgo=None):
 			elif dictPLL['typeOfHist'] == 'syncState':
 				inst_freq_lastStep			= dictPLL['syncF'] + np.random.normal(loc=0.0, scale=np.sqrt( dictPLL['noiseVarVCO'] * dictPLL['dt'] ))
 				inst_freq_prior_to_lastStep = dictPLL['syncF'] + np.random.normal(loc=0.0, scale=np.sqrt( dictPLL['noiseVarVCO'] * dictPLL['dt'] ))
-			pll_list[i].lf.set_initial_control_signal( inst_freq_lastStep, inst_freq_prior_to_lastStep )
+			pll_list[i].low_pass_filter.set_initial_control_signal(inst_freq_lastStep, inst_freq_prior_to_lastStep)
 		else:
 			print('in simPLL.lib: Higher order LFs are net yet supported!')
 		# print('Set internal initial VCO phi at t-dt for PLL %i:'%i, phi[max_delay_steps,i])
@@ -205,7 +205,7 @@ def evolveSystemOnTauArray(dictNet, dictPLL, phi, clock_counter, pll_list, dictD
 		#print('(idx_time+1)%phi_array_len', ((idx_time+1)%phi_array_len)*dictPLL['dt']); #time.sleep(0.5)
 		phi[(idx_time+1)%phi_array_len,:] = [pll.next(idx_time,dictNet['phi_array_len'],phi) for pll in pll_list] # now the network is iterated, starting at t=0 with the history as prepared above
 
-		#clock_counter[(idx_time+1)%phi_array_len,:] = [pll.clock_halfperiods_count(idx_time%phi_array_len,phi[(idx_time+1)%phi_array_len,pll.idx_self]) for pll in pll_list]
+		#clock_counter[(idx_time+1)%phi_array_len,:] = [pll.clock_halfperiods_count(phi[(idx_time+1)%phi_array_len,pll.idx_self]) for pll in pll_list]
 		#print('clock count for all:', clock_counter[-1])
 	phiStore = phi
 	clkStore = clock_counter
@@ -238,7 +238,7 @@ def evolveSystemOnTsimArray(dictNet, dictPLL, phi, clock_counter, pll_list, dict
 		#print('(idx_time+1)%phi_array_len', ((idx_time+1)%phi_array_len)*dictPLL['dt']); #time.sleep(0.5)
 		phi[(idx_time+1)%phi_array_len,:] = [pll.next(idx_time,dictNet['phi_array_len'],phi) for pll in pll_list] # now the network is iterated, starting at t=0 with the history as prepared above
 
-		clock_counter[(idx_time+1)%phi_array_len,:] = [pll.clock_halfperiods_count(idx_time%phi_array_len,phi[(idx_time+1)%phi_array_len,pll.idx_self]) for pll in pll_list]
+		clock_counter[(idx_time+1)%phi_array_len,:] = [pll.clock_halfperiods_count(phi[(idx_time+1)%phi_array_len,pll.id]) for pll in pll_list]
 		#print('clock count for all:', clock_counter[-1])
 
 		clkStore[idx_time+1,:] = clock_counter[(idx_time+1)%phi_array_len,:]
@@ -276,9 +276,9 @@ def evolveSystemOnTsimArray_timeDepChangeOfCoupStrength(dictNet, dictPLL, phi, c
 		#print('(idx_time+1)%phi_array_len', ((idx_time+1)%phi_array_len)*dictPLL['dt']); #time.sleep(0.5)
 		phi[(idx_time+1)%phi_array_len,:] = [pll.next(idx_time,phi_array_len,phi) for pll in pll_list] # now the network is iterated, starting at t=0 with the history as prepared above
 		#print('injectionLock:', [pll.pdc.compute(np.zeros(dictNet['Nx']*dictNet['Ny']-1), 0, np.zeros(dictNet['Nx']*dictNet['Ny']-1), idx_time) for pll in pll_list])
-		[pll.vco.evolveCouplingStrength(couplingStrVal_vs_time[idx_time],dictNet) for pll in pll_list]
+		[pll.signal_controlled_oscillator.evolveCouplingStrength(couplingStrVal_vs_time[idx_time], dictNet) for pll in pll_list]
 		#[print('at time t=', idx_time*dictPLL['dt'] , 'K_inject2ndHarm=', couplingStrVal_vs_time[idx_time]) for pll in pll_list]
-		clock_counter[(idx_time+1)%phi_array_len,:] = [pll.clock_halfperiods_count(idx_time%phi_array_len,phi[(idx_time+1)%phi_array_len,pll.idx_self]) for pll in pll_list]
+		clock_counter[(idx_time+1)%phi_array_len,:] = [pll.clock_halfperiods_count(phi[(idx_time+1)%phi_array_len,pll.id]) for pll in pll_list]
 		#print('clock count for all:', clock_counter[-1])
 
 		clkStore[idx_time+1,:] = clock_counter[(idx_time+1)%phi_array_len,:]
@@ -317,13 +317,13 @@ def evolveSystemOnTsimArray_varInjectLockCoupStrength(dictNet, dictPLL, phi, clo
 		#print('(idx_time+1)%phi_array_len', ((idx_time+1)%phi_array_len)*dictPLL['dt']); #time.sleep(0.5)
 		phi[(idx_time+1)%phi_array_len,:] = [pll.next(idx_time,dictNet['phi_array_len'],phi) for pll in pll_list] # now the network is iterated, starting at t=0 with the history as prepared above
 		#print('injectionLock:', [pll.pdc.compute(np.zeros(dictNet['Nx']*dictNet['Ny']-1), 0, np.zeros(dictNet['Nx']*dictNet['Ny']-1), idx_time) for pll in pll_list])
-		[pll.pdc.evolveCouplingStrengthInjectLock(injectLockCoupStrVal_vs_time[idx_time],dictNet) for pll in pll_list]
+		[pll.phase_detector_combiner.evolveCouplingStrengthInjectLock(injectLockCoupStrVal_vs_time[idx_time], dictNet) for pll in pll_list]
 		#[print('at time t=', idx_time*dictPLL['dt'] , 'K_inject2ndHarm=', injectLockCoupStrVal_vs_time[idx_time]) for pll in pll_list]
-		clock_counter[(idx_time+1)%phi_array_len,:] = [pll.clock_halfperiods_count(idx_time%phi_array_len,phi[(idx_time+1)%phi_array_len,pll.idx_self]) for pll in pll_list]
+		clock_counter[(idx_time+1)%phi_array_len,:] = [pll.clock_halfperiods_count(phi[(idx_time+1)%phi_array_len,pll.id]) for pll in pll_list]
 		#print('clock count for all:', clock_counter[-1])
 		if idx_time*dictPLL['dt'] > t_first_pert and idx_time*dictPLL['dt'] < t_first_pert+2*dictPLL['dt']:
 			print('Perturbation added at t=', idx_time*dictPLL['dt'], '!')
-			[pll.vco.add_perturbation( np.random.uniform(-np.pi, np.pi) ) for pll in pll_list]
+			[pll.signal_controlled_oscillator.add_perturbation(np.random.uniform(-np.pi, np.pi)) for pll in pll_list]
 			t_first_pert = t_first_pert + 500;
 
 		clkStore[idx_time+1,:] = clock_counter[(idx_time+1)%phi_array_len,:]
@@ -344,7 +344,7 @@ def evolveSystemOnTsimArray_varDelaySaveCtrlSig(dictNet, dictPLL, phi, clock_cou
 	phiStore = np.empty([dictNet['max_delay_steps']+dictPLL['sim_time_steps'], dictNet['Nx']*dictNet['Ny']])
 	ctlStore = np.empty([dictNet['max_delay_steps']+dictPLL['sim_time_steps'], dictNet['Nx']*dictNet['Ny']])
 	phiStore[0:dictNet['max_delay_steps']+1,:] = phi[0:dictNet['max_delay_steps']+1,:]
-	ctlStore[0:dictNet['max_delay_steps'],:] = 0; ctlStore[dictNet['max_delay_steps']+1,:] = [pll.lf.y for pll in pll_list];
+	ctlStore[0:dictNet['max_delay_steps'],:] = 0; ctlStore[dictNet['max_delay_steps']+1,:] = [pll.low_pass_filter.y for pll in pll_list];
 	#line = []; tlive = np.arange(0,dictNet['phi_array_len']-1)*dictPLL['dt']
 	phi_array_len = dictNet['phi_array_len']
 
@@ -355,12 +355,12 @@ def evolveSystemOnTsimArray_varDelaySaveCtrlSig(dictNet, dictPLL, phi, clock_cou
 		#print('(idx_time+1)%phi_array_len', ((idx_time+1)%phi_array_len)*dictPLL['dt']); #time.sleep(0.5)
 		phi[(idx_time+1)%phi_array_len,:] = [pll.next(idx_time,dictNet['phi_array_len'],phi) for pll in pll_list] # now the network is iterated, starting at t=0 with the history as prepared above
 
-		clock_counter[(idx_time+1)%phi_array_len,:] = [pll.clock_halfperiods_count(idx_time%phi_array_len,phi[(idx_time+1)%phi_array_len,pll.idx_self]) for pll in pll_list]
+		clock_counter[(idx_time+1)%phi_array_len,:] = [pll.clock_halfperiods_count(phi[(idx_time+1)%phi_array_len,pll.id]) for pll in pll_list]
 		#print('clock count for all:', clock_counter[-1])
 
 		clkStore[idx_time+1,:] = clock_counter[(idx_time+1)%phi_array_len,:]
 		phiStore[idx_time+1,:] = phi[(idx_time+1)%phi_array_len,:]
-		ctlStore[idx_time+1,:] = [pll.lf.monitor_ctrl() for pll in pll_list]
+		ctlStore[idx_time+1,:] = [pll.low_pass_filter.monitor_ctrl() for pll in pll_list]
 		#phidot = (phi[1:,0]-phi[:-1,0])/(2*np.pi*dictPLL['dt'])
 		#line = livplt.live_plotter(tlive, phidot, line)
 
@@ -378,7 +378,7 @@ def evolveSystemInterface(dictNet, dictPLL, phi, clock_counter, pll_list, dictDa
 	for idx_time in range(dictNet['max_delay_steps'],dictNet['max_delay_steps']+dictPLL['sim_time_steps']-1,1):
 
 		phi[(idx_time+1)%phi_array_len,:] = [pll.next(idx_time,dictNet['phi_array_len'],phi) for pll in pll_list] # now the network is iterated, starting at t=0 with the history as prepared above
-		clock_counter[(idx_time+1)%phi_array_len,:] = [pll.clock_halfperiods_count(idx_time%phi_array_len,phi[(idx_time+1)%phi_array_len,pll.idx_self]) for pll in pll_list]
+		clock_counter[(idx_time+1)%phi_array_len,:] = [pll.clock_halfperiods_count(phi[(idx_time+1)%phi_array_len,pll.id]) for pll in pll_list]
 
 	t = np.arange(0,len(phiStore[0:dictNet['max_delay_steps']+dictPLL['sim_time_steps'],0]))*dictPLL['dt']
 	dictData.update({'t': t, 'phi': phiStore, 'clock': clock_counter})
@@ -403,13 +403,13 @@ def evolveSystemTestCases(dictNet, dictPLL, phi, clock_counter, pll_list, dictDa
 		#print('(idx_time+1)%phi_array_len', ((idx_time+1)%phi_array_len)*dictPLL['dt']); #time.sleep(0.5)
 		phi[(idx_time+1)%phi_array_len,:] = [pll.next_antenna(idx_time,dictNet['phi_array_len'],phi,ext_field) for pll in pll_list] # now the network is iterated, starting at t=0 with the history as prepared above
 
-		clock_counter[(idx_time+1)%phi_array_len,:] = [pll.clock_halfperiods_count(idx_time%phi_array_len,phi[(idx_time+1)%phi_array_len,pll.idx_self]) for pll in pll_list]
+		clock_counter[(idx_time+1)%phi_array_len,:] = [pll.clock_halfperiods_count(phi[(idx_time+1)%phi_array_len,pll.id]) for pll in pll_list]
 		#print('clock count for all:', clock_counter[-1])
 
 		if clock_counter[(idx_time+1)%phi_array_len][0] == clock_sync_scheduled:
 			clock_sync_scheduled = -23
 			print('Assume transient dynamics decayed, reset (synchronize) all clocks!')
-			[pll.clock_reset(phi[(idx_time+1)%phi_array_len,pll.idx_self].copy()-2.0*np.pi) for pll in pll_list]
+			[pll.clock_reset(phi[(idx_time+1)%phi_array_len,pll.id].copy() - 2.0 * np.pi) for pll in pll_list]
 
 		clkStore[idx_time+1,:] = clock_counter[(idx_time+1)%phi_array_len,:]
 		phiStore[idx_time+1,:] = phi[(idx_time+1)%phi_array_len,:]
@@ -439,18 +439,18 @@ def evolveSystemTestPerturbations(dictNet, dictPLL, phi, clock_counter, pll_list
 		#print('(idx_time+1)%phi_array_len', ((idx_time+1)%phi_array_len)*dictPLL['dt']); #time.sleep(0.5)
 		phi[(idx_time+1)%phi_array_len,:] = [pll.next(idx_time,dictNet['phi_array_len'],phi) for pll in pll_list] # now the network is iterated, starting at t=0 with the history as prepared above
 
-		clock_counter[(idx_time+1)%phi_array_len,:] = [pll.clock_halfperiods_count(idx_time%phi_array_len,phi[(idx_time+1)%phi_array_len,pll.idx_self]) for pll in pll_list]
+		clock_counter[(idx_time+1)%phi_array_len,:] = [pll.clock_halfperiods_count(phi[(idx_time+1)%phi_array_len,pll.id]) for pll in pll_list]
 		#print('clock count for all:', clock_counter[-1])
 
 		if clock_counter[(idx_time+1)%phi_array_len][0] == clock_sync_scheduled:
 			clock_sync_scheduled = -23
 			print('Assume transient dynamics decayed, reset (synchronize) all clocks!')
-			[pll.clock_reset(phi[(idx_time+1)%phi_array_len,pll.idx_self].copy()-2.0*np.pi) for pll in pll_list]
+			[pll.clock_reset(phi[(idx_time+1)%phi_array_len,pll.id].copy() - 2.0 * np.pi) for pll in pll_list]
 
 		if clock_counter[(idx_time+1)%phi_array_len][0]%750 == 0:
-			tempMon = [pll.lf.monitor_ctrl() for pll in pll_list]
+			tempMon = [pll.low_pass_filter.monitor_ctrl() for pll in pll_list]
 			print('Monitor control signal and then add perturbation. xc(%0.2f)~' %(clock_counter[(idx_time+1)%phi_array_len][0]/(2*dictPLL['syncF'])), tempMon)
-			phi[(idx_time+1)%phi_array_len,:] = [pll.vco.add_perturbation((-0.5)**pll.idx_self) for pll in pll_list]
+			phi[(idx_time+1)%phi_array_len,:] = [pll.signal_controlled_oscillator.add_perturbation((-0.5) ** pll.id) for pll in pll_list]
 			clock_sync_scheduled = clock_counter[(idx_time+1)%phi_array_len][0] + 50
 
 		clkStore[idx_time+1,:] = clock_counter[(idx_time+1)%phi_array_len,:]
@@ -476,7 +476,7 @@ def evolveSystemTestPerturbations(dictNet, dictPLL, phi, clock_counter, pll_list
 # 		#print('Current state: phi[(idx_time)%phi_array_len,:]', phi[(idx_time)%phi_array_len,:], '\t(idx_time)%phi_array_len',(idx_time)%phi_array_len); sys.exit()
 # 		#print('(idx_time+1)%phi_array_len', ((idx_time+1)%phi_array_len)*dictPLL['dt']); #time.sleep(0.5)
 # 		phi[(idx_time+1)%phi_array_len,:] = [pll.next(idx_time%phi_array_len,phi) for pll in pll_list] # now the network is iterated, starting at t=0 with the history as prepared above
-# 		clock_counter[(idx_time+1)%phi_array_len] = [pll.clock_periods_count(idx_time%phi_array_len,phi[(idx_time+1)%phi_array_len,pll.idx_self]) for pll in pll_list]
+# 		clock_counter[(idx_time+1)%phi_array_len] = [pll.clock_periods_count(phi[(idx_time+1)%phi_array_len,pll.idx_self]) for pll in pll_list]
 # 		#print('clock count for all:', clock_counter[-1])
 # 		phiStore[idx_time+1,:] = phi[(idx_time+1)%phi_array_len,:]
 # 		#phidot = (phi[1:,0]-phi[:-1,0])/(2*np.pi*dictPLL['dt'])
@@ -488,6 +488,6 @@ def evolveSystemTestPerturbations(dictNet, dictPLL, phi, clock_counter, pll_list
 # 		#print('Current state: phi[(idx_time)%phi_array_len,:]', phi[(idx_time)%phi_array_len,:], '\t(idx_time)%phi_array_len',(idx_time)%phi_array_len); sys.exit()
 # 		#print('(idx_time+1)%phi_array_len', ((idx_time+1)%phi_array_len)*dictPLL['dt']); #time.sleep(0.5)
 # 		phi[(idx_time+1)%phi_array_len,:] = [pll.next(idx_time%phi_array_len,phi) for pll in pll_list] # now the network is iterated, starting at t=0 with the history as prepared above
-# 		clock_counter[(idx_time+1)%phi_array_len] = [pll.clock_periods_count(idx_time%phi_array_len,phi[(idx_time+1)%phi_array_len,pll.idx_self]) for pll in pll_list]
+# 		clock_counter[(idx_time+1)%phi_array_len] = [pll.clock_periods_count(phi[(idx_time+1)%phi_array_len,pll.idx_self]) for pll in pll_list]
 # 		#print('clock count for all:', clock_counter[-1])
 # 	phiStore = phi

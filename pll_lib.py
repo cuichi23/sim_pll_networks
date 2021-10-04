@@ -9,6 +9,8 @@ from __future__ import print_function
 
 import sys, gc
 import inspect
+from typing import Tuple
+
 import numpy as np
 #cimport numpy as np
 #cimport cython
@@ -374,124 +376,165 @@ class PhaseDetectorCombiner:													# this class creates PD objects, these 
 
 			return self.y
 
-################################################################################
 
-# delayer
 class Delayer:
-	"""A delayer class
+	"""The delayer obtains the past states of a PLLs coupling partners and its own past or current state.
 
-		Args:
+		Attributes:
+			pll_id: the identifier of the PLL this delayer belongs to
+			dt: time increment
+			phi_array_len: length of container that stores the phases
+			neighbor_ids: list of the ids of neighbors from whom signals are being received
+			transmit_delay: the transmission delay of the incoming signal
+			transmit_delay_steps: transmission delay in multiples of the time increment
+			pick_delayed_phases: function that defines how phases of incoming signals are picked
+			feedback_delay: the feedback delay of the oscillators internal loop
+			feedback_delay_steps: feedback delay in multiples of the time increment
 
-	    Returns:
-
-	    Raises:
 	"""
-	def __init__(self,idx_self,dictPLL,dictNet,dictData): #delay,dt,feedback_delay,std_dist_delay)
+	def __init__(self, pll_id: int, dict_pll: dict, dict_net: dict, dict_data: dict) -> None:
+		"""
+		Args:
+			pll_id: the oscillator's identity
+			dict_pll: oscillator related properties and parameters
+			dict_net: network related properties and parameters
+			dict_data: database for simulation results
+		"""
+		self.dt = dict_pll['dt']
+		self.pll_id = pll_id
 
-		self.dt				= dictPLL['dt']
-		self.idx_self		= idx_self
-		self.phi_array_len  = None												# this is being set after all (random) delays have been drawn
-		self.idx_neighbors = [n for n in dictPLL['G'].neighbors(self.idx_self)]# for networkx > v1.11
-		print('\nI am the delayer of PLL%i, my neighbors have indexes:'%self.idx_self, self.idx_neighbors)
-		self.temp_array 	= np.zeros(dictNet['Nx']*dictNet['Ny'])				# use to collect tau_kl for PLL k
+		# this is being set after all (random) delays have been drawn
+		self.phi_array_len = None
 
-		if ( ( isinstance(dictPLL['transmission_delay'], float) or isinstance(dictPLL['transmission_delay'], int) ) and not dictNet['special_case'] == 'timeDepTransmissionDelay'):
-			self.transmit_delay 		= dictPLL['transmission_delay']
+		self.neighbor_ids = [n for n in dict_pll['G'].neighbors(self.pll_id)]# for networkx > v1.11
+		print('\nI am the delayer of PLL%i, my neighbors have indexes:' % self.pll_id, self.neighbor_ids)
+
+		if ( (isinstance(dict_pll['transmission_delay'], float) or isinstance(dict_pll['transmission_delay'], int)) and not dict_net['special_case'] == 'timeDepTransmissionDelay'):
+			self.transmit_delay 		= dict_pll['transmission_delay']
 			self.transmit_delay_steps 	= int(np.round( self.transmit_delay / self.dt ))	# when initialized, the delay in time-steps is set to delay_steps
 			if ( self.transmit_delay_steps == 0 and self.transmit_delay > 0 ):
 				print('Transmission delay set nonzero but smaller than the time-step "dt", hence "self.transmit_delay_steps" < 1 !'); sys.exit()
 			elif ( self.transmit_delay_steps == 0 and self.transmit_delay == 0 ):
 				print('Transmission delay set to zero!')
 			#self.get_delayed_states		= lambda;
-			self.pick_delayed_phases = lambda phi, t, abs_t, tau: phi[(t-tau)%self.phi_array_len, self.idx_neighbors]
+			self.pick_delayed_phases = lambda phi, t, abs_t, tau: phi[(t-tau)%self.phi_array_len, self.neighbor_ids]
 
-		elif ( dictNet['special_case'] == 'timeDepTransmissionDelay' ):
+		elif (dict_net['special_case'] == 'timeDepTransmissionDelay'):
 
 			print('Time dependent transmission delay set!')
-			time_dep_delay = setup.setupTimeDependentParameter(dictNet, dictPLL, dictData, parameter='transmission_delay', afterTsimPercent=0.25, forAllPLLsDifferent=False)
+			time_dep_delay = setup.setupTimeDependentParameter(dict_net, dict_pll, dict_data, parameter='transmission_delay', afterTsimPercent=0.25, forAllPLLsDifferent=False)
 			selfidx_or_ident = 0												# this is the case if all transmission delays have the same time dependence
-			if len(time_dep_delay[:,0]) == dictNet['Nx']*dictNet['Ny']:			# if there is a matrix, i.e., different time-dependencies for different delay, then use this
+			if len(time_dep_delay[:,0]) == dict_net['Nx']*dict_net['Ny']:			# if there is a matrix, i.e., different time-dependencies for different delay, then use this
 				print('Test')
-				selfidx_or_ident = self.idx_self
-			dictPLL.update({'transmission_delay': time_dep_delay})
+				selfidx_or_ident = self.pll_id
+			dict_pll.update({'transmission_delay': time_dep_delay})
 			plt.figure(1234)
-			plt.plot(np.arange(0,len(dictPLL['transmission_delay'][selfidx_or_ident,:]))*dictPLL['dt'], dictPLL['transmission_delay'][selfidx_or_ident,:])
+			plt.plot(np.arange(0, len(dict_pll['transmission_delay'][selfidx_or_ident, :])) * dict_pll['dt'], dict_pll['transmission_delay'][selfidx_or_ident, :])
 			plt.xlabel('time'); plt.ylabel('delay value [s]'); plt.title('time-dependence of transmission delay over simulation time')
 			plt.draw(); plt.show()
-			self.transmit_delay 		= dictPLL['transmission_delay'][selfidx_or_ident,:]	# each object only knows its own sending delay time dependence
+			self.transmit_delay 		= dict_pll['transmission_delay'][selfidx_or_ident, :]	# each object only knows its own sending delay time dependence
 			self.transmit_delay_steps 	= [int(np.round(delay / self.dt)) for delay in self.transmit_delay] # when initialized, the delay in time-steps is set to delay_steps
 
-			if ( self.transmit_delay_steps == 0 and self.transmit_delay > 0 ):
+			if self.transmit_delay_steps == 0 and self.transmit_delay > 0:
 				print('Transmission delay set nonzero but smaller than the time-step "dt", hence "self.transmit_delay_steps" < 1 !'); sys.exit()
 			#self.get_delayed_states		= lambda;
-			self.pick_delayed_phases = lambda phi, t, abs_t, tau: phi[(t-tau[abs_t])%self.phi_array_len, self.idx_neighbors]
+			self.pick_delayed_phases = lambda phi, t, abs_t, tau: phi[(t-tau[abs_t])%self.phi_array_len, self.neighbor_ids]
 
 		# calculate tranmission delays steps, here pick for each Delayer individually but the same for each input l or even tau_kl
-		elif ( isinstance(dictPLL['transmission_delay'], list) or isinstance(dictPLL['transmission_delay'], np.ndarray) and not dictNet['special_case'] == 'timeDepTransmissionDelay' ):
-			if np.array(dictPLL['transmission_delay']).ndim == 1:				# tau_k case
-				self.transmit_delay_steps= int(np.round(dictPLL['transmission_delay'][idx_self] / self.dt))
-				self.pick_delayed_phases = lambda phi, t, abs_t, tau_k: phi[(t-tau_k)%self.phi_array_len, self.idx_neighbors]
+		elif isinstance(dict_pll['transmission_delay'], list) or isinstance(dict_pll['transmission_delay'], np.ndarray) and not dict_net['special_case'] == 'timeDepTransmissionDelay':
+			if np.array(dict_pll['transmission_delay']).ndim == 1:				# tau_k case
+				self.transmit_delay_steps= int(np.round(dict_pll['transmission_delay'][pll_id] / self.dt))
+				self.pick_delayed_phases = lambda phi, t, abs_t, tau_k: phi[(t-tau_k)%self.phi_array_len, self.neighbor_ids]
 
-			elif np.array(dictPLL['transmission_delay']).ndim == 2: 			# tau_kl case
+			elif np.array(dict_pll['transmission_delay']).ndim == 2: 			# tau_kl case
 				print('Delayer has different delays for each input signal! Hence: tau_kl are introduced.')
-				tempTauSteps_kl			 = [int(np.round(dictPLL['transmission_delay'][self.idx_self,i]/ self.dt)) for i in self.idx_neighbors]# pick the entries and store in a list for each PLL
+				tempTauSteps_kl			 = [int(np.round(dict_pll['transmission_delay'][self.pll_id, i] / self.dt)) for i in self.neighbor_ids]# pick the entries and store in a list for each PLL
 				self.transmit_delay_steps= np.array(tempTauSteps_kl)			# save as an array to object
-				self.pick_delayed_phases = lambda phi, t, abs_t, tau_kl: [phi[(t-tau_kl[i])%self.phi_array_len, self.idx_neighbors[i]] for i in range(len(self.idx_neighbors))]
-				#other possible option if needed -- return phi-slice of the dimension of the phi container and pick neighbors in PDC!
-				#self.pick_delayed_phases = self.pick_delayed_phases_taukl
+				self.pick_delayed_phases = lambda phi, t, abs_t, tau_kl: [phi[(t-tau_kl[i])%self.phi_array_len, self.neighbor_ids[i]] for i in range(len(self.neighbor_ids))]
 
-		if ( isinstance(dictPLL['feedback_delay'], float) or isinstance(dictPLL['feedback_delay'], int) ):
-			self.feedback_delay 		= dictPLL['feedback_delay']
+		if isinstance(dict_pll['feedback_delay'], float) or isinstance(dict_pll['feedback_delay'], int):
+			self.feedback_delay 		= dict_pll['feedback_delay']
 			self.feedback_delay_steps 	= int(np.round( self.feedback_delay / self.dt ))	# when initialized, the delay in time-steps is set to delay_steps
-			if ( self.feedback_delay_steps == 0 and self.feedback_delay > 0 ):
+			if self.feedback_delay_steps == 0 and self.feedback_delay > 0:
 				print('Feedback set to nonzero but is smaller than the time-step "dt", hence "self.feedback_delay_steps" < 1 !'); sys.exit()
 
-	#***************************************************************************
+	def evolve_delay_in_time(self, new_delay_value: float) -> None:
+		"""Assigns a new delay value to an incoming signal. So far this only works if all incoming delays are equal.
 
-	# def pick_delayed_phases_taukl(phi, t, tau_kl):
-	#
-	# 	for i in range(self.idx_neighbors):
-	# 		self.temp_array[self.idx_neighbors[i]] = phi[(t-tau_kl[i])%self.phi_array_len, self.idx_neighbors[i]]
-	#
-	# 	return transmission_delayed_phases
+		Args:
+			new_delay_value: the new delay value
 
-	def evolveDelayInTime(self,new_value):
+		"""
+		self.transmit_delay = new_delay_value
+		self.transmit_delay_steps = int(np.round( self.transmit_delay / self.dt ))
 
-		self.transmit_delay 		= new_value
-		self.transmit_delay_steps 	= int(np.round( self.transmit_delay / self.dt ))	# when initialized, the delay in time-steps is set to delay_steps
+	def next(self, index_current_time_cyclic: int, phase_memory: np.ndarray, index_current_time_absolute: int) -> Tuple[np.ndarray, np.ndarray]:
+		"""Assigns a new delay value to an incoming signal. So far this only works if all incoming delays are equal.
 
-		return None
+		Args:
+			index_current_time_cyclic: the current time index limited by the size of the phase memory
+			phase_memory: a container for the history of all phases
+			index_current_time_absolute: the absolute current time index within the simulation
 
-	def next(self,idx_time,x,abs_t):
+		Returns:
+			a tuple of arrays representing the feedback delayed phase state of the oscillator and the transmission delayed phase states of the neighbors
 
+		"""
 		#print('in delayer next: self.transmit_delay_steps=', self.transmit_delay_steps)
-		transmission_delayed_phases = self.pick_delayed_phases(x, idx_time, abs_t, self.transmit_delay_steps )
-		feedback_delayed_phase		= x[(idx_time-self.feedback_delay_steps)%self.phi_array_len, self.idx_self]
+		transmission_delayed_phases = self.pick_delayed_phases(phase_memory, index_current_time_cyclic, index_current_time_absolute, self.transmit_delay_steps)
+		feedback_delayed_phase		= phase_memory[(index_current_time_cyclic - self.feedback_delay_steps) % self.phi_array_len, self.pll_id]
 		#print('PLL%i with its feedback_delayed_phase [in steps]:'%self.idx_self,feedback_delayed_phase,', receives transmission_delayed_phases [in steps]:',transmission_delayed_phases,' from self.idx_neighbors:', self.idx_neighbors)
 		#time.sleep(1)
 
 		return np.asarray(feedback_delayed_phase), np.asarray(transmission_delayed_phases) # x is is the time-series from which the values at t-tau_kl^f and t-tau_kl are returned
 
 
-################################################################################
-
-# counter
 class Counter:
-	"""A counter class
+	"""Counts cycles or half cycles of periodic processes using the phase variable.
+
+	Counts multiples of PI or 2*PI to count half or full cycles.
+
+	Attributes:
+		reference_phase: the phase at which counting starts
 	"""
-	def __init__(self,idx_self,dictPLL):
+	def __init__(self):
+		self.reference_phase: float = 0
 
-		self.phase_init = 0
+	def reset(self, reference_phase: float) -> None:
+		"""Resets the clock counter by setting the reference phase.
 
-	def reset(self,phi0):
-		self.phase_init = phi0
+		Args:
+			reference_phase: the phase at which counting starts
+
+		"""
+		self.reference_phase = reference_phase
 		return None
 
-	def read_periods(self, phi):
-		return np.floor((phi-self.phase_init)/(2.0*np.pi))
+	def read_periods(self, current_phase: float) -> int:
+		"""
+		Calculates number of fully completed periods given by the difference between the current and reference phase.
 
-	def read_halfperiods(self,phi):
-		return np.floor((phi-self.phase_init)/(np.pi))
+		Args:
+			current_phase: phase at which periods should be calculated
+
+		Returns:
+			fully completed periods at the given phase
+
+		"""
+		return np.floor((current_phase - self.reference_phase) / (2.0 * np.pi))
+
+	def read_half_periods(self, current_phase: float) -> int:
+		"""
+		Calculates number of half periods given by the difference between the current and reference phase.
+
+		Args:
+			current_phase: phase at which half periods should be calculated
+
+		Returns:
+			half periods at the given phase
+
+		"""
+		return np.floor((current_phase - self.reference_phase) / np.pi)
 
 
 class PhaseLockedLoop:
@@ -506,8 +549,17 @@ class PhaseLockedLoop:
 
 		It allows to implement first and second order Kuramoto models with delayed and non delayed coupling for
 		different coupling topologies, heterogeneous oscillators and dynamic and quenched noise.
+
+		Attributes:
+			delayer: 						organizes delayed coupling
+			phase_detector_combiner: 		extracts phase relations between feedback and external signals
+			low_pass_filter: 				filters high frequency components (first or second order low pass)
+			signal_controlled_oscillator 	determines instantaneous frequency of autonomous oscillator with respect to an input signal
+			counter:						derives a clock / time from the oscillators clocking signal
+			pll_id:							identifier of the oscillator within the network
 	"""
-	def __init__(self, id: int, delayer: Delayer, phase_detector_combiner: PhaseDetectorCombiner,
+
+	def __init__(self, pll_id: int, delayer: Delayer, phase_detector_combiner: PhaseDetectorCombiner,
 				 low_pass_filter: LowPassFilter, signal_controlled_oscillator: SignalControlledOscillator,
 				 counter: Counter):
 		"""
@@ -517,7 +569,7 @@ class PhaseLockedLoop:
 				low_pass_filter: 				filters high frequency components (first or second order low pass)
 				signal_controlled_oscillator 	determines instantaneous frequency of autonomous oscillator with respect to an input signal
 				counter:						derives a clock / time from the oscillators clocking signal
-				id:								identifier of the oscillator within the network
+				pll_id:							identifier of the oscillator within the network
 
 		"""
 		self.delayer = delayer
@@ -525,9 +577,9 @@ class PhaseLockedLoop:
 		self.low_pass_filter = low_pass_filter
 		self.signal_controlled_oscillator = signal_controlled_oscillator
 		self.counter = counter
-		self.id = id
+		self.pll_id = pll_id
 
-	def next(self, index_current_time: int, length_phase_memory: int, phase_memory: np.ndarray) -> np.ndarray:
+	def next(self, index_current_time_absolute: int, length_phase_memory: int, phase_memory: np.ndarray) -> np.ndarray:
 		""" Function that evolves the oscillator forward in time by one increment based on the external signals and internal dynamics.
 			1) delayer obtains past states of neighbors in the network coupled to this oscillator and the current state of the oscillator itself
 			2) from these states the input phase relations are evaluated by the phase detector and combiner which yields the PD signal (averaged over all inputs)
@@ -535,18 +587,18 @@ class PhaseLockedLoop:
 			4) the voltage controlled oscillator evolves the phases according to the control signal
 
 			Args:
-				index_current_time:		current time within simulation
-				length_phase_memory:	length of container that stores the phases of the oscillators, needed for organizing the cyclic memory to handle the delay
-				phase_memory:			holds the phases of all oscillators for at least the time [-tau_max, 0], denotes the memory necessary for the time delay
+				index_current_time_absolute: current time within simulation
+				length_phase_memory: length of container that stores the phases of the oscillators, needed for organizing the cyclic memory to handle the delay
+				phase_memory: holds the phases of all oscillators for at least the time [-tau_max, 0], denotes the memory necessary for the time delay
 
 			Returns:
 				updated phase incrementing the time by one step
 
 			Raises:
 		"""
-		current_phase_state, delayed_phase_state = self.delayer.next(index_current_time % length_phase_memory, phase_memory, index_current_time)
+		current_phase_state, delayed_phase_state = self.delayer.next(index_current_time_absolute % length_phase_memory, phase_memory, index_current_time_absolute)
 
-		phase_detector_output = self.phase_detector_combiner.next(current_phase_state, delayed_phase_state, 0, index_current_time)
+		phase_detector_output = self.phase_detector_combiner.next(current_phase_state, delayed_phase_state, 0, index_current_time_absolute)
 
 		control_signal = self.low_pass_filter.next(phase_detector_output)
 
@@ -575,7 +627,7 @@ class PhaseLockedLoop:
 			Returns:
 				the number of half cycles counted
 		"""
-		return self.counter.read_halfperiods(current_phase_state)
+		return self.counter.read_half_periods(current_phase_state)
 
 	def clock_reset(self, current_phase_state: np.ndarray) -> None:
 		""" Function that resets the clock count of the oscillator.
@@ -585,7 +637,7 @@ class PhaseLockedLoop:
 		"""
 		self.counter.reset(current_phase_state)
 
-	def setup_hist_reverse(self) -> np.ndarray:
+	def setup_hist_reverse(self) -> float:
 		""" Function that sets the history of the oscillator using the voltage controlled oscillator. Given the required phase at the start of the simulation,
 			the function calls the VCO's function to set the history/memory backwards in time until the memory is filled.
 
@@ -594,7 +646,7 @@ class PhaseLockedLoop:
 		"""
 		return self.signal_controlled_oscillator.set_initial_reverse()[0]
 
-	def set_delta_perturbation(self, current_phase_state, perturbation, instantaneous_frequency):
+	def set_delta_perturbation(self, current_phase_state, perturbation, instantaneous_frequency) -> float:
 		""" Function that applies a delta-like perturbation to the phase of the oscillator at the start of the simulation.
 			Corrects the internal state of the oscillator with respect to the perturbation, calculated the initial control signal.
 
@@ -610,7 +662,7 @@ class PhaseLockedLoop:
 		control_signal = self.low_pass_filter.set_initial_control_signal(current_phase_state, instantaneous_frequency)
 		return self.signal_controlled_oscillator.delta_perturbation(current_phase_state, perturbation, control_signal)[0]
 
-	def next_no_external_input(self, index_current_time: int, length_phase_memory: int, phase_memory: np.ndarray) -> np.ndarray:
+	def next_no_external_input(self, index_current_time: int, length_phase_memory: int, phase_memory: np.ndarray) -> float:
 		""" Function that evolves the voltage controlled oscillator in a closed loop configuration when there is no external input, i.e., free-running closed loop PLL.
 			1) delayer obtains the current state of the oscillator itself (potentially delayed by a feedback delay)
 			2) this state is fed in the phase detector and combiner for zero external signal which yields the PD signal
@@ -632,7 +684,7 @@ class PhaseLockedLoop:
 		control_signal = self.low_pass_filter.next(phase_detector_output)
 		return self.signal_controlled_oscillator.next(control_signal)[0]
 
-	def next_free_running_open_loop(self) -> np.ndarray:
+	def next_free_running_open_loop(self) -> float:
 		""" Function that evolves the voltage controlled oscillator when there is no external input, i.e., free-running open loop PLL.
 
 			Returns:

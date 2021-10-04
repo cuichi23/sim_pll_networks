@@ -34,7 +34,7 @@ def generatePLLs(dictPLL, dictNet, dictData):									#mode,div,params['topology
 					pll.PhaseDetectorCombiner(idx_pll, dictPLL, dictNet),		# setup PDadder object of PLL k;
 					pll.LowPassFilter(idx_pll, dictPLL, dictNet),						# setup LF(1st) object of PLL k;
 					pll.SignalControlledOscillator(idx_pll,dictPLL, dictNet),	# setup VCO object of PLL k;
-					pll.Counter(idx_pll, dictPLL)								# setup Counter object of PLL k;
+					pll.Counter()								# setup Counter object of PLL k;
 					)  for idx_pll in range(dictNet['Nx']*dictNet['Ny']) ]
 
 	return pll_list

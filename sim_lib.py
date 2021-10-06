@@ -175,16 +175,16 @@ def simulateSystem(dictNet, dictPLL, dictAlgo=None):
 	eva.saveDictionaries(dictNet, 'dictNet',   dictPLL['coupK'], dictPLL['transmission_delay'], dictPLL['cutFc'], dictNet['Nx'], dictNet['Ny'], dictNet['mx'], dictNet['my'], dictNet['topology'])	   # save the dicts
 	eva.saveDictionaries(dictData, 'dictData', dictPLL['coupK'], dictPLL['transmission_delay'], dictPLL['cutFc'], dictNet['Nx'], dictNet['Ny'], dictNet['mx'], dictNet['my'], dictNet['topology'])	   # save the dicts
 
-	plot.plotPhasesInf(dictPLL, dictNet, dictData)
-	plot.plotPhases2pi(dictPLL, dictNet, dictData)
-	plot.plotFrequency(dictPLL, dictNet, dictData)
+	#plot.plotPhasesInf(dictPLL, dictNet, dictData)
+	#plot.plotPhases2pi(dictPLL, dictNet, dictData)
+	#plot.plotFrequency(dictPLL, dictNet, dictData)
 	plot.plotOrderPara(dictPLL, dictNet, dictData)
-	plot.plotPhaseRela(dictPLL, dictNet, dictData)
-	plot.plotPhaseDiff(dictPLL, dictNet, dictData)
-	plot.plotClockTime(dictPLL, dictNet, dictData)
-	plot.plotOscSignal(dictPLL, dictNet, dictData)
+	# plot.plotPhaseRela(dictPLL, dictNet, dictData)
+	#plot.plotPhaseDiff(dictPLL, dictNet, dictData)
+	#plot.plotClockTime(dictPLL, dictNet, dictData)
+	#plot.plotOscSignal(dictPLL, dictNet, dictData)
 	plot.plotFreqAndPhaseDiff(dictPLL, dictNet, dictData)
-	plot.plotPSD(dictPLL, dictNet, dictData, [], saveData=False)
+	plot.plotPSD(dictPLL, dictNet, dictData, [0, 15], saveData=False)
 
 	print('Time needed for simulation, evaluation and plotting: ', (time.time()-t0), ' seconds')
 
@@ -198,6 +198,8 @@ def simulateSystem(dictNet, dictPLL, dictAlgo=None):
 def evolveSystemOnTauArray(dictNet, dictPLL, phi, clock_counter, pll_list, dictData=None, dictAlgo=None):
 
 	print('Phi container only of length tau or multiple, no write-out so far of phases.')
+	phi_array_len = dictNet['phi_array_len']
+
 	for idx_time in range(dictNet['max_delay_steps'],dictNet['max_delay_steps']+dictPLL['sim_time_steps']-1,1):
 
 		#print('[pll.next(idx_time,dictNet['phi_array_len'],phi) for pll in pll_list]:', [pll.next(idx_time,dictNet['phi_array_len'],phi) for pll in pll_list])

@@ -687,7 +687,7 @@ class FlatStateList(object):
 			x[:, 10] = self.get_mx()
 			x[:, 11] = self.get_my()
 			x[:, 12] = self.get_v()
-			x[:, 13] = ( self.get_k(isRadians=True) / self.get_v() ) * h( self.get_omega(isRadians=True)*self.get_tau() )
+			x[:, 13] = ( self.get_k(isRadians=True) / self.get_v() ) * h( -self.get_omega(isRadians=True)*self.get_tau() / self.get_v() )
 			#print('from get_phiConf: ', self.get_phiConf()[0])
 			x[:, 14:14+phi_config_vec_len] = self.get_phiConf()[0]
 			#print('phi configuration x[:, 13:%i]: '%(13+phi_config_vec_len), x[:, 13:])

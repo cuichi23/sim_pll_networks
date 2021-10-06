@@ -367,7 +367,7 @@ def setupTopology(dictNet):
 
 	if dictNet['Nx']*dictNet['Ny'] < 36:
 		F=nx.adjacency_matrix(G)
-		print('nx.adjacency_matrix(G)', F.todense())
+		print('nx.adjacency_matrix(G)\n', F.todense())
 		print('nx.adjacency_spectrum(G)/max(nx.adjacency_spectrum(G))', nx.adjacency_spectrum(G)/max(nx.adjacency_spectrum(G)))
 
 	return G

@@ -669,9 +669,9 @@ def plotFreqAndPhaseDiff(dictPLL, dictNet, dictData):
 
 	ax012 = fig19.add_subplot(212)
 
-	if phase_diff_zero_2pi == 0:
+	if phase_diff_zero_2pi == 0:												# plot phase-differences in [-pi, pi] interval
 		shift2piWin = np.pi
-	elif phase_diff_zero_2pi == 1:
+	elif phase_diff_zero_2pi == 1:												# plot phase-differences in [0, 2*pi] interval
 		shift2piWin = 0.0
 
 	if not dictNet['topology'] == 'compareEntrVsMutual':
@@ -679,10 +679,10 @@ def plotFreqAndPhaseDiff(dictPLL, dictNet, dictData):
 			for i in range(len(dictData['phi'][0,:])):
 				labelname = r'$\phi_{%i}$-$\phi_{0}$' %(i)
 				plt.plot((dictData['t'][int(0.75*np.round(np.mean(dictPLL['transmission_delay'])/dictPLL['dt']))::dictPLL['sampleFplot']]),
-						((dictData['phi'][int(0.75*np.round(np.mean(dictPLL['transmission_delay'])/dictPLL['dt']))::dictPLL['sampleFplot'],i]-dictData['phi'][int(0.75*np.round(np.mean(dictPLL['transmission_delay'])/dictPLL['dt']))::dictPLL['sampleFplot'],0]-shift2piWin)%(2*np.pi))+shift2piWin,label=labelname)
+						((dictData['phi'][int(0.75*np.round(np.mean(dictPLL['transmission_delay'])/dictPLL['dt']))::dictPLL['sampleFplot'],i]-dictData['phi'][int(0.75*np.round(np.mean(dictPLL['transmission_delay'])/dictPLL['dt']))::dictPLL['sampleFplot'],0]+shift2piWin)%(2*np.pi))-shift2piWin,label=labelname)
 	else:
-		plt.plot(dictData['t'][-int(25*1.0/(dictPLL['intrF']*dt)):],((dictData['phi'][-int(25*1.0/(dictPLL['intrF']*dt)):,0]-dictData['phi'][-int(25*1.0/(dictPLL['intrF']*dt)):,1]+np.pi)%(2.*np.pi))-np.pi,'-',linewidth=2,label=r'$\phi_{0}-\phi_{1}$ mutual')
-		plt.plot(dictData['t'][-int(25*1.0/(dictPLL['intrF']*dt)):],((dictData['phi'][-int(25*1.0/(dictPLL['intrF']*dt)):,3]-dictData['phi'][-int(25*1.0/(dictPLL['intrF']*dt)):,2]+np.pi)%(2.*np.pi))-np.pi,'--',linewidth=2,label=r'$\phi_{3}-\phi_{2}$ entrain')
+		plt.plot(dictData['t'][-int(25*1.0/(dictPLL['intrF']*dt)):],((dictData['phi'][-int(25*1.0/(dictPLL['intrF']*dt)):,0]-dictData['phi'][-int(25*1.0/(dictPLL['intrF']*dt)):,1]+shift2piWin)%(2.*np.pi))-shift2piWin,'-',linewidth=2,label=r'$\phi_{0}-\phi_{1}$ mutual')
+		plt.plot(dictData['t'][-int(25*1.0/(dictPLL['intrF']*dt)):],((dictData['phi'][-int(25*1.0/(dictPLL['intrF']*dt)):,3]-dictData['phi'][-int(25*1.0/(dictPLL['intrF']*dt)):,2]+shift2piWin)%(2.*np.pi))-shift2piWin,'--',linewidth=2,label=r'$\phi_{3}-\phi_{2}$ entrain')
 		# plt.plot((t[-int(12*1.0/(dictPLL['intrF']*dt)):]*dt),((dictData['phi'][-int(12*1.0/(dictPLL['intrF']*dt)):,0]-dictData['phi'][-int(12*1.0/(dictPLL['intrF']*dt)):,5]+np.pi)%(2.*np.pi))-np.pi,'-',linewidth=2,label=r'$\phi_{0}-\phi_{5}$ mutual  vs freeRef')
 		# plt.plot((t[-int(12*1.0/(dictPLL['intrF']*dt)):]*dt),((dictData['phi'][-int(12*1.0/(dictPLL['intrF']*dt)):,3]-dictData['phi'][-int(12*1.0/(dictPLL['intrF']*dt)):,5]+np.pi)%(2.*np.pi))-np.pi,'--',linewidth=2,label=r'$\phi_{3}-\phi_{5}$ entrain vs freeRef')
 		# plt.plot((t[-int(12*1.0/(dictPLL['intrF']*dt)):]*dt),((dictData['phi'][-int(12*1.0/(dictPLL['intrF']*dt)):,0]-dictData['phi'][-int(12*1.0/(dictPLL['intrF']*dt)):,4]+np.pi)%(2.*np.pi))-np.pi,'-.',linewidth=2,label=r'$\phi_{0}-\phi_{4}$ mutual  vs freePLL')

@@ -17,6 +17,7 @@ from scipy.stats import cauchy
 import datetime
 import time
 
+import check_dicts_lib as chk_dicts
 import coupling_fct_lib as coupfct
 import synctools_interface_lib as synctools
 
@@ -87,7 +88,8 @@ def getDicts(Fsim=125):
 		'sampleF': Fsim,														# sampling frequency
 		'sampleFplot': 5,														# sampling frequency for reduced plotting (every sampleFplot time step)
 		'treshold_maxT_to_plot': 50E3,											# maximum number of periods to plot for some plots
-		'percentPeriodsAverage': 0.7											# average of *percentPeriodsAverage* % of simulated periods
+		'percentPeriodsAverage': 0.15,											# average of *percentPeriodsAverage* % of simulated periods
+		'PSD_freq_resolution': 1E-3												# frequency resolution aimed at with PSD: hence, T_analyze ~ 1/f
 	}
 
 	dictAlgo={
@@ -96,141 +98,7 @@ def getDicts(Fsim=125):
 		'min_max_range_parameter': [0.95, 1.05]									# specifies within which min and max value to linspace the detuning
 	}
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	if dictPLL['coup_fct_sig'] == coupfct.triangular or dictPLL['coup_fct_sig'] == coupfct.deriv_triangular or dictPLL['coup_fct_sig'] == coupfct.square_wave or dictPLL['coup_fct_sig'] == coupfct.pfd:
-		if dictPLL['vco_out_sig'] == coupfct.sine:
-			print('A coupling function associated to oscillators with DIGITAL output is chosen. Current PSD choice is only to analyze first harmonic contribution! Switch to full digital [y]?')
-			choice = choose_yes_no()
-			if choice == 'y':
-				dictPLL.update({'vco_out_sig': coupfct.square_wave})
-			elif choice == 'n':
-				dictPLL.update({'vco_out_sig': coupfct.sine})
-	elif dictPLL['coup_fct_sig'] == coupfct.sine or dictPLL['coup_fct_sig'] == coupfct.cosine:
-		if dictPLL['vco_out_sig'] == coupfct.square_wave:
-			print('A coupling function associated to oscillators with ANALOG output is chosen. Current PSD choice is to analyze a square wave signal of the phase! Switch to sine wave [y]?')
-			choice = choose_yes_no()
-			if choice == 'y':
-				dictPLL.update({'vco_out_sig': coupfct.sine})
-			elif choice == 'n':
-				dictPLL.update({'vco_out_sig': coupfct.square_wave})
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	# calculate other parameters and test for incompatibilities
-	dictPLL.update({'dt': 1.0/dictPLL['sampleF']})
-	if ( isinstance(dictPLL['gPDin'], np.ndarray) and dictPLL['gPDin_symmetric']):
 
-		print('Generate symmetrical matrix for PD gains. CHECK HERE AGAIN! CONSTRUCTION SITE!')
-		dictPLL.update({'gPDin': (dictPLL['gPDin']@dictPLL['gPDin'].T)/np.max(dictPLL['gPDin']@dictPLL['gPDin'].T)})
-		for i in range(len(dictPLL['gPDin'][:][0])):
-			for j in range(len(dictPLL['gPDin'][0][:])):
-					if dictPLL['gPDin'][i][j] > 0.25:
-						dictPLL['gPDin'][i][j] = 1
-					else:
-						dictPLL['gPDin'][i][j] = 0
-					if i == j:
-						dictPLL['gPDin'][i][j] = 0
-
-	# if 	 isinstance(dictPLL['intrF'], list) or isinstance(dictPLL['intrF'], np.ndarray):
-	# 	min_intF = np.min(dictPLL['intrF'])
-	#
-	# elif isinstance(dictPLL['intrF'], float) or isinstance(dictPLL['intrF'], int):
-	# 	min_intF = dictPLL['intrF']
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	min_intF = np.min(dictPLL['intrF'])
-	if min_intF > 1E-3:
-
-		dictNet.update({'Tsim': dictNet['Tsim']*(1.0/min_intF)})		# simulation time in multiples of the period of the uncoupled oscillators
-		dictPLL.update({'sim_time_steps': int(dictNet['Tsim']/dictPLL['dt'])})
-		print('Total simulation time in multiples of the eigentfrequency:', int(dictNet['Tsim']*min_intF))
-	else:
-
-		print('Tsim not in multiples of T_omega, since F <= 1E-3')
-		dictNet.update({'Tsim': dictNet['Tsim']*2})
-		dictPLL.update({'sim_time_steps': int(dictNet['Tsim']/dictPLL['dt'])})
-		print('Total simulation time in seconds:', int(dictNet['Tsim']))
-
-	dictPLL.update({'timeSeriesAverTime': int(dictPLL['percentPeriodsAverage']*dictNet['Tsim']*dictPLL['syncF'])})
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	if dictPLL['extra_coup_sig'] != 'injection2ndHarm':
-		dictPLL.update({'coupStr_2ndHarm': 0})
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	if dictNet['computeFreqAndStab'] and dictPLL['orderLF'] == 1:
-		if( isinstance(dictPLL['intrF'], np.ndarray) or isinstance(dictPLL['intrF'], list) or isinstance(dictPLL['cutFc'], np.ndarray) or isinstance(dictPLL['cutFc'], list) or
-			isinstance(dictPLL['coupK'], np.ndarray) or isinstance(dictPLL['coupK'], list) or isinstance(dictPLL['transmission_delay'], np.ndarray) or isinstance(dictPLL['transmission_delay'], list) ):
-			print('USING SYNCTOOLS for heterogeneous parameters -- taking the mean value!')
-			dictPLLsyncTool = dictPLL.copy()
-			dictPLLsyncTool.update({'intrF': 				np.mean(dictPLL['intrF'])})
-			dictPLLsyncTool.update({'cutFc': 				np.mean(dictPLL['cutFc'])})
-			dictPLLsyncTool.update({'coupK': 				np.mean(dictPLL['coupK'])})
-			dictPLLsyncTool.update({'transmission_delay': 	np.mean(dictPLL['transmission_delay'])})
-			#try:
-			isRadian = False													# set this False to get values returned in [Hz] instead of [rad * Hz]
-			sf = synctools.SweepFactory(dictPLLsyncTool, dictNet, isRadians=isRadian)
-			fsl = sf.sweep()
-			para_mat = fsl.get_parameter_matrix(isRadians=isRadian)				# extract variables from the sweep, this matrix contains all cases
-			print('New parameter combinations with {intrF, coupK, cutFc, delay, Omega, ReLambda, ImLambda, TsimToPert1/e, Nx, Ny, mx, my, div}: \n', [*para_mat])
-			choice = chooseSolution(para_mat)
-			dictPLL.update({'syncF': para_mat[choice,4], 'ReLambda': para_mat[choice,5], 'ImLambda': para_mat[choice,6]})
-			print('Choice %i made. This state has global frequency Omega=%0.2f Hz, and ReLambda=%0.2f and ImLambda=%0.2f'%(choice, dictPLL['syncF'], dictPLL['ReLambda'], dictPLL['ImLambda']))
-			#except:
-			#	print('Could not compute linear stability and global frequency! Check synctools and case!')
-
-		elif ( (isinstance(dictPLL['intrF'], np.float) or isinstance(dictPLL['intrF'], np.int)) and (isinstance(dictPLL['cutFc'], np.float) or isinstance(dictPLL['cutFc'], np.int)) and
-			(isinstance(dictPLL['coupK'], np.float) or isinstance(dictPLL['coupK'], np.int)) and (isinstance(dictPLL['transmission_delay'], np.float) or isinstance(dictPLL['transmission_delay'], np.int)) ):
-			#try:
-			isRadian = False													# set this False to get values returned in [Hz] instead of [rad * Hz]
-			sf = synctools.SweepFactory(dictPLL, dictNet, isRadians=isRadian)
-			fsl = sf.sweep()
-			para_mat = fsl.get_parameter_matrix(isRadians=isRadian)				# extract variables from the sweep, this matrix contains all cases
-			print('New parameter combinations with {intrF, coupK, cutFc, delay, Omega, ReLambda, ImLambda, TsimToPert1/e, Nx, Ny, mx, my, div}: \n', [*para_mat])
-			choice = chooseSolution(para_mat)
-			dictPLL.update({'syncF': para_mat[choice,4], 'ReLambda': para_mat[choice,5], 'ImLambda': para_mat[choice,6]})
-			print('Choice %i made. This state has global frequency Omega=%0.2f Hz, and ReLambda=%0.2f and ImLambda=%0.2f'%(choice, dictPLL['syncF'], dictPLL['ReLambda'], dictPLL['ImLambda']))
-			#except:
-			#	print('Could not compute linear stability and global frequency! Check synctools and case!')
-	elif dictNet['computeFreqAndStab'] and dictPLL['orderLF'] > 1:
-		print('In dicts_<NAME>: Synctools prediction not available for second order LFs!'); sys.exit();
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-	dictNet = check_consistency_initPert(dictNet)
-	print('Setup (dictNet, dictPLL):', dictNet, dictPLL)
+	dictPLL, dictNet, dictAlgo = chk_dicts.check_dicts_consistency(dictPLL, dictNet, dictAlgo)
 
 	return dictPLL, dictNet, dictAlgo
-
-# ******************************************************************************
-
-def chooseSolution(para_mat):													# ask user-input for which solution to simulate
-	a_true = True
-	while a_true:
-		# get user input which of the possible cases to simulate
-		choice = input('Choose which case to simulate [0,...,%i]: '%(len(para_mat[:,0])-1))
-		if int(choice) >= 0 and int(choice) < len(para_mat[:,0]):
-			break
-		else:
-			print('Please provide input as integer choice!')
-
-	return int(choice)
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-def check_consistency_initPert(dictNet):
-	if len(dictNet['phiPerturb']) != dictNet['Nx']*dictNet['Ny']:
-		userIn = input('No initial perturbation defined, choose from [manual, allzero, iid]: ')
-		if userIn == 'manual':
-			a_true = True
-			while a_true:
-				# get user input for corrected set of perturbations
-				choice = [float(item) for item in input('Initial perturbation vectors´ length does not match number of oscillators (%i), provide new list [only numbers without commas!]: '%(dictNet['Nx']*dictNet['Ny'])).split()]
-				dictNet.update({'phiPerturb': choice})
-				print('type(choice), len(choice)', type(choice), len(choice))
-				if len(dictNet['phiPerturb']) == dictNet['Nx']*dictNet['Ny']:
-					break
-				elif dictNet['phiPerturb'][0] == -999:
-					dictNet.update({'phiPerturb': np.zeros(dictNet['Nx']*dictNet['Ny']).tolist()})
-				else:
-					print('Please choose right number of perturbations or the value -999 for no perturbation!')
-		elif userIn == 'allzero':
-			dictNet.update({'phiPerturb': np.zeros(dictNet['Nx']*dictNet['Ny']).tolist()})
-		elif userIn == 'iid':
-			lowerPertBound = np.float(input('Lower bound [e.g., -3.14159]: '))
-			upperPertBound = np.float(input('Upper bound [e.g., +3.14159]: '))
-			dictNet.update({'phiPerturb': (np.random.rand(dictNet['Nx']*dictNet['Ny'])*np.abs((upperPertBound-lowerPertBound))-lowerPertBound).tolist()})
-		else:
-			return None
-	return dictNet

@@ -278,7 +278,7 @@ def evolveSystemOnTsimArray_timeDepChangeOfCoupStrength(dictNet, dictPLL, phi, c
 		#print('(idx_time+1)%phi_array_len', ((idx_time+1)%phi_array_len)*dictPLL['dt']); #time.sleep(0.5)
 		phi[(idx_time+1)%phi_array_len,:] = [pll.next(idx_time,phi_array_len,phi) for pll in pll_list] # now the network is iterated, starting at t=0 with the history as prepared above
 		#print('injectionLock:', [pll.pdc.compute(np.zeros(dictNet['Nx']*dictNet['Ny']-1), 0, np.zeros(dictNet['Nx']*dictNet['Ny']-1), idx_time) for pll in pll_list])
-		[pll.signal_controlled_oscillator.evolveCouplingStrength(couplingStrVal_vs_time[idx_time], dictNet) for pll in pll_list]
+		[pll.signal_controlled_oscillator.evolve_coupling_strength(couplingStrVal_vs_time[idx_time], dictNet) for pll in pll_list]
 		#[print('at time t=', idx_time*dictPLL['dt'] , 'K_inject2ndHarm=', couplingStrVal_vs_time[idx_time]) for pll in pll_list]
 		clock_counter[(idx_time+1)%phi_array_len,:] = [pll.clock_halfperiods_count(phi[(idx_time+1)%phi_array_len,pll.pll_id]) for pll in pll_list]
 		#print('clock count for all:', clock_counter[-1])

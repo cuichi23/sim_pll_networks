@@ -9,7 +9,7 @@ from __future__ import print_function
 
 import sys, gc
 import inspect
-from typing import Tuple
+from typing import Tuple, Optional
 
 import numpy as np
 #cimport numpy as np
@@ -154,71 +154,84 @@ class LowPassFilter:
 	def monitor_ctrl(self):														# monitor ctrl signal
 		return self.y
 
-################################################################################
 
-# VCO: d_phi / d_t = omega + K * x
 class SignalControlledOscillator:
-	"""A voltage controlled oscillator class
+	"""A signal controlled oscillator is an autonomous oscillator that can change its instantaneous frequency as a
+	function of the control signal.
 
-		Args:
+	SCO: d_phi / d_t = f(x_ctrl) = omega + K * x_ctrl + O(epsilon > 1)
 
-	    Returns:
+	Attributes:
+		pll_id: the oscillator's identity
+		sync_freq_rad: frequency of synchronized states in radHz (Omega)
+		intr_freq_rad: intrinsic frequency of free running closed loop oscillator in radHz (omega)
+		K_rad: coupling strength in radHz
+		c: noise strength -- provides the variance of the GWN process
+		dt: time increment
+		phi: this is the internal representation of the oscillator's phase, NOT the container in simulateNetwork
+		response_vco: defines a nonlinear VCO response, either set to 'linear' or the nonlinear expression
+		init_freq: defines the initial frequency of the signal control oscillator according to the phase history
+		evolve_phi: function defining how the phase evolves in time, e.g., with or without noise, linear vs. nonlinear
 
-	    Raises:
 	"""
-	def __init__(self,idx_self,dictPLL,dictNet):
-		self.idx_self 	= idx_self												# assigns the index
-		self.Omega 		= 2.0*np.pi*dictPLL['syncF']							# set angular frequency of synchronized state under investigation
-		if dictPLL['fric_coeff_PRE_vs_PRR'] == 'PRR':
-			self.omega 	= 2.0 * np.pi * get_from_value_or_list(idx_self, dictPLL['intrF'], dictNet['Nx'] * dictNet['Ny']) # set intrinsic frequency of the VCO
-		elif dictPLL['fric_coeff_PRE_vs_PRR'] == 'PRE':
-			self.omega 	= 2.0 * np.pi * get_from_value_or_list(idx_self, dictPLL['intrF'] / dictPLL['friction_coefficient'], dictNet['Nx'] * dictNet['Ny']) # set intrinsic frequency of the VCO
-		self.K 			= 2.0 * np.pi * get_from_value_or_list(idx_self, dictPLL['coupK'], dictNet['Nx'] * dictNet['Ny']) # set coupling strength
-		self.c 			= get_from_value_or_list(idx_self, dictPLL['noiseVarVCO'], dictNet['Nx'] * dictNet['Ny'])	 # noise strength -- provide the variance of the GWN process
-		self.dt 		= dictPLL['dt']											# set time step with which the equations are evolved
-		self.phi 		= None													# this is the internal representation of phi, NOT the container in simulateNetwork
-		self.responVCO	= dictPLL['responseVCO']								# defines a nonlinar VCO response, either set to 'linear' or the nonlinear expression
-		self.idx		= idx_self
+	def __init__(self, pll_id, dict_pll, dict_net):
+		"""
+		Args:
+			pll_id: the oscillator's identity
+			dict_pll: oscillator related properties and parameters
+			dict_net: network related properties and parameters
+		"""
+		self.pll_id 	= pll_id
+		self.sync_freq_rad 		= 2.0 * np.pi * dict_pll['syncF']
+		if dict_pll['fric_coeff_PRE_vs_PRR'] == 'PRR':
+			self.intr_freq_rad 	= 2.0 * np.pi * get_from_value_or_list(pll_id, dict_pll['intrF'], dict_net['Nx'] * dict_net['Ny'])
+		elif dict_pll['fric_coeff_PRE_vs_PRR'] == 'PRE':
+			self.intr_freq_rad 	= 2.0 * np.pi * get_from_value_or_list(pll_id, dict_pll['intrF'] / dict_pll['friction_coefficient'], dict_net['Nx'] * dict_net['Ny'])
+		self.K_rad 			= 2.0 * np.pi * get_from_value_or_list(pll_id, dict_pll['coupK'], dict_net['Nx'] * dict_net['Ny'])
+		self.c 			= get_from_value_or_list(pll_id, dict_pll['noiseVarVCO'], dict_net['Nx'] * dict_net['Ny'])
+		self.dt 		= dict_pll['dt']
+		self.phi: Optional[float] = None
+		self.response_vco = dict_pll['responseVCO']
 
-		if 	 dictPLL['typeOfHist'] == 'syncState':								# set initial frequency according to the parameter in 1params.txt
-			print('I am the VCO of PLL%i with intrinsic frequency f=%0.2f Hz and K=%0.2f Hz, initially in a synchronized state.'%(self.idx_self, self.omega/(2.0*np.pi), self.K/(2.0*np.pi)))
-			self.init_freq = self.Omega
-		elif dictPLL['typeOfHist'] == 'freeRunning':
-			print('I am the VCO of PLL%i with intrinsic frequency f=%0.2f Hz and K=%0.2f Hz, initially in free running.'%(self.idx_self, self.omega/(2.0*np.pi), self.K/(2.0*np.pi)))
-			self.init_freq = self.omega
+		if dict_pll['typeOfHist'] == 'syncState':
+			print('I am the VCO of PLL%i with intrinsic frequency f=%0.2f Hz and K=%0.2f Hz, initially in a synchronized state.' % (self.pll_id, self.intr_freq_rad / (2.0 * np.pi), self.K_rad / (2.0 * np.pi)))
+			self.init_freq = self.sync_freq_rad
+		elif dict_pll['typeOfHist'] == 'freeRunning':
+			print('I am the VCO of PLL%i with intrinsic frequency f=%0.2f Hz and K=%0.2f Hz, initially in free running.' % (self.pll_id, self.intr_freq_rad / (2.0 * np.pi), self.K_rad / (2.0 * np.pi)))
+			self.init_freq = self.intr_freq_rad
 		else:
 			print('\nSet typeOfHist dict entry correctly!'); sys.exit()
 
 		if self.c > 0:															# create noisy VCO output
 			print('VCO output noise is enabled!')
-			if self.responVCO == 'linear':										# this simulates a linear response of the VCO
-				self.evolvePhi = lambda w, K, x_ctrl, c, dt: ( w + K * x_ctrl ) * dt + np.random.normal(loc=0.0, scale=np.sqrt( c * dt ))
-			elif not self.responVCO == 'linear':								# this simulates a user defined nonlinear VCO response
-				print('\nself.responVCO:',self.responVCO,'\n')
-				self.evolvePhi = lambda w, K, x_ctrl, c, dt: self.responVCO(w, K, x_ctrl) * dt + np.random.normal(loc=0.0, scale=np.sqrt( c * dt ))
+			if self.response_vco == 'linear':										# this simulates a linear response of the VCO
+				self.evolve_phi = lambda w, K, x_ctrl, c, dt: (w + K * x_ctrl) * dt + np.random.normal(loc=0.0, scale=np.sqrt(c * dt))
+			elif not self.response_vco == 'linear':								# this simulates a user defined nonlinear VCO response
+				print('\nself.responVCO:', self.response_vco, '\n')
+				self.evolve_phi = lambda w, K, x_ctrl, c, dt: self.response_vco(w, K, x_ctrl) * dt + np.random.normal(loc=0.0, scale=np.sqrt(c * dt))
 		elif self.c == 0:														# create non-noisy VCO output
-			if self.responVCO == 'linear':
-				self.evolvePhi = lambda w, K, x_ctrl, c, dt: ( w + K * x_ctrl ) * dt
-			elif not self.responVCO == 'linear':
-				self.evolvePhi = lambda w, K, x_ctrl, c, dt: self.responVCO(w, K, x_ctrl) * dt
+			if self.response_vco == 'linear':
+				self.evolve_phi = lambda w, K, x_ctrl, c, dt: (w + K * x_ctrl) * dt
+			elif not self.response_vco == 'linear':
+				self.evolve_phi = lambda w, K, x_ctrl, c, dt: self.response_vco(w, K, x_ctrl) * dt
 
-		test = self.evolvePhi(self.omega, self.K, 0.01, self.c, self.dt)
+		test = self.evolve_phi(self.intr_freq_rad, self.K_rad, 0.01, self.c, self.dt)
 		if not ( isinstance(test, float) or isinstance(test, int) ):
 			print('Specified VCO response function unknown, check VCO initialization in pll_lib!'); sys.exit()
 
-	def evolveCouplingStrength(self,new_value_or_list,dictNet):
+	def evolve_coupling_strength(self, new_coupling_strength_value_or_list, dict_net):
 
-		self.K	= 2.0 * np.pi * get_from_value_or_list(self.idx_self, new_value_or_list / self.K, dictNet['Nx'] * dictNet['Ny'])
+		self.K_rad	= 2.0 * np.pi * get_from_value_or_list(self.pll_id, new_coupling_strength_value_or_list / self.K_rad, dict_net['Nx'] * dict_net['Ny'])
 		#print('Injection lock coupling strength for PLL%i changed, new value:'%self.idx_self, self.K2nd_k); #time.sleep(1)
 		return None
 
 	def next(self,x_ctrl):														# compute change of phase per time-step due to intrinsic frequency and noise (if non-zero variance)
-		self.d_phi 	= self.evolvePhi(self.omega, self.K, x_ctrl, self.c, self.dt)
+		self.d_phi 	= self.evolve_phi(self.intr_freq_rad, self.K_rad, x_ctrl, self.c, self.dt)
 		self.phi 	= self.phi + self.d_phi
 		return self.phi, self.d_phi
 
 	def delta_perturbation(self, phi, phiPert, x_ctrl):							# sets a delta-like perturbation 0-dt, the last time-step of the history
-		self.d_phi 	= phiPert + self.evolvePhi(self.init_freq, self.K, x_ctrl, self.c, self.dt)
+		self.d_phi 	= phiPert + self.evolve_phi(self.init_freq, self.K_rad, x_ctrl, self.c, self.dt)
 		self.phi 	= self.phi + self.d_phi
 		return self.phi, self.d_phi
 
@@ -227,12 +240,12 @@ class SignalControlledOscillator:
 		return self.phi
 
 	def set_initial_forward(self):												# sets the phase history of the VCO with the frequency of the synchronized state under investigation
-		self.d_phi 	= self.evolvePhi(self.init_freq, 0.0, 0.0, self.c, self.dt)
+		self.d_phi 	= self.evolve_phi(self.init_freq, 0.0, 0.0, self.c, self.dt)
 		self.phi 	= self.phi + self.d_phi
 		return self.phi, self.d_phi
 
 	def set_initial_reverse(self):												# sets the phase history of the VCO with the frequency of the synchronized state under investigation
-		self.d_phi 	= self.evolvePhi(-self.init_freq, 0.0, 0.0, self.c, self.dt)
+		self.d_phi 	= self.evolve_phi(-self.init_freq, 0.0, 0.0, self.c, self.dt)
 		#print('In reverse fct of PLL%i self.phi, self.d_phi:'%self.idx, self.phi, self.d_phi); time.sleep(0.5)
 		self.phi 	= self.phi + self.d_phi
 		return self.phi, self.d_phi
@@ -253,8 +266,8 @@ class PhaseDetectorCombiner:
 
 	Attributes:
 		pll_id: the oscillator's identity
-		omega: intrinsic frequency in radHz
-		K: coupling strength in radHz
+		intr_freq_rad: intrinsic frequency in radHz
+		K_rad: coupling strength in radHz
 		dt: time increment
 		div: the division value of the frequency divider
 		h: the coupling function of the phase detector (HF components ideally damped)
@@ -278,8 +291,8 @@ class PhaseDetectorCombiner:
 		"""
 		# print('Phasedetector and Combiner: sin(x)')
 		self.pll_id 		= pll_id
-		self.omega 			= 2.0*np.pi*np.mean(dict_pll['intrF'])
-		self.K 				= 2.0 * np.pi * get_from_value_or_list(pll_id, dict_pll['coupK'], dict_net['Nx'] * dict_net['Ny'])
+		self.intr_freq_rad 			= 2.0 * np.pi * np.mean(dict_pll['intrF'])
+		self.K_rad 				= 2.0 * np.pi * get_from_value_or_list(pll_id, dict_pll['coupK'], dict_net['Nx'] * dict_net['Ny'])
 		self.dt				= dict_pll['dt']
 		self.div 			= dict_pll['div']
 		self.h 				= dict_pll['coup_fct_sig']
@@ -310,8 +323,8 @@ class PhaseDetectorCombiner:
 				self.compute	= lambda x_ext, ant_in, x_feed, idx_time:  np.mean(self.G_kl * self.h( ( x_ext - x_feed ) / self.div ) + self.activate_Rx * self.h(ant_in - x_feed / self.div))
 			elif dict_pll['antenna'] == False and dict_pll['extra_coup_sig'] == 'injection2ndHarm':
 				print('Setup PLL with injection locking signal! Initial self.K2nd_k=', self.K2nd_k, 'Hz')
-				if self.omega == 0 and not dict_pll['syncF'] == 0:
-					self.omega = 2 * np.pi * dict_pll['syncF']
+				if self.intr_freq_rad == 0 and not dict_pll['syncF'] == 0:
+					self.intr_freq_rad = 2 * np.pi * dict_pll['syncF']
 
 				#self.compute	= lambda x_ext, ant_in, x_feed, idx_time: np.mean( self.G_kl * self.h( ( x_ext - x_feed ) / self.div ) ) - self.K2nd_k * self.h( ( 2.0 * self.omega * idx_time * self.dt ) / self.div )
 				#self.compute	= lambda x_ext, ant_in, x_feed, idx_time: np.sum( self.G_kl * self.h( ( x_ext - x_feed ) / self.div ) ) - self.K2nd_k * self.h( 2.0 * x_feed / self.div )
@@ -344,8 +357,8 @@ class PhaseDetectorCombiner:
 																				+ (1.0-self.hf( ant_in ))*self.hf( x_feed / self.div ))
 			elif dict_pll['antenna'] == False and dict_pll['extra_coup_sig'] == 'injection2ndHarm':
 				print('Setup PLL with injection locking signal!');
-				self.compute	= lambda x_ext, ant_in, x_feed, idx_time: np.mean( self.G_kl * ( self.h( ( 2 * x_ext - x_feed ) / self.div )
-																				+ self.h( ( 2 * self.omega * idx_time * self.dt ) / self.div ) ) )
+				self.compute	= lambda x_ext, ant_in, x_feed, idx_time: np.mean(self.G_kl * (self.h( ( 2 * x_ext - x_feed ) / self.div )
+																							   + self.h((2 * self.intr_freq_rad * idx_time * self.dt) / self.div)))
 			else:
 				if dict_pll['typeVCOsig'] == 'analogHF':							# this becomes the coupling function for analog VCO output signals
 					self.compute= lambda x_ext, ant_in, x_feed, idx_time: np.mean( self.G_kl * self.hf( x_ext / self.div ) * self.hf( x_feed / self.div ) )
@@ -366,7 +379,7 @@ class PhaseDetectorCombiner:
 			either a scalar or an array with individual values for each oscillator in the network
 			dict_net: network related properties and parameters
 		"""
-		self.K2nd_k	= get_from_value_or_list(self.pll_id, new_coupling_strength_injection_locking / self.K, dict_net['Nx'] * dict_net['Ny'])
+		self.K2nd_k	= get_from_value_or_list(self.pll_id, new_coupling_strength_injection_locking / self.K_rad, dict_net['Nx'] * dict_net['Ny'])
 		#print('Injection lock coupling strength for PLL%i changed, new value:'%self.idx_self, self.K2nd_k); #time.sleep(1)
 
 	def next(self, feedback_delayed_phases: np.ndarray, transmission_delayed_phases: np.ndarray, antenna_in: float, index_current_time: int = 0):

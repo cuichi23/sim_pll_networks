@@ -9,3 +9,5 @@ dependencies:
   - pyparsing
   - python-dateutil
   - matplotlib
+  - scipy
+  - networkx

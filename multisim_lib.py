@@ -246,7 +246,7 @@ def simulateSystem(dictNet, dictPLL, dictAlgo=None):
 
 	# run evaluations
 	r, orderParam, F1 	= eva.obtainOrderParam(dictPLL, dictNet, dictData)
-	dictData.update({'orderParam': orderParam, 'R': r})
+	dictData.update({'orderParam': orderParam, 'R': r, 'F1': F1})
 	#dynFreq, phaseDiff	= calculateFreqPhaseDiff(dictData)
 	#dictData.update({'dynFreq': dynFreq, 'phaseDiff': phaseDiff})
 

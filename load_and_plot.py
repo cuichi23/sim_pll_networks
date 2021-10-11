@@ -74,22 +74,24 @@ colormapSyncStab 	= colormap_diver.PuOr_7.mpl_colormap
 # load data
 ################################################################################
 filenamePLL  = 'results/2021_Mocast_simRes/res4/dictPLL_K0.050_tau39968.000_Fc0.000_mx0_my0_N16_toposquare-open_10:27_2021_10_5'
-filenameNET  = 'results/2021_Mocast_simRes/res4/dictNet_K0.050_tau39968.000_Fc0.000_mx0_my0_N16_toposquare-open_10:27_2021_10_5'
+filenameNet  = 'results/2021_Mocast_simRes/res4/dictNet_K0.050_tau39968.000_Fc0.000_mx0_my0_N16_toposquare-open_10:27_2021_10_5'
 filenameData = 'results/2021_Mocast_simRes/res4/dictData_K0.050_tau39968.000_Fc0.000_mx0_my0_N16_toposquare-open_10:27_2021_10_5'
+filenameAlgo = 'results/2021_Mocast_simRes/res4/dictAlgo_K0.050_tau39968.000_Fc0.000_mx0_my0_N16_toposquare-open_10:27_2021_10_5'
 ################################################################################
 dictPLL 	 = pickle.load(open(filenamePLL, 'rb'))
-dictNet 	 = pickle.load(open(filenameNET, 'rb'))
+dictNet 	 = pickle.load(open(filenameNet, 'rb'))
 dictData  	 = pickle.load(open(filenameData, 'rb'))
+dictAlgo  	 = pickle.load(open(filenameAlgo, 'rb'))
 ################################################################################
 # if necessary update parameters related to plotting
 ################################################################################
-dictPLL.update({'PSD_freq_resolution': 1E-6})
-dictAlgo={
-	'bruteForceBasinStabMethod': 'listOfInitialPhaseConfigurations',		# pick method for setting realizations 'classicBruteForceMethodRotatedSpace', 'listOfInitialPhaseConfigurations'
-	'paramDiscretization': [5, 3],#3										# parameter discetization for brute force parameter space scans
-	'min_max_range_parameter': [0.95, 1.05]									# specifies within which min and max value to linspace the detuning
-}
-dictPLL, dictNet, dictAlgo = chk_dicts.check_dicts_consistency(dictPLL, dictNet, dictAlgo)
+dictPLL.update({'PSD_freq_resolution': 5E-6})
+# dictAlgo={
+# 	'bruteForceBasinStabMethod': 'listOfInitialPhaseConfigurations',		# pick method for setting realizations 'classicBruteForceMethodRotatedSpace', 'listOfInitialPhaseConfigurations'
+# 	'paramDiscretization': [5, 3],#3										# parameter discetization for brute force parameter space scans
+# 	'min_max_range_parameter': [0.95, 1.05]									# specifies within which min and max value to linspace the detuning
+# }
+# dictPLL, dictNet, dictAlgo = chk_dicts.check_dicts_consistency(dictPLL, dictNet, dictAlgo)
 ################################################################################
 ################################################################################
 

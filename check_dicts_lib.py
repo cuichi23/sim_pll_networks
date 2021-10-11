@@ -49,10 +49,17 @@ def check_dicts_consistency(dictPLL, dictNet, dictAlgo):
 
 	# calculate other parameters and test for incompatibilities
 	dictPLL.update({'dt': 1.0/dictPLL['sampleF']})
-	if ( isinstance(dictPLL['gPDin'], np.ndarray) and dictPLL['gPDin_symmetric']):
+	if ( ( isinstance(dictPLL['gPDin'], np.ndarray) or isinstance(dictPLL['gPDin'], list) ) and dictPLL['gPDin_symmetric']):
+
+		if not np.shape(dictPLL['gPDin']) == (dictNet['Nx']*dictNet['Ny'], dictNet['Nx']*dictNet['Ny']):
+			print('Error! In order to set individual gains for all feed-foward paths, an [N, N] matrix of gains G_kl needs to provided! Please fix dictPLL[*gPDin*].')
+			sys.exit()
 
 		print('Generate symmetrical matrix for PD gains.')
-		dictPLL.update({'gPDin': (dictPLL['gPDin']@dictPLL['gPDin'].T)/np.max(dictPLL['gPDin']@dictPLL['gPDin'].T)})
+		symm_matrix = (dictPLL['gPDin']@dictPLL['gPDin'].T)/np.max(dictPLL['gPDin']@dictPLL['gPDin'].T)
+		if isinstance(symm_matrix, list):
+			symm_matrix = np.array(symm_matrix)
+		dictPLL.update({'gPDin': symm_matrix})
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

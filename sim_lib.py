@@ -176,16 +176,21 @@ def simulateSystem(dictNet, dictPLL, dictAlgo=None):
 	eva.saveDictionaries(dictData, 'dictData', dictPLL['coupK'], dictPLL['transmission_delay'], dictPLL['cutFc'], dictNet['Nx'], dictNet['Ny'], dictNet['mx'], dictNet['my'], dictNet['topology'])	   # save the dicts
 	eva.saveDictionaries(dictAlgo, 'dictAlgo', dictPLL['coupK'], dictPLL['transmission_delay'], dictPLL['cutFc'], dictNet['Nx'], dictNet['Ny'], dictNet['mx'], dictNet['my'], dictNet['topology'])	   # save the dicts
 
-	plot.plotPhasesInf(dictPLL, dictNet, dictData)
-	plot.plotPhases2pi(dictPLL, dictNet, dictData)
-	plot.plotFrequency(dictPLL, dictNet, dictData)
+	# run evaluations
+	r, orderParam, F1 	= eva.obtainOrderParam(dictPLL, dictNet, dictData)
+	dictData.update({'orderParam': orderParam, 'R': r, 'F1': F1})
+
+	#plot.plotPhasesInf(dictPLL, dictNet, dictData)
+	#plot.plotPhases2pi(dictPLL, dictNet, dictData)
+	#plot.plotFrequency(dictPLL, dictNet, dictData)
 	plot.plotOrderPara(dictPLL, dictNet, dictData)
-	plot.plotPhaseRela(dictPLL, dictNet, dictData)
-	plot.plotPhaseDiff(dictPLL, dictNet, dictData)
-	plot.plotClockTime(dictPLL, dictNet, dictData)
-	plot.plotOscSignal(dictPLL, dictNet, dictData)
+	# plot.plotPhaseRela(dictPLL, dictNet, dictData)
+	#plot.plotPhaseDiff(dictPLL, dictNet, dictData)
+	#plot.plotClockTime(dictPLL, dictNet, dictData)
+	#plot.plotOscSignal(dictPLL, dictNet, dictData)
 	plot.plotFreqAndPhaseDiff(dictPLL, dictNet, dictData)
-	plot.plotPSD(dictPLL, dictNet, dictData, [], saveData=False)
+	plot.plotFreqAndOrderPar(dictPLL, dictNet, dictData)
+	plot.plotPSD(dictPLL, dictNet, dictData, [0, 15], saveData=False)
 
 	print('Time needed for simulation, evaluation and plotting: ', (time.time()-t0), ' seconds')
 

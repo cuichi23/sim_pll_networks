@@ -100,7 +100,7 @@ def plotPSD(dictPLL, dictNet, dictData, plotList=[], saveData=False):
 	else:
 		plotList = [];
 		for i in range(len(dictData['phi'][0,:])):								# calculate spectrum of signals for all oscillators
-			ftemp, Pxx_temp = eva.calcSpectrum( dictData['phi'][:,i], dictPLL, dictNet )
+			ftemp, Pxx_temp = eva.calcSpectrum( dictData['phi'][:,i], dictPLL, dictNet, dictPLL['percent_of_Tsim'] )
 			f.append(ftemp[0]); Pxx_db.append(Pxx_temp[0]); plotList.append(i)
 
 	peak_power_val = [];
@@ -321,16 +321,15 @@ def plotFrequency(dictPLL, dictNet, dictData):
 def plotOrderPara(dictPLL, dictNet, dictData):
 
 	dictPLL, dictNet = prepareDictsForPlotting(dictPLL, dictNet)
-	r, orderparam, F1 = eva.obtainOrderParam(dictPLL, dictNet, dictData)
 
 	fig6 = plt.figure(num=6, figsize=(figwidth, figheight), dpi=dpi_val, facecolor='w', edgecolor='k')
 	fig6.canvas.set_window_title('order parameter over time')					# plot the order parameter in dependence of time
 	fig6.set_size_inches(plot_size_inches_x, plot_size_inches_y)
 
-	plt.plot(dictData['t'], orderparam)
-	plt.plot(np.mean(dictPLL['transmission_delay']), orderparam[int(round(np.mean(dictPLL['transmission_delay'])/dictPLL['dt']))], 'yo', ms=5)				# mark where the simulation starts
-	plt.axvspan(dictData['t'][-int(dictPLL['timeSeriesAverTime']*1.0/(F1*dictPLL['dt']))], dictData['t'][-1], color='b', alpha=0.3)
-	plt.title(r'mean order parameter $\bar{R}=$%.2f, and $\bar{\sigma}=$%.4f' %(np.mean(orderparam[-int(round(dictPLL['timeSeriesAverTime']*1.0/(F1*dictPLL['dt']))):]), np.std(orderparam[-int(round(dictPLL['timeSeriesAverTime']*1.0/(F1*dictPLL['dt']))):])), fontdict = titlefont)
+	plt.plot(dictData['t'], dictData['orderParam'])
+	plt.plot(np.mean(dictPLL['transmission_delay']), dictData['orderParam'][int(round(np.mean(dictPLL['transmission_delay'])/dictPLL['dt']))], 'yo', ms=5)				# mark where the simulation starts
+	plt.axvspan(dictData['t'][-int(dictPLL['timeSeriesAverTime']*1.0/(dictData['F1']*dictPLL['dt']))], dictData['t'][-1], color='b', alpha=0.3)
+	plt.title(r'mean order parameter $\bar{R}=$%.2f, and $\bar{\sigma}=$%.4f' %(np.mean(dictData['orderParam'][-int(round(dictPLL['timeSeriesAverTime']*1.0/(dictData['F1']*dictPLL['dt']))):]), np.std(dictData['orderParam'][-int(round(dictPLL['timeSeriesAverTime']*1.0/(dictData['F1']*dictPLL['dt']))):])), fontdict = titlefont)
 	plt.xlabel(r'$t\,[T_{\omega}]$', fontdict = labelfont, labelpad=labelpadxaxis)
 	plt.ylabel(r'$R(t,m_x=%d,m_y=%d )$' %(dictNet['mx'],dictNet['my']), fontdict = labelfont, labelpad=labelpadyaxis)
 	plt.tick_params(axis='both', which='major', labelsize=tickSize)
@@ -338,16 +337,16 @@ def plotOrderPara(dictPLL, dictNet, dictData):
 	plt.savefig('results/orderP-t_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.svg' %(np.mean(dictPLL['coupK']), np.mean(dictPLL['cutFc']), np.mean(dictPLL['syncF']), np.mean(dictPLL['transmission_delay']), np.mean(dictPLL['noiseVarVCO']), now.year, now.month, now.day))
 	plt.savefig('results/orderP-t_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.png' %(np.mean(dictPLL['coupK']), np.mean(dictPLL['cutFc']), np.mean(dictPLL['syncF']), np.mean(dictPLL['transmission_delay']), np.mean(dictPLL['noiseVarVCO']), now.year, now.month, now.day), dpi=dpi_val)
 	try:
-		plt.xlim([dictData['t'][-int(round(np.mean(dictPLL['transmission_delay'])/dictPLL['dt']+75*1.0/(F1*dictPLL['dt'])))], dictData['t'][-1]]); # plt.ylim([]);
+		plt.xlim([dictData['t'][-int(round(np.mean(dictPLL['transmission_delay'])/dictPLL['dt']+75*1.0/(dictData['F1']*dictPLL['dt'])))], dictData['t'][-1]]); # plt.ylim([]);
 	except:
 		plt.xlim([0, 15])
 	plt.savefig('results/orderPFin-t_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.svg' %(np.mean(dictPLL['coupK']), np.mean(dictPLL['cutFc']), np.mean(dictPLL['syncF']), np.mean(dictPLL['transmission_delay']), np.mean(dictPLL['noiseVarVCO']), now.year, now.month, now.day))
 	plt.savefig('results/orderPFin-t_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.png' %(np.mean(dictPLL['coupK']), np.mean(dictPLL['cutFc']), np.mean(dictPLL['syncF']), np.mean(dictPLL['transmission_delay']), np.mean(dictPLL['noiseVarVCO']), now.year, now.month, now.day), dpi=dpi_val)
-	plt.xlim([0, np.mean(dictPLL['transmission_delay'])+125*1.0/(F1)]); # plt.ylim([]);
+	plt.xlim([0, np.mean(dictPLL['transmission_delay'])+125*1.0/(dictData['F1'])]); # plt.ylim([]);
 	plt.savefig('results/orderPInit-t_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.svg' %(np.mean(dictPLL['coupK']), np.mean(dictPLL['cutFc']), np.mean(dictPLL['syncF']), np.mean(dictPLL['transmission_delay']), np.mean(dictPLL['noiseVarVCO']), now.year, now.month, now.day))
 	plt.savefig('results/orderPInit-t_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.png' %(np.mean(dictPLL['coupK']), np.mean(dictPLL['cutFc']), np.mean(dictPLL['syncF']), np.mean(dictPLL['transmission_delay']), np.mean(dictPLL['noiseVarVCO']), now.year, now.month, now.day), dpi=dpi_val)
-	#print('\nlast entry order parameter: R-1 = %.3e' % (orderparam[-1]-1) )
-	#print('\nlast entries order parameter: R = ', orderparam[-25:])
+	#print('\nlast entry order parameter: R-1 = %.3e' % (dictData['orderParam'][-1]-1) )
+	#print('\nlast entries order parameter: R = ', dictData['orderParam'][-25:])
 
 	return None
 
@@ -367,7 +366,7 @@ def plotPhaseRela(dictPLL, dictNet, dictData):
 			plt.plot(dictData['t'][::dictPLL['sampleFplot']],((dictData['phi'][::dictPLL['sampleFplot'],1]-dictData['phi'][::dictPLL['sampleFplot'],2]+np.pi)%(2.*np.pi))-np.pi,label=r'$\phi_{1}-\phi_{2}$')
 			plt.plot(dictData['t'][::dictPLL['sampleFplot']],((dictData['phi'][::dictPLL['sampleFplot'],0]-dictData['phi'][::dictPLL['sampleFplot'],2]+np.pi)%(2.*np.pi))-np.pi,label=r'$\phi_{0}-\phi_{2}$')
 		plt.plot(np.mean(dictPLL['transmission_delay']), ((dictData['phi'][int(round(np.mean(dictPLL['transmission_delay'])/dictPLL['dt'])),0]-dictData['phi'][int(round(np.mean(dictPLL['transmission_delay'])/dictPLL['dt'])),1]+np.pi)%(2.*np.pi))-np.pi, 'yo', ms=5)
-		#plt.axvspan(t[-int(5.5*1.0/(F1*dt))]*dt, t[-1]*dt, color='b', alpha=0.3)
+		#plt.axvspan(t[-int(5.5*1.0/(dictData['F1']*dt))]*dt, t[-1]*dt, color='b', alpha=0.3)
 		if dictNet['Nx']*dictNet['Ny']>=3:
 			plt.title(r'phases $\phi_{0}=%.4f$, $\phi_{1}=%.4f$, $\phi_{R}=%.4f$  [rad]' %( (-1)*(np.mod(dictData['phi'][-10][2]-dictData['phi'][-10][0]+np.pi, 2.0*np.pi)-np.pi),
 																np.mod(dictData['phi'][-10][1]-dictData['phi'][-10][0]+np.pi, 2.0*np.pi)-np.pi - (np.mod(dictData['phi'][-10][2]-dictData['phi'][-10][0]+np.pi, 2.0*np.pi)-np.pi), 0 ), fontdict = titlefont)
@@ -381,14 +380,14 @@ def plotPhaseRela(dictPLL, dictNet, dictData):
 		plt.savefig('results/phaseRela-t_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.svg' %(np.mean(dictPLL['coupK']), np.mean(dictPLL['cutFc']), np.mean(dictPLL['syncF']), np.mean(dictPLL['transmission_delay']), np.mean(dictPLL['noiseVarVCO']), now.year, now.month, now.day))
 		plt.savefig('results/phaseRela-t_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.png' %(np.mean(dictPLL['coupK']), np.mean(dictPLL['cutFc']), np.mean(dictPLL['syncF']), np.mean(dictPLL['transmission_delay']), np.mean(dictPLL['noiseVarVCO']), now.year, now.month, now.day), dpi=dpi_val)
 	else:
-		plt.plot(dictData['t'][-int(25*1.0/(F1*dt)):],((dictData['phi'][-int(25*1.0/(F1*dt)):,0]-dictData['phi'][-int(25*1.0/(F1*dt)):,1]+np.pi)%(2.*np.pi))-np.pi,'-',label=r'$\phi_{0}-\phi_{1}$ mutual')
-		plt.plot(dictData['t'][-int(25*1.0/(F1*dt)):],((dictData['phi'][-int(25*1.0/(F1*dt)):,3]-dictData['phi'][-int(25*1.0/(F1*dt)):,2]+np.pi)%(2.*np.pi))-np.pi,'--',label=r'$\phi_{3}-\phi_{2}$ entrain')
-		#plt.plot((t[-int(12*1.0/(F1*dt)):]*dt),((dictData['phi'][-int(12*1.0/(F1*dt)):,0]-dictData['phi'][-int(12*1.0/(F1*dt)):,5]+np.pi)%(2.*np.pi))-np.pi,'-',label=r'$\phi_{0}-\phi_{5}$ mutual  vs freeRef')
-		#plt.plot((t[-int(12*1.0/(F1*dt)):]*dt),((dictData['phi'][-int(12*1.0/(F1*dt)):,3]-dictData['phi'][-int(12*1.0/(F1*dt)):,5]+np.pi)%(2.*np.pi))-np.pi,'--',label=r'$\phi_{3}-\phi_{5}$ entrain vs freeRef')
-		#plt.plot((t[-int(12*1.0/(F1*dt)):]*dt),((dictData['phi'][-int(12*1.0/(F1*dt)):,0]-dictData['phi'][-int(12*1.0/(F1*dt)):,4]+np.pi)%(2.*np.pi))-np.pi,'-.',label=r'$\phi_{0}-\phi_{4}$ mutual  vs freePLL')
-		#plt.plot((t[-int(12*1.0/(F1*dt)):]*dt),((dictData['phi'][-int(12*1.0/(F1*dt)):,3]-dictData['phi'][-int(12*1.0/(F1*dt)):,4]+np.pi)%(2.*np.pi))-np.pi,'-.',label=r'$\phi_{3}-\phi_{4}$ entrain vs freePLL')
+		plt.plot(dictData['t'][-int(25*1.0/(dictData['F1']*dt)):],((dictData['phi'][-int(25*1.0/(dictData['F1']*dt)):,0]-dictData['phi'][-int(25*1.0/(dictData['F1']*dt)):,1]+np.pi)%(2.*np.pi))-np.pi,'-',label=r'$\phi_{0}-\phi_{1}$ mutual')
+		plt.plot(dictData['t'][-int(25*1.0/(dictData['F1']*dt)):],((dictData['phi'][-int(25*1.0/(dictData['F1']*dt)):,3]-dictData['phi'][-int(25*1.0/(dictData['F1']*dt)):,2]+np.pi)%(2.*np.pi))-np.pi,'--',label=r'$\phi_{3}-\phi_{2}$ entrain')
+		#plt.plot((t[-int(12*1.0/(dictData['F1']*dt)):]*dt),((dictData['phi'][-int(12*1.0/(dictData['F1']*dt)):,0]-dictData['phi'][-int(12*1.0/(dictData['F1']*dt)):,5]+np.pi)%(2.*np.pi))-np.pi,'-',label=r'$\phi_{0}-\phi_{5}$ mutual  vs freeRef')
+		#plt.plot((t[-int(12*1.0/(dictData['F1']*dt)):]*dt),((dictData['phi'][-int(12*1.0/(dictData['F1']*dt)):,3]-dictData['phi'][-int(12*1.0/(dictData['F1']*dt)):,5]+np.pi)%(2.*np.pi))-np.pi,'--',label=r'$\phi_{3}-\phi_{5}$ entrain vs freeRef')
+		#plt.plot((t[-int(12*1.0/(dictData['F1']*dt)):]*dt),((dictData['phi'][-int(12*1.0/(dictData['F1']*dt)):,0]-dictData['phi'][-int(12*1.0/(dictData['F1']*dt)):,4]+np.pi)%(2.*np.pi))-np.pi,'-.',label=r'$\phi_{0}-\phi_{4}$ mutual  vs freePLL')
+		#plt.plot((t[-int(12*1.0/(dictData['F1']*dt)):]*dt),((dictData['phi'][-int(12*1.0/(dictData['F1']*dt)):,3]-dictData['phi'][-int(12*1.0/(dictData['F1']*dt)):,4]+np.pi)%(2.*np.pi))-np.pi,'-.',label=r'$\phi_{3}-\phi_{4}$ entrain vs freePLL')
 		#plt.plot(np.mean(dictPLL['transmission_delay']), ((dictData['phi'][int(round(np.mean(dictPLL['transmission_delay'])/dictPLL['dt'])),0]-dictData['phi'][int(round(np.mean(dictPLL['transmission_delay'])/dictPLL['dt'])),1]+np.pi)%(2.*np.pi))-np.pi, 'yo', ms=5)
-		plt.axvspan(dictData['t'][-int(5.5*1.0/(F1*dt))], dictData['t'][-1], color='b', alpha=0.3)
+		plt.axvspan(dictData['t'][-int(5.5*1.0/(dictData['F1']*dt))], dictData['t'][-1], color='b', alpha=0.3)
 		plt.title(r'phases-differences between the clocks', fontdict = titlefont)
 		plt.xlabel(r'$t\,[T_{\omega}]$', fontdict = labelfont, labelpad=labelpadxaxis)
 		plt.ylabel(r'$\phi_k(t)-\phi_0(t)$', fontdict = labelfont, labelpad=labelpadyaxis)
@@ -414,9 +413,9 @@ def plotPhaseDiff(dictPLL, dictNet, dictData):
 	if len(dictData['phi'][:,0]) > dictPLL['treshold_maxT_to_plot'] * (1.0/(np.min(dictPLL['intrF'])*dictPLL['dt'])):	# (1.0/(np.min(dictPLL['intrF'])*dictPLL['dt'])) steps for one period
 		for i in range(len(dictData['phi'][0,:])):
 			labelname = r'$\phi_{%i}$-$\phi_{0}$' %(i);
-			plt.plot((dictData['t'][int(0.75*np.round(np.mean(dictPLL['transmission_delay'])/dictPLL['dt'])):int(np.round(np.mean(dictPLL['transmission_delay'])/dictPLL['dt'])+dictPLL['treshold_maxT_to_plot']*1.0/(F1*dt)):dictPLL['sampleFplot']]*dt), ((dictData['phi'][int(0.75*np.round(np.mean(dictPLL['transmission_delay'])/dictPLL['dt'])):int(np.round(np.mean(dictPLL['transmission_delay'])/dictPLL['dt'])+dictPLL['treshold_maxT_to_plot']*1.0/(F1*dt)):dictPLL['sampleFplot'],i]-dictData['phi'][int(0.75*np.round(np.mean(dictPLL['transmission_delay'])/dictPLL['dt'])):int(np.round(np.mean(dictPLL['transmission_delay'])/dictPLL['dt'])+dictPLL['treshold_maxT_to_plot']*1.0/(F1*dt)):dictPLL['sampleFplot'],0]+np.pi)%(2.*np.pi))-np.pi,label=labelname)			#math.fmod(phi[:,:], 2.*np.pi))
+			plt.plot((dictData['t'][int(0.75*np.round(np.mean(dictPLL['transmission_delay'])/dictPLL['dt'])):int(np.round(np.mean(dictPLL['transmission_delay'])/dictPLL['dt'])+dictPLL['treshold_maxT_to_plot']*1.0/(dictData['F1']*dt)):dictPLL['sampleFplot']]*dt), ((dictData['phi'][int(0.75*np.round(np.mean(dictPLL['transmission_delay'])/dictPLL['dt'])):int(np.round(np.mean(dictPLL['transmission_delay'])/dictPLL['dt'])+dictPLL['treshold_maxT_to_plot']*1.0/(dictData['F1']*dt)):dictPLL['sampleFplot'],i]-dictData['phi'][int(0.75*np.round(np.mean(dictPLL['transmission_delay'])/dictPLL['dt'])):int(np.round(np.mean(dictPLL['transmission_delay'])/dictPLL['dt'])+dictPLL['treshold_maxT_to_plot']*1.0/(dictData['F1']*dt)):dictPLL['sampleFplot'],0]+np.pi)%(2.*np.pi))-np.pi,label=labelname)			#math.fmod(phi[:,:], 2.*np.pi))
 		plt.plot(np.mean(dictPLL['transmission_delay']), ((dictData['phi'][int(round(np.mean(dictPLL['transmission_delay'])/dictPLL['dt'])),0]-dictData['phi'][int(round(np.mean(dictPLL['transmission_delay'])/dictPLL['dt'])),1]+np.pi)%(2.*np.pi))-np.pi, 'yo', ms=5)
-		#plt.axvspan(t[-int(5.5*1.0/(F1*dt))]*dt, t[-1]*dt, color='b', alpha=0.3)
+		#plt.axvspan(t[-int(5.5*1.0/(dictData['F1']*dt))]*dt, t[-1]*dt, color='b', alpha=0.3)
 		if dictNet['Nx']*dictNet['Ny']>=3:
 			plt.title(r'phase differences $\Delta\phi_{10}=%.4f$, $\Delta\phi_{20}=%.4f$  [rad]' %( np.mod(dictData['phi'][-10][1]-dictData['phi'][-10][0]+np.pi, 2.0*np.pi)-np.pi,
 																		np.mod(dictData['phi'][-10][2]-dictData['phi'][-10][0]+np.pi, 2.0*np.pi)-np.pi ), fontdict = titlefont)
@@ -431,9 +430,9 @@ def plotPhaseDiff(dictPLL, dictNet, dictData):
 		for i in range(len(dictData['phi'][0,:])):
 			labelname = r'$\phi_{%i}$-$\phi_{0}$' %(i);
 			plt.plot((dictData['t'][int(0.75*np.round(np.mean(dictPLL['transmission_delay'])/dictPLL['dt']))::dictPLL['sampleFplot']]),
-					((dictData['phi'][int(0.75*np.round(np.mean(dictPLL['transmission_delay'])/dictPLL['dt']))::dictPLL['sampleFplot'],i]-dictData['phi'][int(0.75*np.round(np.mean(dictPLL['transmission_delay'])/dictPLL['dt']))::dictPLL['sampleFplot'],0]-shift2piWin)%(2*np.pi))+shift2piWin,label=labelname)			#math.fmod(phi[:,:], 2.*np.pi)) , #int(np.round(np.mean(dictPLL['transmission_delay'])/dictPLL['dt'])+25*1.0/(F1*dt))
+					((dictData['phi'][int(0.75*np.round(np.mean(dictPLL['transmission_delay'])/dictPLL['dt']))::dictPLL['sampleFplot'],i]-dictData['phi'][int(0.75*np.round(np.mean(dictPLL['transmission_delay'])/dictPLL['dt']))::dictPLL['sampleFplot'],0]-shift2piWin)%(2*np.pi))+shift2piWin,label=labelname)			#math.fmod(phi[:,:], 2.*np.pi)) , #int(np.round(np.mean(dictPLL['transmission_delay'])/dictPLL['dt'])+25*1.0/(dictData['F1']*dt))
 		plt.plot(np.mean(dictPLL['transmission_delay']), ((dictData['phi'][int(round(np.mean(dictPLL['transmission_delay'])/dictPLL['dt'])),0]-dictData['phi'][int(round(np.mean(dictPLL['transmission_delay'])/dictPLL['dt'])),1]-shift2piWin)%(2*np.pi))+shift2piWin, 'yo', ms=5)
-		#plt.axvspan(t[-int(5.5*1.0/(F1*dt))]*dt, t[-1]*dt, color='b', alpha=0.3)
+		#plt.axvspan(t[-int(5.5*1.0/(dictData['F1']*dt))]*dt, t[-1]*dt, color='b', alpha=0.3)
 		if dictNet['Nx']*dictNet['Ny']>=3:
 			plt.title(r'phase differences $\Delta\phi_{10}=%.4f$, $\Delta\phi_{20}=%.4f$  [rad]' %( np.mod(dictData['phi'][-10][1]-dictData['phi'][-10][0]+np.pi, 2.0*np.pi)-np.pi,
 																		np.mod(dictData['phi'][-10][2]-dictData['phi'][-10][0]+np.pi, 2.0*np.pi)-np.pi ), fontdict = titlefont)
@@ -610,13 +609,12 @@ def deltaThetaDot_vs_deltaTheta(dictPLL, dictNet, deltaTheta, deltaThetaDot, col
 def plotOrderPvsTimeDepPara(dictPLL, dictNet, dictData):
 
 	#dictPLL, dictNet = prepareDictsForPlotting(dictPLL, dictNet)
-	r, orderparam, F1 = eva.obtainOrderParam(dictPLL, dictNet, dictData)
 
 	fig18 = plt.figure(num=18, figsize=(figwidth, figheight), dpi=dpi_val, facecolor='w', edgecolor='k')
 	fig18.canvas.set_window_title('order parameter as function of time-dependent parameter')	# time-series phases and phase-differences
 	fig18.set_size_inches(plot_size_inches_x, plot_size_inches_y)
 
-	plt.plot(dictData['timeDepPara'], orderparam, 'b-')
+	plt.plot(dictData['timeDepPara'], dictData['orderParam'], 'b-')
 
 	plt.xlabel(r'$K$', fontdict = labelfont, labelpad=labelpadxaxis)
 	plt.ylabel(r'$R(t)$', fontdict = labelfont, labelpad=labelpadyaxis)
@@ -630,7 +628,7 @@ def plotOrderPvsTimeDepPara(dictPLL, dictNet, dictData):
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-def plotFreqAndPhaseDiff(dictPLL, dictNet, dictData):
+def plotFreqAndPhaseDiff(dictPLL, dictNet, dictData, ylim_percent_of_min_val=0.995, ylim_percent_of_max_val=1.005):
 
 	phase_diff_zero_2pi = 0;													# set to 1 if phase differences to be plotted in [0, 2pi) or to 0 if plotting in [-pi, +pi)
 
@@ -665,6 +663,12 @@ def plotFreqAndPhaseDiff(dictPLL, dictNet, dictData):
 	plt.ylabel(ylabel = ylabelname, fontdict = labelfont, labelpad=labelpadyaxis)
 	ax011.tick_params(axis='both', which='major', labelsize=tickSize, pad=1)
 	ax011.set_xlim([dictData['t'][int(0.75*np.round(np.mean(dictPLL['transmission_delay'])/dictPLL['dt']))], dictData['t'][-1]])
+
+	mean_freq_ts = np.mean(phidot[int(0.75*np.round(np.mean(dictPLL['transmission_delay'])/dictPLL['dt']))::dictPLL['sampleFplot']])
+	max_freq_ts  = np.max(phidot[int(0.75*np.round(np.mean(dictPLL['transmission_delay'])/dictPLL['dt']))::dictPLL['sampleFplot']])
+	min_freq_ts  = np.min(phidot[int(0.75*np.round(np.mean(dictPLL['transmission_delay'])/dictPLL['dt']))::dictPLL['sampleFplot']])
+
+	ax011.set_ylim([ylim_percent_of_min_val*min_freq_ts, ylim_percent_of_max_val*max_freq_ts])
 	plt.grid();
 
 	ax012 = fig19.add_subplot(212)
@@ -681,12 +685,14 @@ def plotFreqAndPhaseDiff(dictPLL, dictNet, dictData):
 				plt.plot((dictData['t'][int(0.75*np.round(np.mean(dictPLL['transmission_delay'])/dictPLL['dt']))::dictPLL['sampleFplot']]),
 						((dictData['phi'][int(0.75*np.round(np.mean(dictPLL['transmission_delay'])/dictPLL['dt']))::dictPLL['sampleFplot'],i]-dictData['phi'][int(0.75*np.round(np.mean(dictPLL['transmission_delay'])/dictPLL['dt']))::dictPLL['sampleFplot'],0]+shift2piWin)%(2*np.pi))-shift2piWin,label=labelname)
 	else:
-		plt.plot(dictData['t'][-int(25*1.0/(dictPLL['intrF']*dt)):],((dictData['phi'][-int(25*1.0/(dictPLL['intrF']*dt)):,0]-dictData['phi'][-int(25*1.0/(dictPLL['intrF']*dt)):,1]+shift2piWin)%(2.*np.pi))-shift2piWin,'-',linewidth=2,label=r'$\phi_{0}-\phi_{1}$ mutual')
-		plt.plot(dictData['t'][-int(25*1.0/(dictPLL['intrF']*dt)):],((dictData['phi'][-int(25*1.0/(dictPLL['intrF']*dt)):,3]-dictData['phi'][-int(25*1.0/(dictPLL['intrF']*dt)):,2]+shift2piWin)%(2.*np.pi))-shift2piWin,'--',linewidth=2,label=r'$\phi_{3}-\phi_{2}$ entrain')
-		# plt.plot((t[-int(12*1.0/(dictPLL['intrF']*dt)):]*dt),((dictData['phi'][-int(12*1.0/(dictPLL['intrF']*dt)):,0]-dictData['phi'][-int(12*1.0/(dictPLL['intrF']*dt)):,5]+np.pi)%(2.*np.pi))-np.pi,'-',linewidth=2,label=r'$\phi_{0}-\phi_{5}$ mutual  vs freeRef')
-		# plt.plot((t[-int(12*1.0/(dictPLL['intrF']*dt)):]*dt),((dictData['phi'][-int(12*1.0/(dictPLL['intrF']*dt)):,3]-dictData['phi'][-int(12*1.0/(dictPLL['intrF']*dt)):,5]+np.pi)%(2.*np.pi))-np.pi,'--',linewidth=2,label=r'$\phi_{3}-\phi_{5}$ entrain vs freeRef')
-		# plt.plot((t[-int(12*1.0/(dictPLL['intrF']*dt)):]*dt),((dictData['phi'][-int(12*1.0/(dictPLL['intrF']*dt)):,0]-dictData['phi'][-int(12*1.0/(dictPLL['intrF']*dt)):,4]+np.pi)%(2.*np.pi))-np.pi,'-.',linewidth=2,label=r'$\phi_{0}-\phi_{4}$ mutual  vs freePLL')
-		# plt.plot((t[-int(12*1.0/(dictPLL['intrF']*dt)):]*dt),((dictData['phi'][-int(12*1.0/(dictPLL['intrF']*dt)):,3]-dictData['phi'][-int(12*1.0/(dictPLL['intrF']*dt)):,4]+np.pi)%(2.*np.pi))-np.pi,'-.',linewidth=2,label=r'$\phi_{3}-\phi_{4}$ entrain vs freePLL')
+		plt.plot(dictData['t'][int(0.75*np.round(np.mean(dictPLL['transmission_delay'])/dictPLL['dt'])):-1:dictPLL['sampleFplot']],
+		((dictData['phi'][int(0.75*np.round(np.mean(dictPLL['transmission_delay'])/dictPLL['dt'])):-1:dictPLL['sampleFplot'],0]-dictData['phi'][int(0.75*np.round(np.mean(dictPLL['transmission_delay'])/dictPLL['dt'])):-1:dictPLL['sampleFplot'],1]+shift2piWin)%(2.*np.pi))-shift2piWin,'-',linewidth=2,label=r'$\phi_{0}-\phi_{1}$ mutual')
+		plt.plot(dictData['t'][int(0.75*np.round(np.mean(dictPLL['transmission_delay'])/dictPLL['dt'])):-1:dictPLL['sampleFplot']],
+		((dictData['phi'][int(0.75*np.round(np.mean(dictPLL['transmission_delay'])/dictPLL['dt'])):-1:dictPLL['sampleFplot'],3]-dictData['phi'][int(0.75*np.round(np.mean(dictPLL['transmission_delay'])/dictPLL['dt'])):-1:dictPLL['sampleFplot'],2]+shift2piWin)%(2.*np.pi))-shift2piWin,'--',linewidth=2,label=r'$\phi_{3}-\phi_{2}$ entrain')
+		# plt.plot((t[int(0.75*np.round(np.mean(dictPLL['transmission_delay'])/dictPLL['dt'])):-1:dictPLL['sampleFplot']]*dt),((dictData['phi'][int(0.75*np.round(np.mean(dictPLL['transmission_delay'])/dictPLL['dt'])):-1:dictPLL['sampleFplot'],0]-dictData['phi'][int(0.75*np.round(np.mean(dictPLL['transmission_delay'])/dictPLL['dt'])):-1:dictPLL['sampleFplot'],5]+np.pi)%(2.*np.pi))-np.pi,'-',linewidth=2,label=r'$\phi_{0}-\phi_{5}$ mutual  vs freeRef')
+		# plt.plot((t[int(0.75*np.round(np.mean(dictPLL['transmission_delay'])/dictPLL['dt'])):-1:dictPLL['sampleFplot']]*dt),((dictData['phi'][int(0.75*np.round(np.mean(dictPLL['transmission_delay'])/dictPLL['dt'])):-1:dictPLL['sampleFplot'],3]-dictData['phi'][int(0.75*np.round(np.mean(dictPLL['transmission_delay'])/dictPLL['dt'])):-1:dictPLL['sampleFplot'],5]+np.pi)%(2.*np.pi))-np.pi,'--',linewidth=2,label=r'$\phi_{3}-\phi_{5}$ entrain vs freeRef')
+		# plt.plot((t[int(0.75*np.round(np.mean(dictPLL['transmission_delay'])/dictPLL['dt'])):-1:dictPLL['sampleFplot']]*dt),((dictData['phi'][int(0.75*np.round(np.mean(dictPLL['transmission_delay'])/dictPLL['dt'])):-1:dictPLL['sampleFplot'],0]-dictData['phi'][int(0.75*np.round(np.mean(dictPLL['transmission_delay'])/dictPLL['dt'])):-1:dictPLL['sampleFplot'],4]+np.pi)%(2.*np.pi))-np.pi,'-.',linewidth=2,label=r'$\phi_{0}-\phi_{4}$ mutual  vs freePLL')
+		# plt.plot((t[int(0.75*np.round(np.mean(dictPLL['transmission_delay'])/dictPLL['dt'])):-1:dictPLL['sampleFplot']]*dt),((dictData['phi'][int(0.75*np.round(np.mean(dictPLL['transmission_delay'])/dictPLL['dt'])):-1:dictPLL['sampleFplot'],3]-dictData['phi'][int(0.75*np.round(np.mean(dictPLL['transmission_delay'])/dictPLL['dt'])):-1:dictPLL['sampleFplot'],4]+np.pi)%(2.*np.pi))-np.pi,'-.',linewidth=2,label=r'$\phi_{3}-\phi_{4}$ entrain vs freePLL')
 		# plt.plot(np.mean(dictPLL['transmission_delay']), ((dictData['phi'][int(round(np.mean(dictPLL['transmission_delay'])/dictPLL['dt'])),0]-dictData['phi'][int(round(np.mean(dictPLL['transmission_delay'])/dictPLL['dt'])),1]+np.pi)%(2.*np.pi))-np.pi, 'yo', ms=5)
 		# plt.axvspan(dictData['t'][-int(5.5*1.0/(dictPLL['intrF']*dt))], dictData['t'][-1], color='b', alpha=0.3)
 
@@ -703,6 +709,64 @@ def plotFreqAndPhaseDiff(dictPLL, dictNet, dictData):
 
 	return None
 
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+def plotFreqAndOrderPar(dictPLL, dictNet, dictData):
+
+	phase_diff_zero_2pi = 0;													# set to 1 if phase differences to be plotted in [0, 2pi) or to 0 if plotting in [-pi, +pi)
+
+	dictPLL, dictNet = prepareDictsForPlotting(dictPLL, dictNet)
+
+	labeldict 	= {'wc': r'$\frac{\omega_\textrm{c}}{\omega}$', 'tau': r'$\frac{\Omega\tau}{2\pi}$', 'K': r'$K$',
+					'a': r'$\alpha$', 'Omeg': r'$\Omega$', 'zeta': r'$\zeta$', 'beta': r'$\beta$'}
+	labeldict1 	= {'wc': r'$\omega_\textrm{c}$', 'tau': r'$\tau$', 'K': r'$K$', 'phi': r'$\phi$', 't': r'$t$',
+					'a': r'$\alpha$', 'Omeg': r'$\Omega$', 'zeta': r'$\zeta$', 'beta': r'$\beta$'}
+	color		= ['blue', 'red', 'purple', 'cyan', 'green', 'yellow'] #'magenta'
+	linet		= ['-', '-.', '--', ':', 'densily dashdotdotted', 'densely dashed']
+
+	dictPLL, dictNet = prepareDictsForPlotting(dictPLL, dictNet)
+
+	fig20 = plt.figure(num=20, figsize=(figwidth, figheight), dpi=dpi_val, facecolor='w', edgecolor='k')
+	fig20.canvas.set_window_title('time-series frequency and phase difference')	# frequency and order parameter
+	fig20.set_size_inches(plot_size_inches_x, plot_size_inches_y)
+
+	ax011 = fig20.add_subplot(211)
+
+	plt.axvspan(dictData['t'][int(0.75*np.round(np.mean(dictPLL['transmission_delay'])/dictPLL['dt']))], dictData['t'][int(1.0*np.round(np.mean(dictPLL['transmission_delay'])/dictPLL['dt']))], color='b', alpha=0.25)
+	phidot = np.diff(dictData['phi'], axis=0)/dictPLL['dt']
+	if not dictPLL['intrF'] == 0:
+		phidot = phidot / (2.0*np.pi*dictPLL['intrF'])
+		ylabelname = r'$\frac{\dot{\theta}_k(t)}{\omega}$'
+	else:
+		ylabelname = r'$\dot{\theta}_k(t)$'
+	plt.plot(dictData['t'][int(0.75*np.round(np.mean(dictPLL['transmission_delay'])/dictPLL['dt'])):-1:dictPLL['sampleFplot']], phidot[int(0.75*np.round(np.mean(dictPLL['transmission_delay'])/dictPLL['dt']))::dictPLL['sampleFplot']], linewidth=2, linestyle=linet[0])
+	#plt.plot(dictData['t'][dictNet['max_delay_steps']-1], phidot[int(dictNet['max_delay_steps'])-1,0]+0.001,'go')
+
+	plt.xlabel(r'$\frac{\omega t}{2\pi}$', fontdict = labelfont, labelpad=labelpadxaxis)
+	plt.ylabel(ylabel = ylabelname, fontdict = labelfont, labelpad=labelpadyaxis)
+	ax011.tick_params(axis='both', which='major', labelsize=tickSize, pad=1)
+	ax011.set_xlim([dictData['t'][int(0.75*np.round(np.mean(dictPLL['transmission_delay'])/dictPLL['dt']))], dictData['t'][-1]])
+	plt.grid();
+
+	ax012 = fig20.add_subplot(212)
+
+	plt.plot(dictData['t'][int(0.75*np.round(np.mean(dictPLL['transmission_delay'])/dictPLL['dt'])):-1:dictPLL['sampleFplot']], dictData['orderParam'][int(0.75*np.round(np.mean(dictPLL['transmission_delay'])/dictPLL['dt'])):-1:dictPLL['sampleFplot']], linewidth=1.5)
+	plt.xlabel(r'$\omega t/2\pi$', fontdict=labelfont, labelpad=-5)
+	plt.ylabel(r'$R(t)$',rotation=90, fontdict=labelfont, labelpad=40)
+	ax012.tick_params(axis='both', which='major', labelsize=tickSize, pad=1)
+	ax012.set_xlim([dictData['t'][int(0.75*np.round(np.mean(dictPLL['transmission_delay'])/dictPLL['dt']))], dictData['t'][-1]])
+	plt.grid();
+
+	plt.savefig('results/freq_orderPar_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.png' %(np.mean(dictPLL['coupK']), np.mean(dictPLL['cutFc']), np.mean(dictPLL['syncF']), np.mean(dictPLL['transmission_delay']), np.mean(dictPLL['noiseVarVCO']), now.year, now.month, now.day), dpi=dpi_val)
+	plt.savefig('results/freq_orderPar_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.svg' %(np.mean(dictPLL['coupK']), np.mean(dictPLL['cutFc']), np.mean(dictPLL['syncF']), np.mean(dictPLL['transmission_delay']), np.mean(dictPLL['noiseVarVCO']), now.year, now.month, now.day), dpi=dpi_val)
+
+
+	return None
+
+
+# ###############################################################################################################################################################################
+
+
 
 # ################################################################################################################################################################################
 #
@@ -713,7 +777,7 @@ def plotFreqAndPhaseDiff(dictPLL, dictNet, dictData):
 #
 # plt.axvspan(0, t[int(1.0*np.round(np.mean(dictPLL['transmission_delay'])/dictPLL['dt']))]*dictPLL['dt'], color='b', alpha=0.25)
 # for i in range(len(phidot[0,:])):
-# 	plt.plot((t[0:-1:dictPLL['sampleFplot']]*dictPLL['dt']), phidot[::dictPLL['sampleFplot'],i]/(2.0*np.pi*F1), label='PLL%i' %(i), linewidth=1)
+# 	plt.plot((t[0:-1:dictPLL['sampleFplot']]*dictPLL['dt']), phidot[::dictPLL['sampleFplot'],i]/(2.0*np.pi*dictData['F1']), label='PLL%i' %(i), linewidth=1)
 #
 # plt.ylabel(r'$f(t)/f0=\dot{\phi}(t)/\omega$',rotation=90, fontsize=60, labelpad=40)
 # ax011.tick_params(axis='both', which='major', labelsize=35, pad=1)
@@ -722,7 +786,7 @@ def plotFreqAndPhaseDiff(dictPLL, dictNet, dictData):
 #
 # ax012 = fig110.add_subplot(212)
 #
-# plt.plot((t*dictPLL['dt'])[::dictPLL['sampleFplot']], orderparam[::dictPLL['sampleFplot']], linewidth=1.5)
+# plt.plot((t*dictPLL['dt'])[::dictPLL['sampleFplot']], dictData['orderParam'][::dictPLL['sampleFplot']], linewidth=1.5)
 # plt.xlabel(r'$t\,[T_{\omega}]$', fontsize=60, labelpad=-5)
 # plt.ylabel(r'$R(t)$',rotation=90, fontsize=60, labelpad=40)
 # ax012.tick_params(axis='both', which='major', labelsize=35, pad=1)
@@ -731,7 +795,7 @@ def plotFreqAndPhaseDiff(dictPLL, dictNet, dictData):
 #
 # plt.savefig('results/freq_orderP_allT_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.png' %(np.mean(dictPLL['coupK']), np.mean(dictPLL['cutFc']), np.mean(dictPLL['syncF']), np.mean(dictPLL['transmission_delay']), np.mean(dictPLL['noiseVarVCO']), now.year, now.month, now.day), dpi=dpi_val)
 # plt.savefig('results/freq_orderP_allT_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.svg' %(np.mean(dictPLL['coupK']), np.mean(dictPLL['cutFc']), np.mean(dictPLL['syncF']), np.mean(dictPLL['transmission_delay']), np.mean(dictPLL['noiseVarVCO']), now.year, now.month, now.day), dpi=dpi_val)
-# ax011.set_ylim([0, 1.05*np.max(phidot[::dictPLL['sampleFplot'],:]/(2.0*np.pi*F1))])
+# ax011.set_ylim([0, 1.05*np.max(phidot[::dictPLL['sampleFplot'],:]/(2.0*np.pi*dictData['F1']))])
 # ax012.set_ylim([0, 1.05])
 # plt.savefig('results/freq_orderP_allT_2_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.png' %(np.mean(dictPLL['coupK']), np.mean(dictPLL['cutFc']), np.mean(dictPLL['syncF']), np.mean(dictPLL['transmission_delay']), np.mean(dictPLL['noiseVarVCO']), now.year, now.month, now.day), dpi=dpi_val)
 # plt.savefig('results/freq_orderP_allT_2_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.svg' %(np.mean(dictPLL['coupK']), np.mean(dictPLL['cutFc']), np.mean(dictPLL['syncF']), np.mean(dictPLL['transmission_delay']), np.mean(dictPLL['noiseVarVCO']), now.year, now.month, now.day), dpi=dpi_val)
@@ -739,21 +803,21 @@ def plotFreqAndPhaseDiff(dictPLL, dictNet, dictData):
 # ################################################################################################################################################################################
 # # plot instantaneous frequency and phase-differences
 # multPrior = 5.0; multAfter = 95.0;
-# if np.mean(dictPLL['transmission_delay'])/dictPLL['dt'] > multPrior/(F1*dictPLL['dt']):
-# 	priorStart = multPrior/(F1*dictPLL['dt'])											# start plot 'multPrior' periods before start of simulation
+# if np.mean(dictPLL['transmission_delay'])/dictPLL['dt'] > multPrior/(dictData['F1']*dictPLL['dt']):
+# 	priorStart = multPrior/(dictData['F1']*dictPLL['dt'])											# start plot 'multPrior' periods before start of simulation
 # else:
 # 	priorStart = int(0.5*np.mean(dictPLL['transmission_delay'])/dictPLL['dt'])
-# if np.mean(dictPLL['transmission_delay'])/dictPLL['dt'] > multAfter/(F1*dictPLL['dt']):
-# 	afterStart = multPrior/(F1*dictPLL['dt'])											# end plot after 'multAfter' periods following the start of the simulation
+# if np.mean(dictPLL['transmission_delay'])/dictPLL['dt'] > multAfter/(dictData['F1']*dictPLL['dt']):
+# 	afterStart = multPrior/(dictData['F1']*dictPLL['dt'])											# end plot after 'multAfter' periods following the start of the simulation
 # else:
 # 	afterStart = int(0.25*Tsim/dt)
 # multStartFin = 110.0; multEndFin = 15.0;
-# if len(t) > multStartFin/(F1*dictPLL['dt']):
-# 	multStartFin = multStartFin/(F1*dictPLL['dt'])										# start plot 'multStartFin' periods before end of simulation
+# if len(t) > multStartFin/(dictData['F1']*dictPLL['dt']):
+# 	multStartFin = multStartFin/(dictData['F1']*dictPLL['dt'])										# start plot 'multStartFin' periods before end of simulation
 # else:
 # 	multStartFin = int(0.65*Tsim/dt)
 # if multStartFin > multEndFin:
-# 	multEndFin = multEndFin/(F1*dictPLL['dt'])											# end plot after 'multEndFin' periods before end of simulation
+# 	multEndFin = multEndFin/(dictData['F1']*dictPLL['dt'])											# end plot after 'multEndFin' periods before end of simulation
 # else:
 # 	multEndFin = int(0.95*Tsim/dt)
 #
@@ -770,12 +834,12 @@ def plotFreqAndPhaseDiff(dictPLL, dictNet, dictData):
 # ''' PLOT HERE THE FIRST PART '''
 # plt.axvspan(0, t[int(1.0*np.round(np.mean(dictPLL['transmission_delay'])/dictPLL['dt']))]*dictPLL['dt'], color='b', alpha=0.25)
 # for i in range(len(phidot[0,:])):
-# 	plt.plot((t[xstart1:xend1:dictPLL['sampleFplot']]*dictPLL['dt']), phidot[xstart1:xend1:dictPLL['sampleFplot'],i]/(2.0*np.pi*F1), label='PLL%i' %(i), linewidth=1)
+# 	plt.plot((t[xstart1:xend1:dictPLL['sampleFplot']]*dictPLL['dt']), phidot[xstart1:xend1:dictPLL['sampleFplot'],i]/(2.0*np.pi*dictData['F1']), label='PLL%i' %(i), linewidth=1)
 #
 # plt.ylabel(r'$f(t)/f0=\dot{\phi}(t)/\omega$',rotation=90, fontsize=60, labelpad=40)
 # ax111.set_xlim(xmin1, xmax1)
-# ax111.set_ylim(0.99*np.min([np.min(phidot[xstart1:xend1:dictPLL['sampleFplot'],:]/(2.0*np.pi*F1)), np.min(phidot[xstart2:xend2:dictPLL['sampleFplot'],:]/(2.0*np.pi*F1))]),
-# 			   1.01*np.max([np.max(phidot[xstart1:xend1:dictPLL['sampleFplot'],:]/(2.0*np.pi*F1)), np.max(phidot[xstart2:xend2:dictPLL['sampleFplot'],:]/(2.0*np.pi*F1))]) )
+# ax111.set_ylim(0.99*np.min([np.min(phidot[xstart1:xend1:dictPLL['sampleFplot'],:]/(2.0*np.pi*dictData['F1'])), np.min(phidot[xstart2:xend2:dictPLL['sampleFplot'],:]/(2.0*np.pi*dictData['F1']))]),
+# 			   1.01*np.max([np.max(phidot[xstart1:xend1:dictPLL['sampleFplot'],:]/(2.0*np.pi*dictData['F1'])), np.max(phidot[xstart2:xend2:dictPLL['sampleFplot'],:]/(2.0*np.pi*dictData['F1']))]) )
 #
 # ax111.tick_params(axis='both', which='major', labelsize=35, pad=1)
 # plt.grid();
@@ -784,12 +848,12 @@ def plotFreqAndPhaseDiff(dictPLL, dictNet, dictData):
 #
 # ''' PLOT HERE THE SECOND PART '''
 # for i in range(len(phidot[0,:])):
-# 	plt.plot((t[xstart2:xend2:dictPLL['sampleFplot']]*dictPLL['dt']), phidot[xstart2:xend2:dictPLL['sampleFplot'],i]/(2.0*np.pi*F1), label='PLL%i' %(i), linewidth=1)
+# 	plt.plot((t[xstart2:xend2:dictPLL['sampleFplot']]*dictPLL['dt']), phidot[xstart2:xend2:dictPLL['sampleFplot'],i]/(2.0*np.pi*dictData['F1']), label='PLL%i' %(i), linewidth=1)
 #
 # #plt.xlabel(r'$time$',fontsize=60,labelpad=-5)
 # ax112.set_xlim(xmin2, xmax2)
-# ax112.set_ylim(0.99*np.min([np.min(phidot[xstart1:xend1:dictPLL['sampleFplot'],:]/(2.0*np.pi*F1)), np.min(phidot[xstart2:xend2:dictPLL['sampleFplot'],:]/(2.0*np.pi*F1))]),
-# 			   1.01*np.max([np.max(phidot[xstart1:xend1:dictPLL['sampleFplot'],:]/(2.0*np.pi*F1)), np.max(phidot[xstart2:xend2:dictPLL['sampleFplot'],:]/(2.0*np.pi*F1))]) )
+# ax112.set_ylim(0.99*np.min([np.min(phidot[xstart1:xend1:dictPLL['sampleFplot'],:]/(2.0*np.pi*dictData['F1'])), np.min(phidot[xstart2:xend2:dictPLL['sampleFplot'],:]/(2.0*np.pi*dictData['F1']))]),
+# 			   1.01*np.max([np.max(phidot[xstart1:xend1:dictPLL['sampleFplot'],:]/(2.0*np.pi*dictData['F1'])), np.max(phidot[xstart2:xend2:dictPLL['sampleFplot'],:]/(2.0*np.pi*dictData['F1']))]) )
 #
 # ax112.tick_params(axis='both', which='major', labelsize=35, pad=1)
 # plt.grid();
@@ -819,7 +883,7 @@ def plotFreqAndPhaseDiff(dictPLL, dictNet, dictData):
 #
 # ''' PLOT HERE THE FIRST PART '''
 # plt.axvspan(0, t[int(1.0*np.round(np.mean(dictPLL['transmission_delay'])/dictPLL['dt']))]*dictPLL['dt'], color='b', alpha=0.25)
-# plt.plot((t*dictPLL['dt'])[xstart1:xend1:dictPLL['sampleFplot']], orderparam[xstart1:xend1:dictPLL['sampleFplot']], linewidth=1.5)
+# plt.plot((t*dictPLL['dt'])[xstart1:xend1:dictPLL['sampleFplot']], dictData['orderParam'][xstart1:xend1:dictPLL['sampleFplot']], linewidth=1.5)
 #
 # plt.ylabel(r'$R(t)$',rotation=0, fontsize=60, labelpad=40)
 # ax121.set_xlim(xmin1, xmax1)
@@ -831,7 +895,7 @@ def plotFreqAndPhaseDiff(dictPLL, dictNet, dictData):
 # ax122 = fig111.add_subplot(224)
 #
 # ''' PLOT HERE THE SECOND PART '''
-# plt.plot((t*dictPLL['dt'])[xstart2:xend2:dictPLL['sampleFplot']], orderparam[xstart2:xend2:dictPLL['sampleFplot']], linewidth=1.5)
+# plt.plot((t*dictPLL['dt'])[xstart2:xend2:dictPLL['sampleFplot']], dictData['orderParam'][xstart2:xend2:dictPLL['sampleFplot']], linewidth=1.5)
 #
 # plt.xlabel(r'$t\,[T_{\omega}]$', fontsize=60, labelpad=-5)
 # ax122.set_xlim(xmin2, xmax2)
@@ -862,21 +926,21 @@ def plotFreqAndPhaseDiff(dictPLL, dictNet, dictData):
 # plt.savefig('results/freq_orderP_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.svg' %(np.mean(dictPLL['coupK']), np.mean(dictPLL['cutFc']), np.mean(dictPLL['syncF']), np.mean(dictPLL['transmission_delay']), np.mean(dictPLL['noiseVarVCO']), now.year, now.month, now.day), dpi=dpi_val)
 #
 # multPrior = 5.0; multAfter = 20.0;
-# if np.mean(dictPLL['transmission_delay'])/dictPLL['dt'] > multPrior/(F1*dictPLL['dt']):
-# 	priorStart = multPrior/(F1*dictPLL['dt'])											# start plot 'multPrior' periods before start of simulation
+# if np.mean(dictPLL['transmission_delay'])/dictPLL['dt'] > multPrior/(dictData['F1']*dictPLL['dt']):
+# 	priorStart = multPrior/(dictData['F1']*dictPLL['dt'])											# start plot 'multPrior' periods before start of simulation
 # else:
 # 	priorStart = int(0.1*np.mean(dictPLL['transmission_delay'])/dictPLL['dt'])
-# if np.mean(dictPLL['transmission_delay'])/dictPLL['dt'] > multAfter/(F1*dictPLL['dt']):
-# 	afterStart = multPrior/(F1*dictPLL['dt'])											# end plot after 'multAfter' periods following the start of the simulation
+# if np.mean(dictPLL['transmission_delay'])/dictPLL['dt'] > multAfter/(dictData['F1']*dictPLL['dt']):
+# 	afterStart = multPrior/(dictData['F1']*dictPLL['dt'])											# end plot after 'multAfter' periods following the start of the simulation
 # else:
 # 	afterStart = int(0.1*Tsim/dt)
 # multStartFin = 40.0; multEndFin = 15.0;
-# if len(t) > multStartFin/(F1*dictPLL['dt']):
-# 	multStartFin = multStartFin/(F1*dictPLL['dt'])										# start plot 'multStartFin' periods before end of simulation
+# if len(t) > multStartFin/(dictData['F1']*dictPLL['dt']):
+# 	multStartFin = multStartFin/(dictData['F1']*dictPLL['dt'])										# start plot 'multStartFin' periods before end of simulation
 # else:
 # 	multStartFin = int(0.85*Tsim/dt)
 # if multStartFin > multEndFin:
-# 	multEndFin = multEndFin/(F1*dictPLL['dt'])											# end plot after 'multEndFin' periods before end of simulation
+# 	multEndFin = multEndFin/(dictData['F1']*dictPLL['dt'])											# end plot after 'multEndFin' periods before end of simulation
 # else:
 # 	multEndFin = int(0.95*Tsim/dt)
 #
@@ -895,21 +959,21 @@ def plotFreqAndPhaseDiff(dictPLL, dictNet, dictData):
 #
 # ################################################################################################################################################################################
 # multPrior = 5.0; multAfter = 95.0;
-# if np.mean(dictPLL['transmission_delay'])/dictPLL['dt'] > multPrior/(F1*dictPLL['dt']):
-# 	priorStart = multPrior/(F1*dictPLL['dt'])											# start plot 'multPrior' periods before start of simulation
+# if np.mean(dictPLL['transmission_delay'])/dictPLL['dt'] > multPrior/(dictData['F1']*dictPLL['dt']):
+# 	priorStart = multPrior/(dictData['F1']*dictPLL['dt'])											# start plot 'multPrior' periods before start of simulation
 # else:
 # 	priorStart = int(0.5*np.mean(dictPLL['transmission_delay'])/dictPLL['dt'])
-# if np.mean(dictPLL['transmission_delay'])/dictPLL['dt'] > multAfter/(F1*dictPLL['dt']):
-# 	afterStart = multPrior/(F1*dictPLL['dt'])											# end plot after 'multAfter' periods following the start of the simulation
+# if np.mean(dictPLL['transmission_delay'])/dictPLL['dt'] > multAfter/(dictData['F1']*dictPLL['dt']):
+# 	afterStart = multPrior/(dictData['F1']*dictPLL['dt'])											# end plot after 'multAfter' periods following the start of the simulation
 # else:
 # 	afterStart = int(0.25*Tsim/dt)
 # multStartFin = 110.0; multEndFin = 15.0;
-# if len(t) > multStartFin/(F1*dictPLL['dt']):
-# 	multStartFin = multStartFin/(F1*dictPLL['dt'])										# start plot 'multStartFin' periods before end of simulation
+# if len(t) > multStartFin/(dictData['F1']*dictPLL['dt']):
+# 	multStartFin = multStartFin/(dictData['F1']*dictPLL['dt'])										# start plot 'multStartFin' periods before end of simulation
 # else:
 # 	multStartFin = int(0.65*Tsim/dt)
 # if multStartFin > multEndFin:
-# 	multEndFin = multEndFin/(F1*dictPLL['dt'])											# end plot after 'multEndFin' periods before end of simulation
+# 	multEndFin = multEndFin/(dictData['F1']*dictPLL['dt'])											# end plot after 'multEndFin' periods before end of simulation
 # else:
 # 	multEndFin = int(0.95*Tsim/dt)
 #
@@ -1018,24 +1082,24 @@ def plotFreqAndPhaseDiff(dictPLL, dictNet, dictData):
 # plt.savefig('results/phases_phaseDiff_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.svg' %(np.mean(dictPLL['coupK']), np.mean(dictPLL['cutFc']), np.mean(dictPLL['syncF']), np.mean(dictPLL['transmission_delay']), np.mean(dictPLL['noiseVarVCO']), now.year, now.month, now.day), dpi=dpi_val)
 #
 # multPrior = 5.0; multAfter = 20.0;
-# if np.mean(dictPLL['transmission_delay'])/dictPLL['dt'] > multPrior/(F1*dictPLL['dt']):
-# 	priorStart = multPrior/(F1*dictPLL['dt'])											# start plot 'multPrior' periods before start of simulation
+# if np.mean(dictPLL['transmission_delay'])/dictPLL['dt'] > multPrior/(dictData['F1']*dictPLL['dt']):
+# 	priorStart = multPrior/(dictData['F1']*dictPLL['dt'])											# start plot 'multPrior' periods before start of simulation
 # else:
 # 	priorStart = int(0.1*np.mean(dictPLL['transmission_delay'])/dictPLL['dt'])
-# if np.mean(dictPLL['transmission_delay'])/dictPLL['dt'] > multAfter/(F1*dictPLL['dt']):
-# 	afterStart = multPrior/(F1*dictPLL['dt'])											# end plot after 'multAfter' periods following the start of the simulation
+# if np.mean(dictPLL['transmission_delay'])/dictPLL['dt'] > multAfter/(dictData['F1']*dictPLL['dt']):
+# 	afterStart = multPrior/(dictData['F1']*dictPLL['dt'])											# end plot after 'multAfter' periods following the start of the simulation
 # else:
 # 	if Tsim > 2*delay:
 # 		afterStart = int(2.0*np.mean(dictPLL['transmission_delay'])/dictPLL['dt'])
 # 	else:
 # 		afterStart = int(0.05*Tsim/dt)
 # multStartFin = 40.0; multEndFin = 15.0;
-# if len(t) > multStartFin/(F1*dictPLL['dt']):
-# 	multStartFin = multStartFin/(F1*dictPLL['dt'])										# start plot 'multStartFin' periods before end of simulation
+# if len(t) > multStartFin/(dictData['F1']*dictPLL['dt']):
+# 	multStartFin = multStartFin/(dictData['F1']*dictPLL['dt'])										# start plot 'multStartFin' periods before end of simulation
 # else:
 # 	multStartFin = int(0.85*Tsim/dt)
 # if multStartFin > multEndFin:
-# 	multEndFin = multEndFin/(F1*dictPLL['dt'])											# end plot after 'multEndFin' periods before end of simulation
+# 	multEndFin = multEndFin/(dictData['F1']*dictPLL['dt'])											# end plot after 'multEndFin' periods before end of simulation
 # else:
 # 	multEndFin = int(0.95*Tsim/dt)
 #

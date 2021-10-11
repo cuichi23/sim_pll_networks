@@ -177,14 +177,14 @@ def calcSpectrum( phi, dictPLL, dictNet, percentOfTsim=0.5 ): #phi,Fsample,coupl
 	windowset='hamming' #'hamming' #'hamming', 'boxcar'
 	print('\nCurrent window option is', windowset, 'for waveform', inspect.getsourcelines(dictPLL['vco_out_sig'])[0][0],
 			'NOTE: in principle can always choose to be sin() for cleaner PSD in first harmonic approximation of the signal.')
-	print('Calculate spectrum for',1-percentOfTsim,'percent of the time-series. Implement better solution using decay times.')
+	print('Calculate spectrum for',percentOfTsim,'percent of the time-series. Implement better solution using decay times.')
 	try:
 		analyzeL = findIntTinSig.cutTimeSeriesOfIntegerPeriod(dictPLL['sampleF'], dictNet['Tsim'], dictPLL['syncF'],
 																np.max([dictPLL['coupK'], dictPLL['coupStr_2ndHarm']]), phi, percentOfTsim);
-		window	 = scipy.signal.get_window('boxcar', int(dictPLL['sampleF']), fftbins=True);
+		window	 = scipy.signal.get_window('boxcar', int(dictPLL['sampleF']), fftbins=True); # here we choose boxcar since a modification of the ends of the time-series is not necessary for an integer number of periods
 	except:
 		print('\n\nError in cutTimeSeriesOfIntegerPeriod-function! Not picking integer number of periods for PSD!\n\n')
-		analyzeL= [ int( dictNet['Tsim']*(1-percentOfTsim)*dictPLL['sampleF'] ), int( dictNet['Tsim']*dictPLL['sampleF'] )-1 ]
+		analyzeL= [ int( dictNet['Tsim']*dictPLL['sampleF']*(1-percentOfTsim) ), int( dictNet['Tsim']*dictPLL['sampleF'] )-1 ]
 		window	= scipy.signal.get_window(windowset, int(dictPLL['sampleF']), fftbins=True);
 
 	tsdata		= dictPLL['vco_out_sig'](phi[analyzeL[0]:analyzeL[1]])

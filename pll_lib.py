@@ -170,8 +170,9 @@ class SignalControlledOscillator:
 		dt: time increment
 		phi: this is the internal representation of the oscillator's phase, NOT the container in simulateNetwork
 		response_vco: defines a nonlinear VCO response, either set to 'linear' or the nonlinear expression
-		init_freq: defines the initial frequency of the signal control oscillator according to the phase history
+		init_freq: defines the initial frequency of the signal controlled oscillator according to the phase history
 		evolve_phi: function defining how the phase evolves in time, e.g., with or without noise, linear vs. nonlinear
+		d_phi: stores the phase increment between the current and prior simulation step
 
 	"""
 	def __init__(self, pll_id, dict_pll, dict_net):
@@ -181,6 +182,7 @@ class SignalControlledOscillator:
 			dict_pll: oscillator related properties and parameters
 			dict_net: network related properties and parameters
 		"""
+		self.d_phi = None
 		self.pll_id 	= pll_id
 		self.sync_freq_rad 		= 2.0 * np.pi * dict_pll['syncF']
 		if dict_pll['fric_coeff_PRE_vs_PRR'] == 'PRR':
@@ -220,31 +222,83 @@ class SignalControlledOscillator:
 			print('Specified VCO response function unknown, check VCO initialization in pll_lib!'); sys.exit()
 
 	def evolve_coupling_strength(self, new_coupling_strength_value_or_list, dict_net):
+		"""
+		Evolves the values of the cross coupling strength in time -- more precisely the VCO sensitivity.
+
+		Args:
+			new_coupling_strength_value_or_list: the new value for the cross coupling strength,
+			either a scalar or an array with individual values for each signal controlled oscillator in the network
+			dict_net: network related properties and parameters
+		"""
 
 		self.K_rad	= 2.0 * np.pi * get_from_value_or_list(self.pll_id, new_coupling_strength_value_or_list / self.K_rad, dict_net['Nx'] * dict_net['Ny'])
 		#print('Injection lock coupling strength for PLL%i changed, new value:'%self.idx_self, self.K2nd_k); #time.sleep(1)
 		return None
 
-	def next(self,x_ctrl):														# compute change of phase per time-step due to intrinsic frequency and noise (if non-zero variance)
-		self.d_phi 	= self.evolve_phi(self.intr_freq_rad, self.K_rad, x_ctrl, self.c, self.dt)
+	def next(self, control_signal):
+		"""
+		Evolves the instantaneous output frequency of the signal controlled oscillator according to the control signal
+		and the dynamic noise.
+
+		Args:
+			control_signal: the result of the phase detection and signal processing to control the output frequency of
+			the signal controlled oscillator
+
+		Returns:
+			tuple of the next phase and phase increment
+		"""
+		self.d_phi 	= self.evolve_phi(self.intr_freq_rad, self.K_rad, control_signal, self.c, self.dt)
 		self.phi 	= self.phi + self.d_phi
 		return self.phi, self.d_phi
 
-	def delta_perturbation(self, phi, phiPert, x_ctrl):							# sets a delta-like perturbation 0-dt, the last time-step of the history
-		self.d_phi 	= phiPert + self.evolve_phi(self.init_freq, self.K_rad, x_ctrl, self.c, self.dt)
+	def delta_perturbation(self, phase_perturbation, control_signal):
+		"""
+		Sets a delta-like perturbation.
+
+		Args:
+			phase_perturbation: a delta like perturbation to the current phase
+			control_signal: the input signal to the signal controlled oscillator
+		Returns:
+			a tuple of the perturbed phase and the phase increment
+		"""
+		self.d_phi 	= phase_perturbation + self.evolve_phi(self.init_freq, self.K_rad, control_signal, self.c, self.dt)
 		self.phi 	= self.phi + self.d_phi
 		return self.phi, self.d_phi
 
-	def add_perturbation(self, phiPert):										# adds additional perturbation to current state
-		self.phi 	= self.phi + phiPert
+	def add_perturbation(self, phase_perturbation):
+		"""
+		Adds user defined perturbation to current state.
+
+		Args:
+			phase_perturbation: a delta like perturbation to the current phase
+		Returns:
+			the perturbed phase
+		"""
+		self.phi 	= self.phi + phase_perturbation
 		return self.phi
 
-	def set_initial_forward(self):												# sets the phase history of the VCO with the frequency of the synchronized state under investigation
+	def set_initial_forward(self):
+		"""
+		Sets the phase history of the signal controlled oscillator based on the frequency for the initial frequency.
+		Starts at time t - tau_max (the maximum time delay) and evolves the history until the time at which the
+		simulation starts.
+
+		Returns:
+			a tuple of the perturbed phase and the phase increment
+		"""
 		self.d_phi 	= self.evolve_phi(self.init_freq, 0.0, 0.0, self.c, self.dt)
 		self.phi 	= self.phi + self.d_phi
 		return self.phi, self.d_phi
 
-	def set_initial_reverse(self):												# sets the phase history of the VCO with the frequency of the synchronized state under investigation
+	def set_initial_reverse(self):
+		"""
+		Sets the phase history of the signal controlled oscillator based on the frequency for the initial frequency.
+		Starts at the time at which the simulation starts and evolves the history until time t - tau_max
+		(the maximum time delay).
+
+		Returns:
+			a tuple of the perturbed phase and the phase increment
+		"""
 		self.d_phi 	= self.evolve_phi(-self.init_freq, 0.0, 0.0, self.c, self.dt)
 		#print('In reverse fct of PLL%i self.phi, self.d_phi:'%self.idx, self.phi, self.d_phi); time.sleep(0.5)
 		self.phi 	= self.phi + self.d_phi
@@ -370,7 +424,7 @@ class PhaseDetectorCombiner:
 		else:
 			print('Phase detector and combiner problem, dictPLL[*includeCompHF*] should either be True or False, check PhaseDetectorCombiner in pll_lib! ')
 
-	def evolve_coupling_strength_inject_lock(self, new_coupling_strength_injection_locking, dict_net) -> None:
+	def evolve_coupling_strength_inject_lock(self, new_coupling_strength_injection_locking, dict_net: dict) -> None:
 		"""
 		Evolves the values of the coupling strength of the second harmonic injection signals in time.
 		
@@ -686,21 +740,21 @@ class PhaseLockedLoop:
 		"""
 		return self.signal_controlled_oscillator.set_initial_reverse()[0]
 
-	def set_delta_perturbation(self, current_phase_state, perturbation, instantaneous_frequency) -> float:
+	def set_delta_perturbation(self, perturbation, instantaneous_frequency, prior_to_instantaneous_frequency) -> float:
 		""" Function that applies a delta-like perturbation to the phase of the oscillator at the start of the simulation.
 			Corrects the internal state of the oscillator with respect to the perturbation, calculated the initial control signal.
 
 			Args:
-				current_phase_state:					the current phase of the oscillator
 				perturbation:							the perturbation to the current phase
-				instantaneous_frequency:		 		the instantaneous frequency of the oscillator
+				instantaneous_frequency:		 		the current instantaneous frequency of the oscillator
+				prior_to_instantaneous_frequency: 		the previous (time increment) instantaneous frequency of the oscillator
 
 			Returns:
 				the current perturbed phase of the oscillator
 		"""
 		# the filtering at the loop filter is applied to the phase detector signal
-		control_signal = self.low_pass_filter.set_initial_control_signal(current_phase_state, instantaneous_frequency)
-		return self.signal_controlled_oscillator.delta_perturbation(current_phase_state, perturbation, control_signal)[0]
+		control_signal = self.low_pass_filter.set_initial_control_signal(instantaneous_frequency, prior_to_instantaneous_frequency)
+		return self.signal_controlled_oscillator.delta_perturbation(perturbation, control_signal)[0]
 
 	def next_no_external_input(self, index_current_time: int, length_phase_memory: int, phase_memory: np.ndarray) -> float:
 		""" Function that evolves the voltage controlled oscillator in a closed loop configuration when there is no external input, i.e., free-running closed loop PLL.

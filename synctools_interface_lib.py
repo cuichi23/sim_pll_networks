@@ -94,9 +94,9 @@ def generate_delay_plot(dictPLL, dictNet, isRadians=True, filename=None, max_del
 
 	plt.subplot(2, 1, 2)
 	plt.axhline(0, color='k')
-	plt.plot(fsl.get_tau(), np.real(fsl.get_l()), '.')
+	plt.plot(fsl.get_tau(), np.real(fsl.get_lambda()), '.')
 	if ( dictNet['mx'] == 0 or dictNet['mx'] == 1 ) and dictNet['my'] == -999:
-		plt.plot(fsl1.get_tau(), fsl1.get_l(), 'k+', alpha=0.5)
+		plt.plot(fsl1.get_tau(), fsl1.get_lambda(), 'k+', alpha=0.5)
 	plt.grid(True, ls='--')
 	plt.xlabel('delay [s]')
 	plt.ylabel('stability [rad/s]')
@@ -133,9 +133,9 @@ def generate_delay_plot(dictPLL, dictNet, isRadians=True, filename=None, max_del
 
 	plt.subplot(2, 1, 2)
 	plt.axhline(0, color='k')
-	plt.plot(fsl.get_tau()*fsl.get_omega()/(2*np.pi), np.real(fsl.get_l()), '.')
+	plt.plot(fsl.get_tau()*fsl.get_omega()/(2*np.pi), np.real(fsl.get_lambda()), '.')
 	if ( dictNet['mx'] == 0 or dictNet['mx'] == 1 ) and dictNet['my'] == -999:
-		plt.plot(fsl1.get_tau()*fsl1.get_omega()/(2*np.pi), np.real(fsl1.get_l()), 'k+', alpha=0.5)
+		plt.plot(fsl1.get_tau()*fsl1.get_omega()/(2*np.pi), np.real(fsl1.get_lambda()), 'k+', alpha=0.5)
 	plt.grid(True, ls='--')
 	plt.xlabel('Omega delay [s]')
 	plt.ylabel('stability [rad/s]')
@@ -533,13 +533,36 @@ class FlatStateList(object):
 		else:
 			return None
 
-	def get_l(self):
+	def get_lambda(self, isRadians=True):
 		'''Returns an array of the complex linear stability exponent of the states in the list'''
+		if isRadians:
+			s = 1.0
+		else:
+			s = 1.0 / (2 * np.pi)
+
 		if self.n > 0:
 			x = np.zeros(self.n, dtype=np.complex)
 			for i in range(self.n):
-				x[i] = self.states[i].get_stability()
+				x[i] = s * self.states[i].get_stability()[0]
 			return x
+		else:
+			return None
+
+	def get_all_lambda(self, isRadians=True):
+		'''Returns an array of the complex linear stability exponent of the states in the list'''
+		if isRadians:
+			s = 1.0
+		else:
+			s = 1.0 / (2 * np.pi)
+
+		if self.n > 0:
+			x = np.zeros(self.n, dtype=np.complex)
+			y = []
+			for i in range(self.n):
+				#print('TEST:', self.states[i].get_stability())
+				x[i], temp = self.states[i].get_stability()
+				y.append(s * temp)
+			return y
 		else:
 			return None
 
@@ -569,7 +592,7 @@ class FlatStateList(object):
 		if self.n > 0:
 			x = np.zeros(self.n)
 			for i in range(self.n):
-				re_lambda = np.real(self.states[i].get_stability())
+				re_lambda = np.real(self.states[i].get_stability()[0])
 				x[i] = 25.0 / np.abs(re_lambda)
 			return x
 		else:
@@ -674,13 +697,14 @@ class FlatStateList(object):
 			x = np.zeros((self.n, 14+phi_config_vec_len))
 			h = self.get_coup_fct()
 			print('coupling function h=',h)
+			#print('list of all lambda solutions:', self.get_all_lambda())
 			x[:, 0] = self.get_w(isRadians=isRadians)
 			x[:, 1] = self.get_k(isRadians=isRadians)
 			x[:, 2] = self.get_wc(isRadians=isRadians)
 			x[:, 3] = self.get_tau()
 			x[:, 4] = self.get_omega(isRadians=isRadians)
-			x[:, 5] = np.real(self.get_l())
-			x[:, 6] = np.imag(self.get_l())
+			x[:, 5] = np.real(self.get_lambda(isRadians=isRadians))
+			x[:, 6] = np.imag(self.get_lambda(isRadians=isRadians))
 			x[:, 7] = self.get_tsim()
 			x[:, 8] = self.get_nx()
 			x[:, 9] = self.get_ny()
@@ -688,7 +712,7 @@ class FlatStateList(object):
 			x[:, 11] = self.get_my()
 			x[:, 12] = self.get_v()
 			# NOTE: steady state loop gain is returned as specified by the function, however inside the coupling function it needs to be set to redHz
-			x[:, 13] = ( self.get_k(isRadians=isRadians) / self.get_v() ) * h( self.get_omega(isRadians=True)*self.get_tau() )
+			x[:, 13] = ( self.get_k(isRadians=isRadians) / self.get_v() ) * h( -self.get_omega(isRadians=True)*self.get_tau() / self.get_v() )
 			#print('from get_phiConf: ', self.get_phiConf()[0])
 			x[:, 14:14+phi_config_vec_len] = self.get_phiConf()[0]
 			#print('phi configuration x[:, 13:%i]: '%(13+phi_config_vec_len), x[:, 13:])
@@ -720,8 +744,10 @@ class FlatStateList(object):
 			x[:, 10] = self.get_mx()
 			x[:, 11] = self.get_my()
 			x[:, 12] = self.get_v()
+			# NOTE: steady state loop gain is returned as specified by the function, however inside the coupling function it needs to be set to redHz
+			x[:, 13] = ( self.get_k(isRadians=isRadians) / self.get_v() ) * h( -self.get_omega(isRadians=True)*self.get_tau() / self.get_v() )
 			#print('from get_phiConf: ', self.get_phiConf()[0])
-			x[:, 13:13+phi_config_vec_len] = self.get_phiConf()[0]
+			x[:, 14:14+phi_config_vec_len] = self.get_phiConf()[0]
 			#print('phi configuration x[:, 13:%i]: '%(13+phi_config_vec_len), x[:, 13:])
 			return x
 		else:

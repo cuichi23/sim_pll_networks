@@ -743,7 +743,7 @@ class SyncState(object):
 		funcs = self.get_stability_functions()
 		l = []
 		for f in funcs:
-			l_full = optimize.root(f, l0, tol=1e-14, method='lm')				#- 'hybr'             :ref:`(see here) <optimize.root-hybr>`
+			l_full = optimize.root(f, l0, tol=1e-15, method='lm')				#- 'hybr'             :ref:`(see here) <optimize.root-hybr>`
 																				#- 'lm'               :ref:`(see here) <optimize.root-lm>`
 																				#- 'broyden1'         :ref:`(see here) <optimize.root-broyden1>`
 																				#- 'broyden2'         :ref:`(see here) <optimize.root-broyden2>`
@@ -769,7 +769,8 @@ class SyncState(object):
 	def get_stability(self, l0=np.array([1.0, 1.0])):
 		l = self.get_all_stabilities(l0=l0, isFullOutput=False)
 		i_max = np.argmax(np.real(l))
-		return l[i_max]
+		#print('all lambda: ', l)
+		return l[i_max], l
 
 	def get_stability_functions(self, k=1):
 		funcs = []

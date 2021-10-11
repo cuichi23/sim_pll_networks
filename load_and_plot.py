@@ -22,6 +22,7 @@ import time
 import pickle
 
 import plot_lib
+import evaluation_lib as eva
 import check_dicts_lib as chk_dicts
 import palettable.colorbrewer.diverging as colormap_diver
 from palettable.colorbrewer.diverging import PuOr_7
@@ -73,10 +74,10 @@ colormapSyncStab 	= colormap_diver.PuOr_7.mpl_colormap
 ################################################################################
 # load data
 ################################################################################
-filenamePLL  = 'results/2021_Mocast_simRes/res4/dictPLL_K0.050_tau39968.000_Fc0.000_mx0_my0_N16_toposquare-open_10:27_2021_10_5'
-filenameNet  = 'results/2021_Mocast_simRes/res4/dictNet_K0.050_tau39968.000_Fc0.000_mx0_my0_N16_toposquare-open_10:27_2021_10_5'
-filenameData = 'results/2021_Mocast_simRes/res4/dictData_K0.050_tau39968.000_Fc0.000_mx0_my0_N16_toposquare-open_10:27_2021_10_5'
-filenameAlgo = 'results/2021_Mocast_simRes/res4/dictAlgo_K0.050_tau39968.000_Fc0.000_mx0_my0_N16_toposquare-open_10:27_2021_10_5'
+filenamePLL  = 'results/2021_Mocast_simRes/res5/dictPLL_K0.050_tau39968.000_Fc0.000_mx0_my0_N16_toposquare-open_12:14_2021_10_7'
+filenameNet  = 'results/2021_Mocast_simRes/res5/dictNet_K0.050_tau39968.000_Fc0.000_mx0_my0_N16_toposquare-open_12:14_2021_10_7'
+filenameData = 'results/2021_Mocast_simRes/res5/dictData_K0.050_tau39968.000_Fc0.000_mx0_my0_N16_toposquare-open_12:14_2021_10_7'
+filenameAlgo = 'results/2021_Mocast_simRes/res5/dictAlgo_K0.050_tau39968.000_Fc0.000_mx0_my0_N16_toposquare-open_12:14_2021_10_7'
 ################################################################################
 dictPLL 	 = pickle.load(open(filenamePLL, 'rb'))
 dictNet 	 = pickle.load(open(filenameNet, 'rb'))
@@ -85,13 +86,14 @@ dictAlgo  	 = pickle.load(open(filenameAlgo, 'rb'))
 ################################################################################
 # if necessary update parameters related to plotting
 ################################################################################
-dictPLL.update({'PSD_freq_resolution': 5E-6})
-# dictAlgo={
-# 	'bruteForceBasinStabMethod': 'listOfInitialPhaseConfigurations',		# pick method for setting realizations 'classicBruteForceMethodRotatedSpace', 'listOfInitialPhaseConfigurations'
-# 	'paramDiscretization': [5, 3],#3										# parameter discetization for brute force parameter space scans
-# 	'min_max_range_parameter': [0.95, 1.05]									# specifies within which min and max value to linspace the detuning
-# }
-# dictPLL, dictNet, dictAlgo = chk_dicts.check_dicts_consistency(dictPLL, dictNet, dictAlgo)
+dictPLL.update({'PSD_freq_resolution': 1E-5})
+if not dictAlgo:
+	dictAlgo={
+		'bruteForceBasinStabMethod': 'listOfInitialPhaseConfigurations',		# pick method for setting realizations 'classicBruteForceMethodRotatedSpace', 'listOfInitialPhaseConfigurations'
+		'paramDiscretization': [5, 3],#3										# parameter discetization for brute force parameter space scans
+		'min_max_range_parameter': [0.95, 1.05]									# specifies within which min and max value to linspace the detuning
+	}
+dictPLL, dictNet, dictAlgo = chk_dicts.check_dicts_consistency(dictPLL, dictNet, dictAlgo)
 ################################################################################
 ################################################################################
 
@@ -106,7 +108,18 @@ cdict = {
 }
 colormap  	= matplotlib.colors.LinearSegmentedColormap('my_colormap', cdict, 1024)
 
-plot_lib.plotPSD(dictPLL, dictNet, dictData, plotList=[0, 15], saveData=False)
+# run evaluations
+r, orderParam, F1 	= eva.obtainOrderParam(dictPLL, dictNet, dictData)
+dictData.update({'orderParam': orderParam, 'R': r, 'F1': F1})
+
+plot_lib.plotOrderPara(dictPLL, dictNet, dictData)
+#plot_lib.plotPhaseRela(dictPLL, dictNet, dictData)
+#plot_lib.plotPhaseDiff(dictPLL, dictNet, dictData)
+#plot_lib.plotClockTime(dictPLL, dictNet, dictData)
+#plot_lib.plotOscSignal(dictPLL, dictNet, dictData)
+plot_lib.plotFreqAndPhaseDiff(dictPLL, dictNet, dictData)
+plot_lib.plotFreqAndOrderPar(dictPLL, dictNet, dictData)
+plot_lib.plotPSD(dictPLL, dictNet, dictData, [0, 15], saveData=False)
 
 plt.draw()
 plt.show()

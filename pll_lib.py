@@ -63,96 +63,152 @@ def get_from_value_or_list(pll_id, input, pll_count):
 		sys.exit()
 
 
-# LF: y = integral du x(t) * p(t-u)												# this can be expressed in terms of a differential equation with the help of the Laplace transform
 class LowPassFilter:
-	""" A lowpass filter class
+	""" Implements a first or second order RC low pass filter.
+		Mathematically that can be represented by an integral over the impulse response of the filter and
+		the signals. For convenience we reexpress this as a first or second order differential equation
+		using Laplace transformation.
 
-		Args:
-
-	    Returns:
-
-	    Raises:
+		Attributes:
+			dt: time increment
+			cutoff_freq_Hz: cutoff frequency
+			K_Hz: coupling strength in Hz
+			intr_freq_Hz: intrinsic frequency of SCO in Hz, needed to calculate the initial control signal at t=0
+			sync_freq_Hz: frequency of synchronized state under investigation in Hz, needed to calculate the initial control signal at t=0
+			order_loop_filter: specifies the order of the loop filter, here first or second order - 1 RC stage or 2 sequential RC stages
+			pll_id: the oscillator's identity
+			sync_freq_rad: frequency of synchronized states in radHz (Omega)
+			K_rad: coupling strength in radHz
+			instantaneous_freq_Hz: instantaneous frequency in Hz
+			friction_coefficient: damping of friction coefficient of the dynamical model
+			control_signal: denotes the control signal, output of the loop filter stage
+			derivative_control_signal: denotes the time derivative of the control signal, output of the loop filter stage
+			cutoff_freq_rad: angular cut-off frequency of the loop filter
+			beta: helper variable
+			evolve: defines the differential equation that evolves the loop filter in time
+			b: https://www.electronics-tutorials.ws/filter/filter_2.html	TODO QUESTION CHRIS: cut-off freq wc = 1 / RC or w(@-3dB) = wc sqrt( 2^(1/n) -1 )
+			t: array that defines the time span for the solve_ivp function that solves the second order differential equation numerically
 	"""
-	def __init__(self,idx_self,dictPLL,dictNet):								#,Fc,dt,K,F_Omeg,F,cLF=0,Trelax=0,y=0,y_old=0):
+	def __init__(self, pll_id: int, dict_pll: dict, dict_net: dict):
+		"""
+		Args:
+			pll_id: the oscillator's identity
+			dict_pll: oscillator related properties and parameters
+			dict_net: network related properties and parameters
+		"""
 
-		self.dt      = dictPLL['dt']											# set time-step
-		self.Fc 	 = get_from_value_or_list(idx_self, dictPLL['cutFc'], dictNet['Nx'] * dictNet['Ny']) # set cut-off frequency [Hz]
-		self.K_Hz	 = get_from_value_or_list(idx_self, dictPLL['coupK'], dictNet['Nx'] * dictNet['Ny']) # set coupling strength [Hz]
-		self.intrF   = get_from_value_or_list(idx_self, dictPLL['intrF'], dictNet['Nx'] * dictNet['Ny']) # intrinsic frequency of VCO - here needed for x_k^C(0) [Hz]
-		self.syncF   = dictPLL['syncF']											# provide freq. of synchronized state under investigation - here needed for x_k^C(0) [Hz]
-		self.LForder = dictPLL['orderLF']										# provides the LF order
+		self.dt      = dict_pll['dt']
+		self.cutoff_freq_Hz 	 = get_from_value_or_list(pll_id, dict_pll['cutFc'], dict_net['Nx'] * dict_net['Ny'])
+		self.K_Hz	 = get_from_value_or_list(pll_id, dict_pll['coupK'], dict_net['Nx'] * dict_net['Ny'])
+		self.intr_freq_Hz   = get_from_value_or_list(pll_id, dict_pll['intrF'], dict_net['Nx'] * dict_net['Ny'])
+		self.sync_freq_Hz   = dict_pll['syncF']
+		self.order_loop_filter = dict_pll['orderLF']
 
-		self.idx		= idx_self
-		self.Omega  	= 2.0*np.pi*self.syncF									# angular frequency of synchronized state
-		self.K 	  		= 2.0*np.pi*self.K_Hz									# provide coupling strength - here needed for x_k^C(0)
-		self.instantF  	= None													# instantaneous frequency [Hz]
-		self.fric_coeff = get_from_value_or_list(idx_self, dictPLL['friction_coefficient'], dictNet['Nx'] * dictNet['Ny']) # friction coefficient
+		self.pll_id		= pll_id
+		self.sync_freq_rad  	= 2.0 * np.pi * self.sync_freq_Hz
+		self.K_rad 	  		= 2.0 * np.pi * self.K_Hz
+		self.instantaneous_freq_Hz  	= None
+		self.friction_coefficient = get_from_value_or_list(pll_id, dict_pll['friction_coefficient'], dict_net['Nx'] * dict_net['Ny'])
 
-		self.y 			= None													# denotes the control signal, output of the LF
-		self.dydt		= None													# denotes the time derivative of the control signal, output of the LF
+		self.control_signal 			= None
+		self.derivative_control_signal		= None
 
-		if not self.Fc == None and self.LForder > 0:
-			self.wc 	= 2.0*np.pi*self.Fc										# angular cut-off frequency of the loop filter for a=1, filter of first order
-			self.beta 	= self.dt*self.wc
-			if   self.LForder == 1:
-				print('I am the loop filter of PLL%i: first order, a=%i. Friction coefficient set to %0.2f.'%(self.idx, self.LForder, self.fric_coeff))
-				self.evolve = lambda xPD: (1.0-self.beta*self.fric_coeff)*self.y + self.beta*xPD
-			elif self.LForder == 2:
-				print('I am the loop filter of PLL%i: second order, a=%i. Friction coefficient set to %0.2f.'%(self.idx, self.LForder, self.fric_coeff))
-				self.evolve = lambda xPD: self.solve_2nd_orderOrdDiffEq(xPD)
-			elif self.LForder > 2:
+		if not self.cutoff_freq_Hz == None and self.order_loop_filter > 0:
+			self.cutoff_freq_rad 	= 2.0 * np.pi * self.cutoff_freq_Hz
+			self.beta 	= self.dt*self.cutoff_freq_rad
+			if   self.order_loop_filter == 1:
+				print('I am the loop filter of PLL%i: first order, a=%i. Friction coefficient set to %0.2f.' % (self.pll_id, self.order_loop_filter, self.friction_coefficient))
+				self.evolve = lambda xPD: (1.0 - self.beta * self.friction_coefficient) * self.control_signal + self.beta * xPD
+			elif self.order_loop_filter == 2:
+				print('I am the loop filter of PLL%i: second order, a=%i. Friction coefficient set to %0.2f.' % (self.pll_id, self.order_loop_filter, self.friction_coefficient))
+				self.evolve = lambda xPD: self.solve_2nd_order_ordinary_diff_eq(xPD)
+			elif self.order_loop_filter > 2:
 				print('Loop filters of order higher two are NOT implemented. Aborting!'); sys.exit()
-		elif self.Fc == None:
+		elif self.cutoff_freq_Hz == None:
 			print('No cut-off frequency defined (None), hence simulating without loop filter!')
 			self.evolve = lambda xPD: xPD
 		else:
 			print('Problem in LF class!'); sys.exit()
 
-		a 	   = self.LForder;
-		self.b = 1.0 / ( 2.0*np.pi*self.Fc * a )								# https://www.electronics-tutorials.ws/filter/filter_2.html	QUESTION CHRIS: cut-off freq wc = 1 / RC or w(@-3dB) = wc sqrt( 2^(1/n) -1 )
+		a = self.order_loop_filter
+		self.b = 1.0 / (2.0 * np.pi * self.cutoff_freq_Hz * a)
 		self.t = np.array([0, self.dt])
 
-	def controlSig(self, t, z, xPD):
+	def second_order_ordinary_diff_eq(self, t, z, phase_detector_output):
+		""" Defines the second order ordinary differential equation of the second order loop filter as a set of two
+		first order coupled differential equations.
+		"""
 		x = z[0]
 		y = z[1]
 		# print('Solving control signal with 2nd order LF. Initial conditions are:', self.dydt, ',\t', self.y*(1+2.0/self.b)); time.sleep(2)
-		return [y, (1.0/self.b**2)*(xPD-x)-(2.0/self.b)*y]	# -self.y-(self.dydt+(2.0*self.y)/self.b)
+		return [y, (1.0/self.b**2) * (phase_detector_output - x) - (2.0 / self.b) * y]	# -self.y-(self.dydt+(2.0*self.y)/self.b)
 
-	def solve_2nd_orderOrdDiffEq(self, xPD):
-																				# optional: try to implement via odeint as shown here: https://www.epythonguru.com/2020/07/second-order-differential-equation.html
-		func = lambda t, z: self.controlSig(t, z, xPD)
+	def solve_2nd_order_ordinary_diff_eq(self, phase_detector_output):
+		""" Evolves the output of the second order loop filter by one time increment.
 
-		sol = solve_ivp(func, [self.t[0], self.t[1]], [2*self.y/self.b, self.dydt], method='RK45', t_eval=self.t, dense_output=False, events=None, vectorized=False, rtol = 1e-5)
+		Args:
+			phase_detector_output: the input signal to the signal loop filter
+
+		Returns:
+			control signal
+		"""
+		# TODO define function with known solution and test
+		# optional: try to implement via odeint as shown here: https://www.epythonguru.com/2020/07/second-order-differential-equation.html
+		func = lambda t, z: self.second_order_ordinary_diff_eq(t, z, phase_detector_output)
+		sol = solve_ivp(func, [self.t[0], self.t[1]], [2 * self.control_signal / self.b, self.derivative_control_signal], method='RK45', t_eval=self.t, dense_output=False, events=None, vectorized=False, rtol = 1e-5)
 		#print('sol: ', sol)
-		y 			= sol.y[0][1]												# control signal value at time t
-		self.dydt   = sol.y[1][1]												# derivative of control signal at time t
-		# print('self.y:', self.y, '\ty: ', y, '\tdydt:', self.dydt); time.sleep(1)
-		return y
+		control_signal 			= sol.y[0][1]
+		self.derivative_control_signal   = sol.y[1][1]
+		# print('self.control_signal:', self.control_signal, '\tcontrol_signal: ', control_signal, '\tderivative_control_signal:', self.derivative_control_signal); time.sleep(1)
+		return control_signal
 
-	def set_initial_control_signal(self,inst_Freq,prior_inst_Freq):				# set the control signal for the last time step of the history, in the case the history is a synched state
+	def set_initial_control_signal(self, instantaneous_freq_Hz: float, prior_instantaneous_freq_Hz: float):
+		""" Sets the initial control signal for the last time step depending on the history.
+
+		 Args:
+		 	instantaneous_freq_Hz: instantaneous frequency in Hz at the end of the history
+		 	prior_instantaneous_freq_Hz: instantaneous frequency in Hz at the time step before the end of the history
+
+		Returns:
+			initial control signal
+		"""
 
 		#print('REWORK: setting of initial time-derivative of control signal in case of second order LFs.')
-		self.instantF = inst_Freq												# calculate the instantaneous frequency for the last time step of the history
-		#self.y = (self.F_Omeg - self.F) / (self.K)								# calculate the state of the LF at the last time step of the history, it is needed for the simulation of the network
+		# TODO clean up
+		self.instantaneous_freq_Hz = instantaneous_freq_Hz												# calculate the instantaneous frequency for the last time step of the history
+		#self.y = (self.sync_freq_Hz - self.intr_freq_Hz) / (self.K_Hz)								# calculate the state of the LF at the last time step of the history, it is needed for the simulation of the network
 		if self.K_Hz != 0:														# this if-call is fine, since it will only be evaluated once
-			self.y 	  = (self.instantF - self.intrF) / (self.K_Hz)				# calculate the state of the LF at the last time step of the history, it is needed for the simulation of the network
-			yNminus1  = (prior_inst_Freq - self.intrF) / (self.K_Hz)			# calculate the state of the LF at the last time step of the history, it is needed for the simulation of the network
-			self.dydt = (self.y - yNminus1) / self.dt							# calculate the change of the state of the LF at the last time step of the history
-			print('Set initial ctrl signal! self.instantF, self.intrF, self.K_Hz', self.instantF, ' ', self.intrF, ' ', self.K_Hz)
+			self.control_signal 	  = (self.instantaneous_freq_Hz - self.intr_freq_Hz) / (self.K_Hz)				# calculate the state of the LF at the last time step of the history, it is needed for the simulation of the network
+			yNminus1  = (prior_instantaneous_freq_Hz - self.intr_freq_Hz) / (self.K_Hz)			# calculate the state of the LF at the last time step of the history, it is needed for the simulation of the network
+			self.derivative_control_signal = (self.control_signal - yNminus1) / self.dt							# calculate the change of the state of the LF at the last time step of the history
+			print('Set initial ctrl signal! self.instantF, self.intrF, self.K_Hz', self.instantaneous_freq_Hz, ' ', self.intr_freq_Hz, ' ', self.K_Hz)
 		else:
-			self.y = 0.0
-		#print('Set initial control signal of PLL %i to:' %self.idx, self.y)
-		return self.y
+			self.control_signal = 0.0
+		#print('Set initial control signal of PLL %i to:' %self.pll_id, self.control_signal)
+		return self.control_signal
 
-	def next(self,xPD):										      				# this updates y=x_k^{C}(t), the control signal, using the input x=x_k^{PD}(t), the phase-detector signal
+	def next(self, phase_detector_output):
+		""" This function evolves the control signal in time according to the input signal from the phase detector and
+		 combiner.
 
-		#print('Current PD signal of PLL %i:' %self.idx, xPD); time.sleep(1)
-		self.y = self.evolve(xPD)
-		#print('Current control signal of PLL %i:' %self.idx, self.y)
-		return self.y
+		Args:
+			phase_detector_output: the input signal to the signal loop filter
 
-	def monitor_ctrl(self):														# monitor ctrl signal
-		return self.y
+		Returns:
+			control signal
+		"""
+
+		#print('Current PD signal of PLL %i:' %self.pll_id, phase_detector_output); time.sleep(1)
+		self.control_signal = self.evolve(phase_detector_output)
+		#print('Current control signal of PLL %i:' %self.pll_id, self.control_signal)
+		return self.control_signal
+
+	def get_control_signal(self):
+		"""
+		Returns:
+			control signal
+		"""
+		return self.control_signal
 
 
 class SignalControlledOscillator:

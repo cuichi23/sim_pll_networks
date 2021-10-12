@@ -190,7 +190,7 @@ def simulateSystem(dictNet, dictPLL, dictAlgo=None):
 	#plot.plotOscSignal(dictPLL, dictNet, dictData)
 	plot.plotFreqAndPhaseDiff(dictPLL, dictNet, dictData)
 	plot.plotFreqAndOrderPar(dictPLL, dictNet, dictData)
-	plot.plotPSD(dictPLL, dictNet, dictData, [0, 15], saveData=False)
+	plot.plotPSD(dictPLL, dictNet, dictData, [0, 1], saveData=False)
 
 	print('Time needed for simulation, evaluation and plotting: ', (time.time()-t0), ' seconds')
 
@@ -351,7 +351,7 @@ def evolveSystemOnTsimArray_varDelaySaveCtrlSig(dictNet, dictPLL, phi, clock_cou
 	phiStore = np.empty([dictNet['max_delay_steps']+dictPLL['sim_time_steps'], dictNet['Nx']*dictNet['Ny']])
 	ctlStore = np.empty([dictNet['max_delay_steps']+dictPLL['sim_time_steps'], dictNet['Nx']*dictNet['Ny']])
 	phiStore[0:dictNet['max_delay_steps']+1,:] = phi[0:dictNet['max_delay_steps']+1,:]
-	ctlStore[0:dictNet['max_delay_steps'],:] = 0; ctlStore[dictNet['max_delay_steps']+1,:] = [pll.low_pass_filter.y for pll in pll_list];
+	ctlStore[0:dictNet['max_delay_steps'],:] = 0; ctlStore[dictNet['max_delay_steps']+1,:] = [pll.low_pass_filter.control_signal for pll in pll_list];
 	#line = []; tlive = np.arange(0,dictNet['phi_array_len']-1)*dictPLL['dt']
 	phi_array_len = dictNet['phi_array_len']
 
@@ -367,7 +367,7 @@ def evolveSystemOnTsimArray_varDelaySaveCtrlSig(dictNet, dictPLL, phi, clock_cou
 
 		clkStore[idx_time+1,:] = clock_counter[(idx_time+1)%phi_array_len,:]
 		phiStore[idx_time+1,:] = phi[(idx_time+1)%phi_array_len,:]
-		ctlStore[idx_time+1,:] = [pll.low_pass_filter.monitor_ctrl() for pll in pll_list]
+		ctlStore[idx_time+1,:] = [pll.low_pass_filter.get_control_signal() for pll in pll_list]
 		#phidot = (phi[1:,0]-phi[:-1,0])/(2*np.pi*dictPLL['dt'])
 		#line = livplt.live_plotter(tlive, phidot, line)
 
@@ -455,7 +455,7 @@ def evolveSystemTestPerturbations(dictNet, dictPLL, phi, clock_counter, pll_list
 			[pll.clock_reset(phi[(idx_time+1)%phi_array_len,pll.pll_id].copy() - 2.0 * np.pi) for pll in pll_list]
 
 		if clock_counter[(idx_time+1)%phi_array_len][0]%750 == 0:
-			tempMon = [pll.low_pass_filter.monitor_ctrl() for pll in pll_list]
+			tempMon = [pll.low_pass_filter.get_control_signal() for pll in pll_list]
 			print('Monitor control signal and then add perturbation. xc(%0.2f)~' %(clock_counter[(idx_time+1)%phi_array_len][0]/(2*dictPLL['syncF'])), tempMon)
 			phi[(idx_time+1)%phi_array_len,:] = [pll.signal_controlled_oscillator.add_perturbation((-0.5) ** pll.pll_id) for pll in pll_list]
 			clock_sync_scheduled = clock_counter[(idx_time+1)%phi_array_len][0] + 50

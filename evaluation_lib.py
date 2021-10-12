@@ -364,7 +364,7 @@ def getFilterStatus(F,K,Fc,delay,Fsim,Tsim):
 					VoltageControlledOscillator(F,K,dt,c=0,phi=0)
 					)  for idx_pll in range(2) ]
 	_  = simulatePhaseModel(Nsteps,2,pll_list)
-	return pll_list[0].low_pass_filter.y
+	return pll_list[0].low_pass_filter.control_signal
 
 ################################################################################
 

@@ -369,7 +369,7 @@ def evolveSystemOnTsimArray_varDelaySaveCtrlSig(dictNet, dictPLL, phi, clock_cou
 	phiStore = np.empty([dictNet['max_delay_steps']+dictPLL['sim_time_steps'], dictNet['Nx']*dictNet['Ny']])
 	ctlStore = np.empty([dictNet['max_delay_steps']+dictPLL['sim_time_steps'], dictNet['Nx']*dictNet['Ny']])
 	phiStore[0:dictNet['max_delay_steps']+1,:] = phi[0:dictNet['max_delay_steps']+1,:]
-	ctlStore[0:dictNet['max_delay_steps'],:] = 0; ctlStore[dictNet['max_delay_steps']+1,:] = [pll.low_pass_filter.y for pll in pll_list];
+	ctlStore[0:dictNet['max_delay_steps'],:] = 0; ctlStore[dictNet['max_delay_steps']+1,:] = [pll.low_pass_filter.control_signal for pll in pll_list];
 	#line = []; tlive = np.arange(0,dictNet['phi_array_len']-1)*dictPLL['dt']
 
 	phi_array_len = dictNet['phi_array_len']
@@ -386,7 +386,7 @@ def evolveSystemOnTsimArray_varDelaySaveCtrlSig(dictNet, dictPLL, phi, clock_cou
 
 		clkStore[idx_time+1,:] = clock_counter[(idx_time+1)%phi_array_len,:]
 		phiStore[idx_time+1,:] = phi[(idx_time+1)%phi_array_len,:]
-		ctlStore[idx_time+1,:] = [pll.low_pass_filter.monitor_ctrl() for pll in pll_list]
+		ctlStore[idx_time+1,:] = [pll.low_pass_filter.get_control_signal() for pll in pll_list]
 		#phidot = (phi[1:,0]-phi[:-1,0])/(2*np.pi*dictPLL['dt'])
 		#line = livplt.live_plotter(tlive, phidot, line)
 

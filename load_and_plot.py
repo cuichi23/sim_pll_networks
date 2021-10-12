@@ -23,6 +23,7 @@ import pickle
 
 import plot_lib
 import evaluation_lib as eva
+import coupling_fct_lib as coupfct
 import check_dicts_lib as chk_dicts
 import palettable.colorbrewer.diverging as colormap_diver
 from palettable.colorbrewer.diverging import PuOr_7
@@ -49,7 +50,7 @@ labelfont = {
 		'family' : 'sans-serif',
 		'color'  : 'black',
 		'weight' : 'normal',
-		'size'   : 16,
+		'size'   : 36,
 		}
 
 annotationfont = {
@@ -60,14 +61,16 @@ annotationfont = {
 		}
 
 # plot parameter
-axisLabel 			= 44;
-tickSize  			= 30;
+axisLabel 			= 60;
+tickSize  			= 25;
 titleLabel			= 10;
-dpi_val   			= 150;
-figwidth  			= 10;
-figheight 			= 6;
-labelpadxaxis		= 10;
-labelpadyaxis		= 20
+dpi_val	  			= 150;
+figwidth  			= 10;#8;
+figheight 			= 5;
+plot_size_inches_x 	= 10;
+plot_size_inches_y 	= 5;
+labelpadxaxis       = 10;
+labelpadyaxis       = 20;
 colormapSyncStab 	= colormap_diver.PuOr_7.mpl_colormap
 
 
@@ -112,13 +115,15 @@ colormap  	= matplotlib.colors.LinearSegmentedColormap('my_colormap', cdict, 102
 r, orderParam, F1 	= eva.obtainOrderParam(dictPLL, dictNet, dictData)
 dictData.update({'orderParam': orderParam, 'R': r, 'F1': F1})
 
-plot_lib.plotOrderPara(dictPLL, dictNet, dictData)
+dictPLL.update({'vco_out_sig': coupfct.sine})
+
+#plot_lib.plotOrderPara(dictPLL, dictNet, dictData)
 #plot_lib.plotPhaseRela(dictPLL, dictNet, dictData)
 #plot_lib.plotPhaseDiff(dictPLL, dictNet, dictData)
 #plot_lib.plotClockTime(dictPLL, dictNet, dictData)
 #plot_lib.plotOscSignal(dictPLL, dictNet, dictData)
-plot_lib.plotFreqAndPhaseDiff(dictPLL, dictNet, dictData)
-plot_lib.plotFreqAndOrderPar(dictPLL, dictNet, dictData)
+#plot_lib.plotFreqAndPhaseDiff(dictPLL, dictNet, dictData)
+#plot_lib.plotFreqAndOrderPar(dictPLL, dictNet, dictData)
 plot_lib.plotPSD(dictPLL, dictNet, dictData, [0, 15], saveData=False)
 
 plt.draw()

@@ -39,7 +39,7 @@ authors: Alexandros Pollakis, Daniel Platz, Deborah Schmidt, Lucas Wetzel (lwetz
 
 def get_from_value_or_list(pll_id, input, pll_count):
 	"""
-	Convenience method return a value or value from list based on oscillator id, depending on the type 
+	Convenience method return a value or value from list based on oscillator id, depending on the type
 	of the input (scalar or list / array)
 
 	Args:
@@ -197,7 +197,6 @@ class LowPassFilter:
 		Returns:
 			control signal
 		"""
-
 		#print('Current PD signal of PLL %i:' %self.pll_id, phase_detector_output); time.sleep(1)
 		self.control_signal = self.evolve(phase_detector_output)
 		#print('Current control signal of PLL %i:' %self.pll_id, self.control_signal)
@@ -229,7 +228,6 @@ class SignalControlledOscillator:
 		init_freq: defines the initial frequency of the signal controlled oscillator according to the phase history
 		evolve_phi: function defining how the phase evolves in time, e.g., with or without noise, linear vs. nonlinear
 		d_phi: stores the phase increment between the current and prior simulation step
-
 	"""
 	def __init__(self, pll_id, dict_pll, dict_net):
 		"""
@@ -483,7 +481,7 @@ class PhaseDetectorCombiner:
 	def evolve_coupling_strength_inject_lock(self, new_coupling_strength_injection_locking, dict_net: dict) -> None:
 		"""
 		Evolves the values of the coupling strength of the second harmonic injection signals in time.
-		
+
 		Args:
 			new_coupling_strength_injection_locking: the new value for the coupling strength of the injection signals,
 			either a scalar or an array with individual values for each oscillator in the network

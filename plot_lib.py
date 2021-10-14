@@ -660,7 +660,7 @@ def plotFreqAndPhaseDiff(dictPLL, dictNet, dictData, ylim_percent_of_min_val=0.9
 	#plt.plot(dictData['t'][dictNet['max_delay_steps']-1], phidot[int(dictNet['max_delay_steps'])-1,0]+0.001,'go')
 
 	plt.xlabel(r'$\frac{\omega t}{2\pi}$', fontdict = labelfont, labelpad=labelpadxaxis)
-	plt.ylabel(ylabel = ylabelname, fontdict = labelfont, labelpad=labelpadyaxis)
+	plt.ylabel(ylabelname, fontdict=labelfont, labelpad=labelpadyaxis)
 	ax011.tick_params(axis='both', which='major', labelsize=tickSize, pad=1)
 	ax011.set_xlim([dictData['t'][int(0.75*np.round(np.mean(dictPLL['transmission_delay'])/dictPLL['dt']))], dictData['t'][-1]])
 
@@ -697,7 +697,7 @@ def plotFreqAndPhaseDiff(dictPLL, dictNet, dictData, ylim_percent_of_min_val=0.9
 		# plt.axvspan(dictData['t'][-int(5.5*1.0/(dictPLL['intrF']*dt))], dictData['t'][-1], color='b', alpha=0.3)
 
 	plt.xlabel(r'$\omega t/2\pi$', fontdict=labelfont, labelpad=-5)
-	plt.ylabel(r'$\Delta\theta_{k0}(t)$',rotation=90, fontdict=labelfont, labelpad=40)
+	plt.ylabel(r'$\Delta\theta_{k0}(t)$', rotation=90, fontdict=labelfont, labelpad=40)
 	ax012.tick_params(axis='both', which='major', labelsize=tickSize, pad=1)
 	ax012.set_xlim([dictData['t'][int(0.75*np.round(np.mean(dictPLL['transmission_delay'])/dictPLL['dt']))], dictData['t'][-1]])
 	#ax012.set_ylim([-np.pi, np.pi])
@@ -743,7 +743,7 @@ def plotFreqAndOrderPar(dictPLL, dictNet, dictData):
 	#plt.plot(dictData['t'][dictNet['max_delay_steps']-1], phidot[int(dictNet['max_delay_steps'])-1,0]+0.001,'go')
 
 	plt.xlabel(r'$\frac{\omega t}{2\pi}$', fontdict = labelfont, labelpad=labelpadxaxis)
-	plt.ylabel(ylabel = ylabelname, fontdict = labelfont, labelpad=labelpadyaxis)
+	plt.ylabel(ylabelname, fontdict = labelfont, labelpad=labelpadyaxis)
 	ax011.tick_params(axis='both', which='major', labelsize=tickSize, pad=1)
 	ax011.set_xlim([dictData['t'][int(0.75*np.round(np.mean(dictPLL['transmission_delay'])/dictPLL['dt']))], dictData['t'][-1]])
 	plt.grid();

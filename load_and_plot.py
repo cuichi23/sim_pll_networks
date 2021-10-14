@@ -76,11 +76,12 @@ colormapSyncStab 	= colormap_diver.PuOr_7.mpl_colormap
 
 ################################################################################
 # load data
+folder		 = '/home/cuichi/data-z2/simPLL_1/1/results/'
 ################################################################################
-filenamePLL  = 'results/2021_Mocast_simRes/res5/dictPLL_K0.050_tau39968.000_Fc0.000_mx0_my0_N16_toposquare-open_12:14_2021_10_7'
-filenameNet  = 'results/2021_Mocast_simRes/res5/dictNet_K0.050_tau39968.000_Fc0.000_mx0_my0_N16_toposquare-open_12:14_2021_10_7'
-filenameData = 'results/2021_Mocast_simRes/res5/dictData_K0.050_tau39968.000_Fc0.000_mx0_my0_N16_toposquare-open_12:14_2021_10_7'
-filenameAlgo = 'results/2021_Mocast_simRes/res5/dictAlgo_K0.050_tau39968.000_Fc0.000_mx0_my0_N16_toposquare-open_12:14_2021_10_7'
+filenamePLL  = folder+'dictPLL_K0.050_tau39968.000_Fc0.000_mx0_my0_N16_toposquare-open_17:35_2021_10_12'
+filenameNet  = folder+'dictNet_K0.050_tau39968.000_Fc0.000_mx0_my0_N16_toposquare-open_17:35_2021_10_12'
+filenameData = folder+'dictData_K0.050_tau39968.000_Fc0.000_mx0_my0_N16_toposquare-open_17:35_2021_10_12'
+filenameAlgo = folder+'dictAlgo_K0.050_tau39968.000_Fc0.000_mx0_my0_N16_toposquare-open_17:35_2021_10_12'
 ################################################################################
 dictPLL 	 = pickle.load(open(filenamePLL, 'rb'))
 dictNet 	 = pickle.load(open(filenameNet, 'rb'))
@@ -115,14 +116,14 @@ colormap  	= matplotlib.colors.LinearSegmentedColormap('my_colormap', cdict, 102
 r, orderParam, F1 	= eva.obtainOrderParam(dictPLL, dictNet, dictData)
 dictData.update({'orderParam': orderParam, 'R': r, 'F1': F1})
 
-dictPLL.update({'vco_out_sig': coupfct.sine})
+#dictPLL.update({'vco_out_sig': coupfct.sine})
 
 #plot_lib.plotOrderPara(dictPLL, dictNet, dictData)
 #plot_lib.plotPhaseRela(dictPLL, dictNet, dictData)
 #plot_lib.plotPhaseDiff(dictPLL, dictNet, dictData)
 #plot_lib.plotClockTime(dictPLL, dictNet, dictData)
 #plot_lib.plotOscSignal(dictPLL, dictNet, dictData)
-#plot_lib.plotFreqAndPhaseDiff(dictPLL, dictNet, dictData)
+plot_lib.plotFreqAndPhaseDiff(dictPLL, dictNet, dictData)
 #plot_lib.plotFreqAndOrderPar(dictPLL, dictNet, dictData)
 plot_lib.plotPSD(dictPLL, dictNet, dictData, [0, 15], saveData=False)
 

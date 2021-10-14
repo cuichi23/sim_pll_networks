@@ -38,9 +38,9 @@ def getDicts(Fsim=55):
 		'topology': 'square-open',												# 1d) ring, chain, 2d) square-open, square-periodic, hexagonal...
 																				# 3) global, entrainOne, entrainAll, entrainPLLsHierarch, compareEntrVsMutual
 		'Tsim': 20,#7100,#199840,#159850,#119900,#100000,#150000,					# simulation time in multiples of the period
-		'computeFreqAndStab':  True,											# compute linear stability and global frequency if possible: True or False
+		'computeFreqAndStab':  False,											# compute linear stability and global frequency if possible: True or False
 		'phi_array_mult_tau': 1,												# how many multiples of the delay is stored of the phi time series
-		'phiPerturb': [],		#[0, -0.001, 0, 0, 0.001, 0, 0, -0.001, 0],		# delta-perturbation on initial state -- PROVIDE EITHER ONE OF THEM! if [] set to zero
+		'phiPerturb': [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],		#[0, -0.001, 0, 0, 0.001, 0, 0, -0.001, 0],		# delta-perturbation on initial state -- PROVIDE EITHER ONE OF THEM! if [] set to zero
 		'phiPerturbRot': [],													# delta-perturbation on initial state -- in rotated space
 		'phiInitConfig': [],													# phase-configuration of sync state,  []: automatic, else provide list
 		'freq_beacons': 0.1,													# frequency of external sender beacons, either a float or a list
@@ -51,7 +51,7 @@ def getDicts(Fsim=55):
 
 	dictPLL={
 		'intrF': 1, #[0.95, 1.05],												# intrinsic frequency in Hz
-		'syncF': 1.0,															# frequency of synchronized state in Hz
+		'syncF': 1.0443942814145974,											# frequency of synchronized state in Hz
 		'coupK': 0.05,															#[random.uniform(0.3, 0.4) for i in range(dictNet['Nx']*dictNet['Ny'])],# coupling strength in Hz float or [random.uniform(minK, maxK) for i in range(dictNet['Nx']*dictNet['Ny'])]
 		'gPDin': 1,																# gains of the different inputs to PD k from input l -- G_kl, see PD, set to 1 and all G_kl=1 (so far only implemented for some cases, check!): np.random.uniform(0.95,1.05,size=[dictNet['Nx']*dictNet['Ny'],dictNet['Nx']*dictNet['Ny']])
 		'gPDin_symmetric': True,												# set to True if G_kl == G_lk, False otherwise

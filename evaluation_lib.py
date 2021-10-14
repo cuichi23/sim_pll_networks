@@ -125,7 +125,7 @@ def saveDictionaries(dictToSave, name, K, tau, Fc, Nx, Ny, mx, my, topology):
 	N = int(Nx*Ny)
 	filename = 'results/%s_K%.3f_tau%.3f_Fc%.3f_mx%i_my%i_N%i_topo%s_%d:%d_%d_%d_%d'%(name, np.mean(K), np.mean(tau), np.mean(Fc), mx, my, N, topology, now.hour, now.minute, now.year, now.month, now.day)
 	f 		 = open(filename,'wb')
-	pickle.dump(dictToSave,f)
+	pickle.dump(dictToSave,f, protocol=4)
 	f.close()
 
 	return None

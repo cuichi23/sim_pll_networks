@@ -365,6 +365,7 @@ class Graph(object):
 		m = np.zeros((n, n))
 		for ii in range(n):
 			m[ii, :] = self.get_single_site_coupling(ii)
+		#print('coupling matrix:', m)
 		return m
 
 class AllToAll(Graph):
@@ -792,10 +793,13 @@ class SyncState(object):
 
 	def get_coupling_derivative_matrix(self):
 		dphi = self.get_dphi_matrix()
+		#print('DPHI:', dphi)
 		h = self.sys.g.func
 		dhdx = h.get_derivative()
 		c = self.sys.g.get_coupling_matrix()
 		#print('self.sys.pll.v:', self.sys.pll.v)
+		# this performs a matrix multiplication between the adjacency matrix (normalized) and the matrix containing all mutual phase-relations, e.g.,
+		# nonzero for twist and chequerboard sync states
 		return c * dhdx( (-self.omega * self.sys.g.tau + dphi) / self.sys.pll.v ) #( c / self.sys.pll.v ) * dhdx( (-self.omega * self.sys.g.tau + dphi) / self.sys.pll.v )
 
 	def get_eigensystem(self, cutoff=1e-6):

@@ -76,12 +76,12 @@ colormapSyncStab 	= colormap_diver.PuOr_7.mpl_colormap
 
 ################################################################################
 # load data
-folder		 = '/home/cuichi/data-z2/simPLL_1/1/results/'
+folder		 = '/home/cuichi/data-z2/simPLL_1/2/results/'
 ################################################################################
-filenamePLL  = folder+'dictPLL_K0.050_tau39968.000_Fc0.000_mx0_my0_N16_toposquare-open_17:35_2021_10_12'
-filenameNet  = folder+'dictNet_K0.050_tau39968.000_Fc0.000_mx0_my0_N16_toposquare-open_17:35_2021_10_12'
-filenameData = folder+'dictData_K0.050_tau39968.000_Fc0.000_mx0_my0_N16_toposquare-open_17:35_2021_10_12'
-filenameAlgo = folder+'dictAlgo_K0.050_tau39968.000_Fc0.000_mx0_my0_N16_toposquare-open_17:35_2021_10_12'
+filenamePLL  = folder+'dictPLL_K0.050_tau39968.000_Fc0.000_mx0_my0_N16_toposquare-open_17:48_2021_10_13'
+filenameNet  = folder+'dictNet_K0.050_tau39968.000_Fc0.000_mx0_my0_N16_toposquare-open_17:48_2021_10_13'
+filenameData = folder+'dictData_K0.050_tau39968.000_Fc0.000_mx0_my0_N16_toposquare-open_17:48_2021_10_13'
+filenameAlgo = folder+'dictAlgo_K0.050_tau39968.000_Fc0.000_mx0_my0_N16_toposquare-open_17:48_2021_10_13'
 ################################################################################
 dictPLL 	 = pickle.load(open(filenamePLL, 'rb'))
 dictNet 	 = pickle.load(open(filenameNet, 'rb'))
@@ -123,9 +123,10 @@ dictData.update({'orderParam': orderParam, 'R': r, 'F1': F1})
 #plot_lib.plotPhaseDiff(dictPLL, dictNet, dictData)
 #plot_lib.plotClockTime(dictPLL, dictNet, dictData)
 #plot_lib.plotOscSignal(dictPLL, dictNet, dictData)
-plot_lib.plotFreqAndPhaseDiff(dictPLL, dictNet, dictData)
+plot_lib.plotFrequency(dictPLL, dictNet, dictData)
+#plot_lib.plotFreqAndPhaseDiff(dictPLL, dictNet, dictData)
 #plot_lib.plotFreqAndOrderPar(dictPLL, dictNet, dictData)
-plot_lib.plotPSD(dictPLL, dictNet, dictData, [0, 15], saveData=False)
+plot_lib.plotPSD(dictPLL, dictNet, dictData, [], saveData=False)
 
 plt.draw()
 plt.show()

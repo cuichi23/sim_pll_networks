@@ -97,7 +97,7 @@ class LowPassFilter:
 			dict_net: network related properties and parameters
 		"""
 
-		self.dt      = dict_pll['dt']
+		self.dt = dict_pll['dt']
 		self.cutoff_freq_Hz 	 = get_from_value_or_list(pll_id, dict_pll['cutFc'], dict_net['Nx'] * dict_net['Ny'])
 		self.K_Hz	 = get_from_value_or_list(pll_id, dict_pll['coupK'], dict_net['Nx'] * dict_net['Ny'])
 		self.intr_freq_Hz   = get_from_value_or_list(pll_id, dict_pll['intrF'], dict_net['Nx'] * dict_net['Ny'])
@@ -155,7 +155,7 @@ class LowPassFilter:
 		# TODO define function with known solution and test
 		# optional: try to implement via odeint as shown here: https://www.epythonguru.com/2020/07/second-order-differential-equation.html
 		func = lambda t, z: self.second_order_ordinary_diff_eq(t, z, phase_detector_output)
-		sol = solve_ivp(func, [self.t[0], self.t[1]], [2 * self.control_signal / self.b, self.derivative_control_signal], method='RK45', t_eval=self.t, dense_output=False, events=None, vectorized=False, rtol = 1e-5)
+		sol = solve_ivp(func, [self.t[0], self.t[1]], [2 * self.control_signal / self.b, self.derivative_control_signal], method='RK45', t_eval=self.t, dense_output=False, events=None, vectorized=False, rtol=1e-5)
 		#print('sol: ', sol)
 		control_signal 			= sol.y[0][1]
 		self.derivative_control_signal   = sol.y[1][1]
@@ -571,32 +571,40 @@ class Delayer:
 
 			print('Time dependent transmission delay set!')
 			time_dep_delay = setup.setupTimeDependentParameter(dict_net, dict_pll, dict_data, parameter='transmission_delay', afterTsimPercent=0.25, forAllPLLsDifferent=False)
-			selfidx_or_ident = 0												# this is the case if all transmission delays have the same time dependence
-			if len(time_dep_delay[:,0]) == dict_net['Nx']*dict_net['Ny']:			# if there is a matrix, i.e., different time-dependencies for different delay, then use this
+
+			if len(time_dep_delay[:,0]) == dict_net['Nx']*dict_net['Ny']:		# if there is a matrix, i.e., different time-dependencies for different delay, then use this
 				print('Test')
 				selfidx_or_ident = self.pll_id
+			else:																# this is the case if all transmission delays have the same time dependence
+				selfidx_or_ident = 0
 			dict_pll.update({'transmission_delay': time_dep_delay})
+
+			# TODO make a test of this! externalize to a test lib
 			plt.figure(1234)
 			plt.plot(np.arange(0, len(dict_pll['transmission_delay'][selfidx_or_ident, :])) * dict_pll['dt'], dict_pll['transmission_delay'][selfidx_or_ident, :])
 			plt.xlabel('time'); plt.ylabel('delay value [s]'); plt.title('time-dependence of transmission delay over simulation time')
 			plt.draw(); plt.show()
+
 			self.transmit_delay 		= dict_pll['transmission_delay'][selfidx_or_ident, :]	# each object only knows its own sending delay time dependence
 			self.transmit_delay_steps 	= [int(np.round(delay / self.dt)) for delay in self.transmit_delay] # when initialized, the delay in time-steps is set to delay_steps
 
 			if self.transmit_delay_steps == 0 and self.transmit_delay > 0:
 				print('Transmission delay set nonzero but smaller than the time-step "dt", hence "self.transmit_delay_steps" < 1 !'); sys.exit()
+
 			#self.get_delayed_states		= lambda;
 			self.pick_delayed_phases = lambda phi, t, abs_t, tau: phi[(t-tau[abs_t])%self.phi_array_len, self.neighbor_ids]
 
-		# calculate tranmission delays steps, here pick for each Delayer individually but the same for each input l or even tau_kl
+		# calculate tranmission delays steps, here pick for each Delayer individually but the same for each input l or even for each connection tau_kl individually
 		elif isinstance(dict_pll['transmission_delay'], list) or isinstance(dict_pll['transmission_delay'], np.ndarray) and not dict_net['special_case'] == 'timeDepTransmissionDelay':
-			if np.array(dict_pll['transmission_delay']).ndim == 1:				# tau_k case
-				self.transmit_delay_steps= int(np.round(dict_pll['transmission_delay'][pll_id] / self.dt))
+			if np.array(dict_pll['transmission_delay']).ndim == 1:				# tau_k case -- all inputs are subject to the same transmission delay
+				print('Delayer has different delays for each oscillator! Hence: tau_k are introduced and all incoming signals are subject to the same time delay.')
+				self.transmit_delay_steps= int(np.round(dict_pll['transmission_delay'][self.pll_id] / self.dt))
 				self.pick_delayed_phases = lambda phi, t, abs_t, tau_k: phi[(t-tau_k)%self.phi_array_len, self.neighbor_ids]
 
-			elif np.array(dict_pll['transmission_delay']).ndim == 2: 			# tau_kl case
-				print('Delayer has different delays for each input signal! Hence: tau_kl are introduced.')
-				tempTauSteps_kl			 = [int(np.round(dict_pll['transmission_delay'][self.pll_id, i] / self.dt)) for i in self.neighbor_ids]# pick the entries and store in a list for each PLL
+			elif np.array(dict_pll['transmission_delay']).ndim == 2: 			# tau_kl case -- all iputs can have different transmission delay values -- here we provide a 2D matrix of time delays
+				print('Delayer has different delays for each input signal! Hence: tau_kl are introduced via a matrix with dimensions %ix%i.'%(dict_net['Nx']*dict_net['Ny'], dict_net['Nx']*dict_net['Ny']))
+				# pick all time delays of the neighbors of oscillator k an save those as a list to self.transmit_delay_steps
+				tempTauSteps_kl			 = [int(np.round(dict_pll['transmission_delay'][self.pll_id, i] / self.dt)) for i in self.neighbor_ids]
 				self.transmit_delay_steps= np.array(tempTauSteps_kl)			# save as an array to object
 				self.pick_delayed_phases = lambda phi, t, abs_t, tau_kl: [phi[(t-tau_kl[i])%self.phi_array_len, self.neighbor_ids[i]] for i in range(len(self.neighbor_ids))]
 

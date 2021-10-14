@@ -726,6 +726,10 @@ class PhaseLockedLoop:
 				signal_controlled_oscillator 	determines instantaneous frequency of autonomous oscillator with respect to an input signal
 				counter:						derives a clock / time from the oscillators clocking signal
 				pll_id:							identifier of the oscillator within the network
+				pll_rx_signal_distance_treshold distance treshold beyond which no signal from other oscillators can be received (e.g., in wireless coupling)
+				pll_coordinate_vector_3d		coordinate of the oscillator in a 3D coordinate system (x, y, z)
+				pll_diff_var_vector_3d			variance of Gaussian white noise driven diffusion of the oscillator in a 3D coordinate system (var_x, var_y, var_z)
+				pll_speed_vector_3d				speed of the oscillator in a 3D coordinate system (velocity_x, velocity_y, velocity_z)
 
 		"""
 		self.delayer = delayer
@@ -734,6 +738,11 @@ class PhaseLockedLoop:
 		self.signal_controlled_oscillator = signal_controlled_oscillator
 		self.counter = counter
 		self.pll_id = pll_id
+		self.pll_rx_signal_distance_treshold = None
+		self.pll_coordinate_vector_3d = None
+		self.pll_diff_var_vector_3d = None
+		self.pll_speed_vector_3d = None
+
 
 	def next(self, index_current_time_absolute: int, length_phase_memory: int, phase_memory: np.ndarray) -> np.ndarray:
 		""" Function that evolves the oscillator forward in time by one increment based on the external signals and internal dynamics.
@@ -847,3 +856,103 @@ class PhaseLockedLoop:
 				the updated phase
 		"""
 		return self.signal_controlled_oscillator.next(0)[0]
+
+	def set_position_3d(self, position_vector_in_3d_cartesian_coordinates: np.ndarray) -> None:
+		""" Function that sets the position, speed and variance of the diffusion which is driven by Gaussian white noise.
+
+			Args:
+				position_vector_in_3d_cartesian_coordinates: sets the position of the oscillator in a cartesian coordinate system
+
+			Raises:
+		"""
+
+		self.pll_coordinate_vector_3d = position_vector_in_3d_cartesian_coordinates
+
+	def set_speed_3d(self, speed_vector_in_3d_cartesian_coordinates: np.ndarray) -> None:
+		""" Function that sets the position, speed and variance of the diffusion which is driven by Gaussian white noise.
+
+			Args:
+ 				speed_vector_in_3d_cartesian_coordinates: sets the speed of the oscillator in 3D space
+
+			Raises:
+		"""
+
+		self.pll_coordinate_vector_3d = position_vector_in_3d_cartesian_coordinates
+		self.pll_diff_var_vector_3d = variance_gwn_diffusion_cartesian_coordinates
+		self.pll_speed_vector_3d = speed_vector_in_3d_cartesian_coordinates
+
+	def set_gwn_diffusion_variance_3d(self, variance_gwn_diffusion_cartesian_coordinates: np.ndarray) -> None:
+		""" Function that sets the position, speed and variance of the diffusion which is driven by Gaussian white noise.
+
+			Args:
+				variance_gwn_diffusion_cartesian_coordinates: sets the variance of the Gaussian white noise driven diffusion of the oscillator
+
+			Raises:
+		"""
+
+		self.pll_speed_vector_3d = speed_vector_in_3d_cartesian_coordinates
+
+	def get_position_speed_diffusion_3d(self) -> np.ndarray:
+		""" Function that evolves the voltage controlled oscillator in a closed loop configuration when there is no external input, i.e., free-running closed loop PLL.
+			1) delayer obtains the current state of the oscillator itself (potentially delayed by a feedback delay)
+			2) this state is fed in the phase detector and combiner for zero external signal which yields the PD signal
+			3) the PD signal is fed into the loop filter and yields the control signal
+			4) the voltage controlled oscillator's next function evolves the phases dependent on the control signal
+
+			Returns:
+				an np.array with the position of the oscillator, the speed of the oscillator, the variance of the Gaussian white noise driven diffusion in a cartesian coordinate system
+				access: return_array[0,0:3] --> coordinate components x, y, z; return_array[1,0:3] --> speed components x, y, z; return_array[2,0:3] --> variance components x, y, z,
+
+			Raises:
+		"""
+
+		return np.array([self.pll_coordinate_vector_3d, self.pll_speed_vector_3d, self.pll_diff_var_vector_3d])
+
+	def get_position_3d(self) -> np.ndarray:
+		""" Function that get the current position.
+
+			Returns:
+				an np.array with the position of the oscillator
+				access: return_array[0,0:3] --> coordinate components x, y, z
+
+			Raises:
+		"""
+
+		return self.pll_coordinate_vector_3d
+
+	def get_speed_3d(self) -> np.ndarray:
+		""" Function that get the current speed.
+
+			Returns:
+				an np.array with the speed of the oscillator
+				access: return_array[1,0:3] --> speed components x, y, z
+
+			Raises:
+		"""
+
+		return self.pll_speed_vector_3d
+
+	def get_gwn_diffusion_variance_3d(self) -> np.ndarray:
+		""" Function that get the current variance of the Gaussian white noise diffusion process.
+
+			Returns:
+				an np.array with the variance of the Gaussian white noise driven diffusion in a cartesian coordinate system
+				access: return_array[2,0:3] --> variance components x, y, z
+
+			Raises:
+		"""
+
+		return self.pll_diff_var_vector_3d
+
+	def set_receive_sig_distance_treshold(self, distance_treshold: np.ndarray, geometry_of_treshold: str) -> None:
+		""" Function that sets a distance treshold beyond which no signal from other oscillators are received. Can have different shapes, circular, rectangular
+
+			Args:
+				distance_treshold: defines the radius of a circle or rectangle from within which range signals from other oscillators can be received
+ 				geometry_of_treshold: defines the geometry
+
+			Raises:
+		"""
+
+		self.distance_treshold = distance_treshold
+		self.geometry_of_treshold = geometry_of_treshold

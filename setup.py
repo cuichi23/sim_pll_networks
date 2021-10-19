@@ -32,7 +32,7 @@ def generatePLLs(dictPLL, dictNet, dictData):									#mode,div,params['topology
 	pll_list = [ pll.PhaseLockedLoop(idx_pll,									# setup PLLs and store in a list as PLL class objects
 					pll.Delayer(idx_pll, dictPLL, dictNet, dictData),			# setup delayer object of PLL k; it organizes the delayed communications
 					pll.PhaseDetectorCombiner(idx_pll, dictPLL, dictNet),		# setup PDadder object of PLL k;
-					pll.LowPassFilter(idx_pll, dictPLL, dictNet),						# setup LF(1st) object of PLL k;
+					pll.LowPassFilter(idx_pll, dictPLL, dictNet),				# setup LF(1st) object of PLL k;
 					pll.SignalControlledOscillator(idx_pll,dictPLL, dictNet),	# setup VCO object of PLL k;
 					pll.Counter()								# setup Counter object of PLL k;
 					)  for idx_pll in range(dictNet['Nx']*dictNet['Ny']) ]

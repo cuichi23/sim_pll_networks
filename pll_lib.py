@@ -553,9 +553,12 @@ class Delayer:
 
 		# this is being set after all (random) delays have been drawn
 		self.phi_array_len = None
-
-		self.neighbor_ids = [n for n in dict_pll['G'].neighbors(self.pll_id)]# for networkx > v1.11
-		print('\nI am the delayer of PLL%i, my neighbors have indexes:' % self.pll_id, self.neighbor_ids)
+		# each Delayers neighbors are either given by a coupling topology stored in dict_pll['G'] or are updated during the simulation given the positions and a signal propagation speed
+		if not dict_net['special_case'] == 'distanceDepTransmissionDelay':
+			self.neighbor_ids = [n for n in dict_pll['G'].neighbors(self.pll_id)]	# for networkx > v1.11
+		else:
+			self.neighbor_ids = None											# to be set via fuction self.set_list_of_current_neighbors(list_of_neighbors)
+		print('\nI am the delayer of PLL%i, my neighbors (initially) have indexes:' % self.pll_id, self.neighbor_ids)
 
 		if ( (isinstance(dict_pll['transmission_delay'], float) or isinstance(dict_pll['transmission_delay'], int)) and not dict_net['special_case'] == 'timeDepTransmissionDelay'):
 			self.transmit_delay 		= dict_pll['transmission_delay']
@@ -567,6 +570,24 @@ class Delayer:
 			#self.get_delayed_states		= lambda;
 			self.pick_delayed_phases = lambda phi, t, abs_t, tau: phi[(t-tau)%self.phi_array_len, self.neighbor_ids]
 
+		# calculate tranmission delays steps, here pick for each Delayer individually but the same for each input l or even for each connection tau_kl individually
+		elif ( isinstance(dict_pll['transmission_delay'], list) or isinstance(dict_pll['transmission_delay'], np.ndarray)
+												or dict_net['special_case'] == 'distanceDepTransmissionDelay' and not dict_net['special_case'] == 'timeDepTransmissionDelay':
+
+			if np.array(dict_pll['transmission_delay']).ndim == 1:				# tau_k case -- all inputs are subject to the same transmission delay
+				print('Delayer has different delays for each oscillator! Hence: tau_k are introduced and all incoming signals are subject to the same time delay.')
+				self.transmit_delay_steps= int(np.round(dict_pll['transmission_delay'][self.pll_id] / self.dt))
+				self.pick_delayed_phases = lambda phi, t, abs_t, tau_k: phi[(t-tau_k)%self.phi_array_len, self.neighbor_ids]
+
+			elif np.array(dict_pll['transmission_delay']).ndim == 2: 			# tau_kl case -- all iputs can have different transmission delay values -- here we provide a 2D matrix of time delays
+				print('Delayer has different delays for each input signal! Hence: tau_kl are introduced via a matrix with dimensions %ix%i.'%(dict_net['Nx']*dict_net['Ny'], dict_net['Nx']*dict_net['Ny']))
+				# pick all time delays of the neighbors of oscillator k an save those as a list to self.transmit_delay_steps, dict_pll['transmission_delay'] is an (Nx*Ny) x (Nx*Ny) matrix
+				# generate a list with all time delays in simulation steps for all neighbors
+				tempTauSteps_kl			 = [int(np.round(dict_pll['transmission_delay'][self.pll_id, i] / self.dt)) for i in self.neighbor_ids]
+				self.transmit_delay_steps= np.array(tempTauSteps_kl)			# save as an array to object
+				self.pick_delayed_phases = lambda phi, t, abs_t, tau_kl: [phi[(t-tau_kl[i])%self.phi_array_len, self.neighbor_ids[i]] for i in range(len(self.neighbor_ids))]
+
+		# time-dependent delays as defined by a function
 		elif (dict_net['special_case'] == 'timeDepTransmissionDelay'):
 
 			print('Time dependent transmission delay set!')
@@ -594,25 +615,43 @@ class Delayer:
 			#self.get_delayed_states		= lambda;
 			self.pick_delayed_phases = lambda phi, t, abs_t, tau: phi[(t-tau[abs_t])%self.phi_array_len, self.neighbor_ids]
 
-		# calculate tranmission delays steps, here pick for each Delayer individually but the same for each input l or even for each connection tau_kl individually
-		elif isinstance(dict_pll['transmission_delay'], list) or isinstance(dict_pll['transmission_delay'], np.ndarray) and not dict_net['special_case'] == 'timeDepTransmissionDelay':
-			if np.array(dict_pll['transmission_delay']).ndim == 1:				# tau_k case -- all inputs are subject to the same transmission delay
-				print('Delayer has different delays for each oscillator! Hence: tau_k are introduced and all incoming signals are subject to the same time delay.')
-				self.transmit_delay_steps= int(np.round(dict_pll['transmission_delay'][self.pll_id] / self.dt))
-				self.pick_delayed_phases = lambda phi, t, abs_t, tau_k: phi[(t-tau_k)%self.phi_array_len, self.neighbor_ids]
-
-			elif np.array(dict_pll['transmission_delay']).ndim == 2: 			# tau_kl case -- all iputs can have different transmission delay values -- here we provide a 2D matrix of time delays
-				print('Delayer has different delays for each input signal! Hence: tau_kl are introduced via a matrix with dimensions %ix%i.'%(dict_net['Nx']*dict_net['Ny'], dict_net['Nx']*dict_net['Ny']))
-				# pick all time delays of the neighbors of oscillator k an save those as a list to self.transmit_delay_steps
-				tempTauSteps_kl			 = [int(np.round(dict_pll['transmission_delay'][self.pll_id, i] / self.dt)) for i in self.neighbor_ids]
-				self.transmit_delay_steps= np.array(tempTauSteps_kl)			# save as an array to object
-				self.pick_delayed_phases = lambda phi, t, abs_t, tau_kl: [phi[(t-tau_kl[i])%self.phi_array_len, self.neighbor_ids[i]] for i in range(len(self.neighbor_ids))]
-
 		if isinstance(dict_pll['feedback_delay'], float) or isinstance(dict_pll['feedback_delay'], int):
 			self.feedback_delay 		= dict_pll['feedback_delay']
 			self.feedback_delay_steps 	= int(np.round( self.feedback_delay / self.dt ))	# when initialized, the delay in time-steps is set to delay_steps
 			if self.feedback_delay_steps == 0 and self.feedback_delay > 0:
 				print('Feedback set to nonzero but is smaller than the time-step "dt", hence "self.feedback_delay_steps" < 1 !'); sys.exit()
+
+	def set_list_of_current_neighbors(self, list_of_neighbors: list) -> None:
+		"""Set the internal list of neighbors of the Delayer.
+
+		Args:
+			list_of_neighbors: list of the current coupling neighbors of the Delayer
+		"""
+		self.neighbor_ids = list_of_neighbors
+
+	def get_list_of_current_neighbors(self) -> list:
+		"""Get the internal list of neighbors of the Delayer.
+
+		Returns:
+			self.neighbor_ids, the pll_id's of all the neighbors of the current Delayer
+		"""
+		return self.neighbor_ids
+
+	def set_current_transmit_delay_steps(self, current_transmit_delay_steps: list) -> None:
+		"""Set the internal list of the current signal propagation time delay (in simulation steps) of the Delayer according to the, e.g., distances.
+
+		Args:
+			current_transmit_delay_steps: the current time delay values in simulation steps for the reception of signals from each neighbor
+		"""
+		self.transmit_delay_steps = current_transmit_delay_steps
+
+	def get_current_transmit_delay_steps(self) -> list:
+		"""Get the internal list of neighbors of the Delayer.
+
+		Returns:
+			self.transmit_delay_steps, the current time delay values in simulation steps for the reception of signals from each neighbor
+		"""
+		return self.transmit_delay_steps
 
 	def evolve_delay_in_time(self, new_delay_value: float) -> None:
 		"""Assigns a new delay value to an incoming signal. So far this only works if all incoming delays are equal.
@@ -623,21 +662,6 @@ class Delayer:
 		"""
 		self.transmit_delay = new_delay_value
 		self.transmit_delay_steps = int(np.round( self.transmit_delay / self.dt ))
-
-	def obtain_transmission_time_delay_from_distances(self, first_position: np.ndarray, second_position: np.ndarray, signal_propagation_speed: np.float) -> np.float:
-		"""Function that calculates the distance between two coordinate vectors x_1 and x_2 and returns the time it takes to go from x_1 to x_2 at a given
-			constant propagation speed.
-
-			Args:
-				first_position: hold
-				second_position:
-				signal_propagation_speed:
-
-			Returns:
-				signal propagation time between positions x1 and x2
-		"""
-
-		return np.sqrt( (first_position[0]-second_position[0])**2 + (first_position[1]-second_position[1])**2 + (first_position[2]-second_position[2])**2 )
 
 	def next(self, index_current_time_cyclic: int, phase_memory: np.ndarray, index_current_time_absolute: int) -> Tuple[np.ndarray, np.ndarray]:
 		"""Assigns a new delay value to an incoming signal. So far this only works if all incoming delays are equal.
@@ -753,11 +777,12 @@ class PhaseLockedLoop:
 		self.signal_controlled_oscillator = signal_controlled_oscillator
 		self.counter = counter
 		self.pll_id = pll_id
-		self.pll_rx_signal_distance_treshold = None
+
 		self.pll_coordinate_vector_3d = None
 		self.pll_diff_var_vector_3d = None
+		self.geometry_of_treshold = None
 		self.pll_speed_vector_3d = None
-
+		self.distance_treshold = None
 
 	def next(self, index_current_time_absolute: int, length_phase_memory: int, phase_memory: np.ndarray) -> np.ndarray:
 		""" Function that evolves the oscillator forward in time by one increment based on the external signals and internal dynamics.
@@ -964,3 +989,52 @@ class PhaseLockedLoop:
 
 		self.pll_coordinate_vector_3d = ( self.pll_coordinate_vector_3d + self.pll_speed_vector_3d * self.delayer.dt
 												+ np.random.normal(loc=0.0, scale=np.sqrt(self.pll_diff_var_vector_3d * self.delayer.dt)) )
+
+	def update_list_of_neighbors_in_coupling_range(self, all_plls_positions: np.ndarray, distance_treshold: np.ndarray, geometry_of_treshold: str) -> None:
+		"""Function that evaluates the distances so all other oscillators and stores the ids of those that are in the defined coupling range.
+
+			Args:
+				all_plls_positions: contains the current position of all entities
+				distance_treshold: defines the radius of a circle or rectangle from within which range signals from other oscillators can be received
+	 			geometry_of_treshold: defines the geometry
+
+			Returns:
+				signal propagation time between positions x1 and x2
+		"""
+		list_of_neighbors_in_range = []
+		for i in range(len(all_plls_position[:,0])):
+			if ( i ~= self.pll_id and np.sqrt( (all_plls_position[self.pll_id,0]-all_plls_position[i,0])**2 + (all_plls_position[self.pll_id,1]-all_plls_position[i,1])**2
+							+ (all_plls_position[self.pll_id,2]-all_plls_position[i,2])**2 ) < distance_treshold ):
+				list_of_neighbors_in_range.append(i)
+
+		self.delayer.set_list_of_current_neighbors(list_of_neighbors_in_range)
+
+	def update_propagation_time_delay_matrix_of_network(self, all_plls_positions: np.ndarray) -> np.ndarray:
+		"""Function that updates the propagation time delays between each pair of oscillators in the system.
+
+			Args:
+				all_plls_positions: contains the current position of all entities
+				distance_treshold: defines the radius of a circle or rectangle from within which range signals from other oscillators can be received
+	 			geometry_of_treshold: defines the geometry
+
+			Returns:
+				an np.ndarray with signal propagation times between the oscillators positions
+		"""
+
+		self.delayer.set_current_transmit_delay_steps(current_transmit_delay_steps)
+		return propagation_time_delay_in_steps_matrix
+
+	def obtain_transmission_time_delay_from_distances(self, first_position: np.ndarray, second_position: np.ndarray, signal_propagation_speed: np.float) -> np.float:
+		"""Function that calculates the distance between two coordinate vectors x_1 and x_2 and returns the time it takes to go from x_1 to x_2 at a given
+			constant propagation speed.
+
+			Args:
+				first_position: contains the position of a first entity
+				second_position: contains the position of a second entity
+				signal_propagation_speed: the speed with which the signal propagates
+
+			Returns:
+				signal propagation time between positions x1 and x2
+		"""
+
+		return np.sqrt( (first_position[0]-second_position[0])**2 + (first_position[1]-second_position[1])**2 + (first_position[2]-second_position[2])**2 ) / signal_propagation_speed

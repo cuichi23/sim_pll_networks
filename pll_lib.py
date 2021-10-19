@@ -37,7 +37,7 @@ authors: Alexandros Pollakis, Daniel Platz, Deborah Schmidt, Lucas Wetzel (lwetz
 '''
 
 
-def get_from_value_or_list(pll_id, input, pll_count):
+def get_from_value_or_list(pll_id: int, input, pll_count: int):
 	"""
 	Convenience method return a value or value from list based on oscillator id, depending on the type
 	of the input (scalar or list / array)
@@ -162,7 +162,7 @@ class LowPassFilter:
 		# print('self.control_signal:', self.control_signal, '\tcontrol_signal: ', control_signal, '\tderivative_control_signal:', self.derivative_control_signal); time.sleep(1)
 		return control_signal
 
-	def set_initial_control_signal(self, instantaneous_freq_Hz: float, prior_instantaneous_freq_Hz: float):
+	def set_initial_control_signal(self, instantaneous_freq_Hz: float, prior_instantaneous_freq_Hz: float) -> np.float:
 		""" Sets the initial control signal for the last time step depending on the history.
 
 		 Args:
@@ -187,7 +187,7 @@ class LowPassFilter:
 		#print('Set initial control signal of PLL %i to:' %self.pll_id, self.control_signal)
 		return self.control_signal
 
-	def next(self, phase_detector_output):
+	def next(self, phase_detector_output: np.float) -> np.float:
 		""" This function evolves the control signal in time according to the input signal from the phase detector and
 		 combiner.
 
@@ -202,7 +202,7 @@ class LowPassFilter:
 		#print('Current control signal of PLL %i:' %self.pll_id, self.control_signal)
 		return self.control_signal
 
-	def get_control_signal(self):
+	def get_control_signal(self) -> np.float:
 		"""
 		Returns:
 			control signal
@@ -275,7 +275,7 @@ class SignalControlledOscillator:
 		if not ( isinstance(test, float) or isinstance(test, int) ):
 			print('Specified VCO response function unknown, check VCO initialization in pll_lib!'); sys.exit()
 
-	def evolve_coupling_strength(self, new_coupling_strength_value_or_list, dict_net):
+	def evolve_coupling_strength(self, new_coupling_strength_value_or_list, dict_net: dict) -> None:
 		"""
 		Evolves the values of the cross coupling strength in time -- more precisely the VCO sensitivity.
 
@@ -289,7 +289,7 @@ class SignalControlledOscillator:
 		#print('Injection lock coupling strength for PLL%i changed, new value:'%self.idx_self, self.K2nd_k); #time.sleep(1)
 		return None
 
-	def next(self, control_signal):
+	def next(self, control_signal) -> Tuple[np.float, np.float]:
 		"""
 		Evolves the instantaneous output frequency of the signal controlled oscillator according to the control signal
 		and the dynamic noise.
@@ -305,7 +305,7 @@ class SignalControlledOscillator:
 		self.phi 	= self.phi + self.d_phi
 		return self.phi, self.d_phi
 
-	def delta_perturbation(self, phase_perturbation, control_signal):
+	def delta_perturbation(self, phase_perturbation: np.float, control_signal: np.float) -> Tuple[np.float, np.float]:
 		"""
 		Sets a delta-like perturbation.
 
@@ -319,7 +319,7 @@ class SignalControlledOscillator:
 		self.phi 	= self.phi + self.d_phi
 		return self.phi, self.d_phi
 
-	def add_perturbation(self, phase_perturbation):
+	def add_perturbation(self, phase_perturbation: np.float) -> np.float:
 		"""
 		Adds user defined perturbation to current state.
 
@@ -331,7 +331,7 @@ class SignalControlledOscillator:
 		self.phi 	= self.phi + phase_perturbation
 		return self.phi
 
-	def set_initial_forward(self):
+	def set_initial_forward(self) -> Tuple[np.float, np.float]:
 		"""
 		Sets the phase history of the signal controlled oscillator based on the frequency for the initial frequency.
 		Starts at time t - tau_max (the maximum time delay) and evolves the history until the time at which the
@@ -344,7 +344,7 @@ class SignalControlledOscillator:
 		self.phi 	= self.phi + self.d_phi
 		return self.phi, self.d_phi
 
-	def set_initial_reverse(self):
+	def set_initial_reverse(self) -> Tuple[np.float, np.float]:
 		"""
 		Sets the phase history of the signal controlled oscillator based on the frequency for the initial frequency.
 		Starts at the time at which the simulation starts and evolves the history until time t - tau_max
@@ -490,7 +490,7 @@ class PhaseDetectorCombiner:
 		self.K2nd_k	= get_from_value_or_list(self.pll_id, new_coupling_strength_injection_locking / self.K_rad, dict_net['Nx'] * dict_net['Ny'])
 		#print('Injection lock coupling strength for PLL%i changed, new value:'%self.idx_self, self.K2nd_k); #time.sleep(1)
 
-	def next(self, feedback_delayed_phases: np.ndarray, transmission_delayed_phases: np.ndarray, antenna_in: float, index_current_time: int = 0):
+	def next(self, feedback_delayed_phases: np.ndarray, transmission_delayed_phases: np.ndarray, antenna_in: float, index_current_time: int = 0) -> np.float:
 		"""
 		Evaluates delayed phase states of coupling partners and feedback delayed phase state of itself to yield phase
 		detector output.
@@ -623,6 +623,21 @@ class Delayer:
 		"""
 		self.transmit_delay = new_delay_value
 		self.transmit_delay_steps = int(np.round( self.transmit_delay / self.dt ))
+
+	def obtain_transmission_time_delay_from_distances(self, first_position: np.ndarray, second_position: np.ndarray, signal_propagation_speed: np.float) -> np.float:
+		"""Function that calculates the distance between two coordinate vectors x_1 and x_2 and returns the time it takes to go from x_1 to x_2 at a given
+			constant propagation speed.
+
+			Args:
+				first_position: hold
+				second_position:
+				signal_propagation_speed:
+
+			Returns:
+				signal propagation time between positions x1 and x2
+		"""
+
+		return np.sqrt( (first_position[0]-second_position[0])**2 + (first_position[1]-second_position[1])**2 + (first_position[2]-second_position[2])**2 )
 
 	def next(self, index_current_time_cyclic: int, phase_memory: np.ndarray, index_current_time_absolute: int) -> Tuple[np.ndarray, np.ndarray]:
 		"""Assigns a new delay value to an incoming signal. So far this only works if all incoming delays are equal.
@@ -877,8 +892,6 @@ class PhaseLockedLoop:
 			Raises:
 		"""
 
-		self.pll_coordinate_vector_3d = position_vector_in_3d_cartesian_coordinates
-		self.pll_diff_var_vector_3d = variance_gwn_diffusion_cartesian_coordinates
 		self.pll_speed_vector_3d = speed_vector_in_3d_cartesian_coordinates
 
 	def set_gwn_diffusion_variance_3d(self, variance_gwn_diffusion_cartesian_coordinates: np.ndarray) -> None:
@@ -890,30 +903,14 @@ class PhaseLockedLoop:
 			Raises:
 		"""
 
-		self.pll_speed_vector_3d = speed_vector_in_3d_cartesian_coordinates
-
-	def get_position_speed_diffusion_3d(self) -> np.ndarray:
-		""" Function that evolves the voltage controlled oscillator in a closed loop configuration when there is no external input, i.e., free-running closed loop PLL.
-			1) delayer obtains the current state of the oscillator itself (potentially delayed by a feedback delay)
-			2) this state is fed in the phase detector and combiner for zero external signal which yields the PD signal
-			3) the PD signal is fed into the loop filter and yields the control signal
-			4) the voltage controlled oscillator's next function evolves the phases dependent on the control signal
-
-			Returns:
-				an np.array with the position of the oscillator, the speed of the oscillator, the variance of the Gaussian white noise driven diffusion in a cartesian coordinate system
-				access: return_array[0,0:3] --> coordinate components x, y, z; return_array[1,0:3] --> speed components x, y, z; return_array[2,0:3] --> variance components x, y, z,
-
-			Raises:
-		"""
-
-		return np.array([self.pll_coordinate_vector_3d, self.pll_speed_vector_3d, self.pll_diff_var_vector_3d])
+		self.pll_diff_var_vector_3d = variance_gwn_diffusion_cartesian_coordinates
 
 	def get_position_3d(self) -> np.ndarray:
 		""" Function that get the current position.
 
 			Returns:
 				an np.array with the position of the oscillator
-				access: return_array[0,0:3] --> coordinate components x, y, z
+				access: return_array[0:3] --> coordinate components x, y, z
 
 			Raises:
 		"""
@@ -925,7 +922,7 @@ class PhaseLockedLoop:
 
 			Returns:
 				an np.array with the speed of the oscillator
-				access: return_array[1,0:3] --> speed components x, y, z
+				access: return_array[0:3] --> speed components x, y, z
 
 			Raises:
 		"""
@@ -937,7 +934,7 @@ class PhaseLockedLoop:
 
 			Returns:
 				an np.array with the variance of the Gaussian white noise driven diffusion in a cartesian coordinate system
-				access: return_array[2,0:3] --> variance components x, y, z
+				access: return_array[0:3] --> variance components x, y, z
 
 			Raises:
 		"""
@@ -945,7 +942,7 @@ class PhaseLockedLoop:
 		return self.pll_diff_var_vector_3d
 
 	def set_receive_sig_distance_treshold(self, distance_treshold: np.ndarray, geometry_of_treshold: str) -> None:
-		""" Function that sets a distance treshold beyond which no signal from other oscillators are received. Can have different shapes, circular, rectangular
+		""" Function that sets a distance treshold beyond which no signal from other oscillators are received. Can have different shapes, circular, rectangular, etc.
 
 			Args:
 				distance_treshold: defines the radius of a circle or rectangle from within which range signals from other oscillators can be received
@@ -956,3 +953,14 @@ class PhaseLockedLoop:
 
 		self.distance_treshold = distance_treshold
 		self.geometry_of_treshold = geometry_of_treshold
+
+	def evolve_position_in_3d(self) -> None:
+		""" Function that evolves the position in 3d space according to the diffusion coefficient and the deterministic speed components.
+
+			Args:
+			Raises:
+				Error if position, speed, and diffusion coefficient are not set.
+		"""
+
+		self.pll_coordinate_vector_3d = ( self.pll_coordinate_vector_3d + self.pll_speed_vector_3d * self.delayer.dt
+												+ np.random.normal(loc=0.0, scale=np.sqrt(self.pll_diff_var_vector_3d * self.delayer.dt)) )

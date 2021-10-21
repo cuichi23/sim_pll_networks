@@ -35,6 +35,7 @@ def simulateSystem(dictNet, dictPLL, dictAlgo=None):
 
 	np.random.seed()															# restart pseudo random-number generator
 	dictData = {}																# setup dictionary that hold all the data
+	space = generateSpace(dictPLL, dictNet, dictData)							# generates a space object used to handle pll distributed in a contineous space 
 	if not dictNet['phiInitConfig']:											# if no custom phase configuration is provided, generate it
 		print('\nPhase configuration of synchronized state set according to supplied topology and twist state information!')
 		dictNet			= setup.generatePhi0(dictNet)							# generate the initial phase configuration for twist, chequerboard, in- and anti-phase states
@@ -203,7 +204,7 @@ def simulateSystem(dictNet, dictPLL, dictAlgo=None):
 
 def evolveSystemOnTauArray(dictNet, dictPLL, phi, clock_counter, pll_list, dictData=None, dictAlgo=None):
 
-	print('Phi container only of length tau or multiple, no write-out so far of phases.')
+	print('Phi container only of length tau or multiple, no write-out of phases so far.')
 	phi_array_len = dictNet['phi_array_len']
 	for idx_time in range(dictNet['max_delay_steps'],dictNet['max_delay_steps']+dictPLL['sim_time_steps']-1,1):
 
@@ -255,6 +256,68 @@ def evolveSystemOnTsimArray(dictNet, dictPLL, phi, clock_counter, pll_list, dict
 
 	t = np.arange(0,len(phiStore[0:dictNet['max_delay_steps']+dictPLL['sim_time_steps'],0]))*dictPLL['dt']
 	dictData.update({'t': t, 'phi': phiStore, 'clock': clkStore})
+
+	return dictData
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+def distributed_pll_in_3d_mobile(dictNet, dictPLL, phi, pos, coup_matrix, clock_counter, pll_list, dictData=None, dictAlgo=None):
+
+	print('Phi container has length of Tsim.')
+	# create data container
+	clock_signal_store = np.empty([dictNet['max_delay_steps']+dictPLL['sim_time_steps'], dictNet['Nx']*dictNet['Ny']]) # stores clock signal
+	phases_store = np.empty([dictNet['max_delay_steps']+dictPLL['sim_time_steps'], dictNet['Nx']*dictNet['Ny']]) # stores phases
+	positions_3d_store = np.empty([dictNet['max_delay_steps']+dictPLL['sim_time_steps'], dictNet['Nx']*dictNet['Ny']]) # stores positions, from this the signaling delays can be calculated
+	adjacency_time_delay_matrix_store = np.empty([dictNet['max_delay_steps']+dictPLL['sim_time_steps'], dictNet['Nx']*dictNet['Ny']]) # stores the coupling matrix at any point in time
+	# copy history to data container
+	phases_store[0:dictNet['max_delay_steps']+1,:] = phi[0:dictNet['max_delay_steps']+1,:]
+	positions_3d_store[0:dictNet['max_delay_steps']+1,:] = pos[0:dictNet['max_delay_steps']+1,:]
+	adjacency_time_delay_matrix_store[0:dictNet['max_delay_steps']+1,:] = coup_matrix[0:dictNet['max_delay_steps']+1,:]
+	# obtain the length of the temporary phi array
+	phi_array_len = dictNet['phi_array_len']
+
+	for idx_time in range(dictNet['max_delay_steps'],dictNet['max_delay_steps']+dictPLL['sim_time_steps']-1,1):
+
+		# update the positions and store them
+		temp_pos_list = []
+		for pll in pll_list:
+			pll.evolve_position_in_3d()
+			temp_pos_list.append(pll.get_position_3d())
+		positions_3d_store[(idx_time+1)%phi_array_len,:] = temp_pos_list
+
+		TODO or
+
+		[pll.evolve_position_in_3d() for pll in pll_list]
+		positions_3d_store[(idx_time+1)%phi_array_len,:] = [pll.get_position_3d() for pll in pll_list]
+
+		# use all current positions to calculate the current adjacency matrix and the corresponding transmission time delays, since we assume the signal propagation to have equal
+		# velocity in either direction, we only need to compute one side of the matrix of time delays (symmetric about the main diagonal)
+		adjacency_time_delay_matrix_store[(idx_time+1)%phi_array_len,:]
+					= space.update_adjacency_and_time_delay_matrix_with_plls_in_mutual_coupling_range(self, all_pll_positions: np.ndarray, distance_treshold: np.ndarray, geometry_of_treshold: str)
+
+		# TODO extract from the time-series of stored adjacency matrices the one that is shifted by t=receive_sig_distance/signal_propagation_speed with respect to the current times
+		# then use the distance dependent time-delays of the time when the transmitting oscillator was acutally in the reception range
+ 		# in other words: whenever two oscillators move into each others receptions zone it will take a while until the receive each others' signals, only once that happened it makes
+		# sense to have the delayer to pick the time-delays from the time when they moved into each others range and use them to set the time delays with respect to now
+		adjacency_matrix_store -> current_adjacency_matrix[time_at_which_a_neighbor_moved_into_reception_range + time_for_signal_from_boundary_of_reception_range_to_oscillator]
+		position_3d_store -> current_transmit_delay_steps[time_at_which_a_neighbor_moved_into_reception_range + time_for_signal_from_boundary_of_reception_range_to_oscillator]
+
+		# set the current time-delays and coupling parterns is range for all oscillators receiving signals from past or current neighbors:
+		# NOTE that there is a time shift by the maximum delay until an oscillator receives the signal of an oscillator that enters his reception zone
+		[pll.delayer.set_list_of_current_neighbors(current_adjacency_matrix[:,pll.pll_id].tolist()) for pll in pll_list]
+		[pll.delayer.set_current_transmit_delay_steps(current_transmit_delay_steps[:,pll.pll_id].tolist()) for pll in pll_list]
+		# advance the phases of all oscillators by one time-increment
+		phi[(idx_time+1)%phi_array_len,:] = [pll.next(idx_time,phi_array_len,phi) for pll in pll_list] # now the network is iterated, starting at t=0 with the history as prepared above
+		# calculate the clocks' state from the current phases
+		clock_counter[(idx_time+1)%phi_array_len,:] = [pll.clock_halfperiods_count(phi[(idx_time+1)%phi_array_len,pll.pll_id]) for pll in pll_list]
+
+		# write out current states to data containers
+		clock_signal_store[idx_time+1,:] = clock_counter[(idx_time+1)%phi_array_len,:]
+		phases_store[idx_time+1,:] = phi[(idx_time+1)%phi_array_len,:]
+
+
+	t = np.arange(0,len(phiStore[0:dictNet['max_delay_steps']+dictPLL['sim_time_steps'],0]))*dictPLL['dt']
+	dictData.update({'t': t, 'phi': phases_store, 'clock': clock_signal_store}, 'positions': position_3d_store, 'adjacency_matrix_store': adjacency_matrix_store)
 
 	return dictData
 
@@ -469,32 +532,3 @@ def evolveSystemTestPerturbations(dictNet, dictPLL, phi, clock_counter, pll_list
 	dictData.update({'t': t, 'phi': phiStore, 'clock': clkStore})
 
 	return dictData
-
-
-
-# ''' NOW SIMULATE THE SYSTEM AFTER HISTORY IS SET '''
-# if dictPLL['sim_time_steps']*dictPLL['dt'] < 1E6 and dictNet['phi_array_mult_tau'] == 1: # container to flush data
-#
-# 	phiStore = np.empty([max_delay_steps+dictPLL['sim_time_steps'], dictNet['Nx']*dictNet['Ny']])
-# 	phiStore[0:max_delay_steps+1,:] = phi[0:max_delay_steps+1,:]
-# 	#line = []; tlive = np.arange(0,phi_array_len-1)*dictPLL['dt']
-# 	for idx_time in range(max_delay_steps,max_delay_steps+dictPLL['sim_time_steps']-1,1):
-# 		#print('[pll.next(idx_time%phi_array_len,phi) for pll in pll_list]:', [pll.next(idx_time%phi_array_len,phi) for pll in pll_list])
-# 		#print('Current state: phi[(idx_time)%phi_array_len,:]', phi[(idx_time)%phi_array_len,:], '\t(idx_time)%phi_array_len',(idx_time)%phi_array_len); sys.exit()
-# 		#print('(idx_time+1)%phi_array_len', ((idx_time+1)%phi_array_len)*dictPLL['dt']); #time.sleep(0.5)
-# 		phi[(idx_time+1)%phi_array_len,:] = [pll.next(idx_time%phi_array_len,phi) for pll in pll_list] # now the network is iterated, starting at t=0 with the history as prepared above
-# 		clock_counter[(idx_time+1)%phi_array_len] = [pll.clock_periods_count(phi[(idx_time+1)%phi_array_len,pll.idx_self]) for pll in pll_list]
-# 		#print('clock count for all:', clock_counter[-1])
-# 		phiStore[idx_time+1,:] = phi[(idx_time+1)%phi_array_len,:]
-# 		#phidot = (phi[1:,0]-phi[:-1,0])/(2*np.pi*dictPLL['dt'])
-# 		#line = livplt.live_plotter(tlive, phidot, line)
-# else:
-# 	print('Phi container only of length tau or multiple, no write-out so far of phases.')
-# 	for idx_time in range(max_delay_steps,max_delay_steps+dictPLL['sim_time_steps']-1,1):
-# 		#print('[pll.next(idx_time%phi_array_len,phi) for pll in pll_list]:', [pll.next(idx_time%phi_array_len,phi) for pll in pll_list])
-# 		#print('Current state: phi[(idx_time)%phi_array_len,:]', phi[(idx_time)%phi_array_len,:], '\t(idx_time)%phi_array_len',(idx_time)%phi_array_len); sys.exit()
-# 		#print('(idx_time+1)%phi_array_len', ((idx_time+1)%phi_array_len)*dictPLL['dt']); #time.sleep(0.5)
-# 		phi[(idx_time+1)%phi_array_len,:] = [pll.next(idx_time%phi_array_len,phi) for pll in pll_list] # now the network is iterated, starting at t=0 with the history as prepared above
-# 		clock_counter[(idx_time+1)%phi_array_len] = [pll.clock_periods_count(phi[(idx_time+1)%phi_array_len,pll.idx_self]) for pll in pll_list]
-# 		#print('clock count for all:', clock_counter[-1])
-# 	phiStore = phi

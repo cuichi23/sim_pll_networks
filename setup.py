@@ -41,6 +41,14 @@ def generatePLLs(dictPLL, dictNet, dictData):									#mode,div,params['topology
 
 ################################################################################
 
+def generateSpace(dictPLL, dictNet, dictData):									#mode,div,params['topology'],couplingfct,histtype,Nplls,dt,c,delay,feedback_delay,F,F_Omeg,K,Fc,y0,phiM,domega):
+
+	space = pll.Space(signal_propagation_speed: np.float, dimension_x: np.float, dimension_y: np.float)
+
+	return space
+
+################################################################################
+
 def generatePhi0(dictNet):
 
 	if ( dictNet['topology'] == 'entrainOne' or dictNet['topology'] == 'entrainAll' ):

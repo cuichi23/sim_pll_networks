@@ -778,11 +778,13 @@ class PhaseLockedLoop:
 		self.counter = counter
 		self.pll_id = pll_id
 
+		self.signal_propagation_speed = None
 		self.pll_coordinate_vector_3d = None
 		self.pll_diff_var_vector_3d = None
 		self.geometry_of_treshold = None
 		self.pll_speed_vector_3d = None
 		self.distance_treshold = None
+
 
 	def next(self, index_current_time_absolute: int, length_phase_memory: int, phase_memory: np.ndarray) -> np.ndarray:
 		""" Function that evolves the oscillator forward in time by one increment based on the external signals and internal dynamics.
@@ -990,51 +992,106 @@ class PhaseLockedLoop:
 		self.pll_coordinate_vector_3d = ( self.pll_coordinate_vector_3d + self.pll_speed_vector_3d * self.delayer.dt
 												+ np.random.normal(loc=0.0, scale=np.sqrt(self.pll_diff_var_vector_3d * self.delayer.dt)) )
 
-	def update_list_of_neighbors_in_coupling_range(self, all_plls_positions: np.ndarray, distance_treshold: np.ndarray, geometry_of_treshold: str) -> None:
-		"""Function that evaluates the distances so all other oscillators and stores the ids of those that are in the defined coupling range.
+
+	# def update_list_of_neighbors_in_coupling_range(self, all_plls_positions: np.ndarray, distance_treshold: np.ndarray, geometry_of_treshold: str) -> None:
+	# 	"""Function that evaluates the distances so all other oscillators and stores the ids of those that are in the defined coupling range.
+	#
+	# 		Args:
+	# 			all_plls_positions: contains the current position of all entities
+	# 			distance_treshold: defines the radius of a circle or rectangle from within which range signals from other oscillators can be received
+	#  			geometry_of_treshold: defines the geometry
+	#
+	# 		Returns:
+	# 			TODO
+	# 	"""
+	# 	list_of_neighbors_in_range = []
+	# 	for i in range(len(all_plls_position[:,0])):
+	# 		if ( i ~= self.pll_id and np.sqrt( (all_plls_position[self.pll_id,0]-all_plls_position[i,0])**2 + (all_plls_position[self.pll_id,1]-all_plls_position[i,1])**2
+	# 						+ (all_plls_position[self.pll_id,2]-all_plls_position[i,2])**2 ) < distance_treshold ):
+	# 			list_of_neighbors_in_range.append(i)
+	#
+	# 	self.delayer.set_list_of_current_neighbors(list_of_neighbors_in_range)
+
+	# def update_propagation_time_delay_matrix_of_network(self, all_plls_positions: np.ndarray) -> np.ndarray:
+	# 	"""Function that updates the propagation time delays between each pair of oscillators in the system.
+	#
+	# 		Args:
+	# 			all_plls_positions: contains the current position of all entities
+	# 			distance_treshold: defines the radius of a circle or rectangle from within which range signals from other oscillators can be received
+	#  			geometry_of_treshold: defines the geometry
+	#
+	# 		Returns:
+	# 			an np.ndarray with signal propagation times between the oscillators positions
+	# 	"""
+	#
+	# 	self.delayer.set_current_transmit_delay_steps(current_transmit_delay_steps)
+	# 	return propagation_time_delay_in_steps_matrix
+
+	# def obtain_transmission_time_delay_from_distances(self, first_position: np.ndarray, second_position: np.ndarray, signal_propagation_speed: np.float) -> np.float:
+	# 	"""Function that calculates the distance between two coordinate vectors x_1 and x_2 and returns the time it takes to go from x_1 to x_2 at a given
+	# 		constant propagation speed.
+	#
+	# 		Args:
+	# 			first_position: contains the position of a first entity
+	# 			second_position: contains the position of a second entity
+	# 			signal_propagation_speed: the speed with which the signal propagates
+	#
+	# 		Returns:
+	# 			signal propagation time between positions x1 and x2
+	# 	"""
+	#
+	# 	return np.sqrt( (first_position[0]-second_position[0])**2 + (first_position[1]-second_position[1])**2 + (first_position[2]-second_position[2])**2 ) / signal_propagation_speed
+
+
+class Space:
+	""" This class represents a rectangular space in which oscillators can exist. It can have closed or periodic boundary conditions.
+
+		With the definition of 3d space, the oscillators mutual coupling and the associated transmission time delays can be computed according to the distances between
+		the oscillators and  the signal propagation velocity.
+
+		Attributes:
+			pll_list: a list of all PLL objects present in that space
+			signal_propagation_speed: the velocity with which signals propagate in this space
+			dimension_x: the length of the boundaries in x-direction
+			dimension_y: the length of the boundaries in y-direction
+	"""
+
+	def __init__(self, signal_propagation_speed: np.float, dimension_x: np.float, dimension_y: np.float):
+		"""
+			Args:
+				signal_propagation_speed: the velocity with which signals propagate in this space
+				dimension_x: the length of the boundaries in x-direction
+				dimension_y: the length of the boundaries in y-direction
+		"""
+		#self.pll_list = pll_list
+		self.signal_propagation_speed = signal_propagation_speed
+		self.dimension_x = dimension_x
+		self.dimension_y = dimension_y
+
+
+	def update_adjacency_and_time_delay_matrix_for_plls_in_mutual_coupling_range(self, all_pll_positions: np.ndarray, distance_treshold: np.ndarray, geometry_of_treshold: str) -> None:
+		"""Function that updates the adjacency matrix by checking for each oscillator whether it is coupled to another one in the network according to the distance treshold
+			and geometry of the treshold. If all distance tresholds are equal, any connection found is bidirectional and hence only one side of the diagonal of the coupling
+			function needs to be checked.
 
 			Args:
-				all_plls_positions: contains the current position of all entities
+				all_pll_positions: contains the current position of all entities
 				distance_treshold: defines the radius of a circle or rectangle from within which range signals from other oscillators can be received
 	 			geometry_of_treshold: defines the geometry
 
 			Returns:
-				signal propagation time between positions x1 and x2
+				TODO
 		"""
-		list_of_neighbors_in_range = []
-		for i in range(len(all_plls_position[:,0])):
-			if ( i ~= self.pll_id and np.sqrt( (all_plls_position[self.pll_id,0]-all_plls_position[i,0])**2 + (all_plls_position[self.pll_id,1]-all_plls_position[i,1])**2
-							+ (all_plls_position[self.pll_id,2]-all_plls_position[i,2])**2 ) < distance_treshold ):
-				list_of_neighbors_in_range.append(i)
+		# use all current positions to calculate the current adjacency matrix and the corresponding transmission time delays, since we assume the signal propagation to have equal
+		# velocity in either direction, we only need to compute one side of the matrix of time delays (symmetric about the main diagonal)
+		temp_adjacency_time_delay_matrix = np.empty([len(pll_list), len(pll_list)])
+		temp_adjacency_time_delay_matrix.fill(np.nan)
+		for i in range(len(pll_list)):
+			for j in range(i+1, len(pll_list)):
+				distance_of_pair_ij = ( np.sqrt( (all_plls_position[i,0]-all_plls_position[j,0])**2 + (all_plls_position[i,1]-all_plls_position[j,1])**2
+														+ (all_plls_position[i,2]-all_plls_position[j,2])**2 ) )
+				if distance_if_pair_ij < distance_treshold:
+					temp_adjacency_time_delay_matrix[i, j] = distance_if_pair_ij / self.signal_propagation_speed
+					temp_adjacency_time_delay_matrix[j, i] = distance_if_pair_ij / self.signal_propagation_speed
 
-		self.delayer.set_list_of_current_neighbors(list_of_neighbors_in_range)
-
-	def update_propagation_time_delay_matrix_of_network(self, all_plls_positions: np.ndarray) -> np.ndarray:
-		"""Function that updates the propagation time delays between each pair of oscillators in the system.
-
-			Args:
-				all_plls_positions: contains the current position of all entities
-				distance_treshold: defines the radius of a circle or rectangle from within which range signals from other oscillators can be received
-	 			geometry_of_treshold: defines the geometry
-
-			Returns:
-				an np.ndarray with signal propagation times between the oscillators positions
-		"""
-
-		self.delayer.set_current_transmit_delay_steps(current_transmit_delay_steps)
-		return propagation_time_delay_in_steps_matrix
-
-	def obtain_transmission_time_delay_from_distances(self, first_position: np.ndarray, second_position: np.ndarray, signal_propagation_speed: np.float) -> np.float:
-		"""Function that calculates the distance between two coordinate vectors x_1 and x_2 and returns the time it takes to go from x_1 to x_2 at a given
-			constant propagation speed.
-
-			Args:
-				first_position: contains the position of a first entity
-				second_position: contains the position of a second entity
-				signal_propagation_speed: the speed with which the signal propagates
-
-			Returns:
-				signal propagation time between positions x1 and x2
-		"""
-
-		return np.sqrt( (first_position[0]-second_position[0])**2 + (first_position[1]-second_position[1])**2 + (first_position[2]-second_position[2])**2 ) / signal_propagation_speed
+		return temp_adjacency_time_delay_matrix

@@ -31,20 +31,20 @@ gc.enable();
 def getDicts(Fsim=55):
 
 	dictNet={
-		'Nx': 4,																# oscillators in x-direction
-		'Ny': 4,																# oscillators in y-direction
+		'Nx': 7,																# oscillators in x-direction
+		'Ny': 7,																# oscillators in y-direction
 		'mx': 0	,																# twist/chequerboard in x-direction (depends on closed or open boundary conditions)
 		'my': 0,																# twist/chequerboard in y-direction
 		'topology': 'square-open',												# 1d) ring, chain, 2d) square-open, square-periodic, hexagonal...
 																				# 3) global, entrainOne, entrainAll, entrainPLLsHierarch, compareEntrVsMutual
-		'Tsim': 20,#7100,#199840,#159850,#119900,#100000,#150000,					# simulation time in multiples of the period
+		'Tsim': 461000,#199840,#159850,#119900,#100000,#150000,					# simulation time in multiples of the period
 		'computeFreqAndStab':  False,											# compute linear stability and global frequency if possible: True or False
 		'phi_array_mult_tau': 1,												# how many multiples of the delay is stored of the phi time series
-		'phiPerturb': [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],		#[0, -0.001, 0, 0, 0.001, 0, 0, -0.001, 0],		# delta-perturbation on initial state -- PROVIDE EITHER ONE OF THEM! if [] set to zero
+		'phiPerturb': [0 for i in range(49)],									# delta-perturbation on initial state -- PROVIDE EITHER ONE OF THEM! if [] set to zero
 		'phiPerturbRot': [],													# delta-perturbation on initial state -- in rotated space
 		'phiInitConfig': [],													# phase-configuration of sync state,  []: automatic, else provide list
 		'freq_beacons': 0.1,													# frequency of external sender beacons, either a float or a list
-		'special_case': 'False',#'timeDepTransmissionDelay',					# 'False', or 'test_case', 'timeDepInjectLockCoupStr', 'timeDepTransmissionDelay', 'timeDepChangeOfCoupStr'
+		'special_case': 'False',#'timeDepTransmissionDelay',					# 'False', or 'test_case', 'timeDepInjectLockCoupStr', 'timeDepTransmissionDelay', 'timeDepChangeOfCoupStr', 'distanceDepTransmissionDelay'
 		'typeOfTimeDependency': 'linear',										# 'exponential', 'linear', 'quadratic', 'triangle', 'cosine'
 		'min_max_rate_timeDepPara': [0.15, 3.85, 0.4/100]						# provide a list with min, max and rate of the time-dependent parameter
 	}
@@ -86,7 +86,9 @@ def getDicts(Fsim=55):
 		'sampleFplot': 1,														# sampling frequency for reduced plotting (every sampleFplot time step)
 		'treshold_maxT_to_plot': 1E6,											# maximum number of periods to plot for some plots
 		'percentPeriodsAverage': 0.15,											# average of *percentPeriodsAverage* % of simulated periods
-		'PSD_freq_resolution': 1E-4												# frequency resolution aimed at with PSD: hence, T_analyze ~ 1/f
+		'PSD_freq_resolution': 1E-4,											# frequency resolution aimed at with PSD: hence, T_analyze ~ 1/f
+		'signal_propagation_speed': 0.0,										# speed of signal transmission when considering mobile oscillators --> mode: 'distanceDepTransmissionDelay'
+		'space_dimensions_xyz': [10, 10, 10]									# dimension of the 3d space in which mobile oscillators can be simulated --> mode: 'distanceDepTransmissionDelay'
 	}
 
 	dictAlgo={

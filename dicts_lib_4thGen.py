@@ -86,7 +86,9 @@ def getDicts(Fsim=125):
 		'sampleFplot': 5,														# sampling frequency for reduced plotting (every sampleFplot time step)
 		'treshold_maxT_to_plot': 1E6,											# maximum number of periods to plot for some plots
 		'percentPeriodsAverage': 0.15,											# average of *percentPeriodsAverage* % of simulated periods
-		'PSD_freq_resolution': 1E-3												# frequency resolution aimed at with PSD: hence, T_analyze ~ 1/f
+		'PSD_freq_resolution': 1E-4,											# frequency resolution aimed at with PSD: hence, T_analyze ~ 1/f
+		'signal_propagation_speed': 0.0,										# speed of signal transmission when considering mobile oscillators --> mode: 'distanceDepTransmissionDelay'
+		'space_dimensions_xyz': [10, 10, 10]									# dimension of the 3d space in which mobile oscillators can be simulated --> mode: 'distanceDepTransmissionDelay'
 	}
 
 	dictAlgo={

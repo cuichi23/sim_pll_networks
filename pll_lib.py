@@ -572,7 +572,7 @@ class Delayer:
 
 		# calculate tranmission delays steps, here pick for each Delayer individually but the same for each input l or even for each connection tau_kl individually
 		elif ( isinstance(dict_pll['transmission_delay'], list) or isinstance(dict_pll['transmission_delay'], np.ndarray)
-												or dict_net['special_case'] == 'distanceDepTransmissionDelay' and not dict_net['special_case'] == 'timeDepTransmissionDelay':
+												or dict_net['special_case'] == 'distanceDepTransmissionDelay' and not dict_net['special_case'] == 'timeDepTransmissionDelay' ):
 
 			if np.array(dict_pll['transmission_delay']).ndim == 1:				# tau_k case -- all inputs are subject to the same transmission delay
 				print('Delayer has different delays for each oscillator! Hence: tau_k are introduced and all incoming signals are subject to the same time delay.')
@@ -1056,17 +1056,15 @@ class Space:
 			dimension_y: the length of the boundaries in y-direction
 	"""
 
-	def __init__(self, signal_propagation_speed: np.float, dimension_x: np.float, dimension_y: np.float):
+	def __init__(self, signal_propagation_speed: np.float, dimensions_xyz: np.ndarray):
 		"""
 			Args:
 				signal_propagation_speed: the velocity with which signals propagate in this space
-				dimension_x: the length of the boundaries in x-direction
-				dimension_y: the length of the boundaries in y-direction
+				dimensions_xyz: the length of the boundaries in x, y, and z-direction
 		"""
 		#self.pll_list = pll_list
 		self.signal_propagation_speed = signal_propagation_speed
-		self.dimension_x = dimension_x
-		self.dimension_y = dimension_y
+		self.dimensions_xyz = dimensions_xyz
 
 
 	def update_adjacency_and_time_delay_matrix_for_plls_in_mutual_coupling_range(self, all_pll_positions: np.ndarray, distance_treshold: np.ndarray, geometry_of_treshold: str) -> None:

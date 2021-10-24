@@ -1067,10 +1067,10 @@ class Space:
 		self.dimensions_xyz = dimensions_xyz
 
 
-	def update_adjacency_and_time_delay_matrix_for_plls_in_mutual_coupling_range(self, all_pll_positions: np.ndarray, distance_treshold: np.ndarray, geometry_of_treshold: str) -> None:
-		"""Function that updates the adjacency matrix by checking for each oscillator whether it is coupled to another one in the network according to the distance treshold
-			and geometry of the treshold. If all distance tresholds are equal, any connection found is bidirectional and hence only one side of the diagonal of the coupling
-			function needs to be checked.
+	def update_adjacency_matrix_for_all_plls_potentially_receiving_a_signal(self, all_pll_positions: np.ndarray, distance_treshold: np.ndarray, geometry_of_treshold: str) -> None:
+		"""Function that updates the adjacency matrix by checking for each oscillator whether it is within the coupling of another in its vicinity
+ 			according to the distance treshold and geometry of the treshold.
+			If all distance tresholds are equal, any connection found is bidirectional and hence only one side of the diagonal of the coupling function needs to be checked.
 
 			Args:
 				all_pll_positions: contains the current position of all entities
@@ -1080,16 +1080,20 @@ class Space:
 			Returns:
 				TODO
 		"""
-		# use all current positions to calculate the current adjacency matrix and the corresponding transmission time delays, since we assume the signal propagation to have equal
-		# velocity in either direction, we only need to compute one side of the matrix of time delays (symmetric about the main diagonal)
-		temp_adjacency_time_delay_matrix = np.empty([len(pll_list), len(pll_list)])
-		temp_adjacency_time_delay_matrix.fill(np.nan)
+		# use all current positions to calculate the current adjacency matrix, since we assume the signal propagation to have equal velocity in either direction,
+		# we only need to compute one side of the matrix of oscillators who are in potential coupling range at a time t (symmetric about the main diagonal)
+		temp_adjacency_matrix = np.empty([len(pll_list), len(pll_list)])
+		temp_adjacency_matrix.fill(np.nan)
 		for i in range(len(pll_list)):
 			for j in range(i+1, len(pll_list)):
 				distance_of_pair_ij = ( np.sqrt( (all_plls_position[i,0]-all_plls_position[j,0])**2 + (all_plls_position[i,1]-all_plls_position[j,1])**2
 														+ (all_plls_position[i,2]-all_plls_position[j,2])**2 ) )
-				if distance_if_pair_ij < distance_treshold:
-					temp_adjacency_time_delay_matrix[i, j] = distance_if_pair_ij / self.signal_propagation_speed
-					temp_adjacency_time_delay_matrix[j, i] = distance_if_pair_ij / self.signal_propagation_speed
 
-		return temp_adjacency_time_delay_matrix
+				np.subtract( pos1, pos2 )
+				np.sqrt( np.linalg.norm( np.subtract( all_plls_position[i,0], all_plls_position[j,0]) ) )**2 )
+
+				if distance_of_pair_ij < distance_treshold:
+					temp_adjacency_matrix[i, j] = 1
+					temp_adjacency_matrix[j, i] = 1
+
+		return temp_adjacency_matrix

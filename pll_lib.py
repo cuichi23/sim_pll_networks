@@ -1089,8 +1089,8 @@ class Space:
 				distance_of_pair_ij = ( np.sqrt( (all_plls_position[i,0]-all_plls_position[j,0])**2 + (all_plls_position[i,1]-all_plls_position[j,1])**2
 														+ (all_plls_position[i,2]-all_plls_position[j,2])**2 ) )
 
-				np.subtract( pos1, pos2 )
-				np.sqrt( np.linalg.norm( np.subtract( all_plls_position[i,0], all_plls_position[j,0]) ) )**2 )
+
+				#np.sqrt( np.linalg.norm( np.subtract( all_plls_position[i,0], all_plls_position[j,0]) ) )**2 )
 
 				if distance_of_pair_ij < distance_treshold:
 					temp_adjacency_matrix[i, j] = 1

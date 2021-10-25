@@ -128,6 +128,10 @@ def check_dicts_consistency(dictPLL, dictNet, dictAlgo):
 			print('Choice %i made. This state has global frequency Omega=%0.9f Hz, and ReLambda=%0.9f and ImLambda=%0.9f'%(choice, dictPLL['syncF'], dictPLL['ReLambda'], dictPLL['ImLambda']))
 			#except:
 			#	print('Could not compute linear stability and global frequency! Check synctools and case!')
+			print('Calculate synchronized states and their stability using synctools to plot Omega and Re(lambda) vs tau and Omega*tau, [y]es or [n]o?')
+			choice = choose_yes_no()
+			if choice == 'y':
+				synctools.generate_delay_plot(dictPLL, dictNet)
 
 		elif ( (isinstance(dictPLL['intrF'], np.float) or isinstance(dictPLL['intrF'], np.int)) and (isinstance(dictPLL['cutFc'], np.float) or isinstance(dictPLL['cutFc'], np.int)) and
 			(isinstance(dictPLL['coupK'], np.float) or isinstance(dictPLL['coupK'], np.int)) and (isinstance(dictPLL['transmission_delay'], np.float) or isinstance(dictPLL['transmission_delay'], np.int)) ):
@@ -142,6 +146,11 @@ def check_dicts_consistency(dictPLL, dictNet, dictAlgo):
 			print('Choice %i made. This state has global frequency Omega=%0.9f Hz, and ReLambda=%0.9f and ImLambda=%0.9f'%(choice, dictPLL['syncF'], dictPLL['ReLambda'], dictPLL['ImLambda']))
 			#except:
 			#	print('Could not compute linear stability and global frequency! Check synctools and case!')
+			print('Calculate synchronized states and their stability using synctools to plot Omega and Re(lambda) vs tau and Omega*tau, [y]es or [n]o?')
+			choice = choose_yes_no()
+			if choice == 'y':
+				synctools.generate_delay_plot(dictPLL, dictNet)
+
 	elif dictNet['computeFreqAndStab'] and dictPLL['orderLF'] > 1:
 		print('In dicts_<NAME>: Synctools prediction not available for second order LFs!'); sys.exit();
 

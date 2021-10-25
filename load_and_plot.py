@@ -25,8 +25,8 @@ import plot_lib
 import evaluation_lib as eva
 import coupling_fct_lib as coupfct
 import check_dicts_lib as chk_dicts
-import palettable.colorbrewer.diverging as colormap_diver
-from palettable.colorbrewer.diverging import PuOr_7
+#import palettable.colorbrewer.diverging as colormap_diver
+#from palettable.colorbrewer.diverging import PuOr_7
 
 import datetime
 now = datetime.datetime.now()
@@ -71,17 +71,17 @@ plot_size_inches_x 	= 10;
 plot_size_inches_y 	= 5;
 labelpadxaxis       = 10;
 labelpadyaxis       = 20;
-colormapSyncStab 	= colormap_diver.PuOr_7.mpl_colormap
+#colormapSyncStab 	= colormap_diver.PuOr_7.mpl_colormap
 
 
 ################################################################################
 # load data
-folder		 = '/home/cuichi/data-z2/simPLL_1/2/results/'
+folder		 = '/home/cuichi/data-z2/simPLL_0/2/results/'
 ################################################################################
-filenamePLL  = folder+'dictPLL_K0.050_tau39968.000_Fc0.000_mx0_my0_N16_toposquare-open_17:48_2021_10_13'
-filenameNet  = folder+'dictNet_K0.050_tau39968.000_Fc0.000_mx0_my0_N16_toposquare-open_17:48_2021_10_13'
-filenameData = folder+'dictData_K0.050_tau39968.000_Fc0.000_mx0_my0_N16_toposquare-open_17:48_2021_10_13'
-filenameAlgo = folder+'dictAlgo_K0.050_tau39968.000_Fc0.000_mx0_my0_N16_toposquare-open_17:48_2021_10_13'
+filenamePLL  = folder+'dictPLL_K0.050_tau39968.000_Fc0.000_mx0_my0_N16_toposquare-open_11:20_2021_10_22'
+filenameNet  = folder+'dictNet_K0.050_tau39968.000_Fc0.000_mx0_my0_N16_toposquare-open_11:20_2021_10_22'
+filenameData = folder+'dictData_K0.050_tau39968.000_Fc0.000_mx0_my0_N16_toposquare-open_11:20_2021_10_22'
+filenameAlgo = folder+'dictAlgo_K0.050_tau39968.000_Fc0.000_mx0_my0_N16_toposquare-open_11:20_2021_10_22'
 ################################################################################
 dictPLL 	 = pickle.load(open(filenamePLL, 'rb'))
 dictNet 	 = pickle.load(open(filenameNet, 'rb'))
@@ -118,13 +118,13 @@ dictData.update({'orderParam': orderParam, 'R': r, 'F1': F1})
 
 #dictPLL.update({'vco_out_sig': coupfct.sine})
 
-#plot_lib.plotOrderPara(dictPLL, dictNet, dictData)
+plot_lib.plotOrderPara(dictPLL, dictNet, dictData)
 #plot_lib.plotPhaseRela(dictPLL, dictNet, dictData)
 #plot_lib.plotPhaseDiff(dictPLL, dictNet, dictData)
 #plot_lib.plotClockTime(dictPLL, dictNet, dictData)
 #plot_lib.plotOscSignal(dictPLL, dictNet, dictData)
-plot_lib.plotFrequency(dictPLL, dictNet, dictData)
-#plot_lib.plotFreqAndPhaseDiff(dictPLL, dictNet, dictData)
+#plot_lib.plotFrequency(dictPLL, dictNet, dictData)
+plot_lib.plotFreqAndPhaseDiff(dictPLL, dictNet, dictData)
 #plot_lib.plotFreqAndOrderPar(dictPLL, dictNet, dictData)
 plot_lib.plotPSD(dictPLL, dictNet, dictData, [], saveData=False)
 

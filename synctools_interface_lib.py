@@ -142,6 +142,19 @@ def generate_delay_plot(dictPLL, dictNet, isRadians=True, filename=None, max_del
 	plt.tight_layout()
 	plt.draw()
 
+	# Create figure
+	plt.figure(num=3, figsize=(8, 8.2))
+
+	plt.title(str_para)
+	plt.plot(fsl.get_tau(), fsl.get_tau()*fsl.get_omega(isRadians=False), 'b.')
+	if ( dictNet['mx'] == 0 or dictNet['mx'] == 1 ) and dictNet['my'] == -999:
+		plt.plot(fsl1.get_tau(), fsl1.get_tau()*fsl1.get_omega(isRadians=False), 'k+', alpha=0.5)
+	plt.grid(True, ls='--')
+	plt.xlabel('delay [s]')
+	plt.ylabel('TOmega/delay [rad/s]')
+	plt.tight_layout()
+	plt.draw()
+
 	# Check if results folder exists
 	if not os.path.isdir('results'):
 		try:

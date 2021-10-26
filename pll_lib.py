@@ -1050,10 +1050,8 @@ class Space:
 		the oscillators and  the signal propagation velocity.
 
 		Attributes:
-			pll_list: a list of all PLL objects present in that space
 			signal_propagation_speed: the velocity with which signals propagate in this space
-			dimension_x: the length of the boundaries in x-direction
-			dimension_y: the length of the boundaries in y-direction
+			dimensions_xyz: the length of the boundaries in x-, y- and z-direction
 	"""
 
 	def __init__(self, signal_propagation_speed: np.float, dimensions_xyz: np.ndarray):
@@ -1067,8 +1065,7 @@ class Space:
 		self.signal_propagation_speed = signal_propagation_speed
 		self.dimensions_xyz = dimensions_xyz
 
-
-	def update_adjacency_matrix_for_all_plls_potentially_receiving_a_signal(self, all_pll_positions: np.ndarray, distance_treshold: np.ndarray, geometry_of_treshold: str) -> None:
+	def update_adjacency_matrix_for_all_plls_potentially_receiving_a_signal(self, all_pll_positions: np.ndarray, distance_treshold: np.ndarray, geometry_of_treshold: str) -> np.ndarray:
 		"""Function that updates the adjacency matrix by checking for each oscillator whether it is within the coupling of another in its vicinity
  			according to the distance treshold and geometry of the treshold.
 			If all distance tresholds are equal, any connection found is bidirectional and hence only one side of the diagonal of the coupling function needs to be checked.
@@ -1083,13 +1080,14 @@ class Space:
 		"""
 		# use all current positions to calculate the current adjacency matrix, since we assume the signal propagation to have equal velocity in either direction,
 		# we only need to compute one side of the matrix of oscillators who are in potential coupling range at a time t (symmetric about the main diagonal)
-		temp_adjacency_matrix = np.empty([len(pll_list), len(pll_list)])
+		num_plls = len(all_pll_positions[:])
+		temp_adjacency_matrix = np.empty([num_plls, num_plls])
 		temp_adjacency_matrix.fill(np.nan)
-		for i in range(len(pll_list)):
-			for j in range(i+1, len(pll_list)):
+		for i in range(num_plls):
+			for j in range(i+1, num_plls):
 				# THIS IS NOT FASTER: #np.sqrt( np.linalg.norm( np.subtract( all_plls_position[i,0], all_plls_position[j,0]) ) )**2 )
-				distance_of_pair_ij = ( np.sqrt( (all_plls_position[i,0]-all_plls_position[j,0])**2 + (all_plls_position[i,1]-all_plls_position[j,1])**2
-														+ (all_plls_position[i,2]-all_plls_position[j,2])**2 ) )
+				distance_of_pair_ij = ( np.sqrt( (all_pll_positions[i,0]-all_pll_positions[j,0])**2 + (all_pll_positions[i,1]-all_pll_positions[j,1])**2
+														+ (all_pll_positions[i,2]-all_pll_positions[j,2])**2 ) )
 				if distance_of_pair_ij < distance_treshold:
 					temp_adjacency_matrix[i, j] = 1
 					temp_adjacency_matrix[j, i] = 1

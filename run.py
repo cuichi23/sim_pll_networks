@@ -9,8 +9,8 @@ import sim_lib
 import setup
 
 # multiprocessing based simulations
-#multiprocess = True
-multiprocess = False
+multiprocess = True
+#multiprocess = False
 
 # obtain dictionaries for the PLLs and the network
 #dictPLL, dictNet, dictAlgo            = dicts_lib_FPEexplore.getDicts()

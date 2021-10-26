@@ -981,7 +981,7 @@ class PhaseLockedLoop:
 		self.distance_treshold = distance_treshold
 		self.geometry_of_treshold = geometry_of_treshold
 
-	def evolve_position_in_3d(self) -> None:
+	def evolve_position_in_3d(self) -> np.ndarray:
 		""" Function that evolves the position in 3d space according to the diffusion coefficient and the deterministic speed components.
 
 			Args:
@@ -991,6 +991,7 @@ class PhaseLockedLoop:
 
 		self.pll_coordinate_vector_3d = ( self.pll_coordinate_vector_3d + self.pll_speed_vector_3d * self.delayer.dt
 												+ np.random.normal(loc=0.0, scale=np.sqrt(self.pll_diff_var_vector_3d * self.delayer.dt)) )
+		return self.get_position_3d()
 
 
 	# def update_list_of_neighbors_in_coupling_range(self, all_plls_positions: np.ndarray, distance_treshold: np.ndarray, geometry_of_treshold: str) -> None:

@@ -279,9 +279,7 @@ def distributed_pll_in_3d_mobile(dictNet, dictPLL, phi, pos, coup_matrix, clock_
 	for idx_time in range(dictNet['max_delay_steps'],dictNet['max_delay_steps']+dictPLL['sim_time_steps']-1,1):
 
 		# update the positions and store them
-		for index,pll in enumerate(pll_list):
-			pll.evolve_position_in_3d()
-			positions_3d_store[(idx_time+1)%phi_array_len, index] = pll.get_position_3d()
+		positions_3d_store[(idx_time+1)%phi_array_len, :] = [pll.evolve_position_in_3d() for pll in pll_list]
 
 		# use all current positions to calculate the current adjacency matrix and identify potential coupling pairs, i.e., oscillators which enter each others receptions zone
 		# we only need to compute one side of the matrix of neighbor interactions (since it is symmetric about the main diagonal)

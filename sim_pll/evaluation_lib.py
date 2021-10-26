@@ -26,8 +26,8 @@ from mpl_toolkits.axes_grid1.inset_locator import mark_inset
 import time
 import datetime
 
-import integer_mult_period_signal_lib as findIntTinSig
-import plot_lib
+from sim_pll import integer_mult_period_signal_lib as findIntTinSig
+from sim_pll import plot_lib
 
 now = datetime.datetime.now()
 

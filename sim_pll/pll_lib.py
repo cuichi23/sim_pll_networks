@@ -25,7 +25,7 @@ import matplotlib.pyplot as plt
 import datetime
 import time
 
-import setup
+from sim_pll import setup
 
 ''' Enable automatic carbage collector '''
 gc.enable()

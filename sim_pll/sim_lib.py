@@ -18,9 +18,9 @@ import datetime
 import time
 import pickle
 
-import setup
-import evaluation_lib as eva
-import plot_lib as plot
+from sim_pll import setup
+from sim_pll import evaluation_lib as eva
+from sim_pll import plot_lib as plot
 
 now = datetime.datetime.now()
 

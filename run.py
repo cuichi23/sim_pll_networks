@@ -3,10 +3,7 @@ from __future__ import division
 from __future__ import print_function
 
 import dicts_lib, dicts_lib_Ising, dicts_lib_3rdGen, dicts_lib_4thGen, dicts_lib_test, dicts_lib_Nav, dicts_lib_FPEexplore
-import synctools_interface_lib as synctools
-import multisim_lib
-import sim_lib
-import setup
+from sim_pll import sim_lib, setup, multisim_lib
 
 # multiprocessing based simulations
 multiprocess = True

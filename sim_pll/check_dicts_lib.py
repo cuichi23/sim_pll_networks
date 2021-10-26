@@ -17,8 +17,8 @@ from scipy.stats import cauchy
 import datetime
 import time
 
-import coupling_fct_lib as coupfct
-import synctools_interface_lib as synctools
+from sim_pll import coupling_fct_lib as coupfct
+from sim_pll import synctools_interface_lib as synctools
 
 ''' Enable automatic carbage collector '''
 gc.enable();

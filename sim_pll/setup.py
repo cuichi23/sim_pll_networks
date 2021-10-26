@@ -18,8 +18,8 @@ import itertools
 import datetime
 import time
 
-import pll_lib as pll
-import evaluation_lib as eva
+from sim_pll import pll_lib as pll
+from sim_pll import evaluation_lib as eva
 
 ''' Enable automatic carbage collector '''
 gc.enable();

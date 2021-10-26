@@ -268,35 +268,32 @@ def distributed_pll_in_3d_mobile(dictNet, dictPLL, phi, pos, coup_matrix, clock_
 	clock_signal_store = np.empty([dictNet['max_delay_steps']+dictPLL['sim_time_steps'], dictNet['Nx']*dictNet['Ny']]) # stores clock signal
 	phases_store = np.empty([dictNet['max_delay_steps']+dictPLL['sim_time_steps'], dictNet['Nx']*dictNet['Ny']]) # stores phases
 	positions_3d_store = np.empty([dictNet['max_delay_steps']+dictPLL['sim_time_steps'], dictNet['Nx']*dictNet['Ny']]) # stores positions, from this the signaling delays can be calculated
-	adjacency_time_delay_matrix_store = np.empty([dictNet['max_delay_steps']+dictPLL['sim_time_steps'], dictNet['Nx']*dictNet['Ny']]) # stores the coupling matrix at any point in time
+	adjacency_matrix_over_time_store = np.empty([dictNet['max_delay_steps']+dictPLL['sim_time_steps'], dictNet['Nx']*dictNet['Ny']]) # stores the coupling matrix at any point in time
 	# copy history to data container
 	phases_store[0:dictNet['max_delay_steps']+1,:] = phi[0:dictNet['max_delay_steps']+1,:]
 	positions_3d_store[0:dictNet['max_delay_steps']+1,:] = pos[0:dictNet['max_delay_steps']+1,:]
-	adjacency_time_delay_matrix_store[0:dictNet['max_delay_steps']+1,:] = coup_matrix[0:dictNet['max_delay_steps']+1,:]
+	adjacency_matrix_over_time_store[0:dictNet['max_delay_steps']+1,:] = coup_matrix[0:dictNet['max_delay_steps']+1,:]
 	# obtain the length of the temporary phi array
 	phi_array_len = dictNet['phi_array_len']
 
 	for idx_time in range(dictNet['max_delay_steps'],dictNet['max_delay_steps']+dictPLL['sim_time_steps']-1,1):
 
 		# update the positions and store them
-		temp_pos_list = []
-		for pll in pll_list:
+		for index,pll in enumerate(pll_list):
 			pll.evolve_position_in_3d()
-			temp_pos_list.append(pll.get_position_3d())
-		positions_3d_store[(idx_time+1)%phi_array_len,:] = temp_pos_list
+			positions_3d_store[(idx_time+1)%phi_array_len, index] = pll.get_position_3d()
 
-		#TODO or
-		#[pll.evolve_position_in_3d() for pll in pll_list]
-		#positions_3d_store[(idx_time+1)%phi_array_len,:] = [pll.get_position_3d() for pll in pll_list]
+		# use all current positions to calculate the current adjacency matrix and identify potential coupling pairs, i.e., oscillators which enter each others receptions zone
+		# we only need to compute one side of the matrix of neighbor interactions (since it is symmetric about the main diagonal)
+		adjacency_matrix_over_time_store[(idx_time+1)%phi_array_len,:] = space.update_adjacency_matrix_for_all_plls_potentially_receiving_a_signal(all_pll_positions,
+																				distance_treshold, geometry_of_treshold)
 
-		# use all current positions to calculate the current adjacency matrix and the corresponding transmission time delays, since we assume the signal propagation to have equal
-		# velocity in either direction, we only need to compute one side of the matrix of time delays (symmetric about the main diagonal)
-		adjacency_time_delay_matrix_store[(idx_time+1)%phi_array_len,:] = space.update_adjacency_and_time_delay_matrix_with_plls_in_mutual_coupling_range(all_pll_positions, distance_treshold, geometry_of_treshold)
+		# for all identified potential signal exchanges, starting at a time t_e,kl (emission time of PLL k that may reach a neighbor l), the position and velocity vector of the
+		# emitting PLL will be of interest: TODO save time t_e,kl and the position pos_k(t_e,kl), as long as k and l are within each others range, all signal emission events at
+		# all time steps need to be followed and checked, this can only be stopped once two PLLs have been out of each others range long enough such that the signals cannot reach
+		# the other since the have travelled their maximum distance trough space and damped such that they cannot be received anymore: TODO follow each signal emission event that
+		# happens within the reception regime of another PLL until it has either arrived or decayed since travelling more than the distance treshold
 
-		# TODO extract from the time-series of stored adjacency matrices the one that is shifted by t=receive_sig_distance/signal_propagation_speed with respect to the current times
-		# then use the distance dependent time-delays of the time when the transmitting oscillator was acutally in the reception range
- 		# in other words: whenever two oscillators move into each others receptions zone it will take a while until the receive each others' signals, only once that happened it makes
-		# sense to have the delayer to pick the time-delays from the time when they moved into each others range and use them to set the time delays with respect to now
 
 		#adjacency_matrix_store -> current_adjacency_matrix[time_at_which_a_neighbor_moved_into_reception_range + time_for_signal_from_boundary_of_reception_range_to_oscillator]
 		#position_3d_store -> current_transmit_delay_steps[time_at_which_a_neighbor_moved_into_reception_range + time_for_signal_from_boundary_of_reception_range_to_oscillator]

@@ -1059,10 +1059,11 @@ class Space:
 	def __init__(self, signal_propagation_speed: np.float, dimensions_xyz: np.ndarray):
 		"""
 			Args:
+				signals_tracked_currently: N x N matrix in which all current potential signal exchange events are tracked, the entry contains the time of signal emission t_e	
 				signal_propagation_speed: the velocity with which signals propagate in this space
 				dimensions_xyz: the length of the boundaries in x, y, and z-direction
 		"""
-		#self.pll_list = pll_list
+		self.signals_tracked_currently = None
 		self.signal_propagation_speed = signal_propagation_speed
 		self.dimensions_xyz = dimensions_xyz
 
@@ -1086,12 +1087,9 @@ class Space:
 		temp_adjacency_matrix.fill(np.nan)
 		for i in range(len(pll_list)):
 			for j in range(i+1, len(pll_list)):
+				# THIS IS NOT FASTER: #np.sqrt( np.linalg.norm( np.subtract( all_plls_position[i,0], all_plls_position[j,0]) ) )**2 )
 				distance_of_pair_ij = ( np.sqrt( (all_plls_position[i,0]-all_plls_position[j,0])**2 + (all_plls_position[i,1]-all_plls_position[j,1])**2
 														+ (all_plls_position[i,2]-all_plls_position[j,2])**2 ) )
-
-
-				#np.sqrt( np.linalg.norm( np.subtract( all_plls_position[i,0], all_plls_position[j,0]) ) )**2 )
-
 				if distance_of_pair_ij < distance_treshold:
 					temp_adjacency_matrix[i, j] = 1
 					temp_adjacency_matrix[j, i] = 1

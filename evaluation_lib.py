@@ -6,6 +6,8 @@ from __future__ import print_function
 import sys, gc
 import inspect
 import numpy as np
+import scipy
+from scipy import signal
 import multiprocessing as mp
 from multiprocessing import Pool, freeze_support
 import itertools
@@ -23,11 +25,11 @@ from mpl_toolkits.axes_grid1.inset_locator import zoomed_inset_axes
 from mpl_toolkits.axes_grid1.inset_locator import mark_inset
 import time
 import datetime
-now = datetime.datetime.now()
-import scipy
-from scipy import signal
+
 import integer_mult_period_signal_lib as findIntTinSig
 import plot_lib
+
+now = datetime.datetime.now()
 
 ''' Enable automatic carbage collector '''
 gc.enable();

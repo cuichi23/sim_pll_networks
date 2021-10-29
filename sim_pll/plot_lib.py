@@ -140,6 +140,7 @@ def plotPSD(dictPLL, dictNet, dictData, plotList=[], saveData=False):
 	plt.savefig('results/powerdensity1stHarmCloseZoom_dBm_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.svg' %(np.mean(dictPLL['coupK']), np.mean(dictPLL['cutFc']), np.mean(dictPLL['syncF']), np.mean(dictPLL['transmission_delay']), np.mean(dictPLL['noiseVarVCO']), now.year, now.month, now.day), dpi=dpi_val)
 	plt.savefig('results/powerdensity1stHarmCloseZoom_dBm_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.png' %(np.mean(dictPLL['coupK']), np.mean(dictPLL['cutFc']), np.mean(dictPLL['syncF']), np.mean(dictPLL['transmission_delay']), np.mean(dictPLL['noiseVarVCO']), now.year, now.month, now.day), dpi=dpi_val)
 
+	plt.ylim([np.min(Pxx_db[i][:]), peak_power_val[0]+5]);
 	plt.xlim(0, 8.5*np.min(dictPLL['intrF']));
 
 	fig2 = plt.figure(num=2, figsize=(figwidth, figheight), dpi=dpi_val, facecolor='w', edgecolor='k')	# plot spectrum
@@ -662,8 +663,12 @@ def plotFreqAndPhaseDiff(dictPLL, dictNet, dictData, ylim_percent_of_min_val=0.9
 	plt.axvspan(dictData['t'][int(0.75*np.round(np.mean(dictPLL['transmission_delay'])/dictPLL['dt']))], dictData['t'][int(1.0*np.round(np.mean(dictPLL['transmission_delay'])/dictPLL['dt']))], color='b', alpha=0.25)
 	phidot = np.diff(dictData['phi'], axis=0)/dictPLL['dt']
 	if not dictPLL['intrF'] == 0:
-		phidot = phidot / (2.0*np.pi*dictPLL['intrF'])
-		ylabelname = r'$\frac{\dot{\theta}_k(t)}{\omega}$'
+		if isinstance(dictPLL['intrF'], list) or isinstance(dictPLL['intrF'], np.ndarray):
+			phidot = phidot / (2.0*np.pi*np.mean(dictPLL['intrF']))
+			ylabelname = r'$\frac{\dot{\theta}_k(t)}{\bar{\omega}_k}$'
+		else:
+			phidot = phidot / (2.0*np.pi*dictPLL['intrF'])
+			ylabelname = r'$\frac{\dot{\theta}_k(t)}{\omega}$'
 	else:
 		ylabelname = r'$\dot{\theta}_k(t)$'
 	plt.plot(dictData['t'][int(0.75*np.round(np.mean(dictPLL['transmission_delay'])/dictPLL['dt'])):-1:dictPLL['sampleFplot']], phidot[int(0.75*np.round(np.mean(dictPLL['transmission_delay'])/dictPLL['dt']))::dictPLL['sampleFplot']], linewidth=2, linestyle=linet[0])
@@ -694,6 +699,10 @@ def plotFreqAndPhaseDiff(dictPLL, dictNet, dictData, ylim_percent_of_min_val=0.9
 				labelname = r'$\phi_{%i}$-$\phi_{0}$' %(i)
 				plt.plot((dictData['t'][int(0.75*np.round(np.mean(dictPLL['transmission_delay'])/dictPLL['dt']))::dictPLL['sampleFplot']]),
 						((dictData['phi'][int(0.75*np.round(np.mean(dictPLL['transmission_delay'])/dictPLL['dt']))::dictPLL['sampleFplot'],i]-dictData['phi'][int(0.75*np.round(np.mean(dictPLL['transmission_delay'])/dictPLL['dt']))::dictPLL['sampleFplot'],0]+shift2piWin)%(2*np.pi))-shift2piWin,label=labelname)
+		else:
+			labelname = r'$\phi_{1}$-$\phi_{0}$'
+			plt.plot((dictData['t'][int(0.75*np.round(np.mean(dictPLL['transmission_delay'])/dictPLL['dt']))::dictPLL['sampleFplot']]),
+					((dictData['phi'][int(0.75*np.round(np.mean(dictPLL['transmission_delay'])/dictPLL['dt']))::dictPLL['sampleFplot'],1]-dictData['phi'][int(0.75*np.round(np.mean(dictPLL['transmission_delay'])/dictPLL['dt']))::dictPLL['sampleFplot'],0]+shift2piWin)%(2*np.pi))-shift2piWin,label=labelname)
 	else:
 		plt.plot(dictData['t'][int(0.75*np.round(np.mean(dictPLL['transmission_delay'])/dictPLL['dt'])):-1:dictPLL['sampleFplot']],
 		((dictData['phi'][int(0.75*np.round(np.mean(dictPLL['transmission_delay'])/dictPLL['dt'])):-1:dictPLL['sampleFplot'],0]-dictData['phi'][int(0.75*np.round(np.mean(dictPLL['transmission_delay'])/dictPLL['dt'])):-1:dictPLL['sampleFplot'],1]+shift2piWin)%(2.*np.pi))-shift2piWin,'-',linewidth=2,label=r'$\phi_{0}-\phi_{1}$ mutual')
@@ -745,8 +754,12 @@ def plotFreqAndOrderPar(dictPLL, dictNet, dictData):
 	plt.axvspan(dictData['t'][int(0.75*np.round(np.mean(dictPLL['transmission_delay'])/dictPLL['dt']))], dictData['t'][int(1.0*np.round(np.mean(dictPLL['transmission_delay'])/dictPLL['dt']))], color='b', alpha=0.25)
 	phidot = np.diff(dictData['phi'], axis=0)/dictPLL['dt']
 	if not dictPLL['intrF'] == 0:
-		phidot = phidot / (2.0*np.pi*dictPLL['intrF'])
-		ylabelname = r'$\frac{\dot{\theta}_k(t)}{\omega}$'
+		if isinstance(dictPLL['intrF'], list) or isinstance(dictPLL['intrF'], np.ndarray):
+			phidot = phidot / (2.0*np.pi*np.mean(dictPLL['intrF']))
+			ylabelname = r'$\frac{\dot{\theta}_k(t)}{\bar{\omega}_k}$'
+		else:
+			phidot = phidot / (2.0*np.pi*dictPLL['intrF'])
+			ylabelname = r'$\frac{\dot{\theta}_k(t)}{\omega}$'
 	else:
 		ylabelname = r'$\dot{\theta}_k(t)$'
 	plt.plot(dictData['t'][int(0.75*np.round(np.mean(dictPLL['transmission_delay'])/dictPLL['dt'])):-1:dictPLL['sampleFplot']], phidot[int(0.75*np.round(np.mean(dictPLL['transmission_delay'])/dictPLL['dt']))::dictPLL['sampleFplot']], linewidth=2, linestyle=linet[0])

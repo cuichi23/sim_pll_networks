@@ -33,16 +33,16 @@ def getDicts(Fsim=125):
 	dictNet={
 		'Nx': 2,																# oscillators in x-direction
 		'Ny': 1,																# oscillators in y-direction
-		'mx': 0,																# twist/chequerboard in x-direction (depends on closed or open boundary conditions)
+		'mx': 1,																# twist/chequerboard in x-direction (depends on closed or open boundary conditions)
 		'my': -999,																# twist/chequerboard in y-direction
 		'topology': 'ring',														# 1d) ring, chain, 2d) square-open, square-periodic, hexagonal...
 																				# 3) global, entrainOne, entrainAll, entrainPLLsHierarch, compareEntrVsMutual
-		'Tsim': 75000,															# simulation time in multiples of the period
+		'Tsim': 100000,															# simulation time in multiples of the period
 		'computeFreqAndStab': False,											# compute linear stability and global frequency if possible: True or False
 		'phi_array_mult_tau': 1,												# how many multiples of the delay is stored of the phi time series
 		'phiPerturb': [0, 0],													# delta-perturbation on initial state -- PROVIDE EITHER ONE OF THEM! if [] set to zero
 		'phiPerturbRot': [],													# delta-perturbation on initial state -- in rotated space
-		'phiInitConfig': [0, 0],													# phase-configuration of sync state,  []: automatic, else provide list
+		'phiInitConfig': [0, np.pi],												# phase-configuration of sync state,  []: automatic, else provide list
 		'freq_beacons': 0.25,													# frequency of external sender beacons, either a float or a list
 		'special_case': 'False',												# 'False', or 'test_case', 'timeDepInjectLockCoupStr', 'timeDepTransmissionDelay', 'timeDepChangeOfCoupStr'
 		'typeOfTimeDependency': 'linear',										# 'exponential', 'linear', 'quadratic', 'triangle', 'cosine'
@@ -50,7 +50,7 @@ def getDicts(Fsim=125):
 	}
 
 	dictPLL={
-		'intrF': 1, #[0.99889, 1.00111],												# intrinsic frequency in Hz [random.uniform(0.95, 1.05) for i in range(dictNet['Nx']*dictNet['Ny'])]
+		'intrF': [0.99889, 1.00111],											# intrinsic frequency in Hz [random.uniform(0.95, 1.05) for i in range(dictNet['Nx']*dictNet['Ny'])]
 		'syncF': 1.0,															# frequency of synchronized state in Hz
 		'coupK': 0.04992,														# [random.uniform(0.3, 0.4) for i in range(dictNet['Nx']*dictNet['Ny'])],# coupling strength in Hz float or [random.uniform(minK, maxK) for i in range(dictNet['Nx']*dictNet['Ny'])]
 		'gPDin': 1,																# gains of the different inputs to PD k from input l -- G_kl, see PD, set to 1 and all G_kl=1 (so far only implemented for some cases, check!): np.random.uniform(0.95,1.05,size=[dictNet['Nx']*dictNet['Ny'],dictNet['Nx']*dictNet['Ny']])
@@ -61,9 +61,9 @@ def getDicts(Fsim=125):
 		'friction_coefficient': 1,												# friction coefficient of 2nd order Kuramoto models
 		'fric_coeff_PRE_vs_PRR': 'PRE',											# 'PRR': friction coefficient multiplied to instant. AND intrin. freq, 'PRE': friction coefficient multiplied only to instant. freq
 		'noiseVarVCO': 1E-8,													# variance of VCO GWN
-		'feedback_delay': 7.82,													# value of feedback delay in seconds
+		'feedback_delay': 0,													# value of feedback delay in seconds
 		'feedback_delay_var': None, 											# variance of feedback delay
-		'transmission_delay': 405.5,#405.5,											# value of transmission delay in seconds, float (single), list (tau_k) or list of lists (tau_kl): np.random.uniform(min,max,size=[dictNet['Nx']*dictNet['Ny'],dictNet['Nx']*dictNet['Ny']]), OR [np.random.uniform(min,max) for i in range(dictNet['Nx']*dictNet['Ny'])]
+		'transmission_delay': 1026,												# value of transmission delay in seconds, float (single), list (tau_k) or list of lists (tau_kl): np.random.uniform(min,max,size=[dictNet['Nx']*dictNet['Ny'],dictNet['Nx']*dictNet['Ny']]), OR [np.random.uniform(min,max) for i in range(dictNet['Nx']*dictNet['Ny'])]
 		'transmission_delay_var': None, 										# variance of transmission delays
 		'distribution_for_delays': None,										# from what distribution are random delays drawn?
 		# choose from coupfct.<ID>: sine, cosine, neg_sine, neg_cosine, triangular, deriv_triangular, square_wave, pfd, inverse_cosine, inverse_sine
@@ -92,8 +92,8 @@ def getDicts(Fsim=125):
 	}
 
 	dictAlgo={
-		'bruteForceBasinStabMethod': 'single',#'listOfInitialPhaseConfigurations',		# pick method for setting realizations 'classicBruteForceMethodRotatedSpace', 'listOfInitialPhaseConfigurations', 'single', 'statistics'
-		'paramDiscretization': [2, 6],#[15, 10],								# parameter discetization for brute force parameter space scans
+		'bruteForceBasinStabMethod': 'listOfInitialPhaseConfigurations',#'single',#		# pick method for setting realizations 'classicBruteForceMethodRotatedSpace', 'listOfInitialPhaseConfigurations', 'single', 'statistics'
+		'paramDiscretization': [6, 3],#[15, 10],								# parameter discetization for brute force parameter space scans
 		'param_id': 'None',														# parameter to be changed between different realizations, according to the min_max_range_parameter: 'None' or string of any other parameter
 		'min_max_range_parameter': [0.8, 1.2]									# specifies within which min and max value to linspace the initial frequency difference (w.r.t. HF Frequency)
 	}

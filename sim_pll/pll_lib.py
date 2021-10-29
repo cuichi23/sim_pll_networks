@@ -37,7 +37,7 @@ authors: Alexandros Pollakis, Daniel Platz, Deborah Schmidt, Lucas Wetzel (lwetz
 '''
 
 
-def get_from_value_or_list(pll_id: int, input, pll_count: int):
+def get_from_value_or_list(pll_id, input, pll_count):
 	"""
 	Convenience method return a value or value from list based on oscillator id, depending on the type
 	of the input (scalar or list / array)
@@ -59,7 +59,7 @@ def get_from_value_or_list(pll_id: int, input, pll_count: int):
 	elif (isinstance(input, float) or isinstance(input, int)):
 		return input  # set value for all
 	else:
-		print('Error in PDC constructor setting a variable!')
+		print('Error in constructor setting a variable!')
 		sys.exit()
 
 
@@ -242,8 +242,12 @@ class SignalControlledOscillator:
 		if dict_pll['fric_coeff_PRE_vs_PRR'] == 'PRR':
 			self.intr_freq_rad 	= 2.0 * np.pi * get_from_value_or_list(pll_id, dict_pll['intrF'], dict_net['Nx'] * dict_net['Ny'])
 		elif dict_pll['fric_coeff_PRE_vs_PRR'] == 'PRE':
-			self.intr_freq_rad 	= 2.0 * np.pi * get_from_value_or_list(pll_id, dict_pll['intrF'] / dict_pll['friction_coefficient'], dict_net['Nx'] * dict_net['Ny'])
-		self.K_rad 			= 2.0 * np.pi * get_from_value_or_list(pll_id, dict_pll['coupK'], dict_net['Nx'] * dict_net['Ny'])
+			if isinstance(dict_pll['intrF'], list):
+				intrinsic_freqs_temp = np.array(dict_pll['intrF'])
+			else:
+				intrinsic_freqs_temp = dict_pll['intrF']
+			self.intr_freq_rad 	= 2.0 * np.pi * get_from_value_or_list(pll_id, intrinsic_freqs_temp / dict_pll['friction_coefficient'], dict_net['Nx'] * dict_net['Ny'])
+		self.K_rad 		= 2.0 * np.pi * get_from_value_or_list(pll_id, dict_pll['coupK'], dict_net['Nx'] * dict_net['Ny'])
 		self.c 			= get_from_value_or_list(pll_id, dict_pll['noiseVarVCO'], dict_net['Nx'] * dict_net['Ny'])
 		self.dt 		= dict_pll['dt']
 		self.phi: Optional[float] = None
@@ -1058,7 +1062,7 @@ class Space:
 	def __init__(self, signal_propagation_speed: np.float, dimensions_xyz: np.ndarray):
 		"""
 			Args:
-				signals_tracked_currently: N x N matrix in which all current potential signal exchange events are tracked, the entry contains the time of signal emission t_e	
+				signals_tracked_currently: N x N matrix in which all current potential signal exchange events are tracked, the entry contains the time of signal emission t_e
 				signal_propagation_speed: the velocity with which signals propagate in this space
 				dimensions_xyz: the length of the boundaries in x, y, and z-direction
 		"""

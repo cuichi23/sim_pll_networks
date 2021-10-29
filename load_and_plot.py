@@ -76,12 +76,12 @@ labelpadyaxis       = 20;
 
 ################################################################################
 # load data
-folder		 = '/home/cuichi/data-z2/simPLL_0/2/results/'
+folder		 = '/home/cuichi/data-z2/simPLL_2/1/results/'
 ################################################################################
-filenamePLL  = folder+'dictPLL_K0.050_tau39968.000_Fc0.000_mx0_my0_N16_toposquare-open_11:20_2021_10_22'
-filenameNet  = folder+'dictNet_K0.050_tau39968.000_Fc0.000_mx0_my0_N16_toposquare-open_11:20_2021_10_22'
-filenameData = folder+'dictData_K0.050_tau39968.000_Fc0.000_mx0_my0_N16_toposquare-open_11:20_2021_10_22'
-filenameAlgo = folder+'dictAlgo_K0.050_tau39968.000_Fc0.000_mx0_my0_N16_toposquare-open_11:20_2021_10_22'
+filenamePLL  = folder+'dictPLL_K0.050_tau1026.000_Fc0.000_mx1_my-999_N2_toporing_14:1_2021_10_29'
+filenameNet  = folder+'dictNet_K0.050_tau1026.000_Fc0.000_mx1_my-999_N2_toporing_14:1_2021_10_29'
+filenameData = folder+'dictData_K0.050_tau1026.000_Fc0.000_mx1_my-999_N2_toporing_14:1_2021_10_29'
+filenameAlgo = folder+'dictAlgo_K0.050_tau1026.000_Fc0.000_mx1_my-999_N2_toporing_14:1_2021_10_29'
 ################################################################################
 dictPLL 	 = pickle.load(open(filenamePLL, 'rb'))
 dictNet 	 = pickle.load(open(filenameNet, 'rb'))
@@ -118,15 +118,23 @@ dictData.update({'orderParam': orderParam, 'R': r, 'F1': F1})
 
 #dictPLL.update({'vco_out_sig': coupfct.sine})
 
-plot_lib.plotOrderPara(dictPLL, dictNet, dictData)
-#plot_lib.plotPhaseRela(dictPLL, dictNet, dictData)
-#plot_lib.plotPhaseDiff(dictPLL, dictNet, dictData)
-#plot_lib.plotClockTime(dictPLL, dictNet, dictData)
-#plot_lib.plotOscSignal(dictPLL, dictNet, dictData)
-#plot_lib.plotFrequency(dictPLL, dictNet, dictData)
-plot_lib.plotFreqAndPhaseDiff(dictPLL, dictNet, dictData)
-#plot_lib.plotFreqAndOrderPar(dictPLL, dictNet, dictData)
-plot_lib.plotPSD(dictPLL, dictNet, dictData, [], saveData=False)
+
+if dictAlgo['bruteForceBasinStabMethod']   == 'testNetworkMotifIsing':
+	eva.evaluateSimulationIsing(poolData)
+elif dictAlgo['bruteForceBasinStabMethod'] == 'listOfInitialPhaseConfigurations':
+	eva.evaluateSimulationsChrisHoyer(poolData)
+elif dictAlgo['bruteForceBasinStabMethod'] == 'single':
+	plot_lib.plotOrderPara(dictPLL, dictNet, dictData)
+	#plot_lib.plotPhaseRela(dictPLL, dictNet, dictData)
+	#plot_lib.plotPhaseDiff(dictPLL, dictNet, dictData)
+	#plot_lib.plotClockTime(dictPLL, dictNet, dictData)
+	#plot_lib.plotOscSignal(dictPLL, dictNet, dictData)
+	#plot_lib.plotFrequency(dictPLL, dictNet, dictData)
+	plot_lib.plotFreqAndPhaseDiff(dictPLL, dictNet, dictData)
+	#plot_lib.plotFreqAndOrderPar(dictPLL, dictNet, dictData)
+	plot_lib.plotPSD(dictPLL, dictNet, dictData, [], saveData=False)
+elif dictAlgo['bruteForceBasinStabMethod'] == 'classicBruteForceMethodRotatedSpace':
+	print('Implement evaluation as in the old version! Copy plots, etc...'); sys.exit()
 
 plt.draw()
 plt.show()

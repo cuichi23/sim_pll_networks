@@ -6,17 +6,17 @@ import dicts_lib, dicts_lib_Ising, dicts_lib_3rdGen, dicts_lib_4thGen, dicts_lib
 from sim_pll import sim_lib, setup, multisim_lib
 
 # multiprocessing based simulations
-multiprocess = True
-#multiprocess = False
+#multiprocess = True
+multiprocess = False
 
 # obtain dictionaries for the PLLs and the network
 #dictPLL, dictNet, dictAlgo            = dicts_lib_FPEexplore.getDicts()
 #dictPLL, dictNet, dictAlgo            = dicts_lib_4thGen.getDicts()
-dictPLL, dictNet, dictAlgo            = dicts_lib_3rdGen.getDicts()
+#dictPLL, dictNet, dictAlgo            = dicts_lib_3rdGen.getDicts()
 #dictPLL, dictNet, dictAlgo            = dicts_lib_Ising.getDicts()
 #dictPLL, dictNet, dictAlgo            = dicts_lib_test.getDicts()
 #dictPLL, dictNet, dictAlgo            = dicts_lib_Nav.getDicts()
-#dictPLL, dictNet, dictAlgo            = dicts_lib.getDicts()
+dictPLL, dictNet, dictAlgo            = dicts_lib.getDicts()
 # print('dictPLL:', dictPLL)
 # print('dictNet:', dictNet)
 # print('dictNet:', dictAlgo)

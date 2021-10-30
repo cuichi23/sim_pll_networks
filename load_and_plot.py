@@ -21,10 +21,10 @@ from mpl_toolkits.axes_grid1.inset_locator import mark_inset
 import time
 import pickle
 
-import plot_lib
-import evaluation_lib as eva
-import coupling_fct_lib as coupfct
-import check_dicts_lib as chk_dicts
+from sim_pll import plot_lib
+from sim_pll import evaluation_lib as eva
+from sim_pll import coupling_fct_lib as coupfct
+from sim_pll import check_dicts_lib as chk_dicts
 #import palettable.colorbrewer.diverging as colormap_diver
 #from palettable.colorbrewer.diverging import PuOr_7
 
@@ -80,7 +80,7 @@ folder		 = '/home/cuichi/data-z2/simPLL_2/1/results/'
 ################################################################################
 filenamePLL  = folder+'dictPLL_K0.050_tau1026.000_Fc0.000_mx1_my-999_N2_toporing_14:1_2021_10_29'
 filenameNet  = folder+'dictNet_K0.050_tau1026.000_Fc0.000_mx1_my-999_N2_toporing_14:1_2021_10_29'
-filenameData = folder+'dictData_K0.050_tau1026.000_Fc0.000_mx1_my-999_N2_toporing_14:1_2021_10_29'
+filenameData = folder+'poolData_K0.050_tau1026.000_Fc0.000_mx1_my-999_N2_toporing_14:1_2021_10_29'
 filenameAlgo = folder+'dictAlgo_K0.050_tau1026.000_Fc0.000_mx1_my-999_N2_toporing_14:1_2021_10_29'
 ################################################################################
 dictPLL 	 = pickle.load(open(filenamePLL, 'rb'))
@@ -112,18 +112,17 @@ cdict = {
 }
 colormap  	= matplotlib.colors.LinearSegmentedColormap('my_colormap', cdict, 1024)
 
-# run evaluations
-r, orderParam, F1 	= eva.obtainOrderParam(dictPLL, dictNet, dictData)
-dictData.update({'orderParam': orderParam, 'R': r, 'F1': F1})
-
-#dictPLL.update({'vco_out_sig': coupfct.sine})
-
-
 if dictAlgo['bruteForceBasinStabMethod']   == 'testNetworkMotifIsing':
 	eva.evaluateSimulationIsing(poolData)
 elif dictAlgo['bruteForceBasinStabMethod'] == 'listOfInitialPhaseConfigurations':
 	eva.evaluateSimulationsChrisHoyer(poolData)
 elif dictAlgo['bruteForceBasinStabMethod'] == 'single':
+	# run evaluations
+	r, orderParam, F1 	= eva.obtainOrderParam(dictPLL, dictNet, dictData)
+	dictData.update({'orderParam': orderParam, 'R': r, 'F1': F1})
+
+	#dictPLL.update({'vco_out_sig': coupfct.sine})
+
 	plot_lib.plotOrderPara(dictPLL, dictNet, dictData)
 	#plot_lib.plotPhaseRela(dictPLL, dictNet, dictData)
 	#plot_lib.plotPhaseDiff(dictPLL, dictNet, dictData)

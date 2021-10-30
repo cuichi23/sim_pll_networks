@@ -31,12 +31,12 @@ def getDicts(Fsim=125):
 
 	dictNet={
 		'Nx': 2,																# oscillators in x-direction
-		'Ny': 1,																# oscillators in y-direction
+		'Ny': 2,																# oscillators in y-direction
 		'mx': 0	,																# twist/chequerboard in x-direction (depends on closed or open boundary conditions)
-		'my': -999,																# twist/chequerboard in y-direction
-		'topology': 'ring',														# 1d) ring, chain, 2d) square-open, square-periodic, hexagonal...
+		'my': 0,																# twist/chequerboard in y-direction
+		'topology': 'square-open',												# 1d) ring, chain, 2d) square-open, square-periodic, hexagonal...
 																				# 3) global, entrainOne, entrainAll, entrainPLLsHierarch, compareEntrVsMutual
-		'Tsim': 15,															# simulation time in multiples of the period
+		'Tsim': 500,															# simulation time in multiples of the period
 		'computeFreqAndStab':  False,											# compute linear stability and global frequency if possible: True or False
 		'phi_array_mult_tau': 1,												# how many multiples of the delay is stored of the phi time series
 		'phiPerturb': [],		#[0, -0.001, 0, 0, 0.001, 0, 0, -0.001, 0],		# delta-perturbation on initial state -- PROVIDE EITHER ONE OF THEM! if [] set to zero

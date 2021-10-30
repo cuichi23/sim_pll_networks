@@ -27,6 +27,13 @@ gc.enable();
 
 def check_dicts_consistency(dictPLL, dictNet, dictAlgo):
 
+	# check consistency of mx and my
+	if dictNet['Ny'] > 1 and dictNet['my'] == -999:
+		print('NOTE: For 2D topology my should not be set to -999, setting to zero now!')
+		dictNet.update({'my': 0})
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 	# check consistency of coupling functions and output signal type when calculating the PSD (sometimes it can be helpful to only consider the first harmonic contribution)
 	if dictPLL['coup_fct_sig'] == coupfct.triangular or dictPLL['coup_fct_sig'] == coupfct.deriv_triangular or dictPLL['coup_fct_sig'] == coupfct.square_wave or dictPLL['coup_fct_sig'] == coupfct.pfd:
 		if dictPLL['vco_out_sig'] == coupfct.sine:

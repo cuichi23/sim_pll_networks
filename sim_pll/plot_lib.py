@@ -475,7 +475,7 @@ def plotClockTime(dictPLL, dictNet, dictData):
 	fig9.canvas.set_window_title('clock time') 							 		# plot the clocks' time
 	fig9.set_size_inches(plot_size_inches_x, plot_size_inches_y)
 
-	plt.plot(dictData['t'], dictData['clock'], linewidth=1, linestyle=linet[0])
+	plt.plot(dictData['t'], dictData['clock_counter'], linewidth=1, linestyle=linet[0])
 
 	plt.xlabel(r'$\frac{\omega t}{2\pi}$', fontdict = labelfont, labelpad=labelpadxaxis)
 	plt.ylabel(r'count $\frac{T}{2}$', fontdict = labelfont, labelpad=labelpadyaxis)

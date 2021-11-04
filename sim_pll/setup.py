@@ -220,7 +220,6 @@ def generatePhi0(dictNet):
 	if dictNet['topology'] == 'global' or dictNet['topology'] == 'entrainPLLsHierarch':
 		dictNet.update( {'phiInitConfig': np.zeros(dictNet['Nx']*dictNet['Ny'])} )	# for all-to-all coupling we assume no twist states with m > 0
 
-	return dictNet
 
 ################################################################################
 

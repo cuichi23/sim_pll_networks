@@ -441,7 +441,7 @@ def multihelper(iterConfig, initPhiPrime0, dictNet, dictPLL, dictAlgo, param_id=
 		else:																	# here: oscillators have intrinsic frequencies as given in dictPLL['intrF'], however initially they evolve
 																				# with different frequencies given by syncF +/- half_the_freq_difference given by temp[1]
 			dictPLLRea.update({'syncF': [dictPLL['syncF']-temp[1], dictPLL['syncF']+temp[1]]})
-			dictPLLRea.update{'typeOfHist': 'SyncState'}						# makes sure this mode is active
+			dictPLLRea.update({'typeOfHist': 'syncState'})						# makes sure this mode is active
 
 
 		config = [0, temp[0]]

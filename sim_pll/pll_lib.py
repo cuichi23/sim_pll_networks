@@ -101,11 +101,11 @@ class LowPassFilter:
 		self.cutoff_freq_Hz 	 = get_from_value_or_list(pll_id, dict_pll['cutFc'], dict_net['Nx'] * dict_net['Ny'])
 		self.K_Hz	 = get_from_value_or_list(pll_id, dict_pll['coupK'], dict_net['Nx'] * dict_net['Ny'])
 		self.intr_freq_Hz   = get_from_value_or_list(pll_id, dict_pll['intrF'], dict_net['Nx'] * dict_net['Ny'])
-		self.sync_freq_Hz   = dict_pll['syncF']
+		self.sync_freq_Hz   = get_from_value_or_list(pll_id, dict_pll['syncF'], dict_net['Nx'] * dict_net['Ny'])
 		self.order_loop_filter = dict_pll['orderLF']
 
 		self.pll_id		= pll_id
-		self.sync_freq_rad  	= 2.0 * np.pi * self.sync_freq_Hz
+		self.sync_freq_rad  	= 2.0 * np.pi * get_from_value_or_list(pll_id, dict_pll['syncF'], dict_net['Nx'] * dict_net['Ny'])
 		self.K_rad 	  		= 2.0 * np.pi * self.K_Hz
 		self.instantaneous_freq_Hz  	= None
 		self.friction_coefficient = get_from_value_or_list(pll_id, dict_pll['friction_coefficient'], dict_net['Nx'] * dict_net['Ny'])

@@ -85,18 +85,21 @@ filenameAlgo = folder+'dictAlgo_K0.050_tau1026.000_Fc0.000_mx1_my-999_N2_toporin
 ################################################################################
 dictPLL 	 = pickle.load(open(filenamePLL, 'rb'))
 dictNet 	 = pickle.load(open(filenameNet, 'rb'))
-dictData  	 = pickle.load(open(filenameData, 'rb'))
+if 'poolData' in filenameData:
+	poolData = pickle.load(open(filenameData, 'rb'))
+else:
+	dictData = pickle.load(open(filenameData, 'rb'))
 dictAlgo  	 = pickle.load(open(filenameAlgo, 'rb'))
 ################################################################################
 # if necessary update parameters related to plotting
 ################################################################################
 dictPLL.update({'PSD_freq_resolution': 1E-5})
-if not dictAlgo:
-	dictAlgo={
-		'bruteForceBasinStabMethod': 'listOfInitialPhaseConfigurations',		# pick method for setting realizations 'classicBruteForceMethodRotatedSpace', 'listOfInitialPhaseConfigurations'
-		'paramDiscretization': [5, 3],#3										# parameter discetization for brute force parameter space scans
-		'min_max_range_parameter': [0.95, 1.05]									# specifies within which min and max value to linspace the detuning
-	}
+# if not dictAlgo:
+# 	dictAlgo={
+# 		'bruteForceBasinStabMethod': 'listOfInitialPhaseConfigurations',		# pick method for setting realizations 'classicBruteForceMethodRotatedSpace', 'listOfInitialPhaseConfigurations'
+# 		'paramDiscretization': [5, 3],#3										# parameter discetization for brute force parameter space scans
+# 		'min_max_range_parameter': [0.95, 1.05]									# specifies within which min and max value to linspace the detuning
+# 	}
 dictPLL, dictNet, dictAlgo = chk_dicts.check_dicts_consistency(dictPLL, dictNet, dictAlgo)
 ################################################################################
 ################################################################################
@@ -112,11 +115,14 @@ cdict = {
 }
 colormap  	= matplotlib.colors.LinearSegmentedColormap('my_colormap', cdict, 1024)
 
-if dictAlgo['bruteForceBasinStabMethod']   == 'testNetworkMotifIsing':
-	eva.evaluateSimulationIsing(poolData)
-elif dictAlgo['bruteForceBasinStabMethod'] == 'listOfInitialPhaseConfigurations':
-	eva.evaluateSimulationsChrisHoyer(poolData)
-elif dictAlgo['bruteForceBasinStabMethod'] == 'single':
+if 'poolData' in filenameData:
+	if dictAlgo['bruteForceBasinStabMethod']   == 'testNetworkMotifIsing':
+		eva.evaluateSimulationIsing(poolData)
+	elif dictAlgo['bruteForceBasinStabMethod'] == 'listOfInitialPhaseConfigurations':
+		eva.evaluateSimulationsChrisHoyer(poolData)
+	elif dictAlgo['bruteForceBasinStabMethod'] == 'classicBruteForceMethodRotatedSpace':
+		print('Implement evaluation as in the old version! Copy plots, etc...'); sys.exit()
+else:
 	# run evaluations
 	r, orderParam, F1 	= eva.obtainOrderParam(dictPLL, dictNet, dictData)
 	dictData.update({'orderParam': orderParam, 'R': r, 'F1': F1})
@@ -132,8 +138,6 @@ elif dictAlgo['bruteForceBasinStabMethod'] == 'single':
 	plot_lib.plotFreqAndPhaseDiff(dictPLL, dictNet, dictData)
 	#plot_lib.plotFreqAndOrderPar(dictPLL, dictNet, dictData)
 	plot_lib.plotPSD(dictPLL, dictNet, dictData, [], saveData=False)
-elif dictAlgo['bruteForceBasinStabMethod'] == 'classicBruteForceMethodRotatedSpace':
-	print('Implement evaluation as in the old version! Copy plots, etc...'); sys.exit()
 
 plt.draw()
 plt.show()

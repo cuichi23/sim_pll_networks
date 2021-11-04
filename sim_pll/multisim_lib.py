@@ -442,6 +442,7 @@ def multihelper(iterConfig, initPhiPrime0, dictNet, dictPLL, dictAlgo, param_id=
 																				# with different frequencies given by syncF +/- half_the_freq_difference given by temp[1]
 			dictPLLRea.update({'syncF': [dictPLL['syncF']-temp[1], dictPLL['syncF']+temp[1]]})
 			dictPLLRea.update({'typeOfHist': 'syncState'})						# makes sure this mode is active
+			print('WATCH OUT: dirty trick to achieve different frequency differences at the end of the history!!! Discuss with Chris Hoyer and address issue.')
 
 
 		config = [0, temp[0]]

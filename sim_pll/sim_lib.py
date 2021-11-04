@@ -28,7 +28,7 @@ now = datetime.datetime.now()
 gc.enable()
 
 ''' SIMULATE NETWORK '''
-def simulateSystem(dictNet, dictPLL, dictAlgo=None):
+def simulateSystem(dictNet, dictPLL, dictAlgo=None, multi_sim=False):
 #mode,div,Nplls,F,F_Omeg,K,Fc,delay,feedback_delay,dt,c,Nsteps,topology,couplingfct,histtype,phiS,phiM,domega,diffconstK,diffconstSendDelay,cPD,Nx=0,Ny=0,Trelax=0,Kadiab_value_r=0):
 
 	t0 = time.time()
@@ -165,40 +165,44 @@ def simulateSystem(dictNet, dictPLL, dictAlgo=None):
 		dictData = evolveSystemOnTsimArray_varDelaySaveCtrlSig(dictNet, dictPLL, phi, clock_counter, pll_list, dictData)
 		plot.plotCtrlSigDny(dictPLL, dictNet, dictData)
 	elif dictNet['special_case'] == 'timeDepInjectLockCoupStr':
-		dictData = evolveSystemOnTsimArray_varInjectLockCoupStrength(dictNet, dictPLL, phi, clock_counter, pll_list, dictData)
+		dictData = evolveSystemOnTsimArray_varInjectLockCoupStrength(dictNet, dictPLL, phi, clock_counter, pll_list, dictData, dictAlgo)
 	elif dictNet['special_case'] == 'timeDepChangeOfCoupStr':
 		dictData = evolveSystemOnTsimArray_timeDepChangeOfCoupStrength(dictNet, dictPLL, phi, clock_counter, pll_list, dictData)
 		plot.plotOrderPvsTimeDepPara(dictPLL, dictNet, dictData)
 
-	print('Time needed for execution of simulation: ', (time.time()-t0), ' seconds')
-
-	eva.saveDictionaries(dictPLL, 'dictPLL',   dictPLL['coupK'], dictPLL['transmission_delay'], dictPLL['cutFc'], dictNet['Nx'], dictNet['Ny'], dictNet['mx'], dictNet['my'], dictNet['topology'])	   # save the dicts
-	eva.saveDictionaries(dictNet, 'dictNet',   dictPLL['coupK'], dictPLL['transmission_delay'], dictPLL['cutFc'], dictNet['Nx'], dictNet['Ny'], dictNet['mx'], dictNet['my'], dictNet['topology'])	   # save the dicts
-	eva.saveDictionaries(dictData, 'dictData', dictPLL['coupK'], dictPLL['transmission_delay'], dictPLL['cutFc'], dictNet['Nx'], dictNet['Ny'], dictNet['mx'], dictNet['my'], dictNet['topology'])	   # save the dicts
-	eva.saveDictionaries(dictAlgo, 'dictAlgo', dictPLL['coupK'], dictPLL['transmission_delay'], dictPLL['cutFc'], dictNet['Nx'], dictNet['Ny'], dictNet['mx'], dictNet['my'], dictNet['topology'])	   # save the dicts
+	if not multi_sim:
+		print('Time needed for execution of simulation: ', (time.time()-t0), ' seconds')
+		eva.saveDictionaries(dictPLL, 'dictPLL',   dictPLL['coupK'], dictPLL['transmission_delay'], dictPLL['cutFc'], dictNet['Nx'], dictNet['Ny'], dictNet['mx'], dictNet['my'], dictNet['topology'])	   # save the dicts
+		eva.saveDictionaries(dictNet, 'dictNet',   dictPLL['coupK'], dictPLL['transmission_delay'], dictPLL['cutFc'], dictNet['Nx'], dictNet['Ny'], dictNet['mx'], dictNet['my'], dictNet['topology'])	   # save the dicts
+		eva.saveDictionaries(dictData, 'dictData', dictPLL['coupK'], dictPLL['transmission_delay'], dictPLL['cutFc'], dictNet['Nx'], dictNet['Ny'], dictNet['mx'], dictNet['my'], dictNet['topology'])	   # save the dicts
+		eva.saveDictionaries(dictAlgo, 'dictAlgo', dictPLL['coupK'], dictPLL['transmission_delay'], dictPLL['cutFc'], dictNet['Nx'], dictNet['Ny'], dictNet['mx'], dictNet['my'], dictNet['topology'])	   # save the dicts
 
 	# run evaluations
 	r, orderParam, F1 	= eva.obtainOrderParam(dictPLL, dictNet, dictData)
 	dictData.update({'orderParam': orderParam, 'R': r, 'F1': F1})
+	# dynFreq, phaseDiff        = calculateFreqPhaseDiff(dictData)
+	# dictData.update({'dynFreq': dynFreq, 'phaseDiff': phaseDiff})
 
-	#plot.plotPhasesInf(dictPLL, dictNet, dictData)
-	#plot.plotPhases2pi(dictPLL, dictNet, dictData)
-	#plot.plotFrequency(dictPLL, dictNet, dictData)
-	plot.plotOrderPara(dictPLL, dictNet, dictData)
-	# plot.plotPhaseRela(dictPLL, dictNet, dictData)
-	#plot.plotPhaseDiff(dictPLL, dictNet, dictData)
-	#plot.plotClockTime(dictPLL, dictNet, dictData)
-	#plot.plotOscSignal(dictPLL, dictNet, dictData)
-	plot.plotFreqAndPhaseDiff(dictPLL, dictNet, dictData)
-	plot.plotFreqAndOrderPar(dictPLL, dictNet, dictData)
-	plot.plotPSD(dictPLL, dictNet, dictData, [0, 1], saveData=False)
+	if multi_sim:
+		return {'dictNet': dictNet, 'dictPLL': dictPLL, 'dictData': dictData}
+	else:
+		# plot.plotPhasesInf(dictPLL, dictNet, dictData)
+		# plot.plotPhases2pi(dictPLL, dictNet, dictData)
+		# plot.plotFrequency(dictPLL, dictNet, dictData)
+		plot.plotOrderPara(dictPLL, dictNet, dictData)
+		# plot.plotPhaseRela(dictPLL, dictNet, dictData)
+		# plot.plotPhaseDiff(dictPLL, dictNet, dictData)
+		# plot.plotClockTime(dictPLL, dictNet, dictData)
+		# plot.plotOscSignal(dictPLL, dictNet, dictData)
+		plot.plotFreqAndPhaseDiff(dictPLL, dictNet, dictData)
+		plot.plotFreqAndOrderPar(dictPLL, dictNet, dictData)
+		plot.plotPSD(dictPLL, dictNet, dictData, [0, 1], saveData=False)
 
-	print('Time needed for simulation, evaluation and plotting: ', (time.time()-t0), ' seconds')
+		print('Time needed for simulation, evaluation and plotting: ', (time.time() - t0), ' seconds')
 
-	plt.draw()
-	plt.show()
-
-	return dictNet, dictPLL, dictData
+		plt.draw()
+		plt.show()
+		return dictNet, dictPLL, dictData
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -360,46 +364,46 @@ def evolveSystemOnTsimArray_timeDepChangeOfCoupStrength(dictNet, dictPLL, phi, c
 def evolveSystemOnTsimArray_varInjectLockCoupStrength(dictNet, dictPLL, phi, clock_counter, pll_list, dictData=None, dictAlgo=None):
 
 	injectLockCoupStrVal_vs_time = setup.setupTimeDependentParameter(dictNet, dictPLL, dictData, parameter='coupStr_2ndHarm', afterTsimPercent=0.0, forAllPLLsDifferent=False)[0]
-	phi_array_len = dictNet['phi_array_len']
 
-	plt.figure(1234);
 	t = np.arange( 0, dictNet['max_delay_steps']+dictPLL['sim_time_steps'] ) * dictPLL['dt']
-	plt.plot(t, injectLockCoupStrVal_vs_time)
-	plt.draw(); plt.show()
+	if not dictAlgo['bruteForceBasinStabMethod'] == 'testNetworkMotifIsing':
+		plt.figure(1234);
+		plt.plot(t, injectLockCoupStrVal_vs_time)
+		plt.draw(); plt.show()
 
-	t_first_pert = 450;
+	t_first_pert = 150
 	phi_array_len = dictNet['phi_array_len']
+	pll_dt = dictPLL['dt']
 
 	clkStore = np.empty([dictNet['max_delay_steps']+dictPLL['sim_time_steps'], dictNet['Nx']*dictNet['Ny']])
 	phiStore = np.empty([dictNet['max_delay_steps']+dictPLL['sim_time_steps'], dictNet['Nx']*dictNet['Ny']])
 	phiStore[0:dictNet['max_delay_steps']+1,:] = phi[0:dictNet['max_delay_steps']+1,:]
-	#line = []; tlive = np.arange(0,dictNet['phi_array_len']-1)*dictPLL['dt']
+	#line = []; tlive = np.arange(0,phi_array_len-1)*pll_dt
 	for idx_time in range(dictNet['max_delay_steps'],dictNet['max_delay_steps']+dictPLL['sim_time_steps']-1,1):
 
 		#print('[pll.next(idx_time,phi_array_len,phi) for pll in pll_list]:', [pll.next(idx_time,phi_array_len,phi) for pll in pll_list])
 		#print('Current state: phi[(idx_time)%phi_array_len,:]', phi[(idx_time)%phi_array_len,:], '\t(idx_time)%phi_array_len',(idx_time)%phi_array_len); sys.exit()
-		#print('(idx_time+1)%phi_array_len', ((idx_time+1)%phi_array_len)*dictPLL['dt']); #time.sleep(0.5)
+		#print('(idx_time+1)%phi_array_len', ((idx_time+1)%phi_array_len)*pll_dt); #time.sleep(0.5)
 		phi[(idx_time+1)%phi_array_len,:] = [pll.next(idx_time,phi_array_len,phi) for pll in pll_list] # now the network is iterated, starting at t=0 with the history as prepared above
 		#print('injectionLock:', [pll.pdc.compute(np.zeros(dictNet['Nx']*dictNet['Ny']-1), 0, np.zeros(dictNet['Nx']*dictNet['Ny']-1), idx_time) for pll in pll_list])
 		[pll.phase_detector_combiner.evolve_coupling_strength_inject_lock(injectLockCoupStrVal_vs_time[idx_time], dictNet) for pll in pll_list]
-		#[print('at time t=', idx_time*dictPLL['dt'] , 'K_inject2ndHarm=', injectLockCoupStrVal_vs_time[idx_time]) for pll in pll_list]
+		#[print('at time t=', idx_time*pll_dt , 'K_inject2ndHarm=', injectLockCoupStrVal_vs_time[idx_time]) for pll in pll_list]
 		clock_counter[(idx_time+1)%phi_array_len,:] = [pll.clock_halfperiods_count(phi[(idx_time+1)%phi_array_len,pll.pll_id]) for pll in pll_list]
 		#print('clock count for all:', clock_counter[-1])
-		if idx_time*dictPLL['dt'] > t_first_pert and idx_time*dictPLL['dt'] < t_first_pert+2*dictPLL['dt']:
-			print('Perturbation added at t=', idx_time*dictPLL['dt'], '!')
+		if idx_time*pll_dt > t_first_pert and idx_time*pll_dt < t_first_pert+2*pll_dt:
+			print('Perturbation added at t=', idx_time*pll_dt, '!')
 			[pll.signal_controlled_oscillator.add_perturbation(np.random.uniform(-np.pi, np.pi)) for pll in pll_list]
 			t_first_pert = t_first_pert + 500;
 
 		clkStore[idx_time+1,:] = clock_counter[(idx_time+1)%phi_array_len,:]
 		phiStore[idx_time+1,:] = phi[(idx_time+1)%phi_array_len,:]
-		#phidot = (phi[1:,0]-phi[:-1,0])/(2*np.pi*dictPLL['dt'])
+		#phidot = (phi[1:,0]-phi[:-1,0])/(2*np.pi*pll_dt)
 		#line = livplt.live_plotter(tlive, phidot, line)
 
-	t = np.arange(0,len(phiStore[0:dictNet['max_delay_steps']+dictPLL['sim_time_steps'],0]))*dictPLL['dt']
+	t = np.arange(0,len(phiStore[0:dictNet['max_delay_steps']+dictPLL['sim_time_steps'],0]))*pll_dt
 	dictData.update({'t': t, 'phi': phiStore, 'clock': clkStore, 'timeDepPara': injectLockCoupStrVal_vs_time})
 
 	return dictData
-
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 def evolveSystemOnTsimArray_varDelaySaveCtrlSig(dictNet, dictPLL, phi, clock_counter, pll_list, dictData=None, dictAlgo=None):

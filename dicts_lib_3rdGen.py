@@ -37,7 +37,7 @@ def getDicts(Fsim=125):
 		'my': -999,																# twist/chequerboard in y-direction
 		'topology': 'ring',														# 1d) ring, chain, 2d) square-open, square-periodic, hexagonal...
 																				# 3) global, entrainOne, entrainAll, entrainPLLsHierarch, compareEntrVsMutual
-		'Tsim': 25600,															# simulation time in multiples of the period
+		'Tsim': 256,															# simulation time in multiples of the period
 		'computeFreqAndStab': False,											# compute linear stability and global frequency if possible: True or False
 		'phi_array_mult_tau': 1,												# how many multiples of the delay is stored of the phi time series
 		'phiPerturb': [0, 0],													# delta-perturbation on initial state -- PROVIDE EITHER ONE OF THEM! if [] set to zero
@@ -95,7 +95,7 @@ def getDicts(Fsim=125):
 		'bruteForceBasinStabMethod': 'listOfInitialPhaseConfigurations',		# pick method for setting realizations 'single', 'classicBruteForceMethodRotatedSpace', 'listOfInitialPhaseConfigurations', 'single', 'statistics'
 		'paramDiscretization': [6, 3],#[15, 10],								# parameter discetization for brute force parameter space scans
 		'param_id': 'None',														# parameter to be changed between different realizations, according to the min_max_range_parameter: 'None' or string of any other parameter
-		'min_max_range_parameter': [512*0.1, 512*1.9]							# specifies within which min and max value to linspace the initial frequency difference (w.r.t. HF Frequency, not divided)
+		'min_max_range_parameter': [0.5, 1.5]									# specifies within which min and max value to linspace the initial frequency difference (w.r.t. HF Frequency, not divided)
 	}
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

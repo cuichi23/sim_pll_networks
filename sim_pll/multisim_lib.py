@@ -427,13 +427,22 @@ def multihelper(iterConfig, initPhiPrime0, dictNet, dictPLL, dictAlgo, param_id=
 			return simulateSystem(dictNetRea, dictPLL, dictAlgo)
 
 	elif dictAlgo['bruteForceBasinStabMethod'] == 'listOfInitialPhaseConfigurations':	# so far for N=2, work it out for N>2
+		initFreqDetune_vs_intrFreqDetune_equal = False
 		temp   =  list(iterConfig)
 		#print('iterConfig:', iterConfig, '\ttemp[0]:', temp[0], '\ttemp[1]:', temp[1])
 		dictPLLRea = dictPLL.copy()
-		if isinstance(dictPLL['intrF'], list):
-			meanIntF = np.mean(dictPLL['intrF'])
-			dictPLLRea.update({'intrF': [meanIntF-temp[1], meanIntF+temp[1]]})
-			#print('Intrinsic frequencies:', dictPLLRea['intrF'], '\tfor detuning', 2*temp[1]); time.sleep(2)
+		if initFreqDetune_vs_intrFreqDetune_equal:
+			if isinstance(dictPLL['intrF'], list):								# temp[1] represents half the frequency difference to be achieved in the uncoupled state
+				meanIntF = np.mean(dictPLL['intrF'])
+				dictPLLRea.update({'intrF': [meanIntF-temp[1], meanIntF+temp[1]]})
+				#print('Intrinsic frequencies:', dictPLLRea['intrF'], '\tfor detuning', 2*temp[1]); time.sleep(2)
+			else:
+				dictPLLRea.update({'intrF': [dictPLL['intrF']-temp[1], dictPLL['intrF']+temp[1]]})
+		else:																	# here: oscillators have intrinsic frequencies as given in dictPLL['intrF'], however initially they evolve
+																				# with different frequencies given by syncF +/- half_the_freq_difference given by temp[1]
+			dictPLLRea.update({'syncF': [dictPLL['syncF']-temp[1], dictPLL['syncF']+temp[1]]})
+			dictPLLRea.update{'typeOfHist': 'SyncState'}						# makes sure this mode is active
+
 
 		config = [0, temp[0]]
 		dictNetRea = dictNet.copy()

@@ -237,8 +237,8 @@ class SignalControlledOscillator:
 			dict_net: network related properties and parameters
 		"""
 		self.d_phi = None
-		self.pll_id 	= pll_id
-		self.sync_freq_rad 		= 2.0 * np.pi * dict_pll['syncF']
+		self.pll_id = pll_id
+		self.sync_freq_rad 	= 2.0 * np.pi * get_from_value_or_list(pll_id, dict_pll['syncF'], dict_net['Nx'] * dict_net['Ny'])     #dict_pll['syncF']
 		if dict_pll['fric_coeff_PRE_vs_PRR'] == 'PRR':
 			self.intr_freq_rad 	= 2.0 * np.pi * get_from_value_or_list(pll_id, dict_pll['intrF'], dict_net['Nx'] * dict_net['Ny'])
 		elif dict_pll['fric_coeff_PRE_vs_PRR'] == 'PRE':

@@ -395,7 +395,7 @@ def allInitPhaseCombinations(dictPLL, dictNet, dictAlgo, paramDiscretization=10)
 		if dictAlgo['bruteForceBasinStabMethod'] == 'listOfInitialPhaseConfigurations' and ( isinstance(dictAlgo['min_max_range_parameter'], list) or isinstance(dictAlgo['min_max_range_parameter'], np.ndarray) ):
 			tempDetune = ( dictAlgo['min_max_range_parameter'][1] - dictAlgo['min_max_range_parameter'][0] ) / dictPLL['div'];
 			scanValueslist1 = list( np.linspace(-dictPLL['div']*(np.pi), +dictPLL['div']*(np.pi), paramDiscr[0]) ) 		# all entries are in rotated, and reduced phase space NOTE: adjust unit cell accordingly!
-			scanValueslist2 = list( np.linspace(-tempDetune, tempDetune, paramDiscr[1]) )	# all entries are in rotated, and reduced phase space NOTE: adjust unit cell accordingly!
+			scanValueslist2 = list( np.linspace(-tempDetune/2.0, tempDetune/2.0, paramDiscr[1]) )	# all entries are in rotated, and reduced phase space NOTE: adjust unit cell accordingly!
 			#print('scanValueslist2', scanValueslist2)
 			scanValues = np.array([scanValueslist1, scanValueslist2])
 			_allPoints 		= itertools.product(scanValues[0], scanValues[1])

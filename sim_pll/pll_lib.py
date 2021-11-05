@@ -575,8 +575,8 @@ class Delayer:
 			self.pick_delayed_phases = lambda phi, t, abs_t, tau: phi[(t-tau)%self.phi_array_len, self.neighbor_ids]
 
 		# calculate tranmission delays steps, here pick for each Delayer individually but the same for each input l or even for each connection tau_kl individually
-		elif ( isinstance(dict_pll['transmission_delay'], list) or isinstance(dict_pll['transmission_delay'], np.ndarray)
-												or dict_net['special_case'] == 'distanceDepTransmissionDelay' and not dict_net['special_case'] == 'timeDepTransmissionDelay' ):
+		elif ( ( isinstance(dict_pll['transmission_delay'], list) or isinstance(dict_pll['transmission_delay'], np.ndarray)
+												or dict_net['special_case'] == 'distanceDepTransmissionDelay' ) and not dict_net['special_case'] == 'timeDepTransmissionDelay' ):
 
 			if np.array(dict_pll['transmission_delay']).ndim == 1:				# tau_k case -- all inputs are subject to the same transmission delay
 				print('Delayer has different delays for each oscillator! Hence: tau_k are introduced and all incoming signals are subject to the same time delay.')

@@ -547,13 +547,30 @@ def plotOscSignal(dictPLL, dictNet, dictData, plotEveryDt=1):
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-def plotFreqAndOrderP(dictPLL, dictNet, dictData):
+def plot_instfreq_vs_timedependent_parameter(dictPLL, dictNet, dictData):
 
-	dictPLL, dictNet = prepareDictsForPlotting(dictPLL, dictNet)
+	#dictPLL, dictNet = prepareDictsForPlotting(dictPLL, dictNet)
+	param_name = dictNet['special_case']										#'timeDepInjectLockCoupStr', 'timeDepTransmissionDelay', 'timeDepChangeOfCoupStr', 'distanceDepTransmissionDelay'
+	if param_name == 'timeDepTransmissionDelay':
+		dyn_x_label = r'$\frac{\tau\omega}{2\pi}$'
+		x_axis_scaling = np.mean(dictPLL['intrF'])
+	elif param_name == 'timeDepChangeOfCoupStr':
+		dyn_x_label = r'$\frac{2\pi K}{\omega}$'
+		x_axis_scaling = np.mean(1.0/dictPLL['intrF'])
 
 	fig12 = plt.figure(num=12, figsize=(figwidth, figheight), dpi=dpi_val, facecolor='w', edgecolor='k')
-	fig12.canvas.set_window_title('time-series frequency and order parameter')	# frequency and order parameter
+	fig12.canvas.set_window_title('instantaneous frequency as function of time-dependent parameter')
 	fig12.set_size_inches(plot_size_inches_x, plot_size_inches_y)
+
+	plt.plot(dictData['timeDependentParameter'][0,0:-1]*x_axis_scaling, (np.diff(dictData['phi'], axis=0)/dictPLL['dt'])/np.mean(dictPLL['intrF']), 'b-')
+
+	plt.xlabel(dyn_x_label, fontdict = labelfont, labelpad=labelpadxaxis)
+	plt.ylabel(r'$\frac{\dot{\theta}_k(t)}{\omega}$', fontdict = labelfont, labelpad=labelpadyaxis)
+	plt.tick_params(axis='both', which='major', labelsize=tickSize)
+	# plt.legend(loc='upper right')
+
+	plt.savefig('results/instFreq_vs_'+param_name+'%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.svg' %(np.mean(dictPLL['coupK']), np.mean(dictPLL['cutFc']), np.mean(dictPLL['syncF']), np.mean(dictPLL['transmission_delay']), np.mean(dictPLL['noiseVarVCO']), now.year, now.month, now.day))
+	plt.savefig('results/instFreq_vs_'+param_name+'%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.png' %(np.mean(dictPLL['coupK']), np.mean(dictPLL['cutFc']), np.mean(dictPLL['syncF']), np.mean(dictPLL['transmission_delay']), np.mean(dictPLL['noiseVarVCO']), now.year, now.month, now.day), dpi=dpi_val)
 
 	return None
 
@@ -625,7 +642,7 @@ def plotOrderPvsTimeDepPara(dictPLL, dictNet, dictData):
 	fig18.canvas.set_window_title('order parameter as function of time-dependent parameter')	# time-series phases and phase-differences
 	fig18.set_size_inches(plot_size_inches_x, plot_size_inches_y)
 
-	plt.plot(dictData['timeDepPara'], dictData['orderParam'], 'b-')
+	plt.plot(dictData['timeDependentParameter'], dictData['orderParam'], 'b-')
 
 	plt.xlabel(r'$K$', fontdict = labelfont, labelpad=labelpadxaxis)
 	plt.ylabel(r'$R(t)$', fontdict = labelfont, labelpad=labelpadyaxis)
@@ -786,6 +803,8 @@ def plotFreqAndOrderPar(dictPLL, dictNet, dictData):
 
 	return None
 
+
+#############################################################################################################################################################################
 
 # ###############################################################################################################################################################################
 

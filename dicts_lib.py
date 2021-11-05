@@ -31,21 +31,21 @@ def getDicts(Fsim=125):
 
 	dictNet={
 		'Nx': 2,																# oscillators in x-direction
-		'Ny': 2,																# oscillators in y-direction
+		'Ny': 1,																# oscillators in y-direction
 		'mx': 0	,																# twist/chequerboard in x-direction (depends on closed or open boundary conditions)
-		'my': 0,																# twist/chequerboard in y-direction
-		'topology': 'square-open',												# 1d) ring, chain, 2d) square-open, square-periodic, hexagonal...
+		'my': -999,																# twist/chequerboard in y-direction
+		'topology': 'ring',														# 1d) ring, chain, 2d) square-open, square-periodic, hexagonal...
 																				# 3) global, entrainOne, entrainAll, entrainPLLsHierarch, compareEntrVsMutual
-		'Tsim': 500,															# simulation time in multiples of the period
+		'Tsim': 5000,															# simulation time in multiples of the period
 		'computeFreqAndStab':  False,											# compute linear stability and global frequency if possible: True or False
 		'phi_array_mult_tau': 1,												# how many multiples of the delay is stored of the phi time series
 		'phiPerturb': [],		#[0, -0.001, 0, 0, 0.001, 0, 0, -0.001, 0],		# delta-perturbation on initial state -- PROVIDE EITHER ONE OF THEM! if [] set to zero
 		'phiPerturbRot': [0., 0.1],													# delta-perturbation on initial state -- in rotated space
 		'phiInitConfig': [],													# phase-configuration of sync state,  []: automatic, else provide list
 		'freq_beacons': 0.1,													# frequency of external sender beacons, either a float or a list
-		'special_case': 'False',#'timeDepTransmissionDelay',					# 'False', or 'test_case', 'timeDepInjectLockCoupStr', 'timeDepTransmissionDelay', 'timeDepChangeOfCoupStr'
-		'typeOfTimeDependency': 'linear',										# 'exponential', 'linear', 'quadratic', 'triangle', 'cosine'
-		'min_max_rate_timeDepPara': [0.15, 3.85, 0.4/100]						# provide a list with min, max and rate of the time-dependent parameter
+		'special_case': 'timeDepTransmissionDelay',								# 'False', or 'test_case', 'timeDepInjectLockCoupStr', 'timeDepTransmissionDelay', 'timeDepChangeOfCoupStr', 'distanceDepTransmissionDelay'
+		'typeOfTimeDependency': 'triangle',										# 'exponential', 'linear', 'quadratic', 'triangle', 'cosine'
+		'min_max_rate_timeDepPara': [0.01, 4.01, 0.1/100]							# provide a list with min, max and rate of change per unit time of the time-dependent parameter
 	}
 
 	dictPLL={
@@ -54,7 +54,7 @@ def getDicts(Fsim=125):
 		'coupK': 0.2,															#[random.uniform(0.3, 0.4) for i in range(dictNet['Nx']*dictNet['Ny'])],# coupling strength in Hz float or [random.uniform(minK, maxK) for i in range(dictNet['Nx']*dictNet['Ny'])]
 		'gPDin': 1,																# gains of the different inputs to PD k from input l -- G_kl, see PD, set to 1 and all G_kl=1 (so far only implemented for some cases, check!): np.random.uniform(0.95,1.05,size=[dictNet['Nx']*dictNet['Ny'],dictNet['Nx']*dictNet['Ny']])
 		'gPDin_symmetric': True,												# set to True if G_kl == G_lk, False otherwise
-		'cutFc': 0.014,	# LF cut-off frequency in Hz, None for no LF, or e.g., N=9 with mean 0.015: [0.05,0.015,0.00145,0.001,0.0001,0.001,0.00145,0.015,0.05], [0.0148, 0.0148, 0.0957, 0.0957, 0.0148, 0.0148, 0.0957, 0.0957, 0.0148, 0.0148, 0.0957, 0.0957, 0.0148, 0.0148, 0.0957, 0.0957] # [0.0148, 0.0957, 0.0148, 0.0957, 0.0148, 0.0957, 0.0148, 0.0957, 0.0148, 0.0957, 0.0148, 0.0957, 0.0148, 0.0957, 0.0148, 0.0957], #
+		'cutFc': 0.5, #0.014,													# LF cut-off frequency in Hz, None for no LF, or e.g., N=9 with mean 0.015: [0.05,0.015,0.00145,0.001,0.0001,0.001,0.00145,0.015,0.05], [0.0148, 0.0148, 0.0957, 0.0957, 0.0148, 0.0148, 0.0957, 0.0957, 0.0148, 0.0148, 0.0957, 0.0957, 0.0148, 0.0148, 0.0957, 0.0957] # [0.0148, 0.0957, 0.0148, 0.0957, 0.0148, 0.0957, 0.0148, 0.0957, 0.0148, 0.0957, 0.0148, 0.0957, 0.0148, 0.0957, 0.0148, 0.0957], #
 		'orderLF': 1,															# order of LF filter, either 1 or 2 at the moment (not compatible with synctools!)
 		'div': 1,																# divisor of divider (int)
 		'friction_coefficient': 1,												# friction coefficient of 2nd order Kuramoto models
@@ -66,10 +66,10 @@ def getDicts(Fsim=125):
 		'transmission_delay_var': None, 										# variance of transmission delays
 		'distribution_for_delays': None,										# from what distribution are random delays drawn?
 		# choose from coupfct.<ID>: sine, cosine, neg_sine, neg_cosine, triangular, deriv_triangular, square_wave, pfd, inverse_cosine, inverse_sine
-		'coup_fct_sig': coupfct.sine, #coupfct.triangular,						# coupling function h(x) for PLLs with ideally filtered PD signals:
-		'derivative_coup_fct': coupfct.cosine,									# derivative h'(x) of coupling function h(x)
+		'coup_fct_sig': coupfct.triangular,	#coupfct.sine,						# coupling function h(x) for PLLs with ideally filtered PD signals:
+		'derivative_coup_fct': coupfct.deriv_triangular,						# derivative h'(x) of coupling function h(x)
 		'includeCompHF': False,													# boolean True/False whether to simulate with HF components
-		'vco_out_sig': coupfct.sine,										# for HF case, e.g.: coupfct.sine or coupfct.square_wave
+		'vco_out_sig': coupfct.square_wave,										# for HF case, e.g.: coupfct.sine or coupfct.square_wave
 		'typeVCOsig': 'analogHF',												# 'analogHF' or 'digitalHF'
 		'responseVCO': 'linear',												# either string: 'linear' or a nonlinear function of omega, Kvco, e.g., lambda w, K, ...: expression
 		'antenna': False,														# boolean True/False whether antenna present for PLLs

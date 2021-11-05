@@ -32,7 +32,6 @@ def simulateSystem(dictNet, dictPLL, dictAlgo=None, multi_sim=False):
 	#mode,div,Nplls,F,F_Omeg,K,Fc,delay,feedback_delay,dt,c,Nsteps,topology,couplingfct,histtype,phiS,phiM,domega,diffconstK,diffconstSendDelay,cPD,Nx=0,Ny=0,Trelax=0,Kadiab_value_r=0):
 
 	t0 = time.time()
-
 	# restart pseudo random-number generator
 	np.random.seed()
 
@@ -206,6 +205,8 @@ def save_results_simulation(dictNet, dictPLL, dictAlgo, dictData):
 
 
 def plot_results_simulation(dictNet, dictPLL, dictData):
+	if dictNet['special_case'] != 'single':
+		plot.plot_instfreq_vs_timedependent_parameter(dictPLL, dictNet, dictData)
 	# plot.plotPhasesInf(dictPLL, dictNet, dictData)
 	# plot.plotPhases2pi(dictPLL, dictNet, dictData)
 	# plot.plotFrequency(dictPLL, dictNet, dictData)

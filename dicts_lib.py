@@ -36,7 +36,7 @@ def getDicts(Fsim=125):
 		'my': -999,																# twist/chequerboard in y-direction
 		'topology': 'ring',														# 1d) ring, chain, 2d) square-open, square-periodic, hexagonal...
 																				# 3) global, entrainOne, entrainAll, entrainPLLsHierarch, compareEntrVsMutual
-		'Tsim': 5000,															# simulation time in multiples of the period
+		'Tsim': 15000,															# simulation time in multiples of the period
 		'computeFreqAndStab':  False,											# compute linear stability and global frequency if possible: True or False
 		'phi_array_mult_tau': 1,												# how many multiples of the delay is stored of the phi time series
 		'phiPerturb': [],		#[0, -0.001, 0, 0, 0.001, 0, 0, -0.001, 0],		# delta-perturbation on initial state -- PROVIDE EITHER ONE OF THEM! if [] set to zero
@@ -45,7 +45,7 @@ def getDicts(Fsim=125):
 		'freq_beacons': 0.1,													# frequency of external sender beacons, either a float or a list
 		'special_case': 'timeDepTransmissionDelay',								# 'False', or 'test_case', 'timeDepInjectLockCoupStr', 'timeDepTransmissionDelay', 'timeDepChangeOfCoupStr', 'distanceDepTransmissionDelay'
 		'typeOfTimeDependency': 'triangle',										# 'exponential', 'linear', 'quadratic', 'triangle', 'cosine'
-		'min_max_rate_timeDepPara': [0.01, 4.01, 0.1/100]							# provide a list with min, max and rate of change per unit time of the time-dependent parameter
+		'min_max_rate_timeDepPara': [0.01, 4.01, 0.01/100]							# provide a list with min, max and rate of change per unit time of the time-dependent parameter
 	}
 
 	dictPLL={

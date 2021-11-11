@@ -601,6 +601,8 @@ def evaluateSimulationsChrisHoyer(poolData):
 	fig19.canvas.set_window_title('LF (cross-coupling) basin attraction plot')			 			# basin attraction plot
 	ax19 = fig19.add_subplot(111)
 
+	stats_init_phase_conf_final_state = np.empty([len(poolData[0][:]), 5])
+
 	for i in range(len(poolData[0][:])):
 		#print('working on realization %i results from sim:'%i, poolData[0][i]['dictNet'], '\n', poolData[0][i]['dictPLL'], '\n', poolData[0][i]['dictData'],'\n\n')
 
@@ -642,10 +644,18 @@ def evaluateSimulationsChrisHoyer(poolData):
 
 			if np.abs( np.abs( (deltaThetaDiv[-1]+np.pi)%(2.*np.pi)-np.pi ) - np.pi ) < treshold_statState:
 				color = 'r'
+				stats_init_phase_conf_final_state[i,4] = np.pi
 			elif np.abs( (deltaThetaDiv[-1]+np.pi)%(2.*np.pi)-np.pi ) - 0.0 < treshold_statState:
 				color = 'b'
+				stats_init_phase_conf_final_state[i,4] = 0.0
 			else:
 				color = 'k'
+				stats_init_phase_conf_final_state[i,4] = -999
+
+			stats_init_phase_conf_final_state[i,0] = deltaThetaDiv[delay_steps] 							# save initial phase difference
+			stats_init_phase_conf_final_state[i,1] = deltaThetaDivDot[delay_steps]							# save initial freq. difference
+			stats_init_phase_conf_final_state[i,2] = deltaThetaDiv[-1] 										# save final phase difference
+			stats_init_phase_conf_final_state[i,3] = deltaThetaDivDot[-1]									# save final freq. difference
 
 			# plot for LF output
 			ax18.plot((deltaThetaDiv[delay_steps+1::poolData[0][0]['dictPLL']['sampleFplot']]+np.pi)%(2.*np.pi)-np.pi, deltaThetaDivDot[delay_steps::poolData[0][0]['dictPLL']['sampleFplot']], '-', color=color, alpha=alpha, linewidth='1.2')	# plot trajectory
@@ -686,7 +696,7 @@ def evaluateSimulationsChrisHoyer(poolData):
 	fig181.savefig('results/LF-multStabInfo_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.png' %(np.mean(poolData[0][0]['dictPLL']['coupK']), np.mean(poolData[0][0]['dictPLL']['cutFc']), np.mean(poolData[0][0]['dictPLL']['syncF']), np.mean(poolData[0][0]['dictPLL']['transmission_delay']), np.mean(poolData[0][0]['dictPLL']['noiseVarVCO']), now.year, now.month, now.day), dpi=dpi_val)
 	fig181.savefig('results/LF-multStabInfo_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.svg' %(np.mean(poolData[0][0]['dictPLL']['coupK']), np.mean(poolData[0][0]['dictPLL']['cutFc']), np.mean(poolData[0][0]['dictPLL']['syncF']), np.mean(poolData[0][0]['dictPLL']['transmission_delay']), np.mean(poolData[0][0]['dictPLL']['noiseVarVCO']), now.year, now.month, now.day), dpi=dpi_val)
 
-
+	np.save('results/LF-stats_init_phase_conf_final_state_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.npy' %(np.mean(poolData[0][0]['dictPLL']['coupK']), np.mean(poolData[0][0]['dictPLL']['cutFc']), np.mean(poolData[0][0]['dictPLL']['syncF']), np.mean(poolData[0][0]['dictPLL']['transmission_delay']), np.mean(poolData[0][0]['dictPLL']['noiseVarVCO']), now.year, now.month, now.day), stats_init_phase_conf_final_state)
 	plt.draw(); plt.show()
 
 	return None

@@ -59,7 +59,7 @@ def get_from_value_or_list(pll_id, input, pll_count):
 	elif (isinstance(input, float) or isinstance(input, int)):
 		return input  # set value for all
 	else:
-		print('Error in constructor setting a variable!')
+		print('Error in PLL component constructor setting a variable using get_from_value_or_list() function!')
 		sys.exit()
 
 
@@ -220,6 +220,7 @@ class SignalControlledOscillator:
 		pll_id: the oscillator's identity
 		sync_freq_rad: frequency of synchronized states in radHz (Omega)
 		intr_freq_rad: intrinsic frequency of free running closed loop oscillator in radHz (omega)
+		fric_coeff: friction coefficient	
 		K_rad: coupling strength in radHz
 		c: noise strength -- provides the variance of the GWN process
 		dt: time increment
@@ -238,6 +239,7 @@ class SignalControlledOscillator:
 		"""
 		self.d_phi = None
 		self.pll_id = pll_id
+		self.fric_coeff = get_from_value_or_list(pll_id, dict_pll['friction_coefficient'], dict_net['Nx'] * dict_net['Ny'])
 		self.sync_freq_rad 	= 2.0 * np.pi * get_from_value_or_list(pll_id, dict_pll['syncF'], dict_net['Nx'] * dict_net['Ny'])     #dict_pll['syncF']
 		if dict_pll['fric_coeff_PRE_vs_PRR'] == 'PRR':
 			self.intr_freq_rad 	= 2.0 * np.pi * get_from_value_or_list(pll_id, dict_pll['intrF'], dict_net['Nx'] * dict_net['Ny'])
@@ -246,7 +248,7 @@ class SignalControlledOscillator:
 				intrinsic_freqs_temp = np.array(dict_pll['intrF'])
 			else:
 				intrinsic_freqs_temp = dict_pll['intrF']
-			self.intr_freq_rad 	= 2.0 * np.pi * get_from_value_or_list(pll_id, intrinsic_freqs_temp / dict_pll['friction_coefficient'], dict_net['Nx'] * dict_net['Ny'])
+			self.intr_freq_rad 	= 2.0 * np.pi * get_from_value_or_list(pll_id, intrinsic_freqs_temp / self.fric_coeff, dict_net['Nx'] * dict_net['Ny'])
 		self.K_rad 		= 2.0 * np.pi * get_from_value_or_list(pll_id, dict_pll['coupK'], dict_net['Nx'] * dict_net['Ny'])
 		self.c 			= get_from_value_or_list(pll_id, dict_pll['noiseVarVCO'], dict_net['Nx'] * dict_net['Ny'])
 		self.dt 		= dict_pll['dt']

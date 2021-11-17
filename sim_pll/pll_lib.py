@@ -110,29 +110,59 @@ class LowPassFilter:
 		self.instantaneous_freq_Hz  	= None
 		self.friction_coefficient = get_from_value_or_list(pll_id, dict_pll['friction_coefficient'], dict_net['Nx'] * dict_net['Ny'])
 
-		self.control_signal 			= None
-		self.derivative_control_signal		= None
+		self.control_signal = None
+		self.derivative_control_signal = None
+
+		# NOTE: hack :/
+		integrate_2nd_order_diff_eq = False
 
 		if not self.cutoff_freq_Hz == None and self.order_loop_filter > 0:
 			self.cutoff_freq_rad 	= 2.0 * np.pi * self.cutoff_freq_Hz
-			self.beta 	= self.dt*self.cutoff_freq_rad
-			if   self.order_loop_filter == 1:
+			self.beta = self.dt*self.cutoff_freq_rad
+
+			if self.order_loop_filter == 1:
 				print('I am the loop filter of PLL%i: first order, a=%i. Friction coefficient set to %0.2f.' % (self.pll_id, self.order_loop_filter, self.friction_coefficient))
 				self.evolve = lambda xPD: (1.0 - self.beta * self.friction_coefficient) * self.control_signal + self.beta * xPD
-			elif self.order_loop_filter == 2:
-				print('I am the loop filter of PLL%i: second order, a=%i. Friction coefficient set to %0.2f.' % (self.pll_id, self.order_loop_filter, self.friction_coefficient))
-				self.evolve = lambda xPD: self.solve_2nd_order_ordinary_diff_eq(xPD)
-			elif self.order_loop_filter > 2:
-				print('Loop filters of order higher two are NOT implemented. Aborting!'); sys.exit()
+				self.b = 1.0 / (2.0 * np.pi * self.cutoff_freq_Hz)
+			elif self.order_loop_filter >= 2:
+				if integrate_2nd_order_diff_eq:
+					print('I am the loop filter of PLL%i: order, a=%i (sequential RC LFs, using solve_ivp for 2 coupled first order ODEs). Friction coefficient set to %0.2f.' % (self.pll_id, self.order_loop_filter, self.friction_coefficient))
+					self.evolve = lambda xPD: self.solve_2nd_order_ordinary_diff_eq(xPD)
+					a = self.order_loop_filter
+					self.b = 1.0 / (2.0 * np.pi * self.cutoff_freq_Hz * a)
+					self.t = np.array([0, self.dt])
+				else:
+					print('I am the loop filter of PLL%i: order, a=%i (sequential RC LFs). Friction coefficient set to %0.2f.' % (self.pll_id, self.order_loop_filter, self.friction_coefficient))
+					self.evolve = lambda xPD: self.nth_order_sequential_lf(xPD)
+					self.b = 1.0 / (2.0 * np.pi * self.cutoff_freq_Hz)
 		elif self.cutoff_freq_Hz == None:
 			print('No cut-off frequency defined (None), hence simulating without loop filter!')
 			self.evolve = lambda xPD: xPD
 		else:
 			print('Problem in LF class!'); sys.exit()
 
-		a = self.order_loop_filter
-		self.b = 1.0 / (2.0 * np.pi * self.cutoff_freq_Hz * a)
-		self.t = np.array([0, self.dt])
+
+	def nth_order_sequential_lf(self, phase_detector_output: float) -> np.float:
+		""" Evolves the output of an n-th order loop filter by one time increment.
+
+		Args:
+			phase_detector_output: the input signal to the signal loop filter
+
+		Returns:
+			control signal
+		"""
+		for i in range(self.order_loop_filter):									# apply first order loop filter (identical RC) sequentially
+			#print('i=',i)
+			phase_detector_output = (1.0 - self.beta * self.friction_coefficient) * self.control_signal + self.beta * phase_detector_output
+			self.control_signal = phase_detector_output							# needs to be updated in between!
+
+		# prior_ctrl_sig = self.control_signal
+		# for i in range(self.order_loop_filter):									# apply first order loop filter (identical RC) sequentially
+		# 	#print('i=',i)
+		# 	phase_detector_output = (1.0 - self.beta * self.friction_coefficient) * prior_ctrl_sig + self.beta * phase_detector_output
+		# 	prior_ctrl_sig = phase_detector_output								# needs to be updated in between!
+
+		return phase_detector_output
 
 	def second_order_ordinary_diff_eq(self, t, z, phase_detector_output):
 		""" Defines the second order ordinary differential equation of the second order loop filter as a set of two
@@ -155,7 +185,9 @@ class LowPassFilter:
 		# TODO define function with known solution and test
 		# optional: try to implement via odeint as shown here: https://www.epythonguru.com/2020/07/second-order-differential-equation.html
 		func = lambda t, z: self.second_order_ordinary_diff_eq(t, z, phase_detector_output)
-		sol = solve_ivp(func, [self.t[0], self.t[1]], [2 * self.control_signal / self.b, self.derivative_control_signal], method='RK45', t_eval=self.t, dense_output=False, events=None, vectorized=False, rtol=1e-5)
+		sol = solve_ivp(func, [self.t[0], self.t[1]], [2 * self.control_signal / self.b, self.derivative_control_signal], method='RK45', t_eval=self.t, dense_output=False, events=None, vectorized=False, rtol=1e-12)
+		if not sol.success:
+			print('solve_ivp integration of 2nd order LF failed! Aborting.'); sys.exit()
 		#print('sol: ', sol)
 		control_signal 			= sol.y[0][1]
 		self.derivative_control_signal   = sol.y[1][1]
@@ -220,7 +252,7 @@ class SignalControlledOscillator:
 		pll_id: the oscillator's identity
 		sync_freq_rad: frequency of synchronized states in radHz (Omega)
 		intr_freq_rad: intrinsic frequency of free running closed loop oscillator in radHz (omega)
-		fric_coeff: friction coefficient	
+		fric_coeff: friction coefficient
 		K_rad: coupling strength in radHz
 		c: noise strength -- provides the variance of the GWN process
 		dt: time increment
@@ -817,6 +849,38 @@ class PhaseLockedLoop:
 
 		updated_phase = self.signal_controlled_oscillator.next(control_signal)[0]
 		return updated_phase
+
+	# NOTE: found better solution, of ok... delete this when you see it
+	# def next_N_sequential_LFs(self, index_current_time_absolute: int, length_phase_memory: int, phase_memory: np.ndarray, order_filter: int) -> np.ndarray:
+	# 	""" Function that evolves the oscillator forward in time by one increment based on the external signals and internal dynamics.
+	# 		1) delayer obtains past states of neighbors in the network coupled to this oscillator and the current state of the oscillator itself
+	# 		2) from these states the input phase relations are evaluated by the phase detector and combiner which yields the PD signal (averaged over all inputs)
+	# 		3) the PD signal is fed into the loop filter and yields the control signal
+	# 		4) the voltage controlled oscillator evolves the phases according to the control signal
+	#
+	# 		Args:
+	# 			index_current_time_absolute: current time within simulation
+	# 			length_phase_memory: length of container that stores the phases of the oscillators, needed for organizing the cyclic memory to handle the delay
+	# 			phase_memory: holds the phases of all oscillators for at least the time [-tau_max, 0], denotes the memory necessary for the time delay
+	# 			order_filter: integer that
+	#
+	# 		Returns:
+	# 			updated phase incrementing the time by one step
+	#
+	# 		Raises:
+	# 	"""
+	# 	feedback_delayed_phases, transmission_delayed_phases = self.delayer.next(index_current_time_absolute % length_phase_memory, phase_memory, index_current_time_absolute)
+	#
+	# 	phase_detector_output = self.phase_detector_combiner.next(feedback_delayed_phases, transmission_delayed_phases, 0, index_current_time_absolute)
+	#
+	# 	input = phase_detector_output
+	# 	for i in range(order_filter):											# apply first order loop filter (identical RC) sequentially
+	# 		input = self.low_pass_filter.next(input)
+	#
+	# 	control_signal = input
+	#
+	# 	updated_phase = self.signal_controlled_oscillator.next(control_signal)[0]
+	# 	return updated_phase
 
 	def clock_periods_count(self, current_phase_state: np.ndarray) -> int:
 		""" Function that counts the periods of oscillations that have passed for the oscillator. This enables the derivation of a time,

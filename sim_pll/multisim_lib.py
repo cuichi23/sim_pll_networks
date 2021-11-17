@@ -95,6 +95,7 @@ def distributeProcesses(dictNet, dictPLL, dictAlgo=None):
 	elif dictAlgo['bruteForceBasinStabMethod'] == 'listOfInitialPhaseConfigurations':
 		eva.evaluateSimulationsChrisHoyer(poolData)
 	elif dictAlgo['bruteForceBasinStabMethod'] == 'single':
+		plot.plotCtrlSigDny(poolData[0][0]['dictPLL'], poolData[0][0]['dictNet'], poolData[0][0]['dictData'])
 		plot.plotPhasesInf(poolData[0][0]['dictPLL'], poolData[0][0]['dictNet'], poolData[0][0]['dictData'])
 		plot.plotPhases2pi(poolData[0][0]['dictPLL'], poolData[0][0]['dictNet'], poolData[0][0]['dictData'])
 		plot.plotFrequency(poolData[0][0]['dictPLL'], poolData[0][0]['dictNet'], poolData[0][0]['dictData'])

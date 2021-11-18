@@ -37,12 +37,12 @@ def getDicts(Fsim=55):
 		'my': -999,																# twist/chequerboard in y-direction
 		'topology': 'ring',														# 1d) ring, chain, 2d) square-open, square-periodic, hexagonal...
 																				# 3) global, entrainOne, entrainAll, entrainPLLsHierarch, compareEntrVsMutual
-		'Tsim': 325000,															# simulation time in multiples of the period
+		'Tsim': 1250,															# simulation time in multiples of the period
 		'computeFreqAndStab': False,											# compute linear stability and global frequency if possible: True or False
 		'phi_array_mult_tau': 1,												# how many multiples of the delay is stored of the phi time series
 		'phiPerturb': [0, 0],													# delta-perturbation on initial state -- PROVIDE EITHER ONE OF THEM! if [] set to zero
 		'phiPerturbRot': [],													# delta-perturbation on initial state -- in rotated space
-		'phiInitConfig': [0, np.pi/2],												# phase-configuration of sync state,  []: automatic, else provide list
+		'phiInitConfig': [0, -np.pi/2],												# phase-configuration of sync state,  []: automatic, else provide list
 		'freq_beacons': 0.25,													# frequency of external sender beacons, either a float or a list
 		'special_case': 'False',												# 'False', or 'test_case', 'timeDepInjectLockCoupStr', 'timeDepTransmissionDelay', 'timeDepChangeOfCoupStr'
 		'typeOfTimeDependency': 'linear',										# 'exponential', 'linear', 'quadratic', 'triangle', 'cosine'
@@ -92,7 +92,7 @@ def getDicts(Fsim=55):
 	}
 
 	dictAlgo={
-		'bruteForceBasinStabMethod': 'single', #'listOfInitialPhaseConfigurations',		# pick method for setting realizations 'single', 'classicBruteForceMethodRotatedSpace', 'listOfInitialPhaseConfigurations', 'single', 'statistics'
+		'bruteForceBasinStabMethod': 'listOfInitialPhaseConfigurations',		# pick method for setting realizations 'single', 'classicBruteForceMethodRotatedSpace', 'listOfInitialPhaseConfigurations', 'single', 'statistics'
 		'paramDiscretization': [3, 2],#[15, 10],								# parameter discetization for brute force parameter space scans
 		'param_id': 'None',														# parameter to be changed between different realizations, according to the min_max_range_parameter: 'None' or string of any other parameter
 		'min_max_range_parameter': [1-5E-9, 1+5E-9]								# specifies within which min and max value to linspace the initial frequency difference (w.r.t. HF Frequency, not divided)

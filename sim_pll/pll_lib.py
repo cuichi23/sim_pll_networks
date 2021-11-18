@@ -164,14 +164,18 @@ class LowPassFilter:
 
 		return phase_detector_output
 
-	def second_order_ordinary_diff_eq(self, t, z, phase_detector_output):
+	def second_order_ordinary_diff_eq(self, t, z, phase_detector_output, buffered_vs_preloaded=3):
 		""" Defines the second order ordinary differential equation of the second order loop filter as a set of two
 		first order coupled differential equations.
+
+		Args:
+			phase_detector_output: the output signal of the phase detector
+			buffered_vs_preloaded: set to the value of '2' if there is a buffer between the two stages, otherwise set to '3' since the RC filters following the first will preload it
 		"""
 		x = z[0]
 		y = z[1]
 		# print('Solving control signal with 2nd order LF. Initial conditions are:', self.dydt, ',\t', self.y*(1+2.0/self.b)); time.sleep(2)
-		return [y, (1.0/self.b**2) * (phase_detector_output - x) - (2.0 / self.b) * y]	# -self.y-(self.dydt+(2.0*self.y)/self.b)
+		return [y, (1.0/self.b**2) * (phase_detector_output - x) - (buffered_vs_preloaded / self.b) * y]	# -self.y-(self.dydt+(2.0*self.y)/self.b)
 
 	def solve_2nd_order_ordinary_diff_eq(self, phase_detector_output):
 		""" Evolves the output of the second order loop filter by one time increment.

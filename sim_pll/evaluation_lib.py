@@ -601,7 +601,10 @@ def evaluateSimulationsChrisHoyer(poolData):
 	fig19.canvas.set_window_title('LF (cross-coupling) basin attraction plot')			 			# basin attraction plot
 	ax19 = fig19.add_subplot(111)
 
+	delay_steps	= int( np.floor( poolData[0][0]['dictPLL']['transmission_delay'] / poolData[0][0]['dictPLL']['dt'] ) )
 	stats_init_phase_conf_final_state = np.empty([len(poolData[0][:]), 5])
+	deltaThetaDivSave		= np.empty( [len(poolData[0][:]), len(poolData[0][0]['dictData']['phi'][delay_steps+1::poolData[0][0]['dictPLL']['sampleFplot'],0])-0] )
+	deltaThetaDivDotSave	= np.empty( [len(poolData[0][:]), len(poolData[0][0]['dictData']['phi'][delay_steps+1::poolData[0][0]['dictPLL']['sampleFplot'],0])-0] )
 
 	for i in range(len(poolData[0][:])):
 		#print('working on realization %i results from sim:'%i, poolData[0][i]['dictNet'], '\n', poolData[0][i]['dictPLL'], '\n', poolData[0][i]['dictData'],'\n\n')
@@ -617,7 +620,6 @@ def evaluateSimulationsChrisHoyer(poolData):
 			else:
 				initmarker = 'o'
 
-			delay_steps			= int( np.floor( poolData[0][0]['dictPLL']['transmission_delay'] / poolData[0][0]['dictPLL']['dt'] ) )
 			deltaTheta 			= poolData[0][i]['dictData']['phi'][:,0] - poolData[0][i]['dictData']['phi'][:,1]
 			deltaThetaDot		= np.diff( deltaTheta, axis=0 ) / poolData[0][i]['dictPLL']['dt']
 			deltaThetaDiv 		= poolData[0][i]['dictData']['phi'][:,0]/poolData[0][i]['dictPLL']['div'] - poolData[0][i]['dictData']['phi'][:,1]/poolData[0][i]['dictPLL']['div']
@@ -668,6 +670,9 @@ def evaluateSimulationsChrisHoyer(poolData):
 
 			ax181.plot((deltaThetaDiv[0]+np.pi)%(2.*np.pi)-np.pi, deltaThetaDivDot[0], initmarker, color=color, alpha=alpha, linewidth='1.2') # plot initial dot
 
+			deltaThetaDivSave[i] 	= deltaThetaDiv[delay_steps+1::poolData[0][0]['dictPLL']['sampleFplot']]
+			deltaThetaDivDotSave[i] = deltaThetaDivDot[delay_steps::poolData[0][0]['dictPLL']['sampleFplot']]
+
 	#plt.xlabel(r'$\Delta\theta(t)$')
 	#plt.ylabel(r'$\Delta\dot{\theta}(t)$')
 	ax16.set_xlabel(r'$\Delta\theta(t)$ mod $2\pi$', fontsize=axisLabel)
@@ -696,6 +701,8 @@ def evaluateSimulationsChrisHoyer(poolData):
 	fig181.savefig('results/LF-multStabInfo_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.png' %(np.mean(poolData[0][0]['dictPLL']['coupK']), np.mean(poolData[0][0]['dictPLL']['cutFc']), np.mean(poolData[0][0]['dictPLL']['syncF']), np.mean(poolData[0][0]['dictPLL']['transmission_delay']), np.mean(poolData[0][0]['dictPLL']['noiseVarVCO']), now.year, now.month, now.day), dpi=dpi_val)
 	fig181.savefig('results/LF-multStabInfo_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.svg' %(np.mean(poolData[0][0]['dictPLL']['coupK']), np.mean(poolData[0][0]['dictPLL']['cutFc']), np.mean(poolData[0][0]['dictPLL']['syncF']), np.mean(poolData[0][0]['dictPLL']['transmission_delay']), np.mean(poolData[0][0]['dictPLL']['noiseVarVCO']), now.year, now.month, now.day), dpi=dpi_val)
 
+	np.save('results/deltaThetaDivSave_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.npy' %(np.mean(poolData[0][0]['dictPLL']['coupK']), np.mean(poolData[0][0]['dictPLL']['cutFc']), np.mean(poolData[0][0]['dictPLL']['syncF']), np.mean(poolData[0][0]['dictPLL']['transmission_delay']), np.mean(poolData[0][0]['dictPLL']['noiseVarVCO']), now.year, now.month, now.day), deltaThetaDivSave)
+	np.save('results/deltaThetaDivDotSave_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.npy' %(np.mean(poolData[0][0]['dictPLL']['coupK']), np.mean(poolData[0][0]['dictPLL']['cutFc']), np.mean(poolData[0][0]['dictPLL']['syncF']), np.mean(poolData[0][0]['dictPLL']['transmission_delay']), np.mean(poolData[0][0]['dictPLL']['noiseVarVCO']), now.year, now.month, now.day), deltaThetaDivDotSave)
 	np.save('results/LF-stats_init_phase_conf_final_state_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.npy' %(np.mean(poolData[0][0]['dictPLL']['coupK']), np.mean(poolData[0][0]['dictPLL']['cutFc']), np.mean(poolData[0][0]['dictPLL']['syncF']), np.mean(poolData[0][0]['dictPLL']['transmission_delay']), np.mean(poolData[0][0]['dictPLL']['noiseVarVCO']), now.year, now.month, now.day), stats_init_phase_conf_final_state)
 	plt.draw(); plt.show()
 

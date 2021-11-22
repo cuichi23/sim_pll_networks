@@ -47,5 +47,8 @@ def deriv_triangular(x):
 def square_wave(x, duty=0.5):
 	return 0.5*(1.0+square(x,duty=0.5))
 
+def square_wave_symm_zero(x, duty=0.5):
+	return 0.5*(square(x,duty=0.5))
+
 def pfd(x):
 	return 0.5*(np.sign(x)*(1+sawtooth(1*x*np.sign(x), width=1)))

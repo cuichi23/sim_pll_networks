@@ -27,6 +27,11 @@ gc.enable();
 
 def check_dicts_consistency(dictPLL, dictNet, dictAlgo):
 
+	if ( dictPLL['includeCompHF'] and (dictPLL['vco_out_sig'] == coupfct.square_wave or dictPLL['vco_out_sig'] == coupfct.square_wave_symm_zero) ):
+		print('NOTE: simulation with coupling function that has peak2peak amplitude 1 (NOT 2) --> calculate coupling strength K dictPLL[*coupK*] as K = G * A_pd * K_vco, where G are all gains in the feed-forward path, A_pd the output signal amplitude of the PD and K_vco the sensitivity of the VCO.')
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 	# check consistency of mx and my
 	if dictNet['Ny'] > 1 and dictNet['my'] == -999:
 		print('NOTE: For 2D topology my should not be set to -999, setting to zero now!')

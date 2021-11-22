@@ -95,14 +95,19 @@ def distributeProcesses(dictNet, dictPLL, dictAlgo=None):
 	elif dictAlgo['bruteForceBasinStabMethod'] == 'listOfInitialPhaseConfigurations':
 		eva.evaluateSimulationsChrisHoyer(poolData)
 	elif dictAlgo['bruteForceBasinStabMethod'] == 'single':
-		plot.plotCtrlSigDny(poolData[0][0]['dictPLL'], poolData[0][0]['dictNet'], poolData[0][0]['dictData'])
+		if dictNet['special_case'] != 'False':
+			print('Plotting frequency vs time-dependent parameter!')
+			plot.plot_instfreq_vs_timedependent_parameter(poolData[0][0]['dictPLL'], poolData[0][0]['dictNet'], poolData[0][0]['dictData'])
+		if 'ctrl' in poolData[0][0]['dictData']:
+			plot.plotCtrlSigDny(poolData[0][0]['dictPLL'], poolData[0][0]['dictNet'], poolData[0][0]['dictData'])
+		if 'clock_counter' in poolData[0][0]['dictData']:
+			plot.plotClockTime(poolData[0][0]['dictPLL'], poolData[0][0]['dictNet'], poolData[0][0]['dictData'])
 		plot.plotPhasesInf(poolData[0][0]['dictPLL'], poolData[0][0]['dictNet'], poolData[0][0]['dictData'])
 		plot.plotPhases2pi(poolData[0][0]['dictPLL'], poolData[0][0]['dictNet'], poolData[0][0]['dictData'])
 		plot.plotFrequency(poolData[0][0]['dictPLL'], poolData[0][0]['dictNet'], poolData[0][0]['dictData'])
 		plot.plotOrderPara(poolData[0][0]['dictPLL'], poolData[0][0]['dictNet'], poolData[0][0]['dictData'])
 		plot.plotPhaseRela(poolData[0][0]['dictPLL'], poolData[0][0]['dictNet'], poolData[0][0]['dictData'])
 		plot.plotPhaseDiff(poolData[0][0]['dictPLL'], poolData[0][0]['dictNet'], poolData[0][0]['dictData'])
-		plot.plotClockTime(poolData[0][0]['dictPLL'], poolData[0][0]['dictNet'], poolData[0][0]['dictData'])
 		plot.plotOscSignal(poolData[0][0]['dictPLL'], poolData[0][0]['dictNet'], poolData[0][0]['dictData'])
 		plot.plotFreqAndPhaseDiff(poolData[0][0]['dictPLL'], poolData[0][0]['dictNet'], poolData[0][0]['dictData'])
 		plot.plotPSD(poolData[0][0]['dictPLL'], poolData[0][0]['dictNet'], poolData[0][0]['dictData'], [], saveData=False)

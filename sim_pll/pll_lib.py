@@ -441,8 +441,8 @@ class PhaseDetectorCombiner:
 		"""
 		# print('Phasedetector and Combiner: sin(x)')
 		self.pll_id 		= pll_id
-		self.intr_freq_rad 			= 2.0 * np.pi * np.mean(dict_pll['intrF'])
-		self.K_rad 				= 2.0 * np.pi * get_from_value_or_list(pll_id, dict_pll['coupK'], dict_net['Nx'] * dict_net['Ny'])
+		self.intr_freq_rad 	= 2.0 * np.pi * np.mean(dict_pll['intrF'])
+		self.K_rad 			= 2.0 * np.pi * get_from_value_or_list(pll_id, dict_pll['coupK'], dict_net['Nx'] * dict_net['Ny'])
 		self.dt				= dict_pll['dt']
 		self.div 			= dict_pll['div']
 		self.h 				= dict_pll['coup_fct_sig']

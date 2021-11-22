@@ -55,6 +55,8 @@ def simulateSystem(dictNet, dictPLL, dictAlgo=None, multi_sim=False):
 		plt.show()
 		return dictNet, dictPLL, dictData
 
+###########################################################################################################################################
+###########################################################################################################################################
 
 def prepare_simulation(dictNet, dictPLL):
 	dictData = {}  # setup dictionary that hold all the data
@@ -181,7 +183,7 @@ def perform_simulation_case(dictNet, dictPLL, dictAlgo, dictData, pll_list):
 		time.sleep(2)
 		evolveSystemTestCases(dictNet, dictPLL, pll_list, dictData)
 	elif dictNet['special_case'] == 'timeDepTransmissionDelay':
-		evolveSystemOnTsimArray_varDelaySaveCtrlSig(dictNet, dictPLL, pll_list, dictData)
+		evolveSystemOnTsimArray_varDelaySaveCtrlSig(dictNet, dictPLL, pll_list, dictData, dictAlgo, True)
 		plot.plotCtrlSigDny(dictPLL, dictNet, dictData)
 	elif dictNet['special_case'] == 'timeDepInjectLockCoupStr':
 		evolveSystemOnTsimArray_varInjectLockCoupStrength(dictNet, dictPLL, pll_list, dictData, dictAlgo)
@@ -205,7 +207,8 @@ def save_results_simulation(dictNet, dictPLL, dictAlgo, dictData):
 
 
 def plot_results_simulation(dictNet, dictPLL, dictData):
-	if dictNet['special_case'] != 'single':
+	if dictNet['special_case'] != 'False':
+		print('Plotting frequency vs time-dependent parameter!')
 		plot.plot_instfreq_vs_timedependent_parameter(dictPLL, dictNet, dictData)
 	# plot.plotPhasesInf(dictPLL, dictNet, dictData)
 	# plot.plotPhases2pi(dictPLL, dictNet, dictData)
@@ -243,49 +246,93 @@ def evolveSystemOnTauArray(dictNet, dictPLL, pll_list, dictData, dictAlgo=None):
 	t = np.arange(0,len(phiStore[0:dictNet['max_delay_steps']+dictPLL['sim_time_steps'],0]))*dictPLL['dt']
 	dictData.update({'t': t, 'phi': phiStore, 'clock_counter': clkStore})
 
-
-def evolveSystemOnTsimArray(dictNet, dictPLL, pll_list, dictData, dictAlgo=None):
+def evolveSystemOnTsimArray(dictNet, dictPLL, pll_list, dictData, dictAlgo=None, store_ctrl_and_clock=False):
 
 	print('Phi container has length of Tsim.')
 	clock_counter = dictData['clock_counter']
 	phi = dictData['phi']
-	clkStore = np.empty([dictNet['max_delay_steps']+dictPLL['sim_time_steps'], dictNet['Nx']*dictNet['Ny']])
+
 	phiStore = np.empty([dictNet['max_delay_steps']+dictPLL['sim_time_steps'], dictNet['Nx']*dictNet['Ny']])
-	ctlStore = np.empty([dictNet['max_delay_steps']+dictPLL['sim_time_steps'], dictNet['Nx']*dictNet['Ny']])
-	ctlStore[0:dictNet['max_delay_steps'],:] = 0; ctlStore[dictNet['max_delay_steps']+1,:] = [pll.low_pass_filter.control_signal for pll in pll_list];
+	if store_ctrl_and_clock:
+		clkStore = np.empty([dictNet['max_delay_steps']+dictPLL['sim_time_steps'], dictNet['Nx']*dictNet['Ny']])
+		ctlStore = np.empty([dictNet['max_delay_steps']+dictPLL['sim_time_steps'], dictNet['Nx']*dictNet['Ny']])
+		ctlStore[0:dictNet['max_delay_steps'],:] = 0; ctlStore[dictNet['max_delay_steps']+1,:] = [pll.low_pass_filter.control_signal for pll in pll_list];
+
 	phiStore[0:dictNet['max_delay_steps']+1,:] = phi[0:dictNet['max_delay_steps']+1,:]
 	phi_array_len = dictNet['phi_array_len']
 
-	# if dictPLL['orderLF'] > 1:
-	# 	print('Simulating %i sequential identical low pass filters.'%(dictPLL['orderLF']))
-	# 	next_fct = lambda idx_time,phi_array_len,phi: [pll.next_N_sequential_LFs(idx_time, phi_array_len, phi, dictPLL['orderLF']) for pll in pll_list]
-	# else:
- 	# 	next_fct = lambda idx_time,phi_array_len,phi: [pll.next(idx_time, phi_array_len, phi) for pll in pll_list]
-
-	## TESTS!
-	# plt.plot(phiStore[:,0], 'o'); plt.plot(phiStore[:,1], 'd'); plt.title('1'); plt.xlim([0, 40]); plt.draw(); plt.show();
-	# plt.plot(phi[:,0], 'o'); plt.plot(phi[:,1], 'd'); plt.title('2'); plt.xlim([0, 40]); plt.draw(); plt.show();
-	# print('phiStore[0:31,:]', phiStore[0:31,:])
-
 	#line = []; tlive = np.arange(0,phi_array_len-1)*dictPLL['dt']
-	for idx_time in range(dictNet['max_delay_steps'],dictNet['max_delay_steps']+dictPLL['sim_time_steps']-1,1):
+	if store_ctrl_and_clock:
+		for idx_time in range(dictNet['max_delay_steps'],dictNet['max_delay_steps']+dictPLL['sim_time_steps']-1,1):
 
-		#print('[pll.next(idx_time,phi_array_len,phi) for pll in pll_list]:', [pll.next(idx_time,phi_array_len,phi) for pll in pll_list])
-		#print('Current state: phi[(idx_time)%phi_array_len,:]', phi[(idx_time)%phi_array_len,:], '\t(idx_time)%phi_array_len',(idx_time)%phi_array_len); sys.exit()
-		#print('(idx_time+1)%phi_array_len', ((idx_time+1)%phi_array_len)*dictPLL['dt']); #time.sleep(0.5)
-		phi[(idx_time+1)%phi_array_len,:] = [pll.next(idx_time, phi_array_len, phi) for pll in pll_list] # next_fct(idx_time, phi_array_len, phi) # now the network is iterated, starting at t=0 with the history as prepared above
+			#print('[pll.next(idx_time,phi_array_len,phi) for pll in pll_list]:', [pll.next(idx_time,phi_array_len,phi) for pll in pll_list])
+			#print('Current state: phi[(idx_time)%phi_array_len,:]', phi[(idx_time)%phi_array_len,:], '\t(idx_time)%phi_array_len',(idx_time)%phi_array_len); sys.exit()
+			#print('(idx_time+1)%phi_array_len', ((idx_time+1)%phi_array_len)*dictPLL['dt']); #time.sleep(0.5)
+			phi[(idx_time+1)%phi_array_len,:] = [pll.next(idx_time, phi_array_len, phi) for pll in pll_list] # now the network is iterated, starting at t=0 with the history as prepared above
 
-		clock_counter[(idx_time+1)%phi_array_len,:] = [pll.clock_halfperiods_count(phi[(idx_time+1)%phi_array_len,pll.pll_id]) for pll in pll_list]
-		#print('clock count for all:', clock_counter[-1])
+			clock_counter[(idx_time+1)%phi_array_len,:] = [pll.clock_halfperiods_count(phi[(idx_time+1)%phi_array_len,pll.pll_id]) for pll in pll_list]
+			#print('clock count for all:', clock_counter[-1])
 
-		clkStore[idx_time+1,:] = clock_counter[(idx_time+1)%phi_array_len,:]
-		phiStore[idx_time+1,:] = phi[(idx_time+1)%phi_array_len,:]
-		ctlStore[idx_time+1,:] = [pll.low_pass_filter.get_control_signal() for pll in pll_list]
-		#phidot = (phi[1:,0]-phi[:-1,0])/(2*np.pi*dictPLL['dt'])
-		#line = livplt.live_plotter(tlive, phidot, line)
+			clkStore[idx_time+1,:] = clock_counter[(idx_time+1)%phi_array_len,:]
+			phiStore[idx_time+1,:] = phi[(idx_time+1)%phi_array_len,:]
+			ctlStore[idx_time+1,:] = [pll.low_pass_filter.get_control_signal() for pll in pll_list]
+			#phidot = (phi[1:,0]-phi[:-1,0])/(2*np.pi*dictPLL['dt'])
+			#line = livplt.live_plotter(tlive, phidot, line)
+	else:
+		for idx_time in range(dictNet['max_delay_steps'],dictNet['max_delay_steps']+dictPLL['sim_time_steps']-1,1):
+
+			phi[(idx_time+1)%phi_array_len,:] = [pll.next(idx_time, phi_array_len, phi) for pll in pll_list] # now the network is iterated, starting at t=0 with the history as prepared above
+			phiStore[idx_time+1,:] = phi[(idx_time+1)%phi_array_len,:]
 
 	t = np.arange(0,len(phiStore[0:dictNet['max_delay_steps']+dictPLL['sim_time_steps'],0]))*dictPLL['dt']
-	dictData.update({'t': t, 'phi': phiStore, 'clock_counter': clkStore, 'ctrl': ctlStore})
+	if store_ctrl_and_clock:
+		dictData.update({'t': t, 'phi': phiStore, 'clock_counter': clkStore, 'ctrl': ctlStore})
+	else:
+		dictData.pop('clock_counter', None)
+		dictData.update({'t': t, 'phi': phiStore})
+
+# def evolveSystemOnTsimArray(dictNet, dictPLL, pll_list, dictData, dictAlgo=None):
+#
+# 	print('Phi container has length of Tsim.')
+# 	clock_counter = dictData['clock_counter']
+# 	phi = dictData['phi']
+# 	clkStore = np.empty([dictNet['max_delay_steps']+dictPLL['sim_time_steps'], dictNet['Nx']*dictNet['Ny']])
+# 	phiStore = np.empty([dictNet['max_delay_steps']+dictPLL['sim_time_steps'], dictNet['Nx']*dictNet['Ny']])
+# 	ctlStore = np.empty([dictNet['max_delay_steps']+dictPLL['sim_time_steps'], dictNet['Nx']*dictNet['Ny']])
+# 	ctlStore[0:dictNet['max_delay_steps'],:] = 0; ctlStore[dictNet['max_delay_steps']+1,:] = [pll.low_pass_filter.control_signal for pll in pll_list];
+# 	phiStore[0:dictNet['max_delay_steps']+1,:] = phi[0:dictNet['max_delay_steps']+1,:]
+# 	phi_array_len = dictNet['phi_array_len']
+#
+# 	# if dictPLL['orderLF'] > 1:
+# 	# 	print('Simulating %i sequential identical low pass filters.'%(dictPLL['orderLF']))
+# 	# 	next_fct = lambda idx_time,phi_array_len,phi: [pll.next_N_sequential_LFs(idx_time, phi_array_len, phi, dictPLL['orderLF']) for pll in pll_list]
+# 	# else:
+#  	# 	next_fct = lambda idx_time,phi_array_len,phi: [pll.next(idx_time, phi_array_len, phi) for pll in pll_list]
+#
+# 	## TESTS!
+# 	# plt.plot(phiStore[:,0], 'o'); plt.plot(phiStore[:,1], 'd'); plt.title('1'); plt.xlim([0, 40]); plt.draw(); plt.show();
+# 	# plt.plot(phi[:,0], 'o'); plt.plot(phi[:,1], 'd'); plt.title('2'); plt.xlim([0, 40]); plt.draw(); plt.show();
+# 	# print('phiStore[0:31,:]', phiStore[0:31,:])
+#
+# 	#line = []; tlive = np.arange(0,phi_array_len-1)*dictPLL['dt']
+# 	for idx_time in range(dictNet['max_delay_steps'],dictNet['max_delay_steps']+dictPLL['sim_time_steps']-1,1):
+#
+# 		#print('[pll.next(idx_time,phi_array_len,phi) for pll in pll_list]:', [pll.next(idx_time,phi_array_len,phi) for pll in pll_list])
+# 		#print('Current state: phi[(idx_time)%phi_array_len,:]', phi[(idx_time)%phi_array_len,:], '\t(idx_time)%phi_array_len',(idx_time)%phi_array_len); sys.exit()
+# 		#print('(idx_time+1)%phi_array_len', ((idx_time+1)%phi_array_len)*dictPLL['dt']); #time.sleep(0.5)
+# 		phi[(idx_time+1)%phi_array_len,:] = [pll.next(idx_time, phi_array_len, phi) for pll in pll_list] # next_fct(idx_time, phi_array_len, phi) # now the network is iterated, starting at t=0 with the history as prepared above
+#
+# 		clock_counter[(idx_time+1)%phi_array_len,:] = [pll.clock_halfperiods_count(phi[(idx_time+1)%phi_array_len,pll.pll_id]) for pll in pll_list]
+# 		#print('clock count for all:', clock_counter[-1])
+#
+# 		clkStore[idx_time+1,:] = clock_counter[(idx_time+1)%phi_array_len,:]
+# 		phiStore[idx_time+1,:] = phi[(idx_time+1)%phi_array_len,:]
+# 		ctlStore[idx_time+1,:] = [pll.low_pass_filter.get_control_signal() for pll in pll_list]
+# 		#phidot = (phi[1:,0]-phi[:-1,0])/(2*np.pi*dictPLL['dt'])
+# 		#line = livplt.live_plotter(tlive, phidot, line)
+#
+# 	t = np.arange(0,len(phiStore[0:dictNet['max_delay_steps']+dictPLL['sim_time_steps'],0]))*dictPLL['dt']
+# 	dictData.update({'t': t, 'phi': phiStore, 'clock_counter': clkStore, 'ctrl': ctlStore})
 
 
 def distributed_pll_in_3d_mobile(dictNet, dictPLL, phi, pos, coup_matrix, clock_counter, pll_list, dictData, dictAlgo=None):
@@ -426,38 +473,51 @@ def evolveSystemOnTsimArray_varInjectLockCoupStrength(dictNet, dictPLL, pll_list
 	t = np.arange(0,len(phiStore[0:dictNet['max_delay_steps']+dictPLL['sim_time_steps'],0]))*pll_dt
 	dictData.update({'t': t, 'phi': phiStore, 'clock_counter': clkStore, 'timeDepPara': injectLockCoupStrVal_vs_time})
 
-
-def evolveSystemOnTsimArray_varDelaySaveCtrlSig(dictNet, dictPLL, pll_list, dictData, dictAlgo=None):
+def evolveSystemOnTsimArray_varDelaySaveCtrlSig(dictNet, dictPLL, pll_list, dictData, dictAlgo=None, store_ctrl_and_clock=False):
 
 	clock_counter = dictData['clock_counter']
 	phi = dictData['phi']
-	clkStore = np.empty([dictNet['max_delay_steps']+dictPLL['sim_time_steps'], dictNet['Nx']*dictNet['Ny']])
+
 	phiStore = np.empty([dictNet['max_delay_steps']+dictPLL['sim_time_steps'], dictNet['Nx']*dictNet['Ny']])
-	ctlStore = np.empty([dictNet['max_delay_steps']+dictPLL['sim_time_steps'], dictNet['Nx']*dictNet['Ny']])
+	if store_ctrl_and_clock:
+		clkStore = np.empty([dictNet['max_delay_steps']+dictPLL['sim_time_steps'], dictNet['Nx']*dictNet['Ny']])
+		ctlStore = np.empty([dictNet['max_delay_steps']+dictPLL['sim_time_steps'], dictNet['Nx']*dictNet['Ny']])
+		ctlStore[0:dictNet['max_delay_steps'],:] = 0; ctlStore[dictNet['max_delay_steps']+1,:] = [pll.low_pass_filter.control_signal for pll in pll_list];
+
 	phiStore[0:dictNet['max_delay_steps']+1,:] = phi[0:dictNet['max_delay_steps']+1,:]
-	ctlStore[0:dictNet['max_delay_steps'],:] = 0; ctlStore[dictNet['max_delay_steps']+1,:] = [pll.low_pass_filter.control_signal for pll in pll_list];
-	#line = []; tlive = np.arange(0,dictNet['phi_array_len']-1)*dictPLL['dt']
 	phi_array_len = dictNet['phi_array_len']
 
-	for idx_time in range(dictNet['max_delay_steps'],dictNet['max_delay_steps']+dictPLL['sim_time_steps']-1,1):
+	#line = []; tlive = np.arange(0,phi_array_len-1)*dictPLL['dt']
+	if store_ctrl_and_clock:
+		for idx_time in range(dictNet['max_delay_steps'],dictNet['max_delay_steps']+dictPLL['sim_time_steps']-1,1):
 
-		#print('[pll.next(idx_time,phi_array_len,phi) for pll in pll_list]:', [pll.next(idx_time,phi_array_len,phi) for pll in pll_list])
-		#print('Current state: phi[(idx_time)%phi_array_len,:]', phi[(idx_time)%phi_array_len,:], '\t(idx_time)%phi_array_len',(idx_time)%phi_array_len); sys.exit()
-		#print('(idx_time+1)%phi_array_len', ((idx_time+1)%phi_array_len)*dictPLL['dt']); #time.sleep(0.5)
-		phi[(idx_time+1)%phi_array_len,:] = [pll.next(idx_time,phi_array_len,phi) for pll in pll_list] # now the network is iterated, starting at t=0 with the history as prepared above
+			#print('[pll.next(idx_time,phi_array_len,phi) for pll in pll_list]:', [pll.next(idx_time,phi_array_len,phi) for pll in pll_list])
+			#print('Current state: phi[(idx_time)%phi_array_len,:]', phi[(idx_time)%phi_array_len,:], '\t(idx_time)%phi_array_len',(idx_time)%phi_array_len); sys.exit()
+			#print('(idx_time+1)%phi_array_len', ((idx_time+1)%phi_array_len)*dictPLL['dt']); #time.sleep(0.5)
+			phi[(idx_time+1)%phi_array_len,:] = [pll.next(idx_time, phi_array_len, phi) for pll in pll_list] # now the network is iterated, starting at t=0 with the history as prepared above
 
-		clock_counter[(idx_time+1)%phi_array_len,:] = [pll.clock_halfperiods_count(phi[(idx_time+1)%phi_array_len,pll.pll_id]) for pll in pll_list]
-		#print('clock count for all:', clock_counter[-1])
+			clock_counter[(idx_time+1)%phi_array_len,:] = [pll.clock_halfperiods_count(phi[(idx_time+1)%phi_array_len,pll.pll_id]) for pll in pll_list]
+			#print('clock count for all:', clock_counter[-1])
 
-		clkStore[idx_time+1,:] = clock_counter[(idx_time+1)%phi_array_len,:]
-		phiStore[idx_time+1,:] = phi[(idx_time+1)%phi_array_len,:]
-		ctlStore[idx_time+1,:] = [pll.low_pass_filter.get_control_signal() for pll in pll_list]
-		#phidot = (phi[1:,0]-phi[:-1,0])/(2*np.pi*dictPLL['dt'])
-		#line = livplt.live_plotter(tlive, phidot, line)
+			clkStore[idx_time+1,:] = clock_counter[(idx_time+1)%phi_array_len,:]
+			phiStore[idx_time+1,:] = phi[(idx_time+1)%phi_array_len,:]
+			ctlStore[idx_time+1,:] = [pll.low_pass_filter.get_control_signal() for pll in pll_list]
+			#phidot = (phi[1:,0]-phi[:-1,0])/(2*np.pi*dictPLL['dt'])
+			#line = livplt.live_plotter(tlive, phidot, line)
+	else:
+		for idx_time in range(dictNet['max_delay_steps'],dictNet['max_delay_steps']+dictPLL['sim_time_steps']-1,1):
+
+			phi[(idx_time+1)%phi_array_len,:] = [pll.next(idx_time, phi_array_len, phi) for pll in pll_list] # now the network is iterated, starting at t=0 with the history as prepared above
+			phiStore[idx_time+1,:] = phi[(idx_time+1)%phi_array_len,:]
 
 	t = np.arange(0,len(phiStore[0:dictNet['max_delay_steps']+dictPLL['sim_time_steps'],0]))*dictPLL['dt']
-	dictData.update({'t': t, 'phi': phiStore, 'clock_counter': clkStore, 'ctrl': ctlStore})
+	if store_ctrl_and_clock:
+		dictData.update({'t': t, 'phi': phiStore, 'clock_counter': clkStore, 'ctrl': ctlStore})
+	else:
+		dictData.pop('clock_counter', None)
+		dictData.update({'t': t, 'phi': phiStore})
 
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 def evolveSystemInterface(dictNet, dictPLL, phi, clock_counter, pll_list, dictData, dictAlgo=None):
 

@@ -51,7 +51,7 @@ def getDicts(Fsim=125):
 	dictPLL={
 		'intrF': 1.0,															# intrinsic frequency in Hz
 		'syncF': 1.0,															# frequency of synchronized state in Hz
-		'coupK': 27E-3,															#[random.uniform(0.3, 0.4) for i in range(dictNet['Nx']*dictNet['Ny'])],# coupling strength in Hz float or [random.uniform(minK, maxK) for i in range(dictNet['Nx']*dictNet['Ny'])]
+		'coupK': 27E-3,														# [random.uniform(0.3, 0.4) for i in range(dictNet['Nx']*dictNet['Ny'])],# coupling strength (like phase model: K = Kvco/2 * G_all, NOTE: the /2 is for coupling functions that have peak2peal amplitude 2) in Hz float or [random.uniform(minK, maxK) for i in range(dictNet['Nx']*dictNet['Ny'])]
 		'gPDin': 1,																# gains of the different inputs to PD k from input l -- G_kl, see PD, set to 1 and all G_kl=1 (so far only implemented for some cases, check!): np.random.uniform(0.95,1.05,size=[dictNet['Nx']*dictNet['Ny'],dictNet['Nx']*dictNet['Ny']])
 		'gPDin_symmetric': True,												# set to True if G_kl == G_lk, False otherwise
 		'cutFc': 1.1E-4,														# LF cut-off frequency in Hz, here N=9 with mean 0.015: [0.05,0.015,0.00145,0.001,0.0001,0.001,0.00145,0.015,0.05]
@@ -69,7 +69,7 @@ def getDicts(Fsim=125):
 		'coup_fct_sig': coupfct.neg_cosine,										# coupling function h(x) for PLLs with ideally filtered PD signals:
 		'derivative_coup_fct': coupfct.sine,									# derivative h'(x) of coupling function h(x)
 		'includeCompHF': False,													# boolean True/False whether to simulate with HF components
-		'vco_out_sig': coupfct.square_wave,										# for HF case, e.g.: coupfct.sine or coupfct.square_wave
+		'vco_out_sig': coupfct.square_wave_symm_zero,							# for HF case, e.g.: coupfct.sine, coupfct.square_wave, coupfct.square_wave_symm_zero
 		'typeVCOsig': 'analogHF',												# 'analogHF' or 'digitalHF'
 		'responseVCO': 'linear',												# either string: 'linear' or a nonlinear function of omega, Kvco, e.g., lambda w, K, ...: expression
 		'antenna': False,														# boolean True/False whether antenna present for PLLs

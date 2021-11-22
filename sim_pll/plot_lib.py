@@ -339,7 +339,8 @@ def plotOrderPara(dictPLL, dictNet, dictData):
 
 	plt.plot(dictData['t'], dictData['orderParam'])
 	plt.plot(np.mean(dictPLL['transmission_delay']), dictData['orderParam'][int(round(np.mean(dictPLL['transmission_delay'])/dictPLL['dt']))], 'yo', ms=5)				# mark where the simulation starts
-	plt.axvspan(dictData['t'][-int(dictPLL['timeSeriesAverTime']*1.0/(dictData['F1']*dictPLL['dt']))], dictData['t'][-1], color='b', alpha=0.3)
+	if -int(dictPLL['timeSeriesAverTime']*1.0/(dictData['F1']*dictPLL['dt'])) >= 0:
+		plt.axvspan(dictData['t'][-int(dictPLL['timeSeriesAverTime']*1.0/(dictData['F1']*dictPLL['dt']))], dictData['t'][-1], color='b', alpha=0.3)
 	plt.title(r'mean order parameter $\bar{R}=$%.2f, and $\bar{\sigma}=$%.4f' %(np.mean(dictData['orderParam'][-int(round(dictPLL['timeSeriesAverTime']*1.0/(dictData['F1']*dictPLL['dt']))):]), np.std(dictData['orderParam'][-int(round(dictPLL['timeSeriesAverTime']*1.0/(dictData['F1']*dictPLL['dt']))):])), fontdict = titlefont)
 	plt.xlabel(r'$t\,[T_{\omega}]$', fontdict = labelfont, labelpad=labelpadxaxis)
 	plt.ylabel(r'$R(t,m_x=%d,m_y=%d )$' %(dictNet['mx'],dictNet['my']), fontdict = labelfont, labelpad=labelpadyaxis)
@@ -557,12 +558,13 @@ def plot_instfreq_vs_timedependent_parameter(dictPLL, dictNet, dictData):
 	elif param_name == 'timeDepChangeOfCoupStr':
 		dyn_x_label = r'$\frac{2\pi K}{\omega}$'
 		x_axis_scaling = np.mean(1.0/dictPLL['intrF'])
+	y_axis_scaling = (2.0*np.pi*np.mean(dictPLL['intrF']))
 
 	fig12 = plt.figure(num=12, figsize=(figwidth, figheight), dpi=dpi_val, facecolor='w', edgecolor='k')
 	fig12.canvas.set_window_title('instantaneous frequency as function of time-dependent parameter')
 	fig12.set_size_inches(plot_size_inches_x, plot_size_inches_y)
 
-	plt.plot(dictData['timeDependentParameter'][0,0:-1]*x_axis_scaling, (np.diff(dictData['phi'], axis=0)/dictPLL['dt'])/np.mean(dictPLL['intrF']), 'b-')
+	plt.plot(dictData['timeDependentParameter'][0,0:len(dictData['phi'][:,0])]*x_axis_scaling, (np.diff(dictData['phi'], axis=0)/dictPLL['dt'])/y_axis_scaling, 'b-')
 
 	plt.xlabel(dyn_x_label, fontdict = labelfont, labelpad=labelpadxaxis)
 	plt.ylabel(r'$\frac{\dot{\theta}_k(t)}{\omega}$', fontdict = labelfont, labelpad=labelpadyaxis)
@@ -571,6 +573,21 @@ def plot_instfreq_vs_timedependent_parameter(dictPLL, dictNet, dictData):
 
 	plt.savefig('results/instFreq_vs_'+param_name+'%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.svg' %(np.mean(dictPLL['coupK']), np.mean(dictPLL['cutFc']), np.mean(dictPLL['syncF']), np.mean(dictPLL['transmission_delay']), np.mean(dictPLL['noiseVarVCO']), now.year, now.month, now.day))
 	plt.savefig('results/instFreq_vs_'+param_name+'%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.png' %(np.mean(dictPLL['coupK']), np.mean(dictPLL['cutFc']), np.mean(dictPLL['syncF']), np.mean(dictPLL['transmission_delay']), np.mean(dictPLL['noiseVarVCO']), now.year, now.month, now.day), dpi=dpi_val)
+
+	if dictPLL['div'] != 1:
+		fig1212 = plt.figure(num=1212, figsize=(figwidth, figheight), dpi=dpi_val, facecolor='w', edgecolor='k')
+		fig1212.canvas.set_window_title('instantaneous frequency as function of time-dependent parameter')
+		fig1212.set_size_inches(plot_size_inches_x, plot_size_inches_y)
+
+		plt.plot(dictData['timeDependentParameter'][0,0:-1]*x_axis_scaling, (np.diff(dictData['phi']/dictPLL['div'], axis=0)/dictPLL['dt'])/y_axis_scaling, 'b-')
+
+		plt.xlabel(dyn_x_label, fontdict = labelfont, labelpad=labelpadxaxis)
+		plt.ylabel(r'$\frac{\dot{\theta}^\textrm{HF}_k(t)}{v\,\omega}$', fontdict = labelfont, labelpad=labelpadyaxis)
+		plt.tick_params(axis='both', which='major', labelsize=tickSize)
+		# plt.legend(loc='upper right')
+
+		plt.savefig('results/instDivFreq_vs_'+param_name+'%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.svg' %(np.mean(dictPLL['coupK']), np.mean(dictPLL['cutFc']), np.mean(dictPLL['syncF']), np.mean(dictPLL['transmission_delay']), np.mean(dictPLL['noiseVarVCO']), now.year, now.month, now.day))
+		plt.savefig('results/instDivFreq_vs_'+param_name+'%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.png' %(np.mean(dictPLL['coupK']), np.mean(dictPLL['cutFc']), np.mean(dictPLL['syncF']), np.mean(dictPLL['transmission_delay']), np.mean(dictPLL['noiseVarVCO']), now.year, now.month, now.day), dpi=dpi_val)
 
 	return None
 

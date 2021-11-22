@@ -76,12 +76,12 @@ labelpadyaxis       = 20;
 
 ################################################################################
 # load data
-folder		 = '/home/cuichi/data-z2/simPLL_2/1/results/'
+folder		 = '/home/cuichi/data-z2/simPLL_2/1_CH_success/results/'
 ################################################################################
-filenamePLL  = folder+'dictPLL_K0.050_tau1026.000_Fc0.000_mx1_my-999_N2_toporing_14:1_2021_10_29'
-filenameNet  = folder+'dictNet_K0.050_tau1026.000_Fc0.000_mx1_my-999_N2_toporing_14:1_2021_10_29'
-filenameData = folder+'poolData_K0.050_tau1026.000_Fc0.000_mx1_my-999_N2_toporing_14:1_2021_10_29'
-filenameAlgo = folder+'dictAlgo_K0.050_tau1026.000_Fc0.000_mx1_my-999_N2_toporing_14:1_2021_10_29'
+filenamePLL  = folder+'dictPLL_K0.050_tau1026.000_Fc0.000_mx1_my-999_N2_toporing_22:31_2021_10_29'
+filenameNet  = folder+'dictNet_K0.050_tau1026.000_Fc0.000_mx1_my-999_N2_toporing_22:31_2021_10_29'
+filenameData = folder+'poolData_K0.050_tau1026.000_Fc0.000_mx1_my-999_N2_toporing_22:31_2021_10_29'
+filenameAlgo = folder+'dictAlgo_K0.050_tau1026.000_Fc0.000_mx1_my-999_N2_toporing_22:31_2021_10_29'
 ################################################################################
 dictPLL 	 = pickle.load(open(filenamePLL, 'rb'))
 dictNet 	 = pickle.load(open(filenameNet, 'rb'))
@@ -94,6 +94,7 @@ dictAlgo  	 = pickle.load(open(filenameAlgo, 'rb'))
 # if necessary update parameters related to plotting
 ################################################################################
 dictPLL.update({'PSD_freq_resolution': 1E-5})
+dictPLL.update({'sampleFplot': 1000})
 # if not dictAlgo:
 # 	dictAlgo={
 # 		'bruteForceBasinStabMethod': 'listOfInitialPhaseConfigurations',		# pick method for setting realizations 'classicBruteForceMethodRotatedSpace', 'listOfInitialPhaseConfigurations'

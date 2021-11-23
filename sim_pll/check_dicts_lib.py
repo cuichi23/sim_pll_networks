@@ -75,6 +75,11 @@ def check_dicts_consistency(dictPLL, dictNet, dictAlgo):
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+	if np.abs( dictPLL['dt']*np.int( np.round( dictPLL['transmission_delay']/dictPLL['dt'] ) ) - dictPLL['transmission_delay'] ) > 0.01*dictPLL['transmission_delay']:
+		print('NOTE: time step dt not small enough to resolve the time delay.\ntranmission time delay contineous time: %0.3f\ntransmission time delay after time discretization: %0.3f'%(dictPLL['transmission_delay'], dictPLL['dt']*np.int( np.round( dictPLL['transmission_delay']/dictPLL['dt'] ) ) ))
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 	# catch the case where the intrinsic frequency is set to zero
 	if np.all(dictPLL['intrF']) > 1E-3:
 

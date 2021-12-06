@@ -420,7 +420,7 @@ def allInitPhaseCombinations(dictPLL, dictNet, dictAlgo, paramDiscretization=10)
 			scanValueslist1 = list( np.linspace(-dictPLL['div']*(np.pi), +dictPLL['div']*(np.pi), paramDiscr[0]) ) 		# all entries are in rotated, and reduced phase space NOTE: adjust unit cell accordingly!
 			scanValueslist2 = list( np.linspace(-tempDetune/2.0, tempDetune/2.0, paramDiscr[1]) )	# all entries are in rotated, and reduced phase space NOTE: adjust unit cell accordingly!
 			#print('scanValueslist2', scanValueslist2)
-			scanValues = np.array([scanValueslist1, scanValueslist2])
+			scanValues = np.array([scanValueslist1, scanValueslist2], dtype=object)
 			_allPoints 		= itertools.product(scanValues[0], scanValues[1])
 			allPoints 		= list(_allPoints)									# scanValues is a list of lists: create a new list that gives all the possible combinations of items between the lists
 			allPoints 		= np.array(allPoints)								# convert the list to an array

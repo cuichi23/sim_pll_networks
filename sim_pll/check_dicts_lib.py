@@ -75,8 +75,9 @@ def check_dicts_consistency(dictPLL, dictNet, dictAlgo):
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-	if np.abs( dictPLL['dt']*np.int( np.round( dictPLL['transmission_delay']/dictPLL['dt'] ) ) - dictPLL['transmission_delay'] ) > 0.01*dictPLL['transmission_delay']:
-		print('NOTE: time step dt not small enough to resolve the time delay.\ntranmission time delay contineous time: %0.3f\ntransmission time delay after time discretization: %0.3f'%(dictPLL['transmission_delay'], dictPLL['dt']*np.int( np.round( dictPLL['transmission_delay']/dictPLL['dt'] ) ) ))
+	if not ( isinstance(dictPLL['transmission_delay'], np.ndarray) or isinstance(dictPLL['transmission_delay'], list) ):
+		if np.abs( dictPLL['dt']*np.int( np.round( dictPLL['transmission_delay']/dictPLL['dt'] ) ) - dictPLL['transmission_delay'] ) > 0.01*dictPLL['transmission_delay']:
+			print('NOTE: time step dt not small enough to resolve the time delay.\ntranmission time delay contineous time: %0.3f\ntransmission time delay after time discretization: %0.3f'%(dictPLL['transmission_delay'], dictPLL['dt']*np.int( np.round( dictPLL['transmission_delay']/dictPLL['dt'] ) ) ))
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -101,6 +102,7 @@ def check_dicts_consistency(dictPLL, dictNet, dictAlgo):
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 	# consistency check for basin stability plots
+	#print('HERE type(dictAlgo):', type(dictAlgo))
 	if ( isinstance(dictAlgo['paramDiscretization'], list) or isinstance(dictAlgo['paramDiscretization'], np.ndarray) ):
 		if ( isinstance(dictAlgo['min_max_range_parameter'], np.float) or isinstance(dictAlgo['min_max_range_parameter'], np.int) ):
 			print('NOTE: in multisim_lib, the case listOfInitialPhaseConfigurations needs a minimum and maximum intrinsic frequency, e.g., [wmin, wmax]! Please povide.'); sys.exit()

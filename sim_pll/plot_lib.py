@@ -564,7 +564,7 @@ def plot_instfreq_vs_timedependent_parameter(dictPLL, dictNet, dictData):
 	fig12.canvas.set_window_title('instantaneous frequency as function of time-dependent parameter')
 	fig12.set_size_inches(plot_size_inches_x, plot_size_inches_y)
 
-	plt.plot(dictData['timeDependentParameter'][0,0:len(dictData['phi'][:,0])]*x_axis_scaling, (np.diff(dictData['phi'], axis=0)/dictPLL['dt'])/y_axis_scaling, 'b-')
+	plt.plot(dictData['timeDependentParameter'][0,0:len(dictData['phi'][:,0])-1]*x_axis_scaling, (np.diff(dictData['phi'], axis=0)/dictPLL['dt'])/y_axis_scaling, 'b-')
 
 	plt.xlabel(dyn_x_label, fontdict = labelfont, labelpad=labelpadxaxis)
 	plt.ylabel(r'$\frac{\dot{\theta}_k(t)}{\omega}$', fontdict = labelfont, labelpad=labelpadyaxis)
@@ -579,7 +579,7 @@ def plot_instfreq_vs_timedependent_parameter(dictPLL, dictNet, dictData):
 		fig1212.canvas.set_window_title('instantaneous frequency as function of time-dependent parameter')
 		fig1212.set_size_inches(plot_size_inches_x, plot_size_inches_y)
 
-		plt.plot(dictData['timeDependentParameter'][0,0:-1]*x_axis_scaling, (np.diff(dictData['phi']/dictPLL['div'], axis=0)/dictPLL['dt'])/y_axis_scaling, 'b-')
+		plt.plot(dictData['timeDependentParameter'][0,0:len(dictData['phi'][:,0])-1]*x_axis_scaling, (np.diff(dictData['phi']/dictPLL['div'], axis=0)/dictPLL['dt'])/y_axis_scaling, 'b-')
 
 		plt.xlabel(dyn_x_label, fontdict = labelfont, labelpad=labelpadxaxis)
 		plt.ylabel(r'$\frac{\dot{\theta}^\textrm{HF}_k(t)}{v\,\omega}$', fontdict = labelfont, labelpad=labelpadyaxis)

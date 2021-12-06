@@ -59,7 +59,7 @@ def get_from_value_or_list(pll_id, input, pll_count):
 	elif (isinstance(input, float) or isinstance(input, int)):
 		return input  # set value for all
 	else:
-		print('Error in PLL component constructor setting a variable using get_from_value_or_list() function!')
+		print('Error in PLL component constructor setting a variable using get_from_value_or_list() function! Check whether enough values for each oscillator are defined!')
 		sys.exit()
 
 
@@ -282,6 +282,8 @@ class SignalControlledOscillator:
 		elif dict_pll['fric_coeff_PRE_vs_PRR'] == 'PRE':
 			if isinstance(dict_pll['intrF'], list):
 				intrinsic_freqs_temp = np.array(dict_pll['intrF'])
+				#if len(intrinsic_freqs_temp) != dictNet['Nx']*dictNet['Ny']:
+				#	print('Provide the correct number of individual intrinsic frequencies for the given network size, or alternatively a single value for all.'); sys.exit()
 			else:
 				intrinsic_freqs_temp = dict_pll['intrF']
 			self.intr_freq_rad 	= 2.0 * np.pi * get_from_value_or_list(pll_id, intrinsic_freqs_temp / self.fric_coeff, dict_net['Nx'] * dict_net['Ny'])

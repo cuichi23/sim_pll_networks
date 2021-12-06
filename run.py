@@ -6,8 +6,8 @@ import dicts_lib, dicts_lib_Ising, dicts_lib_3rdGen, dicts_lib_4thGen, dicts_lib
 from sim_pll import sim_lib, setup, multisim_lib
 
 # multiprocessing based simulations
-multiprocess = True
-#multiprocess = False
+#multiprocess = True
+multiprocess = False
 
 # obtain dictionaries for the PLLs and the network
 #dictPLL, dictNet, dictAlgo            = dicts_lib_FPEexplore.getDicts()
@@ -23,6 +23,6 @@ dictPLL, dictNet, dictAlgo            = dicts_lib_3rdGen.getDicts()
 
 # simulate the network of coupled PLLs
 if multiprocess:
-	poolData  					= multisim_lib.distributeProcesses(dictNet, dictPLL, dictAlgo)
+	poolData  								= multisim_lib.distributeProcesses(dictNet, dictPLL, dictAlgo)
 elif not multiprocess:
-	dictNet, dictPLL, dictData	= sim_lib.simulateSystem(dictNet, dictPLL)
+	dictNet, dictPLL, dictAlgo, dictData	= sim_lib.simulateSystem(dictNet, dictPLL, dictAlgo)

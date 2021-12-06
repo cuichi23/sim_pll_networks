@@ -573,6 +573,7 @@ def evaluateSimulationsChrisHoyer(poolData):
 	figwidth   = 6;
 	figheight  = 5;
 	alpha 	   = 0.5;
+	linewidth  = 0.5;
 
 	unit_cell = PhaseDifferenceCell(poolData[0][0]['dictNet']['Nx']*poolData[0][0]['dictNet']['Ny'])
 	treshold_statState = np.pi/15
@@ -634,15 +635,15 @@ def evaluateSimulationsChrisHoyer(poolData):
 
 
 			# plot for HF output
-			ax16.plot((deltaTheta[delay_steps+1::poolData[0][0]['dictPLL']['sampleFplot']]+np.pi)%(2.*np.pi)-np.pi, deltaThetaDot[delay_steps::poolData[0][0]['dictPLL']['sampleFplot']], '-', color=color, alpha=alpha, linewidth='1.2')	 	# plot trajectory
-			ax16.plot((deltaTheta[delay_steps]+np.pi)%(2.*np.pi)-np.pi, deltaThetaDot[delay_steps], 'o', color=color, alpha=alpha, linewidth='1.2')	 		# plot initial dot
-			ax16.plot((deltaTheta[-1]+np.pi)%(2.*np.pi)-np.pi, deltaThetaDot[-1], 'x', color=color, alpha=alpha, linewidth='1.2')						 	# plot final state cross
+			ax16.plot((deltaTheta[delay_steps+1::poolData[0][0]['dictPLL']['sampleFplot']]+np.pi)%(2.*np.pi)-np.pi, deltaThetaDot[delay_steps::poolData[0][0]['dictPLL']['sampleFplot']], '-', color=color, alpha=alpha, linewidth=linewidth)	 	# plot trajectory
+			ax16.plot((deltaTheta[delay_steps]+np.pi)%(2.*np.pi)-np.pi, deltaThetaDot[delay_steps], 'o', color=color, alpha=alpha)	 		# plot initial dot
+			ax16.plot((deltaTheta[-1]+np.pi)%(2.*np.pi)-np.pi, deltaThetaDot[-1], 'x', color=color, alpha=alpha)						 	# plot final state cross
 			#plot_lib.deltaThetaDot_vs_deltaTheta(poolData[0][i]['dictPLL'], poolData[0][i]['dictNet'], (deltaTheta[1:]+np.pi)%(2.*np.pi)-np.pi, deltaThetaDot, color, alpha)
-			ax17.plot(deltaTheta[delay_steps+1::poolData[0][0]['dictPLL']['sampleFplot']], deltaThetaDot[delay_steps::poolData[0][0]['dictPLL']['sampleFplot']], '-', color=color, alpha=alpha, linewidth='1.2')		# plot trajectory
-			ax17.plot(deltaTheta[delay_steps], deltaThetaDot[delay_steps], 'o', color=color, alpha=alpha, linewidth='1.2')			# plot initial dot
-			ax17.plot(deltaTheta[-1], deltaThetaDot[-1], 'x', color=color, alpha=alpha, linewidth='1.2')							# plot final state cross
+			ax17.plot(deltaTheta[delay_steps+1::poolData[0][0]['dictPLL']['sampleFplot']], deltaThetaDot[delay_steps::poolData[0][0]['dictPLL']['sampleFplot']], '-', color=color, alpha=alpha, linewidth=linewidth)		# plot trajectory
+			ax17.plot(deltaTheta[delay_steps], deltaThetaDot[delay_steps], 'o', color=color, alpha=alpha)			# plot initial dot
+			ax17.plot(deltaTheta[-1], deltaThetaDot[-1], 'x', color=color, alpha=alpha)							# plot final state cross
 
-			ax161.plot((deltaTheta[0]+np.pi)%(2.*np.pi)-np.pi, deltaThetaDot[0], initmarker, color=color, alpha=alpha, linewidth='1.2') # plot initial dot
+			ax161.plot((deltaTheta[0]+np.pi)%(2.*np.pi)-np.pi, deltaThetaDot[0], initmarker, color=color, alpha=alpha) # plot initial dot
 
 			if np.abs( np.abs( (deltaThetaDiv[-1]+np.pi)%(2.*np.pi)-np.pi ) - np.pi ) < treshold_statState:
 				color = 'r'
@@ -660,15 +661,15 @@ def evaluateSimulationsChrisHoyer(poolData):
 			stats_init_phase_conf_final_state[i,3] = deltaThetaDivDot[-1]									# save final freq. difference
 
 			# plot for LF output
-			ax18.plot((deltaThetaDiv[delay_steps+1::poolData[0][0]['dictPLL']['sampleFplot']]+np.pi)%(2.*np.pi)-np.pi, deltaThetaDivDot[delay_steps::poolData[0][0]['dictPLL']['sampleFplot']], '-', color=color, alpha=alpha, linewidth='1.2')	# plot trajectory
-			ax18.plot((deltaThetaDiv[delay_steps]+np.pi)%(2.*np.pi)-np.pi, deltaThetaDivDot[delay_steps], 'o', color=color, alpha=alpha, linewidth='1.2')		# plot initial dot
-			ax18.plot((deltaThetaDiv[-1]+np.pi)%(2.*np.pi)-np.pi, deltaThetaDivDot[-1], 'x', color=color, alpha=alpha, linewidth='1.2')							# plot final state cross
+			ax18.plot((deltaThetaDiv[delay_steps+1::poolData[0][0]['dictPLL']['sampleFplot']]+np.pi)%(2.*np.pi)-np.pi, deltaThetaDivDot[delay_steps::poolData[0][0]['dictPLL']['sampleFplot']], '-', color=color, alpha=alpha, linewidth=linewidth)	# plot trajectory
+			ax18.plot((deltaThetaDiv[delay_steps]+np.pi)%(2.*np.pi)-np.pi, deltaThetaDivDot[delay_steps], 'o', color=color, alpha=alpha)		# plot initial dot
+			ax18.plot((deltaThetaDiv[-1]+np.pi)%(2.*np.pi)-np.pi, deltaThetaDivDot[-1], 'x', color=color, alpha=alpha)							# plot final state cross
 			#plot_lib.deltaThetaDivDot_vs_deltaThetaDiv(poolData[0][i]['dictPLL'], poolData[0][i]['dictNet'], (deltaThetaDiv[1:]+np.pi)%(2.*np.pi)-np.pi, deltaThetaDivDot, color, alpha)
-			ax19.plot(deltaThetaDiv[delay_steps+1::poolData[0][0]['dictPLL']['sampleFplot']], deltaThetaDivDot[delay_steps::poolData[0][0]['dictPLL']['sampleFplot']], '-', color=color, alpha=alpha, linewidth='1.2')		# plot trajectory
-			ax19.plot(deltaThetaDiv[delay_steps], deltaThetaDivDot[delay_steps], 'o', color=color, alpha=alpha, linewidth='1.2')			# plot initial dot
-			ax19.plot(deltaThetaDiv[-1], deltaThetaDivDot[-1], 'x', color=color, alpha=alpha, linewidth='1.2')								# plot final state cross
+			ax19.plot(deltaThetaDiv[delay_steps+1::poolData[0][0]['dictPLL']['sampleFplot']], deltaThetaDivDot[delay_steps::poolData[0][0]['dictPLL']['sampleFplot']], '-', color=color, alpha=alpha, linewidth=linewidth)		# plot trajectory
+			ax19.plot(deltaThetaDiv[delay_steps], deltaThetaDivDot[delay_steps], 'o', color=color, alpha=alpha)			# plot initial dot
+			ax19.plot(deltaThetaDiv[-1], deltaThetaDivDot[-1], 'x', color=color, alpha=alpha)								# plot final state cross
 
-			ax181.plot((deltaThetaDiv[0]+np.pi)%(2.*np.pi)-np.pi, deltaThetaDivDot[0], initmarker, color=color, alpha=alpha, linewidth='1.2') # plot initial dot
+			ax181.plot((deltaThetaDiv[0]+np.pi)%(2.*np.pi)-np.pi, deltaThetaDivDot[0], initmarker, color=color, alpha=alpha) # plot initial dot
 
 			deltaThetaDivSave[i] 	= deltaThetaDiv[delay_steps+1::poolData[0][0]['dictPLL']['sampleFplot']]
 			deltaThetaDivDotSave[i] = deltaThetaDivDot[delay_steps::poolData[0][0]['dictPLL']['sampleFplot']]

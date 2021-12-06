@@ -32,7 +32,17 @@ now = datetime.datetime.now()
 ''' Enable automatic carbage collector '''
 gc.enable()
 
-def distributeProcesses(dictNet, dictPLL, dictAlgo=None):
+def distributeProcesses(dictNet: dict, dictPLL: dict, dictAlgo=None) -> object:
+	"""Function that
+
+		Args:
+			dictNet:  contains as parameters the information about properties of the network to be simulated, the initial conditions and the synchronized states under investigation
+			dictPLL:  contains as parameters the information about properties of the PLLs, its components, the time delays, the types of signals exchanged
+			dictAlgo: contains as parameters the information how the simulation has to be carried out and what type is run: e.g., 'single', 'classicBruteForceMethodRotatedSpace', 'listOfInitialPhaseConfigurations', 'single', 'statistics'
+
+		Returns:
+			poolData: object with the simulation results of all simulations
+	"""
 
 	t0 = time.time()
 	if dictAlgo['bruteForceBasinStabMethod'] == 'classicBruteForceMethodRotatedSpace' or dictAlgo['bruteForceBasinStabMethod'] == 'testNetworkMotifIsing': # classic approach with LP-adaptation developed with J. Asmus, D. Platz
@@ -120,6 +130,17 @@ def distributeProcesses(dictNet, dictPLL, dictAlgo=None):
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 def multihelper(iterConfig, initPhiPrime0, dictNet, dictPLL, dictAlgo, param_id='None'):
+	"""Function that
+
+		Args:
+			iterConfig
+			initPhiPrime0
+			dictNet:  contains as parameters the information about properties of the network to be simulated, the initial conditions and the synchronized states under investigation
+			dictPLL:  contains as parameters the information about properties of the PLLs, its components, the time delays, the types of signals exchanged
+			dictAlgo: contains as parameters the information how the simulation has to be carried out and what type is run: e.g., 'single', 'classicBruteForceMethodRotatedSpace', 'listOfInitialPhaseConfigurations', 'single', 'statistics'
+
+		Returns:
+	"""
 
 	if dictAlgo['bruteForceBasinStabMethod'] == 'classicBruteForceMethodRotatedSpace':	# classic approach with LP-adaptation developed with J. Asmus, D. Platz
 		phiSr = list(iterConfig)

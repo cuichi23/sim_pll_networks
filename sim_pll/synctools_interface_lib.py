@@ -177,6 +177,8 @@ def generate_delay_plot(dictPLL, dictNet, isRadians=True, filename=None, max_del
 	# Show figure
 	plt.show()
 
+	return fsl.get_tau()/(2*np.pi), fsl.get_omega(), fsl1.get_tau()/(2*np.pi), fsl1.get_omega()
+
 
 
 

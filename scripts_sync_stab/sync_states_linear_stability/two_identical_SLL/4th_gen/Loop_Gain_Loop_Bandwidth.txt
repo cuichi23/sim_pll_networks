@@ -1,0 +1,53 @@
+***********************************
+v= 128 ,  fc=  1e+04  Hz,   Steady State Loop Gain=  2.0707e+06 Hz,  Loop Bandwidth= 1.4373e+05 Hz
+v= 128 ,  fc=  1e+04  Hz,   Steady State Loop Gain=  2.0707e+06 Hz,  Loop Bandwidth= -1.4373e+05 Hz
+v= 128 ,  fc=  1e+05  Hz,   Steady State Loop Gain=  2.0707e+06 Hz,  Loop Bandwidth= 4.4959e+05 Hz
+v= 128 ,  fc=  1e+05  Hz,   Steady State Loop Gain=  2.0707e+06 Hz,  Loop Bandwidth= -4.4959e+05 Hz
+v= 128 ,  fc=  1e+06  Hz,   Steady State Loop Gain=  2.0707e+06 Hz,  Loop Bandwidth= 1.2768e+06 Hz
+v= 128 ,  fc=  1e+06  Hz,   Steady State Loop Gain=  2.0707e+06 Hz,  Loop Bandwidth= -1.2768e+06 Hz
+v= 128 ,  fc=  1e+07  Hz,   Steady State Loop Gain=  2.0707e+06 Hz,  Loop Bandwidth= 2.0294e+06 Hz
+v= 128 ,  fc=  1e+07  Hz,   Steady State Loop Gain=  2.0707e+06 Hz,  Loop Bandwidth= -2.0294e+06 Hz
+v= 128 ,  fc=  1e+08  Hz,   Steady State Loop Gain=  2.0707e+06 Hz,  Loop Bandwidth= 2.0703e+06 Hz
+v= 128 ,  fc=  1e+08  Hz,   Steady State Loop Gain=  2.0707e+06 Hz,  Loop Bandwidth= -2.0703e+06 Hz
+v= 128 ,  fc=  1e+09  Hz,   Steady State Loop Gain=  2.0707e+06 Hz,  Loop Bandwidth= 2.0707e+06 Hz
+v= 128 ,  fc=  1e+09  Hz,   Steady State Loop Gain=  2.0707e+06 Hz,  Loop Bandwidth= -2.0707e+06 Hz
+***********************************
+v= 256 ,  fc=  1e+04  Hz,   Steady State Loop Gain=  1.0354e+06 Hz,  Loop Bandwidth= 1.0151e+05 Hz
+v= 256 ,  fc=  1e+04  Hz,   Steady State Loop Gain=  1.0354e+06 Hz,  Loop Bandwidth= -1.0151e+05 Hz
+v= 256 ,  fc=  1e+05  Hz,   Steady State Loop Gain=  1.0354e+06 Hz,  Loop Bandwidth= 3.1410e+05 Hz
+v= 256 ,  fc=  1e+05  Hz,   Steady State Loop Gain=  1.0354e+06 Hz,  Loop Bandwidth= -3.1410e+05 Hz
+v= 256 ,  fc=  1e+06  Hz,   Steady State Loop Gain=  1.0354e+06 Hz,  Loop Bandwidth= 8.0609e+05 Hz
+v= 256 ,  fc=  1e+06  Hz,   Steady State Loop Gain=  1.0354e+06 Hz,  Loop Bandwidth= -8.0609e+05 Hz
+v= 256 ,  fc=  1e+07  Hz,   Steady State Loop Gain=  1.0354e+06 Hz,  Loop Bandwidth= 1.0299e+06 Hz
+v= 256 ,  fc=  1e+07  Hz,   Steady State Loop Gain=  1.0354e+06 Hz,  Loop Bandwidth= -1.0299e+06 Hz
+v= 256 ,  fc=  1e+08  Hz,   Steady State Loop Gain=  1.0354e+06 Hz,  Loop Bandwidth= 1.0353e+06 Hz
+v= 256 ,  fc=  1e+08  Hz,   Steady State Loop Gain=  1.0354e+06 Hz,  Loop Bandwidth= -1.0353e+06 Hz
+v= 256 ,  fc=  1e+09  Hz,   Steady State Loop Gain=  1.0354e+06 Hz,  Loop Bandwidth= 1.0354e+06 Hz
+v= 256 ,  fc=  1e+09  Hz,   Steady State Loop Gain=  1.0354e+06 Hz,  Loop Bandwidth= -1.0354e+06 Hz
+***********************************
+v= 512 ,  fc=  1e+04  Hz,   Steady State Loop Gain=  5.1769e+05 Hz,  Loop Bandwidth= 7.1604e+04 Hz
+v= 512 ,  fc=  1e+04  Hz,   Steady State Loop Gain=  5.1769e+05 Hz,  Loop Bandwidth= -7.1604e+04 Hz
+v= 512 ,  fc=  1e+05  Hz,   Steady State Loop Gain=  5.1769e+05 Hz,  Loop Bandwidth= 2.1682e+05 Hz
+v= 512 ,  fc=  1e+05  Hz,   Steady State Loop Gain=  5.1769e+05 Hz,  Loop Bandwidth= -2.1682e+05 Hz
+v= 512 ,  fc=  1e+06  Hz,   Steady State Loop Gain=  5.1769e+05 Hz,  Loop Bandwidth= 4.6875e+05 Hz
+v= 512 ,  fc=  1e+06  Hz,   Steady State Loop Gain=  5.1769e+05 Hz,  Loop Bandwidth= -4.6875e+05 Hz
+v= 512 ,  fc=  1e+07  Hz,   Steady State Loop Gain=  5.1769e+05 Hz,  Loop Bandwidth= 5.1700e+05 Hz
+v= 512 ,  fc=  1e+07  Hz,   Steady State Loop Gain=  5.1769e+05 Hz,  Loop Bandwidth= -5.1700e+05 Hz
+v= 512 ,  fc=  1e+08  Hz,   Steady State Loop Gain=  5.1769e+05 Hz,  Loop Bandwidth= 5.1768e+05 Hz
+v= 512 ,  fc=  1e+08  Hz,   Steady State Loop Gain=  5.1769e+05 Hz,  Loop Bandwidth= -5.1768e+05 Hz
+v= 512 ,  fc=  1e+09  Hz,   Steady State Loop Gain=  5.1769e+05 Hz,  Loop Bandwidth= 5.1769e+05 Hz
+v= 512 ,  fc=  1e+09  Hz,   Steady State Loop Gain=  5.1769e+05 Hz,  Loop Bandwidth= -5.1769e+05 Hz
+***********************************
+v= 1024 ,  fc=  1e+04  Hz,   Steady State Loop Gain=  2.5884e+05 Hz,  Loop Bandwidth= 5.0388e+04 Hz
+v= 1024 ,  fc=  1e+04  Hz,   Steady State Loop Gain=  2.5884e+05 Hz,  Loop Bandwidth= -5.0388e+04 Hz
+v= 1024 ,  fc=  1e+05  Hz,   Steady State Loop Gain=  2.5884e+05 Hz,  Loop Bandwidth= 1.4616e+05 Hz
+v= 1024 ,  fc=  1e+05  Hz,   Steady State Loop Gain=  2.5884e+05 Hz,  Loop Bandwidth= -1.4616e+05 Hz
+v= 1024 ,  fc=  1e+06  Hz,   Steady State Loop Gain=  2.5884e+05 Hz,  Loop Bandwidth= 2.5105e+05 Hz
+v= 1024 ,  fc=  1e+06  Hz,   Steady State Loop Gain=  2.5884e+05 Hz,  Loop Bandwidth= -2.5105e+05 Hz
+v= 1024 ,  fc=  1e+07  Hz,   Steady State Loop Gain=  2.5884e+05 Hz,  Loop Bandwidth= 2.5876e+05 Hz
+v= 1024 ,  fc=  1e+07  Hz,   Steady State Loop Gain=  2.5884e+05 Hz,  Loop Bandwidth= -2.5876e+05 Hz
+v= 1024 ,  fc=  1e+08  Hz,   Steady State Loop Gain=  2.5884e+05 Hz,  Loop Bandwidth= 2.5884e+05 Hz
+v= 1024 ,  fc=  1e+08  Hz,   Steady State Loop Gain=  2.5884e+05 Hz,  Loop Bandwidth= -2.5884e+05 Hz
+v= 1024 ,  fc=  1e+09  Hz,   Steady State Loop Gain=  2.5884e+05 Hz,  Loop Bandwidth= 2.5884e+05 Hz
+v= 1024 ,  fc=  1e+09  Hz,   Steady State Loop Gain=  2.5884e+05 Hz,  Loop Bandwidth= -2.5884e+05 Hz
+***********************************

@@ -1,0 +1,10 @@
+f(x)	=a(Vcoarse)+b(Vcoarse)*erf(x-1.35) 
+
+
+a(Vcoarse)=a1+a2*erf(x-1.5)
+a1=6.03062e10
+a2=1.45319e9
+
+
+b(Vcoarse)= b'*Vcoarse***** Maybe needs to find better
+b'1.5224e8

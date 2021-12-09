@@ -1,0 +1,71 @@
+\documentclass{article}
+ \usepackage{array}
+\usepackage[utf8]{inputenc}
+\usepackage[english]{babel}
+\usepackage[document]{ragged2e}
+\usepackage{amsfonts}
+\usepackage{geometry}
+ \geometry{
+ a4paper,
+ total={170mm,257mm},
+ left=10mm,
+ top=20mm,
+ }
+\usepackage{lscape}
+\usepackage{graphicx}
+\usepackage{placeins}
+\usepackage{float}
+\usepackage{subfigure}
+
+\begin{document}
+
+%\begin{landscape}
+
+\begin{flushleft}
+\begin{tabular}{ |p{1.5cm}||p{3.9cm}|p{4.5cm}|p{3.5cm}|p{3cm}|  }
+ \hline
+ \multicolumn{5}{|l|}{List of Phase Models' Parameters} \\
+ \hline
+ Parameter of the phase Model & Value & Parameter of the 4rd Gen Prototype & Value & Comment\\
+ \hline
+ $\omega_k$   & $60\;2\pi\;10^9 Hz$    & $\omega_k=2\pi f_k$ &  $60\;10^9 Hz$ & intrinsic SLL frequency\\
+\hline
+ $K_k^{VCO}$   & $2\pi \; 1\;10^{9}Hz/V$    & $K_{VCO}^{prebias}$ &  $1*10^{9}Hz/V$ & sensitivity of the VCO at $f_{VCO}^{out}$\\
+\hline
+ $A_k^{bias}$   & ...    & $A_k^{prebias}$ &  ... & pre-bias voltage of the VCO at $f_{VCO}^{out}$\\
+\hline
+ $\tau^{cc}$   & $0...10 ns$   & $\tau^{cc}$ &  $0...10 ns$ & cross-coupling time-delay\\
+\hline
+ $A_k$   & $113mV$ peek to peek   &  $A_k$ &  $113mV$ peak to peak & The amplitude of the signal coming from the divider \\
+\hline
+$A_l$   & $113mV$ peek to peek   &  $A_l$ &  $113mV$ peak to peak & The amplitude of the signal coming from the other SLL \\ 
+\hline
+$G_l$   & $6.19$ &  $G_l$ &  $6.19$ & The amplification of signal coming from other SLLS\\
+
+\hline
+$G_k$   & $6.19$ &  $G_k$ &  $6.19$ & The amplification of signal coming from divider\\
+
+\hline
+$G_k^{PD}$   & $3.26$    & $G_k^{PD}$  & $3.26$ & The gain of the PD\\
+\hline
+$G^{VGA}$   & $0.5....2$    & $G^{VGA}$ & $0.5....2$ & The variable gain of the VGA \\
+\hline
+
+$A_k^{PD, offset}$   & $0.837V$    & $A_k^{PD, offset}$ &  ......& The DC offset Voltage of the PD \\
+\hline
+
+$G_k^{LF}$   & $1$    & $G_k^{LF}$ &  $0\;dB$ & loop filter gain\\
+\hline
+$\omega^c$   & $100\;...800\; MHz$ &$\omega^c$    & $100\;...800\; MHz$ & range of cut off frequency \\
+ \hline
+$v_k$    & $4$ or $8$    & $v_k$ &  $4$ or $8$ & division of the VCO's frequency\\
+ \hline
+$K_k$   & $.... Hz/V$    & $K_k=K_k^{VCO}G_k\cdot G_l A_k A_l G_k^{PD}G^{VGA}G_k^{LF}/2$ &  ... & coupling strength\\
+ \hline
+\end{tabular}
+
+\end{flushleft}
+
+%\end{landscape}
+\end{document}
+

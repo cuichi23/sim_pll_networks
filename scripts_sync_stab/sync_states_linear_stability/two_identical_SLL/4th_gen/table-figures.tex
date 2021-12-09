@@ -1,0 +1,97 @@
+\documentclass{article}
+ \usepackage{array}
+\usepackage[utf8]{inputenc}
+\usepackage[english]{babel}
+\usepackage[document]{ragged2e}
+\usepackage{amsfonts}
+\usepackage{geometry}
+ \geometry{
+ a4paper,
+ total={170mm,257mm},
+ left=10mm,
+ top=20mm,
+ }
+\usepackage{lscape}
+\usepackage{graphicx}
+\usepackage{placeins}
+\usepackage{float}
+\usepackage{subfigure}
+\usepackage{stackengine}
+\newcommand\xrowht[2][0]{\addstackgap[.5\dimexpr#2\relax]{\vphantom{#1}}}
+
+
+\begin{document}
+
+%\begin{landscape}
+
+\begin{flushleft}
+\begin{tabular}{ |p{1.5cm}||p{4.2cm}|p{5.9cm}|p{3.0cm}|p{3cm}|  }
+
+ \hline
+ \multicolumn{5}{|l|}{List of Phase Models' Parameters} \\
+ \hline
+ Parameter of the phase Model & Value & Parameter of the 4rd Gen Prototype & Value & Comment\\
+ \hline\xrowht[()]{15pt}
+ $\omega_k$   & $2\pi\cdot 60\cdot10^9$\,radHz    & $f_k=\omega_k/2\pi $ &  $60\cdot10^9 $\,Hz & intrinsic SLL frequency\\
+\hline\xrowht[()]{15pt}
+ $K_k^{\textrm{\tiny VCO}}$   & $2\pi (\cdot 100... 500)\; \textrm{rad MHz/V}$    & $K_k^{\textrm{\tiny VCO, fine}}$ &  $100... 500\; \textrm{MHz/V}$ & sensitivity of the VCO at $f_{VCO}^{out}$\\
+\hline\xrowht[()]{15pt}
+$\tau^\textrm{\scriptsize cc, tune}$   & $0\,\dots\,30$\,ns   & $\tau^\textrm{cc, tune}$ &  $0\,\dots\,30$\,ns & cross-coupling time-delay\\
+\hline\xrowht[()]{15pt}
+$G_k^{\textrm{PD}}$   & $3.24$    & $G_k^{\textrm{PD}}$  & $3.24$ & The gain of the PD\\
+\hline\xrowht[()]{15pt}
+$G_k^{\textrm{VGA}}$   & $0.5....2$    & $G_k^{\textrm{VGA}}$ & $0.5....2$ & The variable gain of the VGA \\
+\hline\xrowht[()]{15pt}
+$G_k^{\textrm{LF}}$   & $1$    & $G_k^{\textrm{LF}}$ &  $0\;dB$ & loop filter gain\\
+\hline\xrowht[()]{15pt}
+$\omega^c$   & $100\,\dots\,800$\,MHz &$\omega^c$    & $100\,\dots\,800$\,MHz & range of cut off frequency \\
+ \hline\xrowht[()]{15pt}
+$v_k$    & $128\,\dots\,1024$    & $v_k$ &  $128\,\dots\,1024$ & division of the VCO's frequency\\
+ \hline\xrowht[()]{15pt}
+$K_k$   & $2\pi(8.1\,\dots\,162)10^7$\,radHz/V    & $K_k=K_k^{\textrm{\tiny VCO}}\, G_k^{\textrm{\tiny PD}}G^{\textrm{\tiny VGA}}G_k^{\textrm{\tiny LF}}/\textrm{2v}$ &  ... & coupling strength\\
+%$K_k$   & $2\pi\cdot(4.97\,\dots\,39.76)\cdot10^5$\,Hz/V    & $K_k=K_k^{\textrm{\tiny VCO}}\, G_k^{\textrm{\tiny PD}}G^{\textrm{\tiny VGA}}G_k^{\textrm{\tiny LF}}/\textrm{2v}$ &  ... & coupling strength\\
+ \hline
+\end{tabular}
+\end{flushleft}
+
+For distance=423m, where $K_k^\textrm{min}$, $\omega^c=800$\,MHz, $v=8$  
+\begin{flushleft}
+\begin{tabular}{ |p{1.5cm}||p{3.9cm}|p{5.9cm}|p{3.0cm}|p{3cm}|  }
+ \hline
+$G_L(0)$   & $-4.3050 \cdot10^6$\,Hz    & $G_L(0)=\frac{K_k\;h'(-\Omega(\tau-\tau^f)+\beta_{kl})}{2v}$ &  $-4.3050 \cdot10^6$\,Hz & steady-state loop gain\\
+ \hline
+$G_L(i\gamma)$   & $-4.3050 \cdot10^6 \frac{p(i\gamma)}{i\gamma}$    & $G_L(i\gamma)=\frac{K_k\;h'(\Omega(\tau-\tau^f)+\beta_{kl})}{2v}\frac{p(i\gamma)}{i\gamma}$ &  $-4.3050 \cdot10^6 \frac{p(i\gamma)}{i\gamma}$ & loop gain\\
+ \hline
+\end{tabular}
+
+\end{flushleft}
+
+
+
+
+For distance=212m, where $K_k^\textrm{max}$, $\omega^c=100MHz$ and $v=4$ 
+\begin{flushleft}
+\begin{tabular}{ |p{1.5cm}||p{3.9cm}|p{5.9cm}|p{3.0cm}|p{3cm}|  }
+ \hline
+$G_L(0)$   & $-9.24095\cdot10^8 Hz$    & $G_L(0)=\frac{K_k\;h'-(\Omega(\tau-\tau^f)+\beta_{kl})}{2v}$ &  $-9.24095\cdot10^8$ & steady-state loop gain\\
+ \hline
+$G_L(i\gamma)$   & $-9.24095\cdot10^8 \frac{p(i\gamma)}{i\gamma}$    & $G_L(i\gamma)=\frac{K_k\;h'(\Omega(\tau-\tau^f)+\beta_{kl})}{2v}\frac{p(i\gamma)}{i\gamma}$ &  $-9.24095\cdot10^8 \frac{p(i\gamma)}{i\gamma}$ & loop gain\\
+ \hline
+\end{tabular}
+
+\end{flushleft}
+
+\subsection*{Open questions, need for discussion}
+
+\begin{itemize}
+ \item divider open questions: high vs. low division, cannot have both since the resulting frequency ranges in which all components need to operate need to be designed for specific frequency regimes; arguments for high division factors -- easy to be exchanged, less damping in case of wireless transmission (range, power consumption), arguments for low division factors -- integrated antennas might be possible (packaging)
+ \item $\tau^\textrm{cc, tune}$ denotes the tunable part of the cross-coupling delay realized either within every input individually (hence each unidirectional connection can be controlled independently), in the output of the VCO's cross-coupling path, or... 
+ \item when asking how large the delay can be for a certain setup so that we can still synchronize robustly, we should consider to use the gain-margin measure and provide the maximum time-delays that would guarantee a phase-margin of $\{30^\circ,\,40^\circ,\,50^\circ,\,60^\circ,\,\dots\}$; is it feasible to plot phase and gain margin as a function of the delay or other parameters
+\end{itemize}
+
+
+
+
+%\end{landscape}
+\end{document}
+

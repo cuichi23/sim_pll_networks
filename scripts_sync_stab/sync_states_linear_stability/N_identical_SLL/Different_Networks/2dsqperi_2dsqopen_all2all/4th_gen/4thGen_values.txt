@@ -1,0 +1,11 @@
+​0.113/2	​0.113/2	​5.8	5.8	​3.2	​2	​2π*1GHzrad/V	900GHz	​4	15.069GHz	14.85GHz(Antiphase) 15.068GHz(Inphase) σ=-0.0085593(Inphase) σ=-0.0085590(Antinphase)
+
+​0.113/2	​0.113/2	​5.8	5.8	​3.2	​2	​2π*1GHzrad/V	100GHz	​4	15.069GHz	14.931GHz(Antiphase) 15.0682GHz(Inphase) σ=-0.00241472(Inphase) σ=-0.00241464(Antinphase)
+
+​0.113/2	​0.113/2	​5.8	5.8	​3.2	​0.5	​2π*1GHzrad/V	100GHz	​4	15.021GHz	14.9787GHz(Antiphase) 15.021GHz(Inphase) σ=-0.00103234(Inphase) σ=-0.00103234(Antinphase)
+												
+​0.113/2	​0.113/2	5.8	5.8	​3.2	​2	​2π*1GHzrad/V	​100MHz	​8	7.5GHz 		7.49999GHz(Antiphase) Unstable(Inphase) σ=0.00499731(Inphase) σ=-0.00275964(Antinphase)
+
+​0.113/2	​0.113/2	5.8	5.8	​3.2	​0.5	​2π*1GHzrad/V	​100MHz	​8	7.5GHz 		7.49999GHz(Antiphase) Unstable(Inphase) σ=0.00177911(Inphase) σ=-0.00444859(Antinphase)
+
+

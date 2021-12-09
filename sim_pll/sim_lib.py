@@ -28,7 +28,7 @@ now = datetime.datetime.now()
 gc.enable()
 
 ''' SIMULATE NETWORK '''
-def simulateSystem(dictNet: dict, dictPLL: dict, dictAlgo=None, multi_sim=False):
+def simulateSystem(dictNet: dict, dictPLL: dict, dictAlgo, multi_sim=False):
 	"""Function that organizes the simulation. a) sets up a list of PLLs and a container for the results (dictData). Writes the initial histories as specified. b) carries out the
 		evolution of the PLL's phases. c) save results and returns results or plots them.
 
@@ -289,12 +289,17 @@ def plot_results_simulation(dictNet, dictPLL, dictData):
 	# plot.plotOscSignal(dictPLL, dictNet, dictData)
 	plot.plotFreqAndPhaseDiff(dictPLL, dictNet, dictData)
 	plot.plotFreqAndOrderPar(dictPLL, dictNet, dictData)
-	plot.plotPSD(dictPLL, dictNet, dictData, [0, 1], saveData=False)
+	if dictNet['Nx']*dictNet['Ny'] == 2:
+		plot.plotPSD(dictPLL, dictNet, dictData, [0, 1], saveData=False)
+	elif dictNet['Nx']*dictNet['Ny'] == 64:
+		plot.plotPSD(dictPLL, dictNet, dictData, [0, 1, 7, 28, 29, 35, 36, 56, 63], saveData=False)			# [0, 1]
+	else:
+		plot.plotPSD(dictPLL, dictNet, dictData, [0, 1], saveData=False)
 	plt.draw()
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-def evolveSystemOnTauArray(dictNet, dictPLL, pll_list, dictData, dictAlgo=None):
+def evolveSystemOnTauArray(dictNet, dictPLL, pll_list, dictData, dictAlgo):
 	"""Function that
 
 		Args:
@@ -340,7 +345,7 @@ def evolveSystemOnTauArray(dictNet, dictPLL, pll_list, dictData, dictAlgo=None):
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-def evolveSystemOnTsimArray(dictNet, dictPLL, pll_list, dictData, dictAlgo=None):
+def evolveSystemOnTsimArray(dictNet, dictPLL, pll_list, dictData, dictAlgo):
 	"""Function that
 
 		Args:
@@ -398,7 +403,7 @@ def evolveSystemOnTsimArray(dictNet, dictPLL, pll_list, dictData, dictAlgo=None)
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-# def evolveSystemOnTsimArray(dictNet, dictPLL, pll_list, dictData, dictAlgo=None):
+# def evolveSystemOnTsimArray(dictNet, dictPLL, pll_list, dictData, dictAlgo):
 #
 # 	print('Phi container has length of Tsim.')
 # 	clock_counter = dictData['clock_counter']
@@ -443,7 +448,7 @@ def evolveSystemOnTsimArray(dictNet, dictPLL, pll_list, dictData, dictAlgo=None)
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-def distributed_pll_in_3d_mobile(dictNet, dictPLL, phi, pos, coup_matrix, clock_counter, pll_list, dictData, dictAlgo=None):
+def distributed_pll_in_3d_mobile(dictNet, dictPLL, phi, pos, coup_matrix, clock_counter, pll_list, dictData, dictAlgo):
 	"""Function that
 
 		Args:
@@ -510,7 +515,7 @@ def distributed_pll_in_3d_mobile(dictNet, dictPLL, phi, pos, coup_matrix, clock_
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-def evolveSystemOnTsimArray_timeDepChangeOfCoupStrength(dictNet, dictPLL, pll_list, dictData, dictAlgo=None):
+def evolveSystemOnTsimArray_timeDepChangeOfCoupStrength(dictNet, dictPLL, pll_list, dictData, dictAlgo):
 	"""Function that
 
 		Args:
@@ -564,7 +569,7 @@ def evolveSystemOnTsimArray_timeDepChangeOfCoupStrength(dictNet, dictPLL, pll_li
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-def evolveSystemOnTsimArray_varInjectLockCoupStrength(dictNet, dictPLL, pll_list, dictData, dictAlgo=None):
+def evolveSystemOnTsimArray_varInjectLockCoupStrength(dictNet, dictPLL, pll_list, dictData, dictAlgo):
 	"""Function that
 
 		Args:
@@ -624,7 +629,7 @@ def evolveSystemOnTsimArray_varInjectLockCoupStrength(dictNet, dictPLL, pll_list
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-def evolveSystemOnTsimArray_varDelaySaveCtrlSig(dictNet, dictPLL, pll_list, dictData, dictAlgo=None):
+def evolveSystemOnTsimArray_varDelaySaveCtrlSig(dictNet, dictPLL, pll_list, dictData, dictAlgo):
 	"""Function that
 
 		Args:
@@ -683,7 +688,7 @@ def evolveSystemOnTsimArray_varDelaySaveCtrlSig(dictNet, dictPLL, pll_list, dict
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-def evolveSystemInterface(dictNet, dictPLL, phi, clock_counter, pll_list, dictData, dictAlgo=None):
+def evolveSystemInterface(dictNet, dictPLL, phi, clock_counter, pll_list, dictData, dictAlgo):
 	"""Function that
 
 		Args:
@@ -710,7 +715,7 @@ def evolveSystemInterface(dictNet, dictPLL, phi, clock_counter, pll_list, dictDa
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-def evolveSystemTestCases(dictNet, dictPLL, pll_list, dictData, dictAlgo=None):
+def evolveSystemTestCases(dictNet, dictPLL, pll_list, dictData, dictAlgo):
 	"""Function that
 
 		Args:
@@ -759,7 +764,7 @@ def evolveSystemTestCases(dictNet, dictPLL, pll_list, dictData, dictAlgo=None):
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-def evolveSystemTestPerturbations(dictNet, dictPLL, phi, clock_counter, pll_list, dictData=None, dictAlgo=None):
+def evolveSystemTestPerturbations(dictNet, dictPLL, phi, clock_counter, pll_list, dictData, dictAlgo):
 	"""Function that
 
 		Args:

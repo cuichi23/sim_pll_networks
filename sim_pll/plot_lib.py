@@ -92,8 +92,15 @@ def plotPSD(dictPLL, dictNet, dictData, plotList=[], saveData=False):
 
 	dictPLL, dictNet = prepareDictsForPlotting(dictPLL, dictNet)
 
-	f = []; Pxx_db = [];
+	f = []
+	Pxx_db = []
+	peak_power_val = []
+	index_of_highest_peak = []
+	value_of_highest_peak = []
+	frequency_of_max_peak = []
+	# compute the PSDs either of a list of oscillators or for all of them
 	if plotList:
+		print('\nPlotting PSD according to given plotlist:', plotList)
 		for i in range(len(plotList)):											# calculate spectrum of signals for the oscillators specified in the list
 			ftemp, Pxx_temp = eva.calcSpectrum( dictData['phi'][:,plotList[i]], dictPLL, dictNet, dictPLL['percent_of_Tsim'] )
 			f.append(ftemp[0]); Pxx_db.append(Pxx_temp[0])
@@ -103,40 +110,51 @@ def plotPSD(dictPLL, dictNet, dictData, plotList=[], saveData=False):
 			ftemp, Pxx_temp = eva.calcSpectrum( dictData['phi'][:,i], dictPLL, dictNet, dictPLL['percent_of_Tsim'] )
 			f.append(ftemp[0]); Pxx_db.append(Pxx_temp[0]); plotList.append(i)
 
-	peak_power_val = [];
+
 	fig1 = plt.figure(num=1, figsize=(figwidth, figheight), dpi=dpi_val, facecolor='w', edgecolor='k')
 	fig1.canvas.set_window_title('spectral density of synchronized state')		# plot spectrum
 	fig1.set_size_inches(plot_size_inches_x, plot_size_inches_y)
 
-	for i in range(len(f)):
-		peak_freq_coup1 = np.argmax(Pxx_db[i]);									# find the principle peak of the free-running SLL
-		peak_freq1_val  = f[i][peak_freq_coup1];
-		peak_power_val.append(Pxx_db[i][peak_freq_coup1]);
-		plt.plot(f[i], Pxx_db[i], '-', label='PLL%i' %(plotList[i]))
-	plt.title(r'power spectrum $\Delta f=$%0.5E, peak at $Pxx^\textrm{peak}$=%0.2f' %((f[0][2]-f[0][1]), peak_power_val[0]), fontdict = labelfont)
 	plt.xlabel('frequencies [Hz]', fontdict = labelfont, labelpad=labelpadxaxis); plt.ylabel('P [dBm]', fontdict = labelfont, labelpad=labelpadyaxis);
 	plt.tick_params(axis='both', which='major', labelsize=tickSize)
+
+	for i in range(len(f)):
+		index_of_highest_peak.append( np.argmax(Pxx_db[i]) )					# find the principle peak
+		frequency_of_max_peak.append( f[i][index_of_highest_peak[i]] )			# save the frequency where the maximum peak is found
+		peak_power_val.append( Pxx_db[i][index_of_highest_peak[i]] )			# save the peak power value
+
+		plt.plot(f[i], Pxx_db[i], '-', label='PLL%i' %(plotList[i]))
+
+
+	plt.title(r'power spectrum $\Delta f=$%0.5E, peak at $Pxx_0^\textrm{peak}$=%0.2f' %((f[0][2]-f[0][1]), peak_power_val[0]), fontdict = labelfont)
 	plt.legend(loc='upper right')
 	plt.grid()
+
 	try:
-		plt.ylim([np.min(Pxx_db[i][peak_freq_coup1:]), peak_power_val[0]+5]);
+		plt.ylim([np.min(Pxx_db[0][index_of_highest_peak[0]:]), np.max(peak_power_val)+5]);
 	except:
-		print('Could not determine peak_power_val!')
+		print('Could not set ylim accordingly!')
 	plt.xlim(0, 12.5*np.min(dictPLL['intrF']));
 	plt.savefig('results/powerdensity_dB_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.svg' %(np.mean(dictPLL['coupK']), np.mean(dictPLL['cutFc']), np.mean(dictPLL['syncF']), np.mean(dictPLL['transmission_delay']), np.mean(dictPLL['noiseVarVCO']), now.year, now.month, now.day), dpi=dpi_val)
 	plt.savefig('results/powerdensity_dB_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.png' %(np.mean(dictPLL['coupK']), np.mean(dictPLL['cutFc']), np.mean(dictPLL['syncF']), np.mean(dictPLL['transmission_delay']), np.mean(dictPLL['noiseVarVCO']), now.year, now.month, now.day), dpi=dpi_val)
-	plt.xlim(peak_freq1_val-1.2*np.min(dictPLL['coupK']),peak_freq1_val+1.2*np.max(dictPLL['coupK']));
-	plt.plot(f[0][peak_freq_coup1-int(0.1*np.min(dictPLL['intrF'])/(f[0][2]-f[0][1]))], Pxx_db[0][peak_freq_coup1], 'r*',
-			 f[0][peak_freq_coup1+int(0.1*np.min(dictPLL['intrF'])/(f[0][2]-f[0][1]))], Pxx_db[0][peak_freq_coup1], 'r*')
+
+	plt.xlim(frequency_of_max_peak[i]-1.2*np.min(dictPLL['coupK']),frequency_of_max_peak[i]+1.2*np.max(dictPLL['coupK']));
+	for i in range(len(f)):
+		plt.plot(f[i][index_of_highest_peak[i]-int(0.1*np.min(dictPLL['intrF'])/(f[0][2]-f[0][1]))], Pxx_db[i][index_of_highest_peak[i]], 'r*',
+			 	 f[i][index_of_highest_peak[i]+int(0.1*np.min(dictPLL['intrF'])/(f[0][2]-f[0][1]))], Pxx_db[i][index_of_highest_peak[i]], 'r*')
 	plt.savefig('results/powerdensity1stHarm_dBm_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.svg' %(np.mean(dictPLL['coupK']), np.mean(dictPLL['cutFc']), np.mean(dictPLL['syncF']), np.mean(dictPLL['transmission_delay']), np.mean(dictPLL['noiseVarVCO']), now.year, now.month, now.day), dpi=dpi_val)
 	plt.savefig('results/powerdensity1stHarm_dBm_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.png' %(np.mean(dictPLL['coupK']), np.mean(dictPLL['cutFc']), np.mean(dictPLL['syncF']), np.mean(dictPLL['transmission_delay']), np.mean(dictPLL['noiseVarVCO']), now.year, now.month, now.day), dpi=dpi_val)
 
 	freq_res_bins_both_peak_sides = 13
 	try:
-		plt.ylim([np.min(Pxx_db[i][peak_freq_coup1:peak_freq_coup1+1+freq_res_bins_both_peak_sides]), peak_power_val[0]+5]);
+		minima_of_all_psd_in_zoom_range = []
+		for i in range(len(f)):
+			minima_of_all_psd_in_zoom_range.append(np.min(Pxx_db[i][(index_of_highest_peak[i]-freq_res_bins_both_peak_sides):(index_of_highest_peak[i]+freq_res_bins_both_peak_sides)]))
+			print('minimum in plot range of PLL%i = %0.2f'%(i, minima_of_all_psd_in_zoom_range[i]))
+		plt.ylim([np.min(minima_of_all_psd_in_zoom_range)-3, np.max(peak_power_val)+3]);
 	except:
-		print('Could not determine peak_power_val!')
-	plt.xlim(peak_freq1_val-freq_res_bins_both_peak_sides*(f[0][2]-f[0][1]),peak_freq1_val+freq_res_bins_both_peak_sides*(f[0][2]-f[0][1]));
+		print('Could not set ylim accordingly!')
+	plt.xlim(frequency_of_max_peak[i]-freq_res_bins_both_peak_sides*(f[0][2]-f[0][1]),frequency_of_max_peak[i]+freq_res_bins_both_peak_sides*(f[0][2]-f[0][1]));
 	plt.savefig('results/powerdensity1stHarmCloseZoom_dBm_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.svg' %(np.mean(dictPLL['coupK']), np.mean(dictPLL['cutFc']), np.mean(dictPLL['syncF']), np.mean(dictPLL['transmission_delay']), np.mean(dictPLL['noiseVarVCO']), now.year, now.month, now.day), dpi=dpi_val)
 	plt.savefig('results/powerdensity1stHarmCloseZoom_dBm_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.png' %(np.mean(dictPLL['coupK']), np.mean(dictPLL['cutFc']), np.mean(dictPLL['syncF']), np.mean(dictPLL['transmission_delay']), np.mean(dictPLL['noiseVarVCO']), now.year, now.month, now.day), dpi=dpi_val)
 
@@ -147,66 +165,64 @@ def plotPSD(dictPLL, dictNet, dictData, plotList=[], saveData=False):
 	fig2.canvas.set_window_title('one-sided spectral density')
 	fig2.set_size_inches(plot_size_inches_x, plot_size_inches_y);
 
-	xHz = 0.001; onsidedPSD_params = []; oneSidPSDwidthsm3dB = [];				# distance from the principle peak to measure damping
+	xHz = 0.001; onsidedPSD_params = []; oneSidPSDwidthsm3dB = []; quality_factors = []; # distance from the principle peak to measure damping
 	Freqres = f[0][3]-f[0][2]; linestyle = ['-', '--', '-', '--', '-', '--'];
 	for i in range (len(f)):
-		peak_freq1_val = 0; coup1_delt_3dB = 0;
+		frequency_of_max_peak[i] = 0; coup1_delt_3dB = 0;
 		# mutually coupled SLL1
-		peak_freq_coup1 = np.argmax(Pxx_db[i]);									# find the index of the principle peak (max dB) of the free-running SLL
-		peak_freq1_val  = f[i][peak_freq_coup1];								# use the above index to identify the frequency of the peaks location
-		coup1_times_X	= np.argmax(f[i] >= 2.25*peak_freq1_val);				# find the index for the frequency being 2.25 times that of the peak
-		m3dB_freqcind1  = peak_freq_coup1 + np.where(Pxx_db[i][peak_freq_coup1:]<=(Pxx_db[i][peak_freq_coup1]-3.0))[0][0]; # find the index associated to a power drop of -3dB w.r.t. the peak's value
+		index_of_highest_peak[i] = np.argmax(Pxx_db[i]);									# find the index of the principle peak (max dB) of the free-running SLL
+		frequency_of_max_peak[i]  = f[i][index_of_highest_peak[i]];								# use the above index to identify the frequency of the peaks location
+		coup1_times_X	= np.argmax(f[i] >= 2.25*frequency_of_max_peak[i]);				# find the index for the frequency being 2.25 times that of the peak
+		m3dB_freqcind1  = index_of_highest_peak[i] + np.where(Pxx_db[i][index_of_highest_peak[i]:]<=(Pxx_db[i][index_of_highest_peak[i]]-3.0))[0][0]; # find the index associated to a power drop of -3dB w.r.t. the peak's value
 		print('\n\nm3dB_freqcind1:', m3dB_freqcind1, '\n\n')
 		m3dB_freqc_val  = f[i][m3dB_freqcind1];									# extract the frequency at -3dB
 
-		coup1_delt_3dB  = np.abs( m3dB_freqc_val - peak_freq1_val - Freqres )
+		coup1_delt_3dB  = np.abs( m3dB_freqc_val - frequency_of_max_peak[i] - Freqres )
 
-		print('Calculating: f[peak]-f[-3dBm]=', peak_freq1_val,'-',m3dB_freqc_val,'=',coup1_delt_3dB, '\n power 1st harmonic', Pxx_db[i][peak_freq_coup1],'\n')
-		print('\nPxx_db[',i,'][',peak_freq_coup1,']-3.0=',Pxx_db[i][peak_freq_coup1]-3.0)
-		#print('TEST Pxx_dBm[',i,'][ peak_freq_coup1+np.argmin(Pxx_db[',i,'][',peak_freq_coup1,':]<=(Pxx_db[',i,'][',peak_freq_coup1,']-3)) ]: ',
-		#					Pxx_db[i][ peak_freq_coup1+np.argmin(Pxx_db[i][peak_freq_coup1:].copy()<=(Pxx_db[i][peak_freq_coup1]-3.0)) ],
+		print('Calculating: f[peak]-f[-3dBm]=', frequency_of_max_peak[i],'-',m3dB_freqc_val,'=',coup1_delt_3dB, '\n power 1st harmonic', Pxx_db[i][index_of_highest_peak[i]],'\n')
+		print('\nPxx_db[',i,'][',index_of_highest_peak[i],']-3.0=',Pxx_db[i][index_of_highest_peak[i]]-3.0)
+		#print('TEST Pxx_dBm[',i,'][ index_of_highest_peak[i]+np.argmin(Pxx_db[',i,'][',index_of_highest_peak[i],':]<=(Pxx_db[',i,'][',index_of_highest_peak[i],']-3)) ]: ',
+		#					Pxx_db[i][ index_of_highest_peak[i]+np.argmin(Pxx_db[i][index_of_highest_peak[i]:].copy()<=(Pxx_db[i][index_of_highest_peak[i]]-3.0)) ],
 		#					' -> frequency where PxxMax-3dB:', m3dB_freqc_val,'Hz')
-		print('np.where(Pxx_db[',i,'][',peak_freq_coup1,':]<=(Pxx_db[',i,'][',peak_freq_coup1,']-3))[0][0]=', np.where(Pxx_db[i][peak_freq_coup1:]<=(Pxx_db[i][peak_freq_coup1]-3.0))[0][0], '\n')
+		print('np.where(Pxx_db[',i,'][',index_of_highest_peak[i],':]<=(Pxx_db[',i,'][',index_of_highest_peak[i],']-3))[0][0]=', np.where(Pxx_db[i][index_of_highest_peak[i]:]<=(Pxx_db[i][index_of_highest_peak[i]]-3.0))[0][0], '\n')
 		# calculate linear function between first two points of one-sided powerspectrum: y = slope * x + yinter, interPol{1,2} are the relate to the y-coordinates between which Pxx-3dB lies
-		# interpolP1 = peak_freq_coup1 + np.where(Pxx_db[i][peak_freq_coup1:] > (Pxx_db[i][peak_freq_coup1]-3.0))[0][-1]	# find the results in the PSD vectors that are adjacent to the -3dB point
-		# interpolP2 = peak_freq_coup1 + np.where(Pxx_db[i][peak_freq_coup1:] < (Pxx_db[i][peak_freq_coup1]-3.0))[0][0]		# PROBLEM IF Pxx goes up again!!!!!!! sketch to see
-		interpolP1 = peak_freq_coup1 + np.where(Pxx_db[i][peak_freq_coup1:] < (Pxx_db[i][peak_freq_coup1]-3.0))[0][0]	# find the first point in the PSD smaller than PxxMax-3dB and then take the prior point
+		# interpolP1 = index_of_highest_peak[i] + np.where(Pxx_db[i][index_of_highest_peak[i]:] > (Pxx_db[i][index_of_highest_peak[i]]-3.0))[0][-1]	# find the results in the PSD vectors that are adjacent to the -3dB point
+		# interpolP2 = index_of_highest_peak[i] + np.where(Pxx_db[i][index_of_highest_peak[i]:] < (Pxx_db[i][index_of_highest_peak[i]]-3.0))[0][0]		# PROBLEM IF Pxx goes up again!!!!!!! sketch to see
+		interpolP1 = index_of_highest_peak[i] + np.where(Pxx_db[i][index_of_highest_peak[i]:] < (Pxx_db[i][index_of_highest_peak[i]]-3.0))[0][0]	# find the first point in the PSD smaller than PxxMax-3dB and then take the prior point
 		interpolP2 = interpolP1-1																						# as the second to interpolate
 		#print('{interpolP1, interpolP2}:', interpolP1, interpolP2)
 		slope  = ( Pxx_db[i][interpolP2]-Pxx_db[i][interpolP1]) / ( f[i][interpolP2]-f[i][interpolP1])
 		yinter = Pxx_db[i][interpolP1] - slope * f[i][interpolP1]
 		#print('{slope, yinter}:', slope, yinter)
-		# slope  = ( Pxx_db[i][peak_freq_coup1+1]-Pxx_db[i][peak_freq_coup1]) / ( f[i][peak_freq_coup1+1]-f[i][peak_freq_coup1])
-		# yinter = Pxx_db[i][peak_freq_coup1] - slope * f[i][peak_freq_coup1]
-		fm3dB  = ( Pxx_db[i][peak_freq_coup1]-3.0 - yinter ) / slope
-		oneSidPSDwidthsm3dB.append(fm3dB-f[i][peak_freq_coup1])
-		print('\nwidths (HWHM) of PSDs obtained from one-sided PSD with interpolation for all oscis:', oneSidPSDwidthsm3dB)
-		print('Mean of widths of PSDs obtained from one-sided PSD with interpolation for all oscis:', np.mean(oneSidPSDwidthsm3dB))
-		print('Std of widths of PSDs obtained from one-sided PSD with interpolation for all oscis:', np.std(oneSidPSDwidthsm3dB), '\n')
-		print('For the mutually coupled SLL',i,' we find the principle peak at f =', peak_freq1_val, ', -3dBm delta_f =', coup1_delt_3dB, ', and hence a quality factor Q = ', peak_freq1_val/(2*(fm3dB-f[i][peak_freq_coup1])))
-		plt.plot(10.0*np.log10(fm3dB-peak_freq1_val+Freqres), Pxx_db[i][peak_freq_coup1]-3.0, 'r*', markersize=2)
+		# slope  = ( Pxx_db[i][index_of_highest_peak[i]+1]-Pxx_db[i][index_of_highest_peak[i]]) / ( f[i][index_of_highest_peak[i]+1]-f[i][index_of_highest_peak[i]])
+		# yinter = Pxx_db[i][index_of_highest_peak[i]] - slope * f[i][index_of_highest_peak[i]]
+		fm3dB  = ( Pxx_db[i][index_of_highest_peak[i]]-3.0 - yinter ) / slope
+		oneSidPSDwidthsm3dB.append(fm3dB-f[i][index_of_highest_peak[i]])
+		quality_factors.append(frequency_of_max_peak[i]/(2*(fm3dB-f[i][index_of_highest_peak[i]])))
+		print('For the mutually coupled SLL',i,' we find the principle peak at f =', frequency_of_max_peak[i], ', -3dBm delta_f =', coup1_delt_3dB, ', and hence a quality factor Q = ', frequency_of_max_peak[i]/(2*(fm3dB-f[i][index_of_highest_peak[i]])))
+		plt.plot(10.0*np.log10(fm3dB-frequency_of_max_peak[i]+Freqres), Pxx_db[i][index_of_highest_peak[i]]-3.0, 'r*', markersize=2)
 		if coup1_delt_3dB == 0:
 			print('frequency resolution of power spectrum too large or power spectrum approaching delta-like peak!')
 		try:
-			onsidedPSD_params.append([peak_freq1_val, coup1_delt_3dB])
+			onsidedPSD_params.append([frequency_of_max_peak[i], coup1_delt_3dB])
 		except:
 			onsidedPSD_params.append([0, 0])
 		if (m3dB_freqcind1 < 3.1 and m3dB_freqcind1 > 2.9):
-			#plt.plot(10.0*np.log10(1E-12), Pxx_db[i][peak_freq_coup1], 'r*', markersize=2)
-			plt.plot(10.0*np.log10(f[i][m3dB_freqcind1]-peak_freq1_val), Pxx_db[i][m3dB_freqcind1], 'r+', markersize=2)
+			#plt.plot(10.0*np.log10(1E-12), Pxx_db[i][index_of_highest_peak[i]], 'r*', markersize=2)
+			plt.plot(10.0*np.log10(f[i][m3dB_freqcind1]-frequency_of_max_peak[i]), Pxx_db[i][m3dB_freqcind1], 'r+', markersize=2)
 		else:
 			print('CHECK frequency resolution of power spectrum and noise strength. Cannot use this method.')
 		if dictNet['topology'] == 'compareEntrVsMutual':
-			plt.plot(10.0*np.log10(f[i][peak_freq_coup1:coup1_times_X]-peak_freq1_val+Freqres), Pxx_db[i][peak_freq_coup1:coup1_times_X], linestyle[i], label='PSD PLL%i' %(i), markersize=2)
+			plt.plot(10.0*np.log10(f[i][index_of_highest_peak[i]:coup1_times_X]-frequency_of_max_peak[i]+Freqres), Pxx_db[i][index_of_highest_peak[i]:coup1_times_X], linestyle[i], label='PSD PLL%i' %(i), markersize=2)
 		else:
-			plt.plot(10.0*np.log10(f[i][peak_freq_coup1:coup1_times_X]-peak_freq1_val+Freqres), Pxx_db[i][peak_freq_coup1:coup1_times_X], label='PSD PLL%i' %(plotList[i]), markersize=2)
+			plt.plot(10.0*np.log10(f[i][index_of_highest_peak[i]:coup1_times_X]-frequency_of_max_peak[i]+Freqres), Pxx_db[i][index_of_highest_peak[i]:coup1_times_X], label='PSD PLL%i' %(plotList[i]), markersize=2)
 	try:
 		plt.title(r'$\gamma_0^{(\textrm{PSDfit})}=$%0.4E, $\gamma_1=$%0.4E, $\gamma_2=$%0.4E' %(params[0][0], params[1][0], params[2][0]), fontdict = titlefont)
 	except:
 		print('No (two-sided, 1st harmonic) PSD fits available!')
 	if dictNet['Nx']*dictNet['Ny'] == 2:
 		onsidedPSD_params.append([0, 0])										# necessary, otherwise error on write-out to csv file
-	#plt.plot(10.0*np.log10(powerspecPLL1['f'][0][peak_freq_coup1:coup1_times_X].copy()-peak_freq1_val), !!!!! , 'y-', label=r'$1/f^2$')
+	#plt.plot(10.0*np.log10(powerspecPLL1['f'][0][index_of_highest_peak[i]:coup1_times_X].copy()-frequency_of_max_peak[i]), !!!!! , 'y-', label=r'$1/f^2$')
 	plt.legend(loc='upper right')
 	# plt.xlim([0,f01+20*max(Kvco1,Kvco2)]);	#plt.ylim(-100,0);
 	plt.xlabel(r'$10\log_{10}\left(f-f_{\rm peak}\right)$ [Hz]', fontdict = labelfont, labelpad=labelpadxaxis); plt.ylabel(r'$P$ [dBm]', fontdict = labelfont, labelpad=labelpadyaxis)
@@ -214,9 +230,16 @@ def plotPSD(dictPLL, dictNet, dictData, plotList=[], saveData=False):
 	plt.savefig('results/onsidedPSD_dBm_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.svg' %(np.mean(dictPLL['coupK']), np.mean(dictPLL['cutFc']), np.mean(dictPLL['syncF']), np.mean(dictPLL['transmission_delay']), np.mean(dictPLL['noiseVarVCO']), now.year, now.month, now.day), dpi=dpi_val)
 	plt.savefig('results/onsidedPSD_dBm_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.png' %(np.mean(dictPLL['coupK']), np.mean(dictPLL['cutFc']), np.mean(dictPLL['syncF']), np.mean(dictPLL['transmission_delay']), np.mean(dictPLL['noiseVarVCO']), now.year, now.month, now.day), dpi=dpi_val)
 
+	print('\nwidths (HWHM) of PSDs obtained from one-sided PSD with interpolation for all oscis:', oneSidPSDwidthsm3dB)
+	print('Mean of widths of PSDs obtained from one-sided PSD with interpolation for all oscis:', np.mean(oneSidPSDwidthsm3dB))
+	print('Std of widths of PSDs obtained from one-sided PSD with interpolation for all oscis:', np.std(oneSidPSDwidthsm3dB), '\n')
+	print('all quality factors obtained from the one-sided PSD:', quality_factors)
+	print('Mean all quality factors obtained from the one-sided PSD:', np.mean(quality_factors))
+	print('Std all quality factors obtained from the one-sided PSD:', np.std(quality_factors), '\n')
+
 	fig1 = plt.figure(num=1, figsize=(figwidth, figheight), dpi=dpi_val, facecolor='w', edgecolor='k')
 	for i in range (len(f)):
-		plt.plot(oneSidPSDwidthsm3dB[i]+f[i][peak_freq_coup1], Pxx_db[i][peak_freq_coup1]-3.0, 'r*', markersize=2)
+		plt.plot(oneSidPSDwidthsm3dB[i]+f[i][index_of_highest_peak[i]], Pxx_db[i][index_of_highest_peak[i]]-3.0, 'r*', markersize=2)
 
 	if saveData:
 		np.savez('results/powerSpec_K%.2f_Fc%.4f_FOm%.2f_tau%.2f_c%.7e_%d_%d_%d.npz' %(np.mean(dictPLL['coupK']), np.mean(dictPLL['cutFc']), np.mean(dictPLL['syncF']), np.mean(dictPLL['transmission_delay']), np.mean(dictPLL['noiseVarVCO']), now.year, now.month, now.day), powerspec=np.array([f, Pxx_db]))

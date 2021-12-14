@@ -13,6 +13,8 @@ if not os.environ.get('SGE_ROOT') == None:										# this environment variable 
 import matplotlib.pyplot as plt
 
 def cutTimeSeriesOfIntegerPeriod(Fsim, Tsim, syncF, maxK, phi, percentOfTsim):
+
+	print('Trying to extract an integer number of periods from the time-series!')
 	# Tsim = 1000; Fsim = 125; f = 0.999; phiInit = 0.0; percentOfTsim = 0.75;
 	signal		= square(phi, duty=0.5)
 	siglen		= len(signal);
@@ -148,7 +150,7 @@ def cutTimeSeriesOfIntegerPeriod(Fsim, Tsim, syncF, maxK, phi, percentOfTsim):
 					print('signal[indexTimeFirstFallinEdgeE-7:indexTimeFirstFallinEdgeE+7]', signal[indexTimeFirstFallinEdgeE-7:indexTimeFirstFallinEdgeE+7])
 				else:
 					print('\n\n...debug!\n\n');
-		print('analyzed nsteps divided by steps equivalent to a period', (indexTimeFirstFallinEdgeE - indexTimeFirstFallinEdgeI) / (Fsim/f) )
+		print('total # of analyzed nsteps divided by # of steps equivalent to the expected deterministic period, i.e., # of analyzed periods:', (indexTimeFirstFallinEdgeE - indexTimeFirstFallinEdgeI) / (Fsim/f) )
 		if testplot:
 			t = np.arange(0,Tsim,1/Fsim)
 			timeFirstFallinEdgeI		= t[indexTimeFirstFallinEdgeI]

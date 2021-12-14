@@ -181,6 +181,7 @@ def calcSpectrum( phi, dictPLL, dictNet, percentOfTsim=0.5 ): #phi,Fsample,coupl
 			'NOTE: in principle can always choose to be sin() for cleaner PSD in first harmonic approximation of the signal.')
 	print('Calculate spectrum for',percentOfTsim,'percent of the time-series. Implement better solution using decay times.')
 	try:
+		print('Trying to cut integer number of periods! Inside calcSpectrum.')
 		analyzeL = findIntTinSig.cutTimeSeriesOfIntegerPeriod(dictPLL['sampleF'], dictNet['Tsim'], dictPLL['syncF'],
 																np.max([dictPLL['coupK'], dictPLL['coupStr_2ndHarm']]), phi, percentOfTsim);
 		window	 = scipy.signal.get_window('boxcar', int(dictPLL['sampleF']), fftbins=True); # here we choose boxcar since a modification of the ends of the time-series is not necessary for an integer number of periods

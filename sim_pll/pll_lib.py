@@ -303,7 +303,7 @@ class SignalControlledOscillator:
 			print('\nSet typeOfHist dict entry correctly!'); sys.exit()
 
 		if self.c > 0:															# create noisy VCO output
-			print('VCO output noise is enabled!')
+			print('VCO output noise with variance=%0.5E and std=%0.5E is enabled!'%(self.c, np.sqrt(self.c)))
 			if self.response_vco == 'linear':										# this simulates a linear response of the VCO
 				self.evolve_phi = lambda w, K, x_ctrl, c, dt: (w + K * x_ctrl) * dt + np.random.normal(loc=0.0, scale=np.sqrt(c * dt))
 			elif not self.response_vco == 'linear':								# this simulates a user defined nonlinear VCO response
@@ -451,7 +451,8 @@ class PhaseDetectorCombiner:
 		self.hp				= dict_pll['derivative_coup_fct']
 		self.hf				= dict_pll['vco_out_sig']
 		self.a 				= dict_pll['antenna_sig']
-		self.K2nd_k			= get_from_value_or_list(pll_id, dict_pll['coupStr_2ndHarm'] / np.array(dict_pll['coupK']), dict_net['Nx'] * dict_net['Ny'])
+		if self.K_rad != 0:
+			self.K2nd_k			= get_from_value_or_list(pll_id, dict_pll['coupStr_2ndHarm'] / np.array(dict_pll['coupK']), dict_net['Nx'] * dict_net['Ny'])
 		self.activate_Rx	= 0
 		self.y = None
 

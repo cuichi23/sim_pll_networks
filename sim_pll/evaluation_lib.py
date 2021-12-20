@@ -173,26 +173,29 @@ def calculateEigenvalues(dictNet, dictPLL):
 ################################################################################
 
 ''' CALCULATE SPECTRUM '''
-def calcSpectrum( phi, dictPLL, dictNet, percentOfTsim=0.5 ): #phi,Fsample,couplingfct,waveform=None,expectedFreq=-999,evalAllRealizations=False,decayTimeSlowestMode=None
+def calcSpectrum( phi, dictPLL, dictNet, psd_id=0, percentOfTsim=0.5 ): #phi,Fsample,couplingfct,waveform=None,expectedFreq=-999,evalAllRealizations=False,decayTimeSlowestMode=None
 
 	Pxx_dBm=[]; Pxx_dBV=[]; f=[];
-	windowset='hamming' #'hamming' #'hamming', 'boxcar'
-	print('\nCurrent window option is', windowset, 'for waveform', inspect.getsourcelines(dictPLL['vco_out_sig'])[0][0],
+	try:
+		windowset='boxcar' 														# here we choose boxcar since a modification of the ends of the time-series is not necessary for an integer number of periods
+		print('Trying to cut integer number of periods! Inside calcSpectrum.')
+		analyzeL = findIntTinSig.cutTimeSeriesOfIntegerPeriod(dictPLL['sampleF'], dictNet['Tsim'], dictPLL['transmission_delay'], dictPLL['syncF'],
+																np.max([dictPLL['coupK'], dictPLL['coupStr_2ndHarm']]), phi, psd_id, percentOfTsim);
+	except:
+		windowset='hamming' 													#'hamming' #'hamming', 'boxcar'
+		print('\n\nError in cutTimeSeriesOfIntegerPeriod-function! Not picking integer number of periods for PSD! Using window %s!\n\n'%windowset)
+		analyzeL= [ int( dictNet['Tsim']*dictPLL['sampleF']*(1-percentOfTsim) ), int( dictNet['Tsim']*dictPLL['sampleF'] )-1 ]
+
+	window	 = scipy.signal.get_window(windowset, analyzeL[1]-analyzeL[0], fftbins=True);
+	#print('Length window:', len(window), '\tshape window:', np.shape(window))
+	print('\nCurrent window option is', windowset, 'for waveform', inspect.getsourcelines(dictPLL['PSD_from_signal'])[0][0],
 			'NOTE: in principle can always choose to be sin() for cleaner PSD in first harmonic approximation of the signal.')
 	print('Calculate spectrum for',percentOfTsim,'percent of the time-series. Implement better solution using decay times.')
-	try:
-		print('Trying to cut integer number of periods! Inside calcSpectrum.')
-		analyzeL = findIntTinSig.cutTimeSeriesOfIntegerPeriod(dictPLL['sampleF'], dictNet['Tsim'], dictPLL['syncF'],
-																np.max([dictPLL['coupK'], dictPLL['coupStr_2ndHarm']]), phi, percentOfTsim);
-		window	 = scipy.signal.get_window('boxcar', int(dictPLL['sampleF']), fftbins=True); # here we choose boxcar since a modification of the ends of the time-series is not necessary for an integer number of periods
-	except:
-		print('\n\nError in cutTimeSeriesOfIntegerPeriod-function! Not picking integer number of periods for PSD!\n\n')
-		analyzeL= [ int( dictNet['Tsim']*dictPLL['sampleF']*(1-percentOfTsim) ), int( dictNet['Tsim']*dictPLL['sampleF'] )-1 ]
-		window	= scipy.signal.get_window(windowset, int(dictPLL['sampleF']), fftbins=True);
 
-	tsdata		= dictPLL['vco_out_sig'](phi[analyzeL[0]:analyzeL[1]])
+	tsdata		= dictPLL['PSD_from_signal'](phi[analyzeL[0]:analyzeL[1]])
+	#print('Length tsdata:', len(tsdata), '\tshape tsdata:', np.shape(tsdata))
 
-	ftemp, Vxx 	= scipy.signal.periodogram(tsdata, dictPLL['sampleF'], return_onesided=True, window=windowset, scaling='density', axis=0) #  returns Pxx with dimensions [V^2] if scaling='spectrum' and [V^2/Hz] if if scaling='density'
+	ftemp, Vxx 	= scipy.signal.periodogram(tsdata, dictPLL['sampleF'], return_onesided=True, window=window, scaling='density', axis=0) #  returns Pxx with dimensions [V^2] if scaling='spectrum' and [V^2/Hz] if if scaling='density'
 	P0 = 1E-3; R=50; 															# for P0 in [mW/Hz] and R [ohm]
 
 	Pxx_dBm.append( 10*np.log10((Vxx/R)/P0) )

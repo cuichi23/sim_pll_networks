@@ -293,8 +293,8 @@ def plot_results_simulation(dictNet, dictPLL, dictData):
 		plot.plotPSD(dictPLL, dictNet, dictData, [0, 1], saveData=False)
 	elif dictNet['Nx']*dictNet['Ny'] == 64:
 		plot.plotPSD(dictPLL, dictNet, dictData, [0, 1, 7, 28, 29, 35, 36, 56, 63], saveData=False)			# [0, 1]
-	elif dictNet['Nx']*dictNet['Ny'] == 4:
-		plot.plotPSD(dictPLL, dictNet, dictData, [0, 1, 2, 3], saveData=False)
+	elif dictNet['Nx']*dictNet['Ny'] <= 36:
+		plot.plotPSD(dictPLL, dictNet, dictData, [i for i in range(dictNet['Nx']*dictNet['Ny'])], saveData=False)
 	else:
 		plot.plotPSD(dictPLL, dictNet, dictData, [0, 1], saveData=False)
 	plt.draw()

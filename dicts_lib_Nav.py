@@ -70,7 +70,7 @@ def getDicts(Fsim=125):
 		'derivative_coup_fct': coupfct.sine,									# derivative h'(x) of coupling function h(x)
 		'includeCompHF': False,													# boolean True/False whether to simulate with HF components
 		'vco_out_sig': coupfct.square_wave_symm_zero,							# for HF case, e.g.: coupfct.sine, coupfct.square_wave, coupfct.square_wave_symm_zero
-		'typeVCOsig': 'analogHF',												# 'analogHF' or 'digitalHF'
+		'typeVCOsig': 'analogHF',												# 'analogHF' or 'digitalHF' - determines whether XOR PD or multiplier is used
 		'responseVCO': 'linear',												# either string: 'linear' or a nonlinear function of omega, Kvco, e.g., lambda w, K, ...: expression
 		'antenna': False,														# boolean True/False whether antenna present for PLLs
 		'posX': 0,																# antenna position of PLL k -- x, y z coordinates, need to be set
@@ -85,7 +85,8 @@ def getDicts(Fsim=125):
 		'sampleFplot': 5,														# sampling frequency for reduced plotting (every sampleFplot time step)
 		'treshold_maxT_to_plot': 1E6,											# maximum number of periods to plot for some plots
 		'percentPeriodsAverage': 0.15,											# average of *percentPeriodsAverage* % of simulated periods
-		'PSD_freq_resolution': 1E-4,											# frequency resolution aimed at with PSD: hence, T_analyze ~ 1/f
+		'PSD_freq_resolution': 1E-5,											# frequency resolution aimed at with PSD: hence, T_analyze ~ 1/f
+		'PSD_from_signal': coupfct.square_wave,									# fore the PSD the following signals will be generated from the phases: coupfct.sine, coupfct.square_wave, coupfct.square_wave_symm_zero
 		'signal_propagation_speed': 0.0,										# speed of signal transmission when considering mobile oscillators --> mode: 'distanceDepTransmissionDelay'
 		'space_dimensions_xyz': [10, 10, 10]									# dimension of the 3d space in which mobile oscillators can be simulated --> mode: 'distanceDepTransmissionDelay'
 	}

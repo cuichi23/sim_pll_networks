@@ -12,11 +12,11 @@ if not os.environ.get('SGE_ROOT') == None:										# this environment variable 
 	matplotlib.use('Agg') #'%pylab inline'
 import matplotlib.pyplot as plt
 
-def cutTimeSeriesOfIntegerPeriod(Fsim, Tsim, syncF, maxK, phi, percentOfTsim):
+def cutTimeSeriesOfIntegerPeriod(Fsim, Tsim, delay, syncF, maxK, phi, psd_id, percentOfTsim):
 
-	print('Trying to extract an integer number of periods from the time-series!')
+	print('Trying to extract an integer number of periods from the time-series of PLL %i!'%psd_id)
 	# Tsim = 1000; Fsim = 125; f = 0.999; phiInit = 0.0; percentOfTsim = 0.75;
-	signal		= square(phi, duty=0.5)
+	signal		= square(phi, duty=0.5)											# history [-tau, 0) and [0, Tsim]
 	siglen		= len(signal);
 	analyzeL	= int(percentOfTsim*siglen);
 	#print(analyzeL)
@@ -32,12 +32,16 @@ def cutTimeSeriesOfIntegerPeriod(Fsim, Tsim, syncF, maxK, phi, percentOfTsim):
 	indexesHigStateI = np.where(signal[-analyzeL-int(widthWinI*Fsim/f):-analyzeL]!=-1)
 	indexesLowStateE = np.where(signal[-int(widthWin1E*Fsim/f):]!= 1)
 	indexesHigStateE = np.where(signal[-int(widthWin1E*Fsim/f):]!=-1)
+	#print('indexesLowStateI and indexesHigStateI:', indexesLowStateI, '\t', indexesHigStateI)
+	#print('np.shape(indexesLowStateI) and np.shape(indexesHigStateI):', np.shape(indexesLowStateI), '\t', np.shape(indexesHigStateI))
 
-	# plt.figure(1);
-	# plt.plot(signal[-analyzeL-int(widthWinI*Fsim/f)-300:-analyzeL+300]);
-	# plt.plot(signal[-int(widthWinI*Fsim/f)-300:]);
+	# plt.figure(1)
+	# shift = 0
+	# plt.plot(signal[-analyzeL-int(widthWinI*Fsim/f)-shift:-analyzeL+shift], 'g')
+	# plt.plot(signal[-int(widthWinI*Fsim/f)-shift:], 'r')
 	# plt.draw(); plt.show()
 
+	# if there are not high and low states in the monitored area. the search window needs too be widened
 	if not ( np.shape(indexesLowStateI)[1]>0 and np.shape(indexesHigStateI)[1]>0 and np.shape(indexesLowStateE)[1]>0 and np.shape(indexesHigStateE)[1]>0 ):
 		print('WIDER WINDOW')
 		widthWinI  = 6.3;
@@ -47,7 +51,6 @@ def cutTimeSeriesOfIntegerPeriod(Fsim, Tsim, syncF, maxK, phi, percentOfTsim):
 		indexesLowStateE = np.where(signal[-int(widthWin1E*Fsim/f):]!= 1)
 		indexesHigStateE = np.where(signal[-int(widthWin1E*Fsim/f):]!=-1)
 
-
 	#print('signal:', signal)
 	#print('signal analyzed for LowStateI:', signal[-analyzeL-int(widthWinI*Fsim/f):-analyzeL])
 	#print('indexesLowStateI and indexesHigStateI:', indexesLowStateI, '\t', indexesHigStateI)
@@ -55,12 +58,13 @@ def cutTimeSeriesOfIntegerPeriod(Fsim, Tsim, syncF, maxK, phi, percentOfTsim):
 	#print('len(indexesLowStateI) and len(indexesHigStateI):', len(indexesLowStateI), '\t', len(indexesHigStateI))
 
 	if indexesLowStateI[0][0] == 0 and indexesHigStateI[0][0] != 0:
-		print('First edge in the inital time window will be rising!')
-		firstRisingEdgeIndI 		= indexesHigStateI[0][0];
-		indexTimeFirstRisingEdgeI	= siglen-analyzeL-int(widthWinI*Fsim/f)+firstRisingEdgeIndI
+		firstRisingEdgeIndI 		= indexesHigStateI[0][0];					# this specifies the first index of the high state in this search window
+		indexTimeFirstRisingEdgeI	= siglen-analyzeL-int(widthWinI*Fsim/f)-1+firstRisingEdgeIndI
+		print('First edge in the inital time window will be rising at time t=%0.5f!'%(indexTimeFirstRisingEdgeI/Fsim))
 		print('signal[indexTimeFirstRisingEdgeI-7:indexTimeFirstRisingEdgeI+7]', signal[indexTimeFirstRisingEdgeI-7:indexTimeFirstRisingEdgeI+7])
 
-		if indexesLowStateE[0][0] == 0:
+		if indexesLowStateE[0][0] == 0:											# we found a rising edge above... now we need to find another one at the end, if the first state in the search window is a low state
+																				# then the first edge must be a rising edge, this one we choose below
 			print('First edge in the final time window is rising!')
 			firstRisingEdgeIndE 		= indexesHigStateE[0][0];
 			indexTimeFirstRisingEdgeE	= siglen-int(widthWin1E*Fsim/f)+firstRisingEdgeIndE
@@ -86,28 +90,28 @@ def cutTimeSeriesOfIntegerPeriod(Fsim, Tsim, syncF, maxK, phi, percentOfTsim):
 					indexTimeFirstRisingEdgeE	= siglen-int(widthWin3E*Fsim/f)+firstRisingEdgeIndE
 					print('signal[indexTimeFirstRisingEdgeE-7:indexTimeFirstRisingEdgeE+7]', signal[indexTimeFirstRisingEdgeE-7:indexTimeFirstRisingEdgeE+7])
 				else:
-					print('\n\n...debug!\n\n');
+					print('\n\n...debug!1\n\n');
 		print('analyzed nsteps divided by steps equivalent to a period', (indexTimeFirstRisingEdgeE - indexTimeFirstRisingEdgeI) / (Fsim/f) )
 		if testplot:
-			t = np.arange(0,Tsim,1/Fsim)
+			t = np.arange(0,Tsim+delay,1/Fsim)
 			timeFirstRisingEdgeI		= t[indexTimeFirstRisingEdgeI]
 			timeFirstRisingEdgeE		= t[indexTimeFirstRisingEdgeE]
 			print('timeFirstRisingEdgeE[indexTimeFirstRisingEdgeE]:', timeFirstRisingEdgeE)
 			print('timeFirstRisingEdgeI[indexTimeFirstRisingEdgeI]:', timeFirstRisingEdgeI)
 			print('analyzed time divided by period (DO NOT expect an integer number for noisy simulation!)', (timeFirstRisingEdgeE     - timeFirstRisingEdgeI) * f )
-			plt.figure(9994); plt.clf();
+			plt.figure(1000+psd_id); plt.clf();
 			plt.plot(t[-analyzeL-int(widthWinI*Fsim/f):-analyzeL], signal[-analyzeL-int(widthWinI*Fsim/f):-analyzeL], 'b-')
 			plt.plot(t[-int(widthWin1E*Fsim/f):], signal[-int(widthWin1E*Fsim/f):], 'r-')
 			plt.plot(t[-int(widthWin3E*Fsim/f):], signal[-int(widthWin3E*Fsim/f):], 'g--')
 			plt.plot(t[-int(widthWin3E*Fsim/f):-int(widthWin2E*Fsim/f)], signal[-int(widthWin3E*Fsim/f):-int(widthWin2E*Fsim/f)], 'c-')
 			plt.plot(t[indexTimeFirstRisingEdgeI], signal[indexTimeFirstRisingEdgeI], 'b*', t[indexTimeFirstRisingEdgeE], signal[indexTimeFirstRisingEdgeE], 'r*')
-			plt.draw(); plt.plot();
+			plt.draw();
 		startIndexFFT	= indexTimeFirstRisingEdgeI
 		endIndexFFT		= indexTimeFirstRisingEdgeE
 	elif indexesLowStateI[0][0] != 0 and indexesHigStateI[0][0] == 0:
 		print('First edge in the inital time window will be falling!')
 		firstFallinEdgeIndI 		= indexesLowStateI[0][0];
-		indexTimeFirstFallinEdgeI	= siglen-analyzeL-int(widthWinI*Fsim/f)+firstFallinEdgeIndI
+		indexTimeFirstFallinEdgeI	= siglen-analyzeL-int(widthWinI*Fsim/f)-1+firstFallinEdgeIndI
 		print('signal[indexTimeFirstFallinEdgeI-7:indexTimeFirstFallinEdgeI+7]', signal[indexTimeFirstFallinEdgeI-7:indexTimeFirstFallinEdgeI+7])
 
 		if indexesHigStateE[0][0] == 0:
@@ -149,22 +153,22 @@ def cutTimeSeriesOfIntegerPeriod(Fsim, Tsim, syncF, maxK, phi, percentOfTsim):
 					indexTimeFirstFallinEdgeE	= siglen-int(widthWin3E*Fsim/f)+firstFallinEdgeIndE
 					print('signal[indexTimeFirstFallinEdgeE-7:indexTimeFirstFallinEdgeE+7]', signal[indexTimeFirstFallinEdgeE-7:indexTimeFirstFallinEdgeE+7])
 				else:
-					print('\n\n...debug!\n\n');
+					print('\n\n...debug! Did not find a rising edge in the search window at the end of the time-series.\n\n');
 		print('total # of analyzed nsteps divided by # of steps equivalent to the expected deterministic period, i.e., # of analyzed periods:', (indexTimeFirstFallinEdgeE - indexTimeFirstFallinEdgeI) / (Fsim/f) )
 		if testplot:
-			t = np.arange(0,Tsim,1/Fsim)
+			t = np.arange(0,Tsim+delay,1/Fsim)
 			timeFirstFallinEdgeI		= t[indexTimeFirstFallinEdgeI]
 			timeFirstFallinEdgeE		= t[indexTimeFirstFallinEdgeE]
 			print('timeFirstFallinEdgeE[indexTimeFirstFallinEdgeE]:', timeFirstFallinEdgeE)
 			print('timeFirstFallinEdgeI[indexTimeFirstFallinEdgeI]:', timeFirstFallinEdgeI)
 			print('analyzed time divided by period (DO NOT expect an integer number for noisy simulation!)', (timeFirstFallinEdgeE - timeFirstFallinEdgeI) * f )
-			plt.figure(9994); plt.clf();
+			plt.figure(2000+psd_id); plt.clf();
 			plt.plot(t[-analyzeL-int(widthWinI*Fsim/f):-analyzeL], signal[-analyzeL-int(widthWinI*Fsim/f):-analyzeL], 'b-')
 			plt.plot(t[-int(widthWin1E*Fsim/f):], signal[-int(widthWin1E*Fsim/f):], 'r-')
 			plt.plot(t[-int(widthWin3E*Fsim/f):], signal[-int(widthWin3E*Fsim/f):], 'g--')
 			plt.plot(t[-int(widthWin3E*Fsim/f):-int(widthWin2E*Fsim/f)], signal[-int(widthWin3E*Fsim/f):-int(widthWin2E*Fsim/f)], 'c-')
 			plt.plot(t[indexTimeFirstFallinEdgeI], signal[indexTimeFirstFallinEdgeI], 'b*', t[indexTimeFirstFallinEdgeE], signal[indexTimeFirstFallinEdgeE], 'r*')
-			plt.draw(); plt.plot();
+			plt.draw();
 		startIndexFFT	= indexTimeFirstFallinEdgeI
 		endIndexFFT		= indexTimeFirstFallinEdgeE
 

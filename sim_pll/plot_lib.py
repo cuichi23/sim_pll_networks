@@ -88,7 +88,7 @@ def prepareDictsForPlotting(dictPLL, dictNet):
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-def plotPSD(dictPLL, dictNet, dictData, plotList=[], saveData=False):
+def plotPSD(dictPLL, dictNet, dictData, plotlist=[], saveData=False):
 
 	dictPLL, dictNet = prepareDictsForPlotting(dictPLL, dictNet)
 
@@ -99,16 +99,16 @@ def plotPSD(dictPLL, dictNet, dictData, plotList=[], saveData=False):
 	value_of_highest_peak = []
 	frequency_of_max_peak = []
 	# compute the PSDs either of a list of oscillators or for all of them
-	if plotList:
-		print('\nPlotting PSD according to given plotlist:', plotList)
-		for i in range(len(plotList)):											# calculate spectrum of signals for the oscillators specified in the list
-			ftemp, Pxx_temp = eva.calcSpectrum( dictData['phi'][:,plotList[i]], dictPLL, dictNet, dictPLL['percent_of_Tsim'] )
+	if plotlist:
+		print('\nPlotting PSD according to given plotlist:', plotlist)
+		for i in range(len(plotlist)):											# calculate spectrum of signals for the oscillators specified in the list
+			ftemp, Pxx_temp = eva.calcSpectrum( dictData['phi'][:,plotlist[i]], dictPLL, dictNet, plotlist[i], dictPLL['percent_of_Tsim'] )
 			f.append(ftemp[0]); Pxx_db.append(Pxx_temp[0])
 	else:
-		plotList = [];
+		plotlist = [];
 		for i in range(len(dictData['phi'][0,:])):								# calculate spectrum of signals for all oscillators
-			ftemp, Pxx_temp = eva.calcSpectrum( dictData['phi'][:,i], dictPLL, dictNet, dictPLL['percent_of_Tsim'] )
-			f.append(ftemp[0]); Pxx_db.append(Pxx_temp[0]); plotList.append(i)
+			ftemp, Pxx_temp = eva.calcSpectrum( dictData['phi'][:,i], dictPLL, dictNet, i, dictPLL['percent_of_Tsim'] )
+			f.append(ftemp[0]); Pxx_db.append(Pxx_temp[0]); plotlist.append(i)
 
 
 	fig1 = plt.figure(num=1, figsize=(figwidth, figheight), dpi=dpi_val, facecolor='w', edgecolor='k')
@@ -123,7 +123,7 @@ def plotPSD(dictPLL, dictNet, dictData, plotList=[], saveData=False):
 		frequency_of_max_peak.append( f[i][index_of_highest_peak[i]] )			# save the frequency where the maximum peak is found
 		peak_power_val.append( Pxx_db[i][index_of_highest_peak[i]] )			# save the peak power value
 
-		plt.plot(f[i], Pxx_db[i], '-', label='PLL%i' %(plotList[i]))
+		plt.plot(f[i], Pxx_db[i], '-', label='PLL%i' %(plotlist[i]))
 
 
 	plt.title(r'power spectrum $\Delta f=$%0.5E, peak at $Pxx_0^\textrm{peak}$=%0.2f' %((f[0][2]-f[0][1]), peak_power_val[0]), fontdict = labelfont)
@@ -158,7 +158,11 @@ def plotPSD(dictPLL, dictNet, dictData, plotList=[], saveData=False):
 	plt.savefig('results/powerdensity1stHarmCloseZoom_dBm_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.svg' %(np.mean(dictPLL['coupK']), np.mean(dictPLL['cutFc']), np.mean(dictPLL['syncF']), np.mean(dictPLL['transmission_delay']), np.mean(dictPLL['noiseVarVCO']), now.year, now.month, now.day), dpi=dpi_val)
 	plt.savefig('results/powerdensity1stHarmCloseZoom_dBm_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.png' %(np.mean(dictPLL['coupK']), np.mean(dictPLL['cutFc']), np.mean(dictPLL['syncF']), np.mean(dictPLL['transmission_delay']), np.mean(dictPLL['noiseVarVCO']), now.year, now.month, now.day), dpi=dpi_val)
 
-	plt.ylim([np.min(Pxx_db[i][:]), peak_power_val[0]+5]);
+	try:
+		print('np.min(Pxx_db[i][:])=%02f, peak_power_val[0]=%02f'%(np.min(Pxx_db[i][5:]), peak_power_val[0]))
+		plt.ylim([np.min(Pxx_db[i][5:]), peak_power_val[0]+5]);
+	except:
+		print('np.min(Pxx_db[i][:]), peak_power_val[0] either Inf or NAN.')
 	plt.xlim(0, 8.5*np.min(dictPLL['intrF']));
 
 	fig2 = plt.figure(num=2, figsize=(figwidth, figheight), dpi=dpi_val, facecolor='w', edgecolor='k')	# plot spectrum
@@ -215,7 +219,7 @@ def plotPSD(dictPLL, dictNet, dictData, plotList=[], saveData=False):
 		if dictNet['topology'] == 'compareEntrVsMutual':
 			plt.plot(10.0*np.log10(f[i][index_of_highest_peak[i]:coup1_times_X]-frequency_of_max_peak[i]+Freqres), Pxx_db[i][index_of_highest_peak[i]:coup1_times_X], linestyle[i], label='PSD PLL%i' %(i), markersize=2)
 		else:
-			plt.plot(10.0*np.log10(f[i][index_of_highest_peak[i]:coup1_times_X]-frequency_of_max_peak[i]+Freqres), Pxx_db[i][index_of_highest_peak[i]:coup1_times_X], label='PSD PLL%i' %(plotList[i]), markersize=2)
+			plt.plot(10.0*np.log10(f[i][index_of_highest_peak[i]:coup1_times_X]-frequency_of_max_peak[i]+Freqres), Pxx_db[i][index_of_highest_peak[i]:coup1_times_X], label='PSD PLL%i' %(plotlist[i]), markersize=2)
 	try:
 		plt.title(r'$\gamma_0^{(\textrm{PSDfit})}=$%0.4E, $\gamma_1=$%0.4E, $\gamma_2=$%0.4E' %(params[0][0], params[1][0], params[2][0]), fontdict = titlefont)
 	except:

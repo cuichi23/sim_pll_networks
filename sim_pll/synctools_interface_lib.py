@@ -111,7 +111,7 @@ def generate_delay_plot(dictPLL, dictNet, isRadians=True, filename=None, max_del
 			raise Exception('results folder does not exist and could not be created')
 
 	# Save figure
-	if filename == None:
+	if filename is None:
 		dt = datetime.datetime.now()
 		str_time = dt.strftime('%Y%m%d_%H%M%S')
 		filename = os.path.join('results', 'delay_plot_' + str_time)
@@ -163,7 +163,7 @@ def generate_delay_plot(dictPLL, dictNet, isRadians=True, filename=None, max_del
 			raise Exception('results folder does not exist and could not be created')
 
 	# Save figure
-	if filename == None:
+	if filename is None:
 		dt = datetime.datetime.now()
 		str_time = dt.strftime('%Y%m%d_%H%M%S')
 		filename = os.path.join('results', 'delayOmeg_plot_' + str_time)

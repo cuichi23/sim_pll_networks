@@ -45,24 +45,24 @@ digital = True;
 expansion=False;
 # define parameters, intrinsic freq, coupling strength, feedback-delay, integration-time LF, divisor of divider
 # define parameters, intrinsic freq, coupling strength, feedback-delay, integration-time LF, divisor of divider
-w   	= 2.0*np.pi#*24E9            #1.0*2.0*np.pi				#2.0*np.pi*24E9;
-Kvco    = 2.0*np.pi*0.1            #*2.4E9 #0.60*2.0*np.pi			#2.0*np.pi*250E6;
+w   	= 2.0*np.pi					#*24E9            #1.0*2.0*np.pi				#2.0*np.pi*24E9;
+Kvco    = 2.0*np.pi*2*0.005            	#*2.4E9 #0.60*2.0*np.pi			#2.0*np.pi*250E6;
 AkPD	= 1.0
 Ga1		= 1.0
 tauf 	= 0.0
-tauc 	= 1.0/(2.0*np.pi*0.0001);
-v	 	= 512.0;
+tauc 	= 1.0/(2.0*np.pi*0.001);
+v	 	= 16;
 c	 	= 3E8;
-maxp1 	= 1.7e0
-maxp2	= 4.99e2
+maxp1 	= 0
+maxp2	= 396					# maxp2 = Omega * tau / v
 # maxp 	= 1e7
 inphase	= True
 order 	= 1.0
 INV		= 0.0*np.pi
 
 sync_state='in-phase'
-Nx=8;
-Ny=8;
+Nx=16;
+Ny=16;
 zetasvalues =  eigenvalzeta('square-open',Nx,Ny)['zeta']#[-1]
 color 		= ['blue', 'orange']
 # omegatau1= np.asarray(1.0/(2.0*np.pi))*globalFreq(w, Kvco, AkPD, Ga1, tauf, v, digital, maxp1, sync_state, INV)['Omeg']*globalFreq(w, Kvco, AkPD, Ga1, tauf, v, digital, maxp1, sync_state, INV)['tau']

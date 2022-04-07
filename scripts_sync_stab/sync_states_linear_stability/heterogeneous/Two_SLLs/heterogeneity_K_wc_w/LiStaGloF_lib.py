@@ -24,8 +24,7 @@ from scipy.optimize import root
 from scipy.optimize import newton
 import time
 
-def xrange(maxp, tauf,dp=0.01):
-
+def xrange(maxp, tauf, dp=0.01):
 	return np.linspace(1E-9, maxp, int((tauf+maxp)/dp))
 
 # set initial guess
@@ -35,18 +34,23 @@ def initial_guess():
 def initial_guess2():
 	return (np.linspace(-0.28*2.0*np.pi, 0.70*2.0*np.pi, 15));
 
-
-#
 # def initial_guess():
 # 	return (np.linspace(-1e-1,1e0, 55));
 #
 # def initial_guess2(tauc):
 # 	wc=1.0/tauc
 # 	return (np.linspace(-2.0*wc, 2.0*wc, 55));
+
 def K(Kvco, AkPD, GkLF, Gvga):
 	return (Kvco*AkPD*GkLF*Gvga)/2.0
+
 # digital case
 cfDig        = lambda x: sawtooth(x,width=0.5)
+cfDigDeriv   = lambda x: (2.0/np.pi)*square(x,duty=0.5)
+# analog case
+cfAna        = lambda x: np.cos(x);
+cfAnaDeriv   = lambda x: -1.0*np.sin(x);
+
 def cfDigInverse(x):
 	if np.abs(x)>1:
 		print('Error! Inverse fct. of triangular wave called with argument out of bounds.'); exit();
@@ -54,25 +58,31 @@ def cfDigInverse(x):
 	# else:
 	return +np.pi/2.0*x+np.pi/2.0;
 
-cfDigDeriv   = lambda x: (2.0/np.pi)*square(x,duty=0.5)
-# analog case
-cfAna        = lambda x: np.cos(x);
-def cfAnaInverse(x):
+def cfAnaInverse(x, slope):
 	if slope==1:
 		return -np.arccos(x);
 	if slope==2:
 		return np.arccos(x);
-cfAnaDeriv   = lambda x: -1.0*np.sin(x);
+
+def solNumericalOmegTau(x, ....):
+	x[0] =
+
+	return
 
 def globalFreq(wmean, Dw, Kmean, DK, tauf,  digital, maxp, inphase):
 	p = xrange(maxp, tauf);
 	Omegabetain=[]; Omegabetaanti=[]; tau=[]; taubetain=[]; taubetaanti=[]; betain=[]; betaanti=[]; pp=[];
 
-	if inphase:
-		if digital:
-			print('Fix it.')
+	if digital:
+		print('Digital case: using max(tau) = maxp parameter.')
+		for value in p:
+			for index in range(len(init)):
 
-		else:
+			temp = optimize.root(solNumericalOmegTau, (init[0,index], init[1,index]), args=( Omegabetain[index], taubetain[index], tauf, Kvco1, Kvco2, AkPD, GkLF, Gvga, tauc1, tauc2, Dw, betain[index], digital),  tol=1.0e-11, method='hybr')
+
+
+	else:
+		if inphase:
 			for value in p:
 				H=np.sqrt( ( 2.0*Kmean*np.sin(value) )**2 + ( DK*np.cos(value) )**2   )
 				if abs(Dw /( H ))<=1.0 and abs( DK*np.cos(value)/H )<=1.0:
@@ -95,15 +105,7 @@ def globalFreq(wmean, Dw, Kmean, DK, tauf,  digital, maxp, inphase):
 					Omegabetain = wmean + Kmean * np.cos( np.array(pp) ) * np.cos( np.array(betain) )- 0.5*DK*np.sin(pp)*np.sin(B)
 					taubetain = ( np.array(Omegabetain) * tauf + np.array(pp) ) / np.array(Omegabetain)
 
-	else:
-		if digital:
-			for value in temp:
-				if value>0.0:
-
-					print('Fix it.')
-
-
-		else:
+		elif not inphase:
 			for value in p:
 				H=np.sqrt( ( 2.0*Kmean*np.sin(value) )**2 + ( DK*np.cos(value) )**2   )
 
@@ -167,7 +169,6 @@ def linStabEq_expansion(l_vec, Omega, tau, tauf, K, tauc, Dw, beta, digital):
 
 
 def solveLinStabbetain(Omegabetain, taubetain, tauf, Kvco1, Kvco2, AkPD, GkLF, Gvga, tauc1, tauc2, Dw, betain, digital, maxp, expansion):
-
 	init = initial_guess()
 	# print(init)
 	lambsolRebetain = np.zeros([len(init),len(betain)],dtype=np.float64)
@@ -300,15 +301,6 @@ def solveLinStabbetaanti(Omegabetaanti, taubetaanti, tauf, Kvco1, Kvco2, AkPD, G
 	# print('\n\nlen(OmegStab):', len(OmegStab), '     len(OmegUnst):', len(OmegUnst),'\n')
 	return {'Rebetaanti': lambsolRebetaanti, 'Imbetaanti': lambsolImbetaanti,'RebetaantiMax': lambsolRebetaantiMax,'ImbetaantiMax':lambsolImbetaantiMax}
 	#
-
-
-
-
-
-
-
-
-
 
 def solveLinStabSingle(Omega, tau, tauf, Kvco1, Kvco2, AkPD, GkLF, Gvga, tauc1, tauc2, Dw, beta, digital, maxp, expansion):
 	# Here we solve the characteristic equation and we get the real and imaginary parts of the solutionsself.

@@ -22,27 +22,27 @@ from sim_pll import check_dicts_lib as chk_dicts
 from sim_pll import coupling_fct_lib as coupfct
 
 ''' Enable automatic carbage collector '''
-gc.enable();
+gc.enable()
 
-#%%cython --annotate -c=-O3 -c=-march=native
+# %%cython --annotate -c=-O3 -c=-march=native
 
 ''' THIS SIMULATES A 2ND ORDER KURAMOTO MODEL -- PROPERLY PREPROCESS ALL GAINS AND DETAILS WHEN COMPARING TO PLL CIRCIUTRY '''
 
 def getDicts(Fsim=55):
 
 	dictNet={
-		'Nx': 4,																# oscillators in x-direction
-		'Ny': 1,																# oscillators in y-direction
+		'Nx': 16,																# oscillators in x-direction
+		'Ny': 16,																# oscillators in y-direction
 		'mx': 0,																# twist/chequerboard in x-direction (depends on closed or open boundary conditions)
 		'my': -999,																# twist/chequerboard in y-direction
-		'topology': 'ring',														# 1d) ring, chain, 2d) square-open, square-periodic, hexagonal...
-																				# 3) global, entrainOne, entrainAll, entrainPLLsHierarch, compareEntrVsMutual
-		'Tsim': 1500,															# simulation time in multiples of the period
+		'topology': 'square-open',												# 1d) ring, chain, 2d) square-open, square-periodic, hexagonal...
+																				# 3) global, entrainOne-[ring,chain,square-open], entrainAll-[ring,chain,square-open], entrainPLLsHierarch, compareEntrVsMutual
+		'Tsim': 25,															# simulation time in multiples of the period
 		'computeFreqAndStab': False,											# compute linear stability and global frequency if possible: True or False
 		'phi_array_mult_tau': 1,												# how many multiples of the delay is stored of the phi time series
-		'phiPerturb': [0 for i in range(4)],									# delta-perturbation on initial state -- PROVIDE EITHER ONE OF THEM! if [] set to zero
+		'phiPerturb': [0 for i in range(256)],									# delta-perturbation on initial state -- PROVIDE EITHER ONE OF THEM! if [] set to zero
 		'phiPerturbRot': [],													# delta-perturbation on initial state -- in rotated space
-		'phiInitConfig': [0 for i in range(4)],									# phase-configuration of sync state,  []: automatic, else provide list
+		'phiInitConfig': [0 for i in range(256)],								# phase-configuration of sync state,  []: automatic, else provide list
 		'freq_beacons': 0.25,													# frequency of external sender beacons, either a float or a list
 		'special_case': 'False', #'timeDepTransmissionDelay',#'False'			# 'False', or 'test_case', 'timeDepInjectLockCoupStr', 'timeDepTransmissionDelay', 'timeDepChangeOfCoupStr'
 		'typeOfTimeDependency': 'triangle',#'linear',							# 'exponential', 'linear', 'quadratic', 'triangle', 'cosine'
@@ -51,25 +51,25 @@ def getDicts(Fsim=55):
 
 	dictPLL={
 		'intrF': 1,																# intrinsic frequency in Hz [random.uniform(0.95, 1.05) for i in range(dictNet['Nx']*dictNet['Ny'])]
-		'syncF': 1,#0.980808,														# frequency of synchronized state in Hz
-		'coupK': 0,#0.0500991,														# [random.uniform(0.3, 0.4) for i in range(dictNet['Nx']*dictNet['Ny'])],# coupling strength (like phase model: K = Kvco/2 * G_all, NOTE: the /2 is for coupling functions that have peak2peal amplitude 2) in Hz float or [random.uniform(minK, maxK) for i in range(dictNet['Nx']*dictNet['Ny'])]
+		'syncF': 0.9968,															# frequency of synchronized state in Hz
+		'coupK': [random.uniform(0.0049, 0.0051) for i in range(dictNet['Nx']*dictNet['Ny'])], # [random.uniform(0.3, 0.4) for i in range(dictNet['Nx']*dictNet['Ny'])],# coupling strength (like phase model: K = Kvco/2 * G_all, NOTE: the /2 is for coupling functions that have peak2peal amplitude 2) in Hz float or [random.uniform(minK, maxK) for i in range(dictNet['Nx']*dictNet['Ny'])]
 		'gPDin': 1,																# gains of the different inputs to PD k from input l -- G_kl, see PD, set to 1 and all G_kl=1 (so far only implemented for some cases, check!): np.random.uniform(0.95,1.05,size=[dictNet['Nx']*dictNet['Ny'],dictNet['Nx']*dictNet['Ny']])
 		'gPDin_symmetric': True,												# set to True if G_kl == G_lk, False otherwise
-		'cutFc': 1E-4,#16.5E-6,													# LF cut-off frequency in Hz, here N=9 with mean 0.015: [0.05,0.015,0.00145,0.001,0.0001,0.001,0.00145,0.015,0.05]
+		'cutFc': [random.uniform(0.001, 0.0015) for i in range(dictNet['Nx']*dictNet['Ny'])], # LF cut-off frequency in Hz, here N=9 with mean 0.015: [0.05,0.015,0.00145,0.001,0.0001,0.001,0.00145,0.015,0.05]
 		'orderLF': 1,															# order of LF filter, either 1 or 2 at the moment
-		'div': 1,																# divisor of divider (int)
+		'div': 16,																# divisor of divider (int)
 		'friction_coefficient': 1,												# friction coefficient of 2nd order Kuramoto models
 		'fric_coeff_PRE_vs_PRR': 'PRE',											# 'PRR': friction coefficient multiplied to instant. AND intrin. freq, 'PRE': friction coefficient multiplied only to instant. freq
 		'noiseVarVCO': 1E-9,													# variance of VCO GWN
 		'feedback_delay': 0,													# value of feedback delay in seconds
 		'feedback_delay_var': None, 											# variance of feedback delay
-		'transmission_delay': 1.7235,#3.05,#1571.805,								# value of transmission delay in seconds, float (single), list (tau_k) or list of lists (tau_kl): np.random.uniform(min,max,size=[dictNet['Nx']*dictNet['Ny'],dictNet['Nx']*dictNet['Ny']]), OR [np.random.uniform(min,max) for i in range(dictNet['Nx']*dictNet['Ny'])]
+		'transmission_delay': 175,#3.05,#1571.805,								# value of transmission delay in seconds, float (single), list (tau_k) or list of lists (tau_kl): np.random.uniform(min,max,size=[dictNet['Nx']*dictNet['Ny'],dictNet['Nx']*dictNet['Ny']]), OR [np.random.uniform(min,max) for i in range(dictNet['Nx']*dictNet['Ny'])]
 		'transmission_delay_var': None, 										# variance of transmission delays
 		'distribution_for_delays': None,										# from what distribution are random delays drawn?
 		# choose from coupfct.<ID>: sine, cosine, neg_sine, neg_cosine, triangular, deriv_triangular, square_wave, pfd, inverse_cosine, inverse_sine
 		'coup_fct_sig': coupfct.triangular,										# coupling function h(x) for PLLs with ideally filtered PD signals, NOTE if 'includeCompHF': True --> 'vco_out_sig' is used in coupling (multiplier or XOR)
 		'derivative_coup_fct': coupfct.deriv_triangular,						# derivative h'(x) of coupling function h(x)
-		'includeCompHF': True,													# boolean True/False whether to simulate with HF components
+		'includeCompHF': False,													# boolean True/False whether to simulate with HF components
 		'vco_out_sig': coupfct.square_wave_symm_zero,							# for HF case, e.g.: coupfct.sine, coupfct.square_wave, coupfct.square_wave_symm_zero (this is relevant when simulating 3rd Gen PLLs, no offset by closing the loop)
 		'typeVCOsig': 'digitalHF',												# 'analogHF' or 'digitalHF' - determines whether XOR PD or multiplier is used
 		'responseVCO': 'linear',												# either string: 'linear' or a nonlinear function of omega, Kvco, e.g., lambda w, K, ...: expression
@@ -79,15 +79,16 @@ def getDicts(Fsim=55):
 		'posZ': 0,
 		'initAntennaState': 0,
 		'antenna_sig': coupfct.sine,											# type of signal received by the antenna
+		'coup_fct_phase_shift': 0,												# phase shift in the coupling function in [0, 2pi], so far constant... may later dynamic
 		'extra_coup_sig': None,													# choose from: 'injection2ndHarm', None
-		'coupStr_2ndHarm': 0.6,													# the coupling constant for the injection of the 2nd harmonic: float, will be indepent of 'coupK'
+		'coupStr_2ndHarm': 0.6,													# the coupling constant for the injection of the 2nd harmonic: float, will be independent of 'coupK'
 		'typeOfHist': 'syncState',												# string, choose from: 'freeRunning', 'syncState'
 		'sampleF': Fsim,														# sampling frequency
-		'sampleFplot': 100,														# sampling frequency for reduced plotting (every sampleFplot time step)
+		'sampleFplot': 25,														# sampling frequency for reduced plotting (every sampleFplot time step)
 		'treshold_maxT_to_plot': 1E6,											# maximum number of periods to plot for some plots
 		'percentPeriodsAverage': 0.15,											# average of *percentPeriodsAverage* % of simulated periods
 		'PSD_freq_resolution': 1E-3,											# frequency resolution aimed at with PSD: hence, T_analyze ~ 1/f
-		'PSD_from_signal': coupfct.square_wave,										# fore the PSD the following signals will be generated from the phases: coupfct.sine, coupfct.square_wave, coupfct.square_wave_symm_zero
+		'PSD_from_signal': coupfct.square_wave,									# fore the PSD the following signals will be generated from the phases: coupfct.sine, coupfct.square_wave, coupfct.square_wave_symm_zero
 		'signal_propagation_speed': 0.0,										# speed of signal transmission when considering mobile oscillators --> mode: 'distanceDepTransmissionDelay'
 		'space_dimensions_xyz': [10, 10, 10]									# dimension of the 3d space in which mobile oscillators can be simulated --> mode: 'distanceDepTransmissionDelay'
 	}
@@ -97,7 +98,8 @@ def getDicts(Fsim=55):
 		'paramDiscretization': [7, 1],#[15, 10],								# parameter discetization for brute force parameter space scans
 		'param_id': 'None',														# parameter to be changed between different realizations, according to the min_max_range_parameter: 'None' or string of any other parameter
 		'min_max_range_parameter': [1-5E-9, 1+5E-9],							# specifies within which min and max value to linspace the initial frequency difference (w.r.t. HF Frequency, not divided)
-		'store_ctrl_and_clock': False											# whether or not the control signals and clock signal is being computed (time and memory usage)
+		'store_ctrl_and_clock': False,											# whether or not the control signals and clock signal is being computed (time and memory usage)
+		'store_phases_tau_array': True  # whether or not the phases are saved when simulation on tau-array
 	}
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

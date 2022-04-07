@@ -15,7 +15,7 @@ from itertools import permutations as permu
 from itertools import combinations as combi
 import matplotlib
 import os, pickle
-if not os.environ.get('SGE_ROOT') == None:										# this environment variable is set within the queue network, i.e., if it exists, 'Agg' mode to supress output
+if not os.environ.get('SGE_ROOT') is None:										# this environment variable is set within the queue network, i.e., if it exists, 'Agg' mode to supress output
 	print('NOTE: \"matplotlib.use(\'Agg\')\"-mode active, plots are not shown on screen, just saved to results folder!\n')
 	matplotlib.use('Agg') #'%pylab inline'
 import matplotlib.pyplot as plt
@@ -108,7 +108,7 @@ def plotTest(params):
 
 def prepareDictsForPlotting(dictPLL, dictNet):
 
-	if dictPLL['cutFc'] == None:
+	if dictPLL['cutFc'] is None:
 		dictPLL.update({'cutFc': np.inf})
 
 	if not np.abs(np.min(dictPLL['intrF'])) > 1E-17:									# for f=0, there would otherwies be a float division by zero
@@ -121,7 +121,7 @@ def prepareDictsForPlotting(dictPLL, dictNet):
 
 def saveDictionaries(dictToSave, name, K, tau, Fc, Nx, Ny, mx, my, topology):
 
-	if Fc == None:
+	if Fc is None:
 		Fc = np.inf
 
 	N = int(Nx*Ny)
@@ -177,10 +177,14 @@ def calcSpectrum( phi, dictPLL, dictNet, psd_id=0, percentOfTsim=0.5 ): #phi,Fsa
 
 	Pxx_dBm=[]; Pxx_dBV=[]; f=[];
 	try:
-		windowset='boxcar' 														# here we choose boxcar since a modification of the ends of the time-series is not necessary for an integer number of periods
+		windowset='boxcar' # here we choose boxcar since a modification of the ends of the time-series is not necessary for an integer number of periods
 		print('Trying to cut integer number of periods! Inside calcSpectrum.')
-		analyzeL = findIntTinSig.cutTimeSeriesOfIntegerPeriod(dictPLL['sampleF'], dictNet['Tsim'], dictPLL['transmission_delay'], dictPLL['syncF'],
-																np.max([dictPLL['coupK'], dictPLL['coupStr_2ndHarm']]), phi, psd_id, percentOfTsim);
+		if dictPLL['extra_coup_sig'] is None:
+			analyzeL = findIntTinSig.cutTimeSeriesOfIntegerPeriod(dictPLL['sampleF'], dictNet['Tsim'], dictPLL['transmission_delay'], dictPLL['syncF'],
+																np.max(dictPLL['coupK']), phi, psd_id, percentOfTsim)
+		else:
+			analyzeL = findIntTinSig.cutTimeSeriesOfIntegerPeriod(dictPLL['sampleF'], dictNet['Tsim'], dictPLL['transmission_delay'], dictPLL['syncF'],
+																np.max([np.max(dictPLL['coupK']), np.max(dictPLL['coupStr_2ndHarm'])]), phi, psd_id, percentOfTsim)
 	except:
 		windowset='hamming' 													#'hamming' #'hamming', 'boxcar'
 		print('\n\nError in cutTimeSeriesOfIntegerPeriod-function! Not picking integer number of periods for PSD! Using window %s!\n\n'%windowset)
@@ -466,7 +470,8 @@ def obtainOrderParam(dictPLL, dictNet, dictData):
 	elif ( dictNet['topology'] == "ring" or dictNet['topology'] == 'global'):
 		r = oracle_mTwistOrderParameter(dictData['phi'][-int(numb_av_T*1.0/(F1*dictPLL['dt'])):, :], dictNet['mx'])# calculate the m-twist order parameter for a time interval of 2 times the eigenperiod, ry is imaginary part
 		orderparam = oracle_mTwistOrderParameter(dictData['phi'][:, :], dictNet['mx'])					# calculate the m-twist order parameter for all times
-	elif ( dictNet['topology'] == "entrainOne" or dictNet['topology'] == "entrainAll" or dictNet['topology'] == "entrainPLLsHierarch"):
+	elif "entrain" in dictNet['topology']:
+		# ( dictNet['topology'] == "entrainOne" or dictNet['topology'] == "entrainAll" or dictNet['topology'] == "entrainPLLsHierarch"):
 		phi_constant_expected = dictNet['phiInitConfig'];
 		r = calcKuramotoOrderParEntrainSelfOrgState(dictData['phi'][-int(numb_av_T*1.0/(F1*dictPLL['dt'])):, :], phi_constant_expected);
 		orderparam = calcKuramotoOrderParEntrainSelfOrgState(dictData['phi'][:, :], phi_constant_expected);

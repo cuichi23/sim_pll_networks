@@ -191,11 +191,11 @@ def eigenvalzeta(topology, Nx=3, Ny=3):
 				zeta[n] = 0.0;
 		print('\n\nzeta',zeta)
 	if topology == 'global':
-		zeta=np.array([-1/(Nplls-1),1]); 													#np.array([-1,Nplls-1]);
+		zeta=np.array([-1/(Nplls-1),1]); 										# np.array([-1,Nplls-1]);
 		#print('This is to test the results for the global coupling topology.')
 		#time.sleep(3)
 	elif topology == 'global-with-selfcoup':
-		zeta=np.array([0, 1/Nplls]);														#np.array([0,Nplls]);
+		zeta=np.array([0, 1/Nplls]);											# np.array([0,Nplls]);
 
 
 	print('Change here such that one can get a normalized or not normalized version of the zetas!')

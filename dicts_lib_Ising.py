@@ -30,7 +30,7 @@ gc.enable()
 def getDicts(Fsim=125):
 
 	dictNet={
-		'Nx': 4,																# oscillators in x-direction
+		'Nx': 20,																# oscillators in x-direction
 		'Ny': 1,																# oscillators in y-direction
 		'mx': 0,																# twist/chequerboard in x-direction (depends on closed or open boundary conditions)
 		'my': -999,																# twist/chequerboard in y-direction
@@ -43,7 +43,7 @@ def getDicts(Fsim=125):
 		'freq_beacons': 0.25,													# frequency of external sender beacons, either a float or a list
 		'special_case': 'timeDepChangeOfCoupStr',#'timeDepInjectLockCoupStr',#	# 'False', or 'test_case', 'timeDepInjectLockCoupStr', 'timeDepTransmissionDelay', 'timeDepChangeOfCoupStr'
 		'typeOfTimeDependency': 'linear',#'exponential'						# 'exponential', 'linear', 'quadratic', 'triangle', 'cosine'
-		'min_max_rate_timeDepPara': [0, 5/(2*np.pi), 0.01/(5/125)]					# provide a list with min, max and rate (per period) of the time-dependent parameter
+		'min_max_rate_timeDepPara': [0, 5/(1*2*np.pi), 0.01/((5*1)/125)]					# provide a list with min, max and rate (per period) of the time-dependent parameter
 	}
 
 	dictNet.update({
@@ -51,13 +51,35 @@ def getDicts(Fsim=125):
 		'phiPerturbRot': [],													# delta-perturbation on initial state -- in rotated space
 	})
 
+	global gkl_list20
+	gkl_list20 = [[0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+					[1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+					[1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+					[1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+					[1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+					[1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+					[1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+					[1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+					[1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+					[1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+					[1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+					[1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+					[1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+					[1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+					[1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+					[1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+					[1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+					[1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+					[1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+					[1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]]
+
 	dictPLL={
 		'intrF': 1.0, #[1.0, 1.01, 0.99, 1.02],										# intrinsic frequency in Hz
 		'syncF': 1.0,															# frequency of synchronized state in Hz
 		'coupK': 0.5,														# [random.uniform(0.3, 0.4) for i in range(dictNet['Nx']*dictNet['Ny'])],# coupling strength (like phase model: K = Kvco/2 * G_all, NOTE: the /2 is for coupling functions that have peak2peal amplitude 2) in Hz float or [random.uniform(minK, maxK) for i in range(dictNet['Nx']*dictNet['Ny'])]
-		'gPDin': np.array([[0, 1, 1, 1], [1, 0, 0, 0], [1, 0, 0, 0], [1, 0, 0, 0]]), #np.random.randint(0,2,size=[dictNet['Nx']*dictNet['Ny'],dictNet['Nx']*dictNet['Ny']]),# gains of the different inputs to PD k from input l -- G_kl, see PD, set to 1 and all G_kl=1 (so far only implemented for some cases, check!): np.random.uniform(0.95,1.05,size=[dictNet['Nx']*dictNet['Ny'],dictNet['Nx']*dictNet['Ny']])
+		'gPDin': np.array(gkl_list20),#np.array([[0, 1, 1, 1], [1, 0, 0, 0], [1, 0, 0, 0], [1, 0, 0, 0]]), #np.random.randint(0,2,size=[dictNet['Nx']*dictNet['Ny'],dictNet['Nx']*dictNet['Ny']]),# gains of the different inputs to PD k from input l -- G_kl, see PD, set to 1 and all G_kl=1 (so far only implemented for some cases, check!): np.random.uniform(0.95,1.05,size=[dictNet['Nx']*dictNet['Ny'],dictNet['Nx']*dictNet['Ny']])
 		'gPDin_symmetric': False,												# set to True if G_kl == G_lk, False otherwise
-		'cutFc': 0.5,															# LF cut-off frequency in Hz, None for no LF, here N=9 with mean 0.015: [0.05,0.015,0.00145,0.001,0.0001,0.001,0.00145,0.015,0.05]
+		'cutFc': None,															# LF cut-off frequency in Hz, None for no LF, here N=9 with mean 0.015: [0.05,0.015,0.00145,0.001,0.0001,0.001,0.00145,0.015,0.05]
 		'orderLF': 1,															# order of LF filter, either 1 or 2 at the moment
 		'div': 1,																# divisor of divider (int)
 		'friction_coefficient': 1,												# friction coefficient of 2nd order Kuramoto models
@@ -84,7 +106,7 @@ def getDicts(Fsim=125):
 		'coup_fct_phase_shift': 0,												# phase shift in the coupling function in [0, 2pi], so far constant... may later dynamic
 		'extra_coup_sig': 'injection2ndHarm',									# choose from: 'injection2ndHarm', None
 		'coupStr_2ndHarm': 2,													# the coupling constant for the injection of the 2nd harmonic: float, will be independent of 'coupK'
-		'typeOfHist': 'freeRunning',												# string, choose from: 'freeRunning', 'syncState'
+		'typeOfHist': 'freeRunning',											# string, choose from: 'freeRunning', 'syncState'
 		'sampleF': Fsim,														# sampling frequency
 		'sampleFplot': 5,														# sampling frequency for reduced plotting (every sampleFplot time step)
 		'treshold_maxT_to_plot': 50E3,											# maximum number of periods to plot for some plots

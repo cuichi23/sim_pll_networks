@@ -126,7 +126,7 @@ def plotPSD(dictPLL, dictNet, dictData, plotlist=[], saveData=False):
 	plt.tick_params(axis='both', which='major', labelsize=tickSize)
 
 	for i in range(len(f)):
-		print('Test:', Pxx_db[i])
+		# print('Test:', Pxx_db[i])
 		index_of_highest_peak.append( np.argmax(Pxx_db[i]) )					# find the principle peak
 		frequency_of_max_peak.append( f[i][index_of_highest_peak[i]] )			# save the frequency where the maximum peak is found
 		peak_power_val.append( Pxx_db[i][index_of_highest_peak[i]] )			# save the peak power value
@@ -935,7 +935,7 @@ def plotFreqAndOrderPar(dictPLL, dictNet, dictData, plotlist=[]):
 
 
 #############################################################################################################################################################################
-def plot_histogram(dictPLL: dict, dictNet: dict, dictData: dict, at_index: int = -1, plot_variable: str = 'phase', plotlist: list = [],
+def plot_histogram(dictPLL: dict, dictNet: dict, dictData: dict, at_index: int = -1, plot_variable: str = 'phase', phase_wrap = 0, plotlist: list = [],
 															prob_density: bool = True, number_of_bins: int = 25, rel_plot_width: float = 1):
 	"""Function that plots a histogram of either the phases or the frequencies.
 
@@ -943,14 +943,14 @@ def plot_histogram(dictPLL: dict, dictNet: dict, dictData: dict, at_index: int =
 				dictNet:  contains as parameters the information about properties of the network to be simulated, the initial conditions and the synchronized states under investigation
 				dictPLL:  contains as parameters the information about properties of the PLLs, its components, the time delays, the types of signals exchanged
 				dictData: contains the results of the simulation, i.e., the phases of all oscillators, time dependent parameters, etc.
-				plot_variable: can either be 'phase' (default), 'phase-difference', or 'frequency'
+				plot_variable: can either be 'phase' (default), 'phase-difference' w.r.t. oscillator k=0, or 'frequency'
+				phase_wrap: set to 0 if plotting in (-inf, inf), to 1 of to be plotted in [-pi, pi), to 2 if to be plotted in [-pi/2, 3*pi/2), and to 3 if to be plotted in [0, 2pi)
 				plotlist: list of a subset of the oscillators to be plotted
 
 			Returns:
 				saves plotted data to files
 		"""
 
-	phase_zero_2pi = 0;  # set to 0 if plotting in (-inf, inf), to 1 of to be plotted in [-pi, pi), to 2 if to be plotted in [-pi/2, 3*pi/2), and to 3 if to be plotted in [0, 2pi)
 	dictPLL, dictNet = prepareDictsForPlotting(dictPLL, dictNet)
 
 	if at_index == -1:	# translate since in case of plotting frequency 2 indixes are needed and the '-1' syntax does not work
@@ -974,11 +974,11 @@ def plot_histogram(dictPLL: dict, dictNet: dict, dictData: dict, at_index: int =
 	else:
 		print('Function parameter plot_variable not yet defined, extend the plot function in plot_lib.py!')
 
-	if phase_zero_2pi == 1:	# plot phase-differences in [-pi, pi] interval
+	if phase_wrap == 1:	# plot phase-differences in [-pi, pi] interval
 		shift2piWin = np.pi
-	elif phase_zero_2pi == 2:	# plot phase-differences in [-pi/2, 3*pi/2] interval
+	elif phase_wrap == 2:	# plot phase-differences in [-pi/2, 3*pi/2] interval
 		shift2piWin = 0.5*np.pi
-	elif phase_zero_2pi == 3:	# plot phase-differences in [0, 2*pi] interval
+	elif phase_wrap == 3:	# plot phase-differences in [0, 2*pi] interval
 		shift2piWin = 0
 
 	fig = plt.figure(figsize=(figwidth, figheight), dpi=dpi_val, facecolor='w', edgecolor='k')
@@ -989,16 +989,16 @@ def plot_histogram(dictPLL: dict, dictNet: dict, dictData: dict, at_index: int =
 		print('phases to calculate frequency data:', dictData['phi'][(at_index - 3):(at_index - 1), plotlist])
 		print('frequency histogram_data:', plot_func(dictData['phi'][(at_index - 3):(at_index - 1), plotlist], 0))
 		plt.hist(plot_func(dictData['phi'][(at_index - 3):(at_index - 1), plotlist], 0)[0], bins=number_of_bins, rwidth=rel_plot_width, density=prob_density)
-	elif plot_variable == 'phase' and phase_zero_2pi == 0: # plot phase differences in [-inf, inf), i.e., we use the unwrapped phases that have counted the cycles/periods
+	elif plot_variable == 'phase' and phase_wrap == 0: # plot phase differences in [-inf, inf), i.e., we use the unwrapped phases that have counted the cycles/periods
 		plt.hist(dictData['phi'][at_index, plotlist], bins=number_of_bins, rwidth=rel_plot_width, density=prob_density)
-	elif plot_variable == 'phase' and phase_zero_2pi != 0:
+	elif plot_variable == 'phase' and phase_wrap != 0:
 		# print('histogram_data (wrapping if phase):', ((dictData['phi'][at_index, plotlist] + shift2piWin) % (2 * np.pi)) - shift2piWin)
 		plt.hist((((dictData['phi'][at_index, plotlist] + shift2piWin) % (2.0 * np.pi)) - shift2piWin), bins=number_of_bins, rwidth=rel_plot_width, density=prob_density)
-	elif plot_variable == 'phase-difference' and phase_zero_2pi == 0: # plot phase differences in [-inf, inf), i.e., we use the unwrapped phases that have counted the cycles/periods
-		plt.hist(dictData['phi'][at_index, plotlist] - dictData['phi'][at_index-1, plotlist], bins=number_of_bins, rwidth=rel_plot_width, density=prob_density)
-	elif plot_variable == 'phase-difference' and phase_zero_2pi != 0:
+	elif plot_variable == 'phase-difference' and phase_wrap == 0: # plot phase differences in [-inf, inf), i.e., we use the unwrapped phases that have counted the cycles/periods
+		plt.hist(dictData['phi'][at_index, plotlist] - dictData['phi'][at_index-1, 0], bins=number_of_bins, rwidth=rel_plot_width, density=prob_density)
+	elif plot_variable == 'phase-difference' and phase_wrap != 0:
 		# print('histogram_data (wrapping if phase):', ((dictData['phi'][at_index, plotlist] + shift2piWin) % (2 * np.pi)) - shift2piWin)
-		plt.hist((((dictData['phi'][at_index, plotlist] - dictData['phi'][at_index-1, plotlist] + shift2piWin) % (2.0 * np.pi)) - shift2piWin), bins=number_of_bins, rwidth=rel_plot_width, density=prob_density)
+		plt.hist((((dictData['phi'][at_index, plotlist] - dictData['phi'][at_index-1, 0] + shift2piWin) % (2.0 * np.pi)) - shift2piWin), bins=number_of_bins, rwidth=rel_plot_width, density=prob_density)
 
 	plt.xlabel(x_label_string)
 	plt.ylabel(y_label_string)

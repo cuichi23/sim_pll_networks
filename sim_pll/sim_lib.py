@@ -312,10 +312,13 @@ def plot_results_simulation(dictNet, dictPLL, dictData):
 		psd_list = [0, int(dictNet['Nx']*dictNet['Ny']/4), int(dictNet['Nx']*dictNet['Ny']/2), int(2*dictNet['Nx']*dictNet['Ny']/3), int(3*dictNet['Nx']*dictNet['Ny']/4), int(dictNet['Nx']*dictNet['Ny'])-1]
 		plot.plotPSD(dictPLL, dictNet, dictData, psd_list, saveData=False)
 		print('plot histo 0')
+		plot.plot_histogram(dictPLL, dictNet, dictData, -1, 'phase-difference', [], True, 15, 0.9)
 		plot.plot_histogram(dictPLL, dictNet, dictData, -1, 'phase', [], True, 15, 0.9)
 		print('plot histo 1')
+		plot.plot_histogram(dictPLL, dictNet, dictData, int(dictPLL['transmission_delay'] / dictPLL['dt']), 'phase-difference', [], True, 15, 0.9)
 		plot.plot_histogram(dictPLL, dictNet, dictData, int(dictPLL['transmission_delay'] / dictPLL['dt']), 'phase', [], True, 15, 0.9)
 		print('plot histo 2')
+		plot.plot_histogram(dictPLL, dictNet, dictData, 0, 'phase-difference', [], True, 15, 0.9)
 		plot.plot_histogram(dictPLL, dictNet, dictData, 0, 'phase', [], True, 15, 0.9)
 		print('plot histo 3')
 		plot.plot_histogram(dictPLL, dictNet, dictData, -1, 'frequency', [], True, 15, 0.9)

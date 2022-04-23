@@ -45,43 +45,77 @@ def distributeProcesses(dictNet: dict, dictPLL: dict, dictAlgo=None) -> object:
 	"""
 
 	t0 = time.time()
-	if dictAlgo['bruteForceBasinStabMethod'] == 'classicBruteForceMethodRotatedSpace' or dictAlgo['bruteForceBasinStabMethod'] == 'testNetworkMotifIsing': # classic approach with LP-adaptation developed with J. Asmus, D. Platz
-		scanValues, allPoints = setup.allInitPhaseCombinations(dictPLL, dictNet, dictAlgo, paramDiscretization=dictAlgo['paramDiscretization']) # set paramDiscretization for the number of points to be simulated
-		print('allPoints:', [allPoints], '\nscanValues', scanValues); Nsim = allPoints.shape[0]; print('multiprocessing', Nsim, 'realizations')
+	if dictAlgo['bruteForceBasinStabMethod'] == 'classicBruteForceMethodRotatedSpace': 																	# classic approach with LP-adaptation developed with J. Asmus, D. Platz
+		scanValues, allPoints = setup.allInitPhaseCombinations(dictPLL, dictNet, dictAlgo,
+																	paramDiscretization=dictAlgo['paramDiscretization'])  # set paramDiscretization for the number of points to be simulated
+		print('allPoints:', [allPoints], '\nscanValues', scanValues)
+		Nsim = allPoints.shape[0]
+		print('multiprocessing', Nsim, 'realizations')
 
 	elif dictAlgo['bruteForceBasinStabMethod'] == 'listOfInitialPhaseConfigurations':	# so far for N=2, work it out for N>2
-		if ( isinstance(dictAlgo['paramDiscretization'], np.float) or isinstance(dictAlgo['paramDiscretization'], np.int) ) and ( isinstance(dictAlgo['min_max_range_parameter'], np.float) or isinstance(dictAlgo['min_max_range_parameter'], np.int) ):
+		if (isinstance(dictAlgo['paramDiscretization'], np.float) or isinstance(dictAlgo['paramDiscretization'], np.int)) and (
+				isinstance(dictAlgo['min_max_range_parameter'], np.float) or isinstance(dictAlgo['min_max_range_parameter'], np.int)):
 			scanValues = np.linspace(-np.pi, np.pi, dictAlgo['paramDiscretization'])
-			print('scanValues', scanValues); Nsim = len(scanValues); print('multiprocessing', Nsim, 'realizations')
+			print('scanValues', scanValues)
+			Nsim = len(scanValues)
+			print('multiprocessing', Nsim, 'realizations')
 		elif isinstance(dictAlgo['min_max_range_parameter'], np.ndarray) or isinstance(dictAlgo['min_max_range_parameter'], list):
 			scanValues, allPoints = setup.allInitPhaseCombinations(dictPLL, dictNet, dictAlgo, paramDiscretization=dictAlgo['paramDiscretization'])
-			print('allPoints:', [allPoints], '\nscanValues', scanValues); Nsim = allPoints.shape[0]; print('multiprocessing', Nsim, 'realizations')
+			print('allPoints:', [allPoints], '\nscanValues', scanValues)
+			Nsim = allPoints.shape[0]
+			print('multiprocessing', Nsim, 'realizations')
 		else:
-			print('2 modes: iterate for no detuning over phase-differences, or detuning and phase-differences! Choose one. HINT: if dictAlgo[*paramDiscretization*] is an instance of list or ndarray, there needs to be a list of intrinsic frequencies!'); sys.exit()
+			print('2 modes: iterate for no detuning over phase-differences, or detuning and phase-differences! Choose one. HINT: if dictAlgo[*paramDiscretization*] is an instance of list or ndarray, there needs to be a list of intrinsic frequencies!');
+			sys.exit()
+
 	elif dictAlgo['bruteForceBasinStabMethod'] == 'single':
 		if dictAlgo['param_id'] == 'None':
 			dictAlgo.update({'min_max_range_parameter': [1, 1], 'paramDiscretization': [1, 1]})
 			print('No parameter to be changed, simulate only one realization!')
 		scanValues, allPoints = setup.allInitPhaseCombinations(dictPLL, dictNet, dictAlgo, paramDiscretization=dictAlgo['paramDiscretization'])
-		print('allPoints:', [allPoints], '\nscanValues', scanValues); Nsim = allPoints.shape[0]; print('multiprocessing', Nsim, 'realizations')
-	elif dictAlgo['bruteForceBasinStabMethod'] == 'statistics':
-		print('Not yet tested, not yet implemented! Needs function that evaluates the data from the many realizations.'); sys.exit()
+		print('allPoints:', [allPoints], '\nscanValues', scanValues)
+		Nsim = allPoints.shape[0]
+		print('multiprocessing', Nsim, 'realizations')
 
-	global number_period_dyn;
-	number_period_dyn 	= 20.5;
-	initPhiPrime0		= 0;
+	elif dictAlgo['bruteForceBasinStabMethod'] == 'testNetworkMotifIsing':
+		if dictNet['Nx'] * dictNet['Ny'] <=3:
+			scanValues, allPoints = setup.allInitPhaseCombinations(dictPLL, dictNet, dictAlgo,
+																   paramDiscretization=dictAlgo['paramDiscretization'])  # set paramDiscretization for the number of points to be simulated
+			print('allPoints:', [allPoints], '\nscanValues', scanValues)
+			Nsim = allPoints.shape[0]
+			print('multiprocessing', Nsim, 'realizations')
+		elif dictNet['Nx'] * dictNet['Ny'] > 3:
+			if isinstance(dictAlgo['paramDiscretization'], list):
+				scanValues = np.random.uniform(low=-np.pi, high=np.pi, size=[dictAlgo['paramDiscretization'][0], dictNet['Nx'] * dictNet['Ny']])
+				if not dictAlgo['param_id'] is None:
+					print('Implement here that a parameter is changed and then generate all combinations with the above realizations?!')
+
+			elif isinstance(dictAlgo['paramDiscretization'], float) or isinstance(dictAlgo['paramDiscretization'], int):
+				scanValues = np.random.uniform(low=-np.pi, high=np.pi, size=[dictAlgo['paramDiscretization'], dictNet['Nx'] * dictNet['Ny']])
+
+			# print('scanValues:', scanValues); sys.exit()
+
+	elif dictAlgo['bruteForceBasinStabMethod'] == 'statistics':		# organize after the data has been collected
+		print('Not yet tested, not yet implemented! Needs function that evaluates the data from the many realizations.')
+		sys.exit()
+
+	global number_period_dyn
+	number_period_dyn = 20.5
+	initPhiPrime0 = 0
 
 	np.random.seed()
-	poolData = [];																# should this be recasted to be an np.array?
+	poolData = []																# should this be recasted to be an np.array?
 	freeze_support()
-	pool = Pool(processes=7)													# create a Pool object, pick number of processes
+	pool = Pool(processes=6)													# create a Pool object, pick number of processes
 
-
-	#def multihelper(phiSr, initPhiPrime0, dictNet, dictPLL, phi, clock_counter, pll_list):
+	# def multihelper(phiSr, initPhiPrime0, dictNet, dictPLL, phi, clock_counter, pll_list):
 	if dictAlgo['bruteForceBasinStabMethod'] == 'classicBruteForceMethodRotatedSpace':
 		poolData.append( pool.map(multihelper_star, zip( 						# this makes a map of all parameter combinations that have to be simulated, itertools.repeat() names the constants
 						itertools.product(*scanValues), itertools.repeat(initPhiPrime0), itertools.repeat(dictNet), itertools.repeat(dictPLL), itertools.repeat(dictAlgo) ) ) )
-	elif dictAlgo['bruteForceBasinStabMethod'] == 'listOfInitialPhaseConfigurations' or dictAlgo['bruteForceBasinStabMethod'] == 'testNetworkMotifIsing':
+	elif dictAlgo['bruteForceBasinStabMethod'] == 'testNetworkMotifIsing':
+		poolData.append(pool.map(multihelper_star, zip(  # this makes a map of all parameter combinations that have to be simulated, itertools.repeat() names the constants
+			itertools.product(scanValues), itertools.repeat(initPhiPrime0), itertools.repeat(dictNet), itertools.repeat(dictPLL), itertools.repeat(dictAlgo))))
+	elif dictAlgo['bruteForceBasinStabMethod'] == 'listOfInitialPhaseConfigurations':
 		if isinstance(dictAlgo['min_max_range_parameter'], np.float) or isinstance(dictAlgo['min_max_range_parameter'], np.int):
 			poolData.append( pool.map(multihelper_star, zip( 					# this makes a map of all parameter combinations that have to be simulated, itertools.repeat() names the constants
 							itertools.product(scanValues), itertools.repeat(initPhiPrime0), itertools.repeat(dictNet), itertools.repeat(dictPLL), itertools.repeat(dictAlgo) ) ) )
@@ -92,8 +126,8 @@ def distributeProcesses(dictNet: dict, dictPLL: dict, dictAlgo=None) -> object:
 		poolData.append( pool.map(multihelper_star, zip( 						# this makes a map of all parameter combinations that have to be simulated, itertools.repeat() names the constants
 						itertools.product(scanValues[0], scanValues[1]), itertools.repeat(initPhiPrime0), itertools.repeat(dictNet), itertools.repeat(dictPLL), itertools.repeat(dictAlgo) ) ) )
 
-	print('time needed for execution of simulations in multiproc mode: ', (time.time()-t0), ' seconds'); #sys.exit()
-
+	print('time needed for execution of simulations in multiproc mode: ', (time.time()-t0), ' seconds')
+	#sys.exit()
 
 	eva.saveDictionaries(poolData, 'poolData', dictPLL['coupK'], dictPLL['transmission_delay'], dictPLL['cutFc'], dictNet['Nx'], dictNet['Ny'], dictNet['mx'], dictNet['my'], dictNet['topology'])	   # save the dicts
 	eva.saveDictionaries(dictPLL, 'dictPLL',   dictPLL['coupK'], dictPLL['transmission_delay'], dictPLL['cutFc'], dictNet['Nx'], dictNet['Ny'], dictNet['mx'], dictNet['my'], dictNet['topology'])	   # save the dicts
@@ -101,9 +135,11 @@ def distributeProcesses(dictNet: dict, dictPLL: dict, dictAlgo=None) -> object:
 	eva.saveDictionaries(dictAlgo, 'dictAlgo', dictPLL['coupK'], dictPLL['transmission_delay'], dictPLL['cutFc'], dictNet['Nx'], dictNet['Ny'], dictNet['mx'], dictNet['my'], dictNet['topology'])	   # save the dicts
 
 	if dictAlgo['bruteForceBasinStabMethod']   == 'testNetworkMotifIsing':
-		eva.evaluateSimulationIsing(poolData)
+		eva.evaluateSimulationIsing(poolData, 2)
+
 	elif dictAlgo['bruteForceBasinStabMethod'] == 'listOfInitialPhaseConfigurations':
 		eva.evaluateSimulationsChrisHoyer(poolData)
+
 	elif dictAlgo['bruteForceBasinStabMethod'] == 'single':
 		if dictNet['special_case'] != 'False':
 			print('Plotting frequency vs time-dependent parameter!')
@@ -121,7 +157,9 @@ def distributeProcesses(dictNet: dict, dictPLL: dict, dictAlgo=None) -> object:
 		plot.plotOscSignal(poolData[0][0]['dictPLL'], poolData[0][0]['dictNet'], poolData[0][0]['dictData'])
 		plot.plotFreqAndPhaseDiff(poolData[0][0]['dictPLL'], poolData[0][0]['dictNet'], poolData[0][0]['dictData'])
 		plot.plotPSD(poolData[0][0]['dictPLL'], poolData[0][0]['dictNet'], poolData[0][0]['dictData'], [], saveData=False)
-		plt.draw(); plt.show();
+		plt.draw()
+		plt.show()
+
 	elif dictAlgo['bruteForceBasinStabMethod'] == 'classicBruteForceMethodRotatedSpace':
 		print('Implement evaluation as in the old version! Copy plots, etc...'); sys.exit()
 
@@ -148,6 +186,7 @@ def multihelper(iterConfig, initPhiPrime0, dictNet, dictPLL, dictAlgo, param_id=
 		if dictNet['Nx']*dictNet['Ny'] > 2:
 			phiSr = np.insert(phiSr, 0, initPhiPrime0)								# insert the first variable in the rotated space, constant initPhiPrime0
 		phiS = eva.rotate_phases(phiSr, isInverse=False)							# rotate back into physical phase space
+		print('TEST len(phiS):', len(phiS))
 		# print('TEST in multihelper, phiS:', phiS, ' and phiSr:', phiSr)
 		unit_cell = eva.PhaseDifferenceCell(dictNet['Nx']*dictNet['Ny'])
 		# SO anpassen, dass auch gegen verschobene Einheitszelle geprueft werden kann (e.g. if not k==0...)
@@ -196,8 +235,10 @@ def multihelper(iterConfig, initPhiPrime0, dictNet, dictPLL, dictAlgo, param_id=
 
 	elif dictAlgo['bruteForceBasinStabMethod'] == 'testNetworkMotifIsing':
 		temp   =  list(iterConfig)
-		#print('iterConfig:', iterConfig, '\ttemp[0]:', temp[0])
-		config = [0]
+		print('iterConfig:', iterConfig, '\ttemp[0]:', temp[0])
+		# sys.exit()
+		# if dictNet['Nx']*dictNet['Ny']
+		config = []
 		[config.append(entry) for entry in temp[0]]
 		dictNetRea = dictNet.copy()
 		dictNetRea.update({'phiInitConfig': config, 'phiPerturb': np.zeros(dictNet['Nx']*dictNet['Ny']), 'phiPerturbRot': np.zeros(dictNet['Nx']*dictNet['Ny'])})

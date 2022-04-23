@@ -36,18 +36,18 @@ def getDicts(Fsim=125):
 		'my': -999,																# twist/chequerboard in y-direction
 		'topology': 'global',													# 1d) ring, chain, 2d) square-open, square-periodic, hexagonal...
 																				# 3) global, entrainOne-[ring,chain,square-open], entrainAll-[ring,chain,square-open], entrainPLLsHierarch, compareEntrVsMutual
-		'Tsim': 25,															# simulation time in multiples of the period
+		'Tsim': 25,																# simulation time in multiples of the period
 		'computeFreqAndStab': False,											# compute linear stability and global frequency if possible: True or False (only identical oscis and Kuramoto 2nd order)
 		'phi_array_mult_tau': 1,												# how many multiples of the delay is stored of the phi time series
 		'phiInitConfig': [],#[0, np.pi, np.pi, np.pi],							# phase-configuration of sync state,  []: automatic, else provide list
 		'freq_beacons': 0.25,													# frequency of external sender beacons, either a float or a list
 		'special_case': 'timeDepChangeOfCoupStr',#'timeDepInjectLockCoupStr',#	# 'False', or 'test_case', 'timeDepInjectLockCoupStr', 'timeDepTransmissionDelay', 'timeDepChangeOfCoupStr'
 		'typeOfTimeDependency': 'linear',#'exponential'						# 'exponential', 'linear', 'quadratic', 'triangle', 'cosine'
-		'min_max_rate_timeDepPara': [0, 5/(1*2*np.pi), 0.01/((5*1)/125)]					# provide a list with min, max and rate (per period) of the time-dependent parameter
+		'min_max_rate_timeDepPara': [0, 5/(1*2*np.pi), 0.01/((5*4)/125)] #[0, 0.5, 0.01/((5*4)/125)]#		# provide a list with min, max and rate (per period) of the time-dependent parameter
 	}
 
 	dictNet.update({
-		'phiPerturb': [np.random.uniform(-np.pi,np.pi) for i in range(dictNet['Nx']*dictNet['Ny'])], # delta-perturbation on initial state -- PROVIDE EITHER ONE OF THEM! if [] set to zero
+		'phiPerturb': [np.random.uniform(-np.pi, np.pi) for i in range(dictNet['Nx']*dictNet['Ny'])],	# delta-perturbation on initial state -- PROVIDE EITHER ONE OF THEM! if [] set to zero
 		'phiPerturbRot': [],													# delta-perturbation on initial state -- in rotated space
 	})
 
@@ -87,7 +87,7 @@ def getDicts(Fsim=125):
 		'noiseVarVCO': 1E-3,													# variance of VCO GWN
 		'feedback_delay': 0,													# value of feedback delay in seconds
 		'feedback_delay_var': None, 											# variance of feedback delay
-		'transmission_delay': 0,	 											# value of transmission delay in seconds, float (single), list (tau_k) or list of lists (tau_kl): np.random.uniform(min,max,size=[dictNet['Nx']*dictNet['Ny'],dictNet['Nx']*dictNet['Ny']]), OR [np.random.uniform(min,max) for i in range(dictNet['Nx']*dictNet['Ny'])]
+		'transmission_delay': 0.0,	 											# value of transmission delay in seconds, float (single), list (tau_k) or list of lists (tau_kl): np.random.uniform(min,max,size=[dictNet['Nx']*dictNet['Ny'],dictNet['Nx']*dictNet['Ny']]), OR [np.random.uniform(min,max) for i in range(dictNet['Nx']*dictNet['Ny'])]
 		'transmission_delay_var': None, 										# variance of transmission delays
 		'distribution_for_delays': None,										# from what distribution are random delays drawn?
 		# choose from coupfct.<ID>: sine, cosine, neg_sine, neg_cosine, triangular, deriv_triangular, square_wave, pfd, inverse_cosine, inverse_sine
@@ -119,7 +119,7 @@ def getDicts(Fsim=125):
 
 	dictAlgo={
 		'bruteForceBasinStabMethod': 'testNetworkMotifIsing',					# pick method for setting realizations 'classicBruteForceMethodRotatedSpace', 'listOfInitialPhaseConfigurations', 'testNetworkMotifIsing'
-		'paramDiscretization': [7, 1],#[15, 10],								# parameter discetization for brute force parameter space scans
+		'paramDiscretization': [18, 1],#[15, 10],								# parameter discetization for brute force parameter space scans, e.g., for 'testNetworkMotifIsing': first entry is number of realizations, second of parameter sweep
 		'param_id': 'None',														# parameter to be changed between different realizations, according to the min_max_range_parameter: 'None' or string of any other parameter
 		'min_max_range_parameter': [0.95, 1.05],								# specifies within which min and max value to linspace the initial frequency difference (w.r.t. HF Frequency, not divided)
 		'store_ctrl_and_clock': False,											# whether or not the control signals and clock signal is being computed (time and memory usage)

@@ -23,6 +23,7 @@ import matplotlib.cm as cm
 from matplotlib import rc
 from mpl_toolkits.axes_grid1.inset_locator import zoomed_inset_axes
 from mpl_toolkits.axes_grid1.inset_locator import mark_inset
+from scipy.ndimage.filters import uniform_filter1d
 import time
 import datetime
 
@@ -484,86 +485,198 @@ def obtainOrderParam(dictPLL, dictNet, dictData):
 
 ################################################################################
 
-def evaluateSimulationIsing(poolData):
+def evaluateSimulationIsing(poolData, phase_wrap=0, number_of_bins=25, prob_density=False, order_param_solution=0.9):
 
 	# plot parameter
-	axisLabel  = 9;
+	axisLabel  = 9
 	legendLab  = 6
-	tickSize   = 5;
-	titleLabel = 9;
-	dpi_val	   = 150;
-	figwidth   = 6;
-	figheight  = 5;
-	alpha 	   = 0.5;
+	tickSize   = 5
+	titleLabel = 9
+	dpi_val	   = 150
+	figwidth   = 6
+	figheight  = 5
+	plot_size_inches_x = 10
+	plot_size_inches_y = 5
+	labelpadxaxis = 10
+	labelpadyaxis = 20
+	alpha 	   = 0.5
+
+	treshold_realizations_plot = 8
+
+	if phase_wrap == 1:				# plot phase-differences in [-pi, pi] interval
+		shift2piWin = np.pi
+	elif phase_wrap == 2:			# plot phase-differences in [-pi/2, 3*pi/2] interval
+		shift2piWin = 0.5*np.pi
+	elif phase_wrap == 3:			# plot phase-differences in [0, 2*pi] interval
+		shift2piWin = 0
 
 	#unit_cell = PhaseDifferenceCell(poolData[0][0]['dictNet']['Nx']*poolData[0][0]['dictNet']['Ny'])
 	treshold_statState = np.pi/15
-	plotEveryDt		   = 1;
-	numberColsPlt	   = 3;
+	plotEveryDt = 1;
+	numberColsPlt = 3;
+	numberColsPlt_widePlt = 1;
 
 	fig16, ax16 = plt.subplots(int(np.ceil(len(poolData[0][:])/numberColsPlt)), numberColsPlt, figsize=(figwidth, figheight), dpi=dpi_val, facecolor='w', edgecolor='k')
-	fig16.canvas.set_window_title('Ising different initial conditions, fixed topology, phase relations')	# phase relations
+	fig16.canvas.set_window_title('Ising different initial conditions, fixed topology, phase relations')					# phase relations
 	if isinstance( poolData[0][0]['dictPLL']['cutFc'], np.float):
 		fig16.suptitle(r'parameters: $f=$%0.2f Hz, $K=$%0.2f Hz/V, $K^\textrm{I}=$%0.2f Hz/V, $f_c=$%0.2f Hz, $\tau=$%0.2f s'%(poolData[0][0]['dictPLL']['intrF'], poolData[0][0]['dictPLL']['coupK'], poolData[0][0]['dictPLL']['coupStr_2ndHarm'], poolData[0][0]['dictPLL']['cutFc'], poolData[0][0]['dictPLL']['transmission_delay']))
 	fig16.subplots_adjust(hspace=0.4, wspace=0.4)
 	ax16 = ax16.ravel()
 
-	fig17, ax17 = plt.subplots(int(np.ceil(len(poolData[0][:])/numberColsPlt)), numberColsPlt, figsize=(figwidth, figheight), dpi=dpi_val, facecolor='w', edgecolor='k')
-	fig17.canvas.set_window_title('Ising different initial conditions, fixed topology, inst. frequencies')	# inst. frequencies
+	fig17, ax17 = plt.subplots(int(np.ceil(len(poolData[0][:])/numberColsPlt_widePlt)), numberColsPlt_widePlt, figsize=(figwidth, figheight), dpi=dpi_val, facecolor='w', edgecolor='k')
+	fig17.canvas.set_window_title('Ising different initial conditions, fixed topology, inst. frequencies')					# inst. frequencies
 	fig17.subplots_adjust(hspace=0.4, wspace=0.4)
 	ax17 = ax17.ravel()
 
 	fig18, ax18 = plt.subplots(int(np.ceil(len(poolData[0][:])/numberColsPlt)), numberColsPlt, figsize=(figwidth, figheight), dpi=dpi_val, facecolor='w', edgecolor='k')
-	fig18.canvas.set_window_title('Ising different initial conditions, fixed topology, order parameter')	# order parameter
+	fig18.canvas.set_window_title('Ising different initial conditions, fixed topology, order parameter')					# order parameter
 	fig18.subplots_adjust(hspace=0.4, wspace=0.4)
 	ax18 = ax18.ravel()
 
-	fig19, ax19 = plt.subplots(int(np.ceil(len(poolData[0][:])/numberColsPlt)), numberColsPlt, figsize=(figwidth, figheight), dpi=dpi_val, facecolor='w', edgecolor='k')
-	fig19.canvas.set_window_title('Ising different initial conditions, fixed topology, signals')			# signals
+	fig19, ax19 = plt.subplots(int(np.ceil(len(poolData[0][:])/numberColsPlt_widePlt)), numberColsPlt_widePlt, figsize=(figwidth, figheight), dpi=dpi_val, facecolor='w', edgecolor='k')
+	fig19.canvas.set_window_title('Ising different initial conditions, fixed topology, signals')							# signals
 	fig19.subplots_adjust(hspace=0.4, wspace=0.4)
 	ax19 = ax19.ravel()
 
+	fig20, ax20 = plt.subplots(int(np.ceil(len(poolData[0][:]) / numberColsPlt)), numberColsPlt, figsize=(figwidth, figheight), dpi=dpi_val, facecolor='w', edgecolor='k')
+	fig20.canvas.set_window_title('Ising different initial conditions, fixed topology, histograms')  # signals
+	fig20.subplots_adjust(hspace=0.4, wspace=0.4)
+	ax20 = ax20.ravel()
+
+	if len(poolData[0][:]) > treshold_realizations_plot:
+		fig21, ax21 = plt.subplots(1, 1, figsize=(figwidth, figheight), dpi=dpi_val, facecolor='w', edgecolor='k')
+		fig21.canvas.set_window_title('all order parameters')  # all order parameters
+		fig21.set_size_inches(plot_size_inches_x, plot_size_inches_y)
+
 	print('poolData in eva.evaluateSimulationIsing(poolData):', poolData)
 
-	for i in range(len(poolData[0][:])):
-		deltaTheta = np.zeros([len(poolData[0][i]['dictData']['phi'][0,:]), len(poolData[0][i]['dictData']['phi'][:,0])]);
-		signalOut  = np.zeros([len(poolData[0][i]['dictData']['phi'][0,:]), len(poolData[0][i]['dictData']['phi'][:,0])]);
+	sol_time = []
+	periods_to_average = 2
+	success_count = 0
 
-		thetaDot 			= np.diff( poolData[0][i]['dictData']['phi'][:,:], axis=0 ) / poolData[0][i]['dictPLL']['dt']	# compute frequencies and order parameter
+	for i in range(len(poolData[0][:])):
+		deltaTheta = np.zeros([len(poolData[0][i]['dictData']['phi'][0, :]), len(poolData[0][i]['dictData']['phi'][:, 0])])
+		signalOut  = np.zeros([len(poolData[0][i]['dictData']['phi'][0, :]), len(poolData[0][i]['dictData']['phi'][:, 0])])
+
+		thetaDot = np.diff( poolData[0][i]['dictData']['phi'][:, :], axis=0 ) / poolData[0][i]['dictPLL']['dt']				# compute frequencies and order parameter
 		r, orderparam, F1 	= obtainOrderParam(poolData[0][i]['dictPLL'], poolData[0][i]['dictNet'], poolData[0][i]['dictData'])
 
-		ax18[i].plot( poolData[0][i]['dictData']['t'][::plotEveryDt], orderparam[::plotEveryDt] )
+		ax18[i].plot( poolData[0][i]['dictData']['t'][::plotEveryDt], orderparam[::plotEveryDt], label=r'$R_\textrm{final}=%0.2f$'%(orderparam[-1]) )
+		if len(poolData[0][:]) > treshold_realizations_plot:
+			ax21.plot(poolData[0][i]['dictData']['t'][::plotEveryDt], orderparam[::plotEveryDt], label=r'$R_\textrm{final}=%0.2f$' % (orderparam[-1]))
+
+		# HOWTO 1) to determine whether the correct solution has be found, we test for the asymptotic value of the order parameter
+		order_param_diff_expected_value_treshold = 0.01
+		correct_solution = False
+		if np.mean(orderparam[-int(periods_to_average * poolData[0][i]['dictPLL']['intrF'] / poolData[0][i]['dictPLL']['dt']):]) - order_param_solution < order_param_diff_expected_value_treshold:
+			print('Order parameter predicted for solution=%0.2f has been reached on average over %i periods of the intrinsic frequency for realization %i.'%(order_param_solution, periods_to_average, i))
+			success_count += 1					# to calculate the probability of finding the correct solutions
+			correct_solution = True				# this is needed to decide for which realizations we need to measure the time to solution
+
+		# HOWTO 2) to determine the time to solutions, we find the time at the which the asymptotic value of the order parameter has been reached, we count from the time when we start increasing one of the couöling strengths
+		order_param_change_treshold = 0.01
+
+		smoothing = True
+		if smoothing:
+			if correct_solution:
+				temp = np.where( uniform_filter1d((np.diff(orderparam[(poolData[0][i]['dictData']['tstep_annealing_start'] + poolData[0][i]['dictNet']['max_delay_steps']):]) / poolData[0][i]['dictPLL']['dt']),
+												size=int(0.5 * poolData[0][i]['dictPLL']['intrF'] / poolData[0][i]['dictPLL']['dt']), mode='reflect') > order_param_change_treshold )
+				# print('temp=', temp[0])
+				sol_time.append(temp[0][-1] * poolData[0][i]['dictPLL']['dt'])
+				# print('sol_time=', sol_time)
+
+			ax18[i].plot( poolData[0][i]['dictData']['t'][(poolData[0][i]['dictData']['tstep_annealing_start'] + poolData[0][i]['dictNet']['max_delay_steps']):-1:plotEveryDt], uniform_filter1d((np.diff(
+										orderparam[(poolData[0][i]['dictData']['tstep_annealing_start'] + poolData[0][i]['dictNet']['max_delay_steps']):]) / poolData[0][i]['dictPLL']['dt']),
+										size=int(0.5 * poolData[0][i]['dictPLL']['intrF'] / poolData[0][i]['dictPLL']['dt']), mode='reflect')[::plotEveryDt], 'r', linewidth=0.5 )
+		else:
+			if correct_solution:
+				temp = np.where( np.diff(orderparam[(poolData[0][i]['dictData']['tstep_annealing_start'] + poolData[0][i]['dictNet']['max_delay_steps']):]) / poolData[0][i]['dictPLL']['dt'] > order_param_change_treshold )
+				sol_time.append(temp[0][-1] * poolData[0][i]['dictPLL']['dt'])
+
+			ax18[i].plot( poolData[0][i]['dictData']['t'][(poolData[0][i]['dictData']['tstep_annealing_start'] + poolData[0][i]['dictNet']['max_delay_steps']):-1:plotEveryDt], (np.diff(
+								orderparam[(poolData[0][i]['dictData']['tstep_annealing_start'] + poolData[0][i]['dictNet']['max_delay_steps']):]) / poolData[0][i]['dictPLL']['dt'])[::plotEveryDt], 'r', linewidth=0.5 )
+
+		ax18[i].plot(poolData[0][i]['dictData']['t'][(poolData[0][i]['dictData']['tstep_annealing_start'] + poolData[0][i]['dictNet']['max_delay_steps'])], 0, 'cd', markersize=1)
+		ax18[i].plot(sol_time[i] + poolData[0][i]['dictData']['t'][(poolData[0][i]['dictData']['tstep_annealing_start'] + poolData[0][i]['dictNet']['max_delay_steps'])], 0, 'c*', markersize=1)
+		if len(poolData[0][:]) > treshold_realizations_plot:
+			ax21.plot(poolData[0][i]['dictData']['t'][(poolData[0][i]['dictData']['tstep_annealing_start'] + poolData[0][i]['dictNet']['max_delay_steps'])], 0, 'cd', markersize=1)
+			ax21.plot(sol_time[i] + poolData[0][i]['dictData']['t'][(poolData[0][i]['dictData']['tstep_annealing_start'] + poolData[0][i]['dictNet']['max_delay_steps'])], 0, 'c*', markersize=1)
+
+		if phase_wrap == 0:  # plot phase differences in [-inf, inf), i.e., we use the unwrapped phases that have counted the cycles/periods
+			ax20[i].hist(poolData[0][i]['dictData']['phi'][-3, :] - poolData[0][i]['dictData']['phi'][-2, 0], bins=number_of_bins, rwidth=0.9, density=prob_density)
+		elif phase_wrap != 0:
+			# print('histogram_data (wrapping if phase):', ((dictData['phi'][at_index, plotlist] + shift2piWin) % (2 * np.pi)) - shift2piWin)
+			ax20[i].hist((((poolData[0][i]['dictData']['phi'][-3, :] - poolData[0][i]['dictData']['phi'][-2, 0] + shift2piWin) % (2.0 * np.pi)) - shift2piWin), bins=number_of_bins, rwidth=0.9, density=prob_density)
 
 		for j in range(len(poolData[0][i]['dictData']['phi'][0,:])):
-			deltaTheta[j] 	= poolData[0][i]['dictData']['phi'][:,0] - poolData[0][i]['dictData']['phi'][:,j] 				# calculate phase-differnce w.r.t. osci k=0
-			signalOut[j]	= poolData[0][i]['dictPLL']['vco_out_sig'](poolData[0][i]['dictData']['phi'][:,j])				# generate signals for all phase histories
+			if shift2piWin != 0:
+				deltaTheta[j] = (((poolData[0][i]['dictData']['phi'][:, 0] - poolData[0][i]['dictData']['phi'][:, j]) + shift2piWin) % (2.0 * np.pi)) - shift2piWin 		# calculate phase-differnce w.r.t. osci k=0
+			else:
+				deltaTheta[j] = poolData[0][i]['dictData']['phi'][:, 0] - poolData[0][i]['dictData']['phi'][:, j]
+			signalOut[j] = poolData[0][i]['dictPLL']['vco_out_sig'](poolData[0][i]['dictData']['phi'][:, j])				# generate signals for all phase histories
 
-			ax16[i].plot( poolData[0][i]['dictData']['t'][::plotEveryDt], deltaTheta[j,::plotEveryDt], label='sig PLL%i' %(j))
-			ax19[i].plot( poolData[0][i]['dictData']['t'][::plotEveryDt], poolData[0][i]['dictPLL']['vco_out_sig'](poolData[0][i]['dictData']['phi'][::plotEveryDt,j]), label='sig PLL%i' %(j))
-			ax17[i].plot( poolData[0][i]['dictData']['t'][1::plotEveryDt], thetaDot[::plotEveryDt,j], label='sig PLL%i' %(j))
+			if j == 0:
+				linestyle = '--'
+			else:
+				linestyle = '-'
+			ax16[i].plot( poolData[0][i]['dictData']['t'][::plotEveryDt], deltaTheta[j, ::plotEveryDt], linestyle, label='sig PLL%i' %(j))
+			ax19[i].plot( poolData[0][i]['dictData']['t'][::plotEveryDt], poolData[0][i]['dictPLL']['vco_out_sig'](poolData[0][i]['dictData']['phi'][::plotEveryDt, j]), label='sig PLL%i' %(j))
+			ax17[i].plot( poolData[0][i]['dictData']['t'][1::plotEveryDt], thetaDot[::plotEveryDt, j], label='sig PLL%i' %(j))
 
-		print('working on realization %i results from sim:'%i, poolData[0][i]['dictNet'], '\n', poolData[0][i]['dictPLL'], '\n', poolData[0][i]['dictData'],'\n\n')
+		print('working on realization %i results from sim:'%i, poolData[0][i]['dictNet'], '\n', poolData[0][i]['dictPLL'], '\n', poolData[0][i]['dictData'], '\n\n')
 
-		ax16[i].set_xlabel(r'$t$ in $[s]$', 				fontsize=axisLabel)
-		ax16[i].set_ylabel(r'$\Delta\theta(t)$', 			fontsize=axisLabel)
-		ax17[i].set_xlabel(r'$t$ in $[s]$', 				fontsize=axisLabel)
-		ax17[i].set_ylabel(r'$\dot{\theta}(t)$ in radHz', 	fontsize=axisLabel)
-		ax18[i].set_xlabel(r'$t$ in $[s]$', 				fontsize=axisLabel)
-		ax18[i].set_ylabel(r'$R(t)$', 						fontsize=axisLabel)
-		ax19[i].set_xlabel(r'$t$ in $[s]$', 				fontsize=axisLabel)
-		ax19[i].set_ylabel(r'$s(t)$', 						fontsize=axisLabel)
+		if i == int( len(poolData[0][:]) / 2 ):
+			ax16[i].set_ylabel(r'$\Delta\theta(t)$', fontsize=axisLabel)
+			ax17[i].set_ylabel(r'$\dot{\theta}(t)$ in radHz', fontsize=axisLabel)
+			ax18[i].set_ylabel(r'$R(t)$', fontsize=axisLabel)
+			ax19[i].set_ylabel(r'$s(t)$', fontsize=axisLabel)
+			ax20[i].set_ylabel(r'$H\left(\Delta\theta(t)\right)$', fontsize=axisLabel)
+		if i == len(poolData[0][:])-2:
+			ax16[i].set_xlabel(r'$t$ in $[s]$', fontsize=axisLabel)
+			ax18[i].set_xlabel(r'$t$ in $[s]$', fontsize=axisLabel)
+			ax20[i].set_xlabel(r'$\Delta\theta(t)$ in $[rad]$', fontsize=axisLabel)
+		if i == len(poolData[0][:])-1:
+			ax17[i].set_xlabel(r'$t$ in $[s]$', fontsize=axisLabel)
+			ax19[i].set_xlabel(r'$t$ in $[s]$', fontsize=axisLabel)
+		if len(poolData[0][:]) > treshold_realizations_plot and i == len(poolData[0][:])-1:
+			ax21.set_xlabel(r'$t$ in $[s]$', fontsize=axisLabel)
+			ax21.set_ylabel(r'$R(t)$', fontsize=axisLabel)
 
 		ax16[i].tick_params(labelsize=tickSize)
 		ax17[i].tick_params(labelsize=tickSize)
 		ax18[i].tick_params(labelsize=tickSize)
 		ax19[i].tick_params(labelsize=tickSize)
+		ax20[i].tick_params(labelsize=tickSize)
+		ax18[i].legend(loc='lower right', fontsize=legendLab)
+
+	results_string = 'Final evaluation:\n1) for a total of %i realizations, success probability = %0.4f\n2) average time to solution = %0.4f seconds, i.e., %0.2f mean intrinsic periods.'%(len(poolData[0][:]),
+														success_count / len(poolData[0][:]), np.mean(sol_time), np.mean(sol_time)/np.mean(poolData[0][i]['dictPLL']['intrF']))
+	if len(poolData[0][:]) > treshold_realizations_plot:
+		props = dict(boxstyle='round', facecolor='wheat', alpha=0.5)
+		ax21.text(0.2*poolData[0][0]['dictData']['t'][-1], 0.2, results_string, horizontalalignment='left', verticalalignment='bottom', bbox=props, fontsize=9)
+
+	print(results_string)
 
 	ax16[0].legend(loc='upper right', fontsize=legendLab)
 	ax17[0].legend(loc='upper right', fontsize=legendLab)
-	ax18[0].legend(loc='upper right', fontsize=legendLab)
 	ax19[0].legend(loc='upper right', fontsize=legendLab)
 
-	plt.draw(); plt.show()
+	fig16.savefig('results/phase_relations_%d_%d_%d.svg' % (now.year, now.month, now.day), dpi=dpi_val)
+	fig17.savefig('results/frequencies_%d_%d_%d.svg' % (now.year, now.month, now.day), dpi=dpi_val)
+	fig18.savefig('results/order_parameter_%d_%d_%d.svg' % (now.year, now.month, now.day), dpi=dpi_val)
+	fig19.savefig('results/signals_%d_%d_%d.svg' % (now.year, now.month, now.day), dpi=dpi_val)
+	fig20.savefig('results/histograms_%d_%d_%d.svg' % (now.year, now.month, now.day), dpi=dpi_val)
+	fig16.savefig('results/phase_relations_%d_%d_%d.png' % (now.year, now.month, now.day), dpi=dpi_val)
+	fig17.savefig('results/frequencies_%d_%d_%d.png' % (now.year, now.month, now.day), dpi=dpi_val)
+	fig18.savefig('results/order_parameter_%d_%d_%d.png' % (now.year, now.month, now.day), dpi=dpi_val)
+	fig19.savefig('results/signals_%d_%d_%d.png' % (now.year, now.month, now.day), dpi=dpi_val)
+	fig20.savefig('results/histograms_%d_%d_%d.png' % (now.year, now.month, now.day), dpi=dpi_val)
+	if len(poolData[0][:]) > treshold_realizations_plot:
+		fig21.savefig('results/all_order_parameters_%d_%d_%d.svg' % (now.year, now.month, now.day), dpi=dpi_val)
+		fig21.savefig('results/all_order_parameters_%d_%d_%d.png' % (now.year, now.month, now.day), dpi=dpi_val)
+
+	plt.draw()
+	plt.show()
 
 	return None
 

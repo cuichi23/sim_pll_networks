@@ -236,15 +236,17 @@ def setupTimeDependentParameter(dict_net, dict_pll, dictData, parameter='coupStr
 		time_series = np.zeros([ 1, dict_net['max_delay_steps']+dict_pll['sim_time_steps'] ])
 	#print('dict_net[*min_max_rate_timeDepPara*][1]:', dict_net['min_max_rate_timeDepPara'][1])
 
+	tstep_annealing_start = dict_net['max_delay_steps'] + int(afterTsimPercent * dict_pll['sim_time_steps'])
+
 	# starting after 'max_delay_steps', we write a list/array of the time-dependent parameter given the functional form chosen
 	sign = -1
 	if dict_net['typeOfTimeDependency'] == 'linear':
 		if (dict_net['special_case'] == 'timeDepInjectLockCoupStr'):
 			print('NOTE: coupStr_2ndHarm overridden by min_max_rate_timeDepPara!')
-		for i in range(len(time_series[:,0])):
+		for i in range(len(time_series[:, 0])):
 			sign = sign * (-1)
-			time_series[i,0:dict_net['max_delay_steps']+int(afterTsimPercent*dict_pll['sim_time_steps'])] = dict_net['min_max_rate_timeDepPara'][0];
-			for j in range(dict_net['max_delay_steps']+int(afterTsimPercent*dict_pll['sim_time_steps'])-1, dict_net['max_delay_steps']+dict_pll['sim_time_steps']-1):
+			time_series[i,0:tstep_annealing_start] = dict_net['min_max_rate_timeDepPara'][0]
+			for j in range(dict_net['max_delay_steps'] + int(afterTsimPercent * dict_pll['sim_time_steps'])-1, dict_net['max_delay_steps']+dict_pll['sim_time_steps']-1):
 				if np.abs( time_series[i,j] - dict_net['min_max_rate_timeDepPara'][0] ) <= delta_max:
 					time_series[i,j+1] = time_series[i,j] + sign * dict_pll['dt'] * dict_net['min_max_rate_timeDepPara'][2]
 					#print('time_series', time_series)
@@ -255,7 +257,6 @@ def setupTimeDependentParameter(dict_net, dict_pll, dictData, parameter='coupStr
 		if (dict_net['special_case'] == 'timeDepInjectLockCoupStr'):
 			print('NOTE: coupStr_2ndHarm overridden by min_max_rate_timeDepPara!')
 		for i in range(len(time_series[:,0])):
-			tstep_annealing_start = dict_net['max_delay_steps']+int(afterTsimPercent*dict_pll['sim_time_steps'])
 			print('Annealing starts after: ', tstep_annealing_start, ' steps.')
 			time_series[i,0:tstep_annealing_start] = dict_net['min_max_rate_timeDepPara'][0];
 			for j in range(tstep_annealing_start-1, dict_net['max_delay_steps']+dict_pll['sim_time_steps']-1):
@@ -272,7 +273,7 @@ def setupTimeDependentParameter(dict_net, dict_pll, dictData, parameter='coupStr
 			print('NOTE: coupStr_2ndHarm overridden by min_max_rate_timeDepPara!')
 		for i in range(len(time_series[:,0])):
 			sign = sign * (-1)
-			time_series[i,0:dict_net['max_delay_steps']+int(afterTsimPercent*dict_pll['sim_time_steps'])] = dict_net['min_max_rate_timeDepPara'][0];
+			time_series[i,0:tstep_annealing_start] = dict_net['min_max_rate_timeDepPara'][0]
 			start_t_steps = dict_net['max_delay_steps']+int(afterTsimPercent*dict_pll['sim_time_steps'])-1
 			final_growth_t_steps = start_t_steps + np.int(np.floor((1-afterTsimPercent)*dict_pll['sim_time_steps']))
 			if final_growth_t_steps <= start_t_steps:
@@ -291,6 +292,7 @@ def setupTimeDependentParameter(dict_net, dict_pll, dictData, parameter='coupStr
 		sys.exit()
 
 	dictData.update({'timeDependentParameter': time_series})
+	dictData.update({'tstep_annealing_start': tstep_annealing_start})
 
 	print('time-series time-dependent parameter: ', [*time_series])
 
@@ -444,7 +446,7 @@ def allInitPhaseCombinations(dict_pll, dict_net, dict_algo, paramDiscretization=
 		paramDiscr = [paramDiscretization, paramDiscretization]
 	elif isinstance(paramDiscretization, list):
 		paramDiscr = paramDiscretization
-		print('List if paramDiscretizations was provided individually for the x- and y-axis.')
+		print('List of paramDiscretizations was provided individually for the x- and y-axis.')
 	else:
 		print('Variable paramDiscretization needs to be integer or list of integers!'); sys.exit()
 
@@ -474,21 +476,42 @@ def allInitPhaseCombinations(dict_pll, dict_net, dict_algo, paramDiscretization=
 		# 	if unit_cell.is_inside(point, isRotated=True):
 		# 		allPoints_unitCell.append(point)
 		# allPoints			= np.array(allPoints_unitCell)
-	elif dict_net['Nx']*dict_net['Ny'] > 2:
+
+	elif dict_net['Nx'] * dict_net['Ny'] == 3:
 		# setup a matrix for all N variables/dimensions and create a cube around the origin with side lengths 2pi
-		scanValues = np.zeros((dict_net['Nx']*dict_net['Ny']-1,paramDiscretization), dtype=np.float)		# create container for all points in the discretized rotated phase space, +/- pi around each dimension (unit area)
-		for i in range (0, dict_net['Nx']*dict_net['Ny']-1):												# the different coordinates of the solution, discretize an interval plus/minus pi around each variable
+		scanValues = np.zeros((dict_net['Nx'] * dict_net['Ny'] - 1, paramDiscr[0]), dtype=np.float)		# create container for all points in the discretized rotated phase space, +/- pi around each dimension (unit area)
+		for i in range(0, dict_net['Nx'] * dict_net['Ny'] - 1):											# the different coordinates of the solution, discretize an interval plus/minus pi around each variable
 			# scanValues[i,:] = np.linspace(phiMr[i+1]-np.pi, phiMr[i+1]+np.pi, paramDiscretization) # all entries are in rotated, and reduced phase space
-			if i==0:															# theta2 (x-axis)
+			if i == 0:															# theta2 (x-axis)
 				#scanValues[i,:] = np.linspace(-(np.pi), +(np.pi), paramDiscretization) 	# all entries are in rotated, and reduced phase space NOTE: adjust unit cell accordingly!
 				#scanValues[i,:] = np.linspace(-0.25*np.pi, 0.25*np.pi, paramDiscretization)
-				scanValues[i,:] = np.linspace(-1.0*np.pi, 1.0*np.pi, paramDiscr[0])
+				scanValues[i, :] = np.linspace(-1.0*np.pi, 1.0*np.pi, paramDiscr[0])
 			else:																# theta3 (y-axis)
 				#scanValues[i,:] = np.linspace(-(1.35*np.pi), +(1.35*np.pi), paramDiscretization)
 				#scanValues[i,:] = np.linspace(-0.35*np.pi, 0.35*np.pi, paramDiscretization)
-				scanValues[i,:] = np.linspace(-1.35*np.pi, 1.35*np.pi, paramDiscr[0])
+				scanValues[i, :] = np.linspace(-1.35*np.pi, 1.35*np.pi, paramDiscr[0])
 
-			#print('row', i,'of matrix with all intervals of the rotated phase space:\n', scanValues[i,:], '\n')
+			print('row', i,'of matrix with all intervals of the rotated phase space:\n', scanValues[i,:], '\n')
+
+		_allPoints 			= itertools.product(*scanValues)
+		allPoints 			= list(_allPoints)									# scanValues is a list of lists: create a new list that gives all the possible combinations of items between the lists
+		allPoints 			= np.array(allPoints) 								# convert the list to an array
+
+	elif dict_net['Nx'] * dict_net['Ny'] > 3:
+		# setup a matrix for all N variables/dimensions and create a cube around the origin with side lengths 2pi
+		scanValues = np.zeros((dict_net['Nx'] * dict_net['Ny'] - 1, paramDiscr[0]), dtype=np.float)		# create container for all points in the discretized rotated phase space, +/- pi around each dimension (unit area)
+		for i in range(0, dict_net['Nx'] * dict_net['Ny'] - 1):											# the different coordinates of the solution, discretize an interval plus/minus pi around each variable
+			# scanValues[i,:] = np.linspace(phiMr[i+1]-np.pi, phiMr[i+1]+np.pi, paramDiscretization) # all entries are in rotated, and reduced phase space
+			if i == 0:															# theta2 (x-axis)
+				#scanValues[i,:] = np.linspace(-(np.pi), +(np.pi), paramDiscretization) 	# all entries are in rotated, and reduced phase space NOTE: adjust unit cell accordingly!
+				#scanValues[i,:] = np.linspace(-0.25*np.pi, 0.25*np.pi, paramDiscretization)
+				scanValues[i, :] = np.linspace(-1.0*np.pi, 1.0*np.pi, paramDiscr[0])
+			else:																# theta3 (y-axis)
+				#scanValues[i,:] = np.linspace(-(1.35*np.pi), +(1.35*np.pi), paramDiscretization)
+				#scanValues[i,:] = np.linspace(-0.35*np.pi, 0.35*np.pi, paramDiscretization)
+				scanValues[i, :] = np.linspace(-1.35*np.pi, 1.35*np.pi, paramDiscr[0])
+
+			print('row', i,'of matrix with all intervals of the rotated phase space:\n', scanValues[i,:], '\n')
 
 		_allPoints 			= itertools.product(*scanValues)
 		allPoints 			= list(_allPoints)									# scanValues is a list of lists: create a new list that gives all the possible combinations of items between the lists

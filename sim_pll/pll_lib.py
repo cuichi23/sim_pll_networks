@@ -87,7 +87,7 @@ class LowPassFilter:
 			instantaneous_freq_Hz: instantaneous frequency in Hz
 			friction_coefficient: damping of friction coefficient of the dynamical model
 			control_signal: denotes the control signal, output of the loop filter stage
-			derivative_control_signal: denotes the time derivative of the control signal, output of the loop filter stage
+			derivative_control_signal: denotes the time derivative 	of the control signal, output of the loop filter stage
 			cutoff_freq_rad: angular cut-off frequency of the loop filter
 			beta: helper variable
 			evolve: defines the differential equation that evolves the loop filter in time
@@ -321,6 +321,21 @@ class SignalControlledOscillator:
 				self.evolve_phi = lambda w, K, x_ctrl, c, dt: (w + K * x_ctrl) * dt
 			elif not self.response_vco == 'linear':
 				self.evolve_phi = lambda w, K, x_ctrl, c, dt: self.response_vco(w, K, x_ctrl) * dt
+		# NOTE: add here another way to implement second harmonic injection locking, in this case the signal is not filtered at the LF but added subsequently
+		# NOTE: in this case, the implemtation of the 2nd harmonic injection in the PhaseDetectorCombiner class needs to be deactivated
+		# if dict_pll['extra_coup_sig'] == 'injection2ndHarm':
+		# 	if self.c > 0:  # create noisy VCO output
+		# 		print('VCO output noise with variance=%0.5E and std=%0.5E is enabled!' % (self.c, np.sqrt(self.c)))
+		# 		if self.response_vco == 'linear':  								# this simulates a linear response of the VCO
+		# 			self.evolve_phi = lambda w, K, x_ctrl, K2ndHarm, inject_sig, c, dt: (w - K * x_ctrl - K2ndHarm * inject_sig) * dt + np.random.normal(loc=0.0, scale=np.sqrt(c * dt))
+		# 		elif not self.response_vco == 'linear':  						# this simulates a user defined nonlinear VCO response
+		# 			print('\nself.responVCO:', self.response_vco, '\n')
+		# 			self.evolve_phi = lambda w, K, x_ctrl, K2ndHarm, inject_sig, c, dt: (self.response_vco(w, K, x_ctrl) - K2ndHarm * inject_sig) * dt + np.random.normal(loc=0.0, scale=np.sqrt(c * dt))
+		# 	elif self.c == 0:  # create non-noisy VCO output
+		# 		if self.response_vco == 'linear':								# this simulates a linear response of the VCO
+		# 			self.evolve_phi = lambda w, K, x_ctrl, K2ndHarm, inject_sig, c, dt: (w - K * x_ctrl - K2ndHarm * inject_sig) * dt
+		# 		elif not self.response_vco == 'linear':							# this simulates a user defined nonlinear VCO response
+		# 			self.evolve_phi = lambda w, K, x_ctrl, K2ndHarm, inject_sig, c, dt: (self.response_vco(w, K, x_ctrl) - K2ndHarm * inject_sig) * dt
 
 		test = self.evolve_phi(self.intr_freq_rad, self.K_rad, 0.01, self.c, self.dt)
 		if not (isinstance(test, float) or isinstance(test, int)):
@@ -403,9 +418,9 @@ class SignalControlledOscillator:
 		Returns:
 			a tuple of the perturbed phase and the phase increment
 		"""
-		self.d_phi 	= self.evolve_phi(-self.init_freq, 0.0, 0.0, self.c, self.dt)
+		self.d_phi = self.evolve_phi(-self.init_freq, 0.0, 0.0, self.c, self.dt)
 		# print('In reverse fct of PLL%i self.phi, self.d_phi:'%self.idx, self.phi, self.d_phi); time.sleep(0.5)
-		self.phi 	= self.phi + self.d_phi
+		self.phi = self.phi + self.d_phi
 		return self.phi, self.d_phi
 
 
@@ -460,9 +475,9 @@ class PhaseDetectorCombiner:
 		self.hf = dict_pll['vco_out_sig']
 		self.phase_shift = dict_pll['coup_fct_phase_shift']
 		self.a = dict_pll['antenna_sig']
-		if self.K_rad != 0:
-			# the division by dict_pll['coupK'] is done since due to the structure of the program, this is multiplied again later
-			self.K2nd_k	= get_from_value_or_list(pll_id, dict_pll['coupStr_2ndHarm'] / np.array(dict_pll['coupK']), dict_net['Nx'] * dict_net['Ny'])
+		if np.abs(self.K_rad) > 1E-16:
+			# the division by self.K_rad is done since due to the structure of the program, this is multiplied again later
+			self.K2nd_k	= get_from_value_or_list(pll_id, dict_pll['coupStr_2ndHarm'] / self.K_rad, dict_net['Nx'] * dict_net['Ny'])
 		else:
 			self.K2nd_k = get_from_value_or_list(pll_id, dict_pll['coupStr_2ndHarm'], dict_net['Nx'] * dict_net['Ny'])
 		self.activate_Rx = 0
@@ -493,12 +508,23 @@ class PhaseDetectorCombiner:
 				if self.intr_freq_rad == 0 and not dict_pll['syncF'] == 0:
 					self.intr_freq_rad = 2 * np.pi * dict_pll['syncF']
 
-				# case of second harmonic injection locking driven by feedback signal with twice the frequency
-				self.compute = lambda x_ext, ant_in, x_feed, idx_time: np.sum(self.G_kl * (-1) * self.h((x_ext - x_feed) / self.div)) - self.K2nd_k * self.h(
-																												(2.0 * x_feed) / self.div)
+				normalized_mutual_coupling = 0
+				second_harmonic_from_feedback = 1
+
+				# case of second harmonic injection locking driven by feedback signal with twice the frequency and coupling capacity proportional to the number of inputs
+				if normalized_mutual_coupling == 0 and second_harmonic_from_feedback == 1:
+					self.compute = lambda x_ext, ant_in, x_feed, idx_time: np.sum(self.G_kl * (-1) * self.h((x_ext - x_feed) / self.div)) - self.K2nd_k * self.h(
+																						(2.0 * x_feed) / self.div)
+				# case of second harmonic injection locking driven by feedback signal with twice the frequency and all oscillators having the same coupling capacity w.r.t. their first harmonic coupling
+				elif normalized_mutual_coupling == 1 and second_harmonic_from_feedback == 1:
+					self.compute = lambda x_ext, ant_in, x_feed, idx_time: np.mean(self.G_kl * (-1) * self.h((x_ext - x_feed) / self.div)) - self.K2nd_k * self.h(
+																						(2.0 * x_feed) / self.div)
 				# case of second harmonic injection locking by external reference signal which is equal to all oscillators
-				# self.compute = lambda x_ext, ant_in, x_feed, idx_time: np.mean(self.G_kl * self.h((x_ext - x_feed) / self.div)) - self.K2nd_k * self.h(
-				# 																								(2.0 * (self.omega * idx_time * self.dt - x_feed)) / self.div)
+				elif normalized_mutual_coupling == 0 and second_harmonic_from_feedback == 0:
+					self.compute = lambda x_ext, ant_in, x_feed, idx_time: np.mean(self.G_kl * self.h((x_ext - x_feed) / self.div)) - self.K2nd_k * self.h(
+																							(2.0 * (self.omega * idx_time * self.dt - x_feed)) / self.div)
+
+
 				# case of only perturbing with second harmonic injection locking, i.e., using an external reference signal at about twice the intrinsic frequency
 				# self.compute = lambda x_ext, ant_in, x_feed, idx_time: - self.K2nd_k * self.h((2.0 * (self.omega * idx_time * self.dt - x_feed)) / self.div)
 

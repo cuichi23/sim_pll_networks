@@ -236,7 +236,8 @@ def perform_simulation_case(dictNet, dictPLL, dictAlgo, dictData, pll_list):
 		evolveSystemOnTsimArray_timeDepChangeOfCoupStrength(dictNet, dictPLL, pll_list, dictData, dictAlgo)
 		# run evaluations
 		perform_evaluation(dictNet, dictPLL, dictData)
-		plot.plotOrderPvsTimeDepPara(dictPLL, dictNet, dictData, dictAlgo)
+		if not dictNet['special_case'] == 'timeDepInjectLockCoupStr':
+			plot.plotOrderPvsTimeDepPara(dictPLL, dictNet, dictData, dictAlgo)
 
 
 def perform_evaluation(dictNet, dictPLL, dictData):
@@ -323,14 +324,14 @@ def plot_results_simulation(dictNet, dictPLL, dictData):
 	elif dictNet['Nx']*dictNet['Ny'] <= 36:
 		plot.plotFreqAndPhaseDiff(dictPLL, dictNet, dictData)
 		plot.plotFreqAndOrderPar(dictPLL, dictNet, dictData)
-		plot.plotPSD(dictPLL, dictNet, dictData, [i for i in range(dictNet['Nx']*dictNet['Ny'])], saveData=False)
+		#plot.plotPSD(dictPLL, dictNet, dictData, [i for i in range(dictNet['Nx']*dictNet['Ny'])], saveData=False)
+		if dictPLL['extra_coup_sig'] == 'injection2ndHarm':
+			plot.plot_histogram(dictPLL, dictNet, dictData, -1, 'phase-difference', 2, [], True, 15, 0.9)
+			plot.plot_histogram(dictPLL, dictNet, dictData, 0, 'phase-difference', 2, [], True, 15, 0.9)
 	else:
 		plot.plotFreqAndPhaseDiff(dictPLL, dictNet, dictData, [0, 1])
 		plot.plotFreqAndOrderPar(dictPLL, dictNet, dictData, [0, 1])
 		plot.plotPSD(dictPLL, dictNet, dictData, [0, 1], saveData=False)
-		if dictPLL['extra_coup_sig'] == 'injection2ndHarm':
-			plot.plot_histogram(dictPLL, dictNet, dictData, -1, 'phase-difference', 2, [], True, 15, 0.9)
-			plot.plot_histogram(dictPLL, dictNet, dictData, 0, 'phase-difference', 2, [], True, 15, 0.9)
 	plt.draw()
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -594,16 +595,12 @@ def evolveSystemOnTsimArray_timeDepChangeOfCoupStrength(dictNet, dictPLL, pll_li
 	clock_counter = dictData['clock_counter']
 	phi = dictData['phi']
 
-	couplingStrVal_vs_time = setup.setupTimeDependentParameter(dictNet, dictPLL, dictData, parameter='coupK', afterTsimPercent=0.2, forAllPLLsDifferent=False)[0]
+	couplingStrVal_vs_time = setup.setupTimeDependentParameter(dictNet, dictPLL, dictData, parameter='coupK', afterTsimPercent=0.1, forAllPLLsDifferent=False)[0]
 
-	plt.figure(1234);
-	t = np.arange(0, dictNet['max_delay_steps']+dictPLL['sim_time_steps']) * dictPLL['dt']
-	plt.plot(t, couplingStrVal_vs_time)
-	plt.xlabel('time')
-	plt.ylabel('K')
-	plt.draw(); plt.show()
+	# if not dictAlgo['bruteForceBasinStabMethod'] == 'testNetworkMotifIsing':
+	plot.plot_time_dependent_parameter(dictPLL, dictNet, dictData, couplingStrVal_vs_time, 'K')
 
-	t_first_pert = 450;
+	t_first_pert = 450
 	phi_array_len = dictNet['phi_array_len']
 
 	clkStore = np.empty([dictNet['max_delay_steps']+dictPLL['sim_time_steps'], dictNet['Nx']*dictNet['Ny']])
@@ -618,6 +615,8 @@ def evolveSystemOnTsimArray_timeDepChangeOfCoupStrength(dictNet, dictPLL, pll_li
 		phi[(idx_time+1)%phi_array_len,:] = [pll.next(idx_time,phi_array_len,phi) for pll in pll_list] # now the network is iterated, starting at t=0 with the history as prepared above
 		# print('injectionLock:', [pll.pdc.compute(np.zeros(dictNet['Nx']*dictNet['Ny']-1), 0, np.zeros(dictNet['Nx']*dictNet['Ny']-1), idx_time) for pll in pll_list])
 		[pll.signal_controlled_oscillator.evolve_coupling_strength(couplingStrVal_vs_time[idx_time], dictNet) for pll in pll_list]
+		if np.abs(couplingStrVal_vs_time[idx_time]) > 1E-16:
+			[pll.phase_detector_combiner.evolve_coupling_strength_inject_lock(dictPLL['coupStr_2ndHarm']/couplingStrVal_vs_time[idx_time], dictNet) for pll in pll_list]
 		# [print('at time t=', idx_time*dictPLL['dt'] , 'K_inject2ndHarm=', couplingStrVal_vs_time[idx_time]) for pll in pll_list]
 		clock_counter[(idx_time+1)%phi_array_len,:] = [pll.clock_halfperiods_count(phi[(idx_time+1)%phi_array_len,pll.pll_id]) for pll in pll_list]
 		# print('clock count for all:', clock_counter[-1])
@@ -650,15 +649,11 @@ def evolveSystemOnTsimArray_varInjectLockCoupStrength(dictNet, dictPLL, pll_list
 	clock_counter = dictData['clock_counter']
 	phi = dictData['phi']
 
-	injectLockCoupStrVal_vs_time = setup.setupTimeDependentParameter(dictNet, dictPLL, dictData, parameter='coupStr_2ndHarm', afterTsimPercent=0.0, forAllPLLsDifferent=False)[0]
+	injectLockCoupStrVal_vs_time = setup.setupTimeDependentParameter(dictNet, dictPLL, dictData, parameter='coupStr_2ndHarm', afterTsimPercent=0.1, forAllPLLsDifferent=False)[0]
 
 	t = np.arange( 0, dictNet['max_delay_steps']+dictPLL['sim_time_steps'] ) * dictPLL['dt']
-	if not dictAlgo['bruteForceBasinStabMethod'] == 'testNetworkMotifIsing':
-		plt.figure(1234)
-		plt.plot(t, injectLockCoupStrVal_vs_time)
-		plt.xlabel('time')
-		plt.ylabel('K_2nd_harm')
-		plt.draw(); plt.show()
+	# if not dictAlgo['bruteForceBasinStabMethod'] == 'testNetworkMotifIsing':
+	plot.plot_time_dependent_parameter(dictPLL, dictNet, dictData, injectLockCoupStrVal_vs_time, 'K2ndHarm')
 
 	t_first_pert = 150
 	phi_array_len = dictNet['phi_array_len']

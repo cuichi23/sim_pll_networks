@@ -115,6 +115,14 @@ def check_dicts_consistency(dictPLL, dictNet, dictAlgo):
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+	if dictNet['topology'].find('entrain') != -1:
+		if isinstance(dictPLL['coupK'], list) or isinstance(dictPLL['coupK'], np.ndarray):
+			if not dictPLL['coupK'][0] == 0:
+				print('ABORT: simulating a topology with a reference oscillator. This needs to be the one indexed by k=0, hence dictPLL[*coupK*][0] needs to be zero!')
+				sys.exit()
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 	# correct the coupStr for second harmonic injection if none is chosen
 	if dictPLL['extra_coup_sig'] != 'injection2ndHarm':
 		dictPLL.update({'coupStr_2ndHarm': 0})
@@ -179,7 +187,8 @@ def check_dicts_consistency(dictPLL, dictNet, dictAlgo):
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-	dictNet = set_max_delay_for_time_dependentTau(dictPLL, dictNet)
+	dictPLL = set_max_coupling_strength_for_time_dependent_coupling_strength(dictPLL, dictNet)
+	dictPLL, dictNet = set_max_delay_for_time_dependentTau(dictPLL, dictNet)
 	dictNet = check_consistency_initPert(dictNet)
 	print('Setup (dictNet, dictPLL):', dictNet, dictPLL)
 
@@ -210,7 +219,15 @@ def set_percent_of_Tsim(dictPLL, dictNet):
 def set_max_delay_for_time_dependentTau(dictPLL, dictNet):
 	if dictNet['special_case'] == 'timeDepTransmissionDelay':
 		dictNet.update({'max_delay_steps': int(np.round(dictNet['min_max_rate_timeDepPara'][1]/dictPLL['dt']))})
-	return dictNet
+		dictPLL.update({'transmission_delay': dictNet['min_max_rate_timeDepPara'][1]})
+	return dictPLL, dictNet
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+def set_max_coupling_strength_for_time_dependent_coupling_strength(dictPLL, dictNet):
+	if dictNet['special_case'] == 'timeDepChangeOfCoupStr':
+		dictPLL.update({'coupK': dictNet['min_max_rate_timeDepPara'][1]})
+	return dictPLL
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

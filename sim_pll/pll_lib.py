@@ -10,7 +10,7 @@ from __future__ import print_function
 import sys
 import gc
 import inspect
-from typing import Tuple, Optional
+from typing import Tuple, Optional, Union, Any
 
 import numpy as np
 #cimport numpy as np
@@ -30,6 +30,7 @@ from sim_pll import setup
 
 ''' Enable automatic carbage collector '''
 gc.enable()
+np.seterr('raise')
 
 # %%cython --annotate -c=-O3 -c=-march=native
 
@@ -124,10 +125,11 @@ class LowPassFilter:
 
 		if self.cutoff_freq_Hz is not None and self.order_loop_filter > 0 and self.cutoff_freq_Hz > 0:
 			self.cutoff_freq_rad = 2.0 * np.pi * self.cutoff_freq_Hz
-			self.beta = self.dt*self.cutoff_freq_rad
+			self.beta = self.dt * self.cutoff_freq_rad
 
 			if self.order_loop_filter == 1:
 				print('I am the loop filter of PLL%i: first order, a=%i. Friction coefficient set to %0.2f.' % (self.pll_id, self.order_loop_filter, self.friction_coefficient))
+				#sys.exit('I WENT HERE! self.cutoff_freq_Hz=%s'%self.cutoff_freq_Hz)
 				self.evolve = lambda xPD: (1.0 - self.beta * self.friction_coefficient) * self.control_signal + self.beta * xPD
 				self.b = 1.0 / (2.0 * np.pi * self.cutoff_freq_Hz)
 			elif self.order_loop_filter >= 2:
@@ -138,14 +140,15 @@ class LowPassFilter:
 					self.b = 1.0 / (2.0 * np.pi * self.cutoff_freq_Hz * a)
 					self.t = np.array([0, self.dt])
 				else:
-					print('I am the loop filter of PLL%i: order, a=%i (sequential RC LFs). Friction coefficient set to %0.2f.' % (self.pll_id, self.order_loop_filter, self.friction_coefficient))
+					print('I am the loop filter of PLL%i: order, a=%i (sequential RC LFs with buffers). Friction coefficient set to %0.2f.' % (self.pll_id, self.order_loop_filter, self.friction_coefficient))
 					self.evolve = lambda xPD: self.nth_order_sequential_lf(xPD)
 					self.b = 1.0 / (2.0 * np.pi * self.cutoff_freq_Hz)
 		elif self.cutoff_freq_Hz is None or self.cutoff_freq_Hz == 0:
-			print('No cut-off frequency defined (None), hence simulating without loop filter!')
+			print('No cut-off frequency defined (cutFc=%s), hence simulating without loop filter!'%self.cutoff_freq_Hz)
 			self.evolve = lambda xPD: xPD
 		else:
-			print('Problem in LF class!'); sys.exit()
+			print('Problem in LF class!')
+			sys.exit()
 
 
 	def nth_order_sequential_lf(self, phase_detector_output: float) -> np.float:
@@ -366,8 +369,8 @@ class SignalControlledOscillator:
 		Returns:
 			tuple of the next phase and phase increment
 		"""
-		self.d_phi 	= self.evolve_phi(self.intr_freq_rad, self.K_rad, control_signal, self.c, self.dt)
-		self.phi 	= self.phi + self.d_phi
+		self.d_phi = self.evolve_phi(self.intr_freq_rad, self.K_rad, control_signal, self.c, self.dt)
+		self.phi = self.phi + self.d_phi
 		return self.phi, self.d_phi
 
 	def delta_perturbation(self, phase_perturbation: np.float, control_signal: np.float) -> Tuple[np.float, np.float]:
@@ -419,7 +422,8 @@ class SignalControlledOscillator:
 			a tuple of the perturbed phase and the phase increment
 		"""
 		self.d_phi = self.evolve_phi(-self.init_freq, 0.0, 0.0, self.c, self.dt)
-		# print('In reverse fct of PLL%i self.phi, self.d_phi:'%self.idx, self.phi, self.d_phi); time.sleep(0.5)
+		# print('In reverse fct of PLL%i self.phi, self.d_phi, inst_freq:' % self.pll_id, self.phi, self.d_phi, -self.d_phi / (2.0 * np.pi * self.dt));
+		# time.sleep(0.5)
 		self.phi = self.phi + self.d_phi
 		return self.phi, self.d_phi
 
@@ -439,7 +443,10 @@ class PhaseDetectorCombiner:
 
 	Attributes:
 		pll_id: the oscillator's identity
-		intr_freq_rad: intrinsic frequency in radHz
+		intrinsic_freq: intrinsic frequency in Hz
+		intrinsic_freq_rad: intrinsic frequency in radHz
+		mean_intrinsic_freq: mean intrinsic frequency in Hz over the network of oscillators
+		mean_intrinsic_freq_rad: mean intrinsic frequency in radHz over the network of oscillators
 		K_rad: coupling strength in radHz
 		dt: time increment
 		div: the division value of the frequency divider
@@ -454,6 +461,9 @@ class PhaseDetectorCombiner:
 		compute: function that defines the dynamics based on the relation of input and feedback signal
 		y: phase detector output
 		omega: help variable for the exploration of second harmonic injection locking, provides the frequency of the injection locking signal that forces all oscillators
+		normalized_mutual_coupling: whether the sum over all inputs is normalized by the the number of inputs
+									-> if normalized: all oscillators have equal coupling capacity that is distributed equally between all inputs
+									-> via the individual feed-forward path loop gains, the weights of the inputs can be changed additionally
 
 	"""
 	def __init__(self, pll_id: int, dict_pll: dict, dict_net: dict):
@@ -465,8 +475,10 @@ class PhaseDetectorCombiner:
 		"""
 		# print('Phasedetector and Combiner: sin(x)')
 		self.pll_id = pll_id
-		self.intr_freq_rad = 2.0 * np.pi * np.mean(dict_pll['intrF'])
-		self.omega = self.intr_freq_rad
+		self.intrinsic_freq = get_from_value_or_list(pll_id, dict_pll['intrF'], dict_net['Nx'] * dict_net['Ny'])
+		self.intrinsic_freq_rad = 2.0 * np.pi * self.intrinsic_freq
+		self.mean_intrinsic_freq = np.mean(dict_pll['intrF'])
+		self.mean_intrinsic_freq_rad = 2.0 * np.pi * self.mean_intrinsic_freq
 		self.K_rad = 2.0 * np.pi * get_from_value_or_list(pll_id, dict_pll['coupK'], dict_net['Nx'] * dict_net['Ny'])
 		self.dt = dict_pll['dt']
 		self.div = dict_pll['div']
@@ -475,11 +487,14 @@ class PhaseDetectorCombiner:
 		self.hf = dict_pll['vco_out_sig']
 		self.phase_shift = dict_pll['coup_fct_phase_shift']
 		self.a = dict_pll['antenna_sig']
-		if np.abs(self.K_rad) > 1E-16:
-			# the division by self.K_rad is done since due to the structure of the program, this is multiplied again later
-			self.K2nd_k	= get_from_value_or_list(pll_id, dict_pll['coupStr_2ndHarm'] / self.K_rad, dict_net['Nx'] * dict_net['Ny'])
-		else:
-			self.K2nd_k = get_from_value_or_list(pll_id, dict_pll['coupStr_2ndHarm'], dict_net['Nx'] * dict_net['Ny'])
+		self.normalized_mutual_coupling = dict_net['normalize_mutual_coupling_by_inputs']
+		# # here be careful! all parameters are specified in Hz -- in the equation however, we need radHz, hence 2*pi*... is needed
+		# if np.abs(self.K_rad) > 1E-16 and not dictNet['special_case'] == 'timeDepChangeOfCoupStr_noSHILfiltering':
+		# 	# the division by self.K_rad is done since due to the structure of the program, this is multiplied again later
+		# 	self.K2nd_k	= get_from_value_or_list(pll_id, dict_pll['coupStr_2ndHarm'] / self.K_rad, dict_net['Nx'] * dict_net['Ny'])
+		# else:
+		# 	self.K2nd_k = get_from_value_or_list(pll_id, dict_pll['coupStr_2ndHarm'], dict_net['Nx'] * dict_net['Ny'])
+		# self.K2nd_rad_k = 2*np.pi*self.K2nd_k
 		self.activate_Rx = 0
 		self.y = None
 
@@ -495,101 +510,65 @@ class PhaseDetectorCombiner:
 		else:
 			self.G_kl = dict_pll['gPDin']
 
+		normalized_mutual_coupling = False
+
+		# CHOICES for different coupling functions: layer1 with or without HF components of the PD signal
 		if not dict_pll['includeCompHF']:
 			print('High frequency components assumed to be ideally damped!')
+
 			# depending on the coupling function for the Kuramoto like model with ideally damped HF terms this implements an XOR (triangular) or mixer PD (cos/sin)
-			if dict_pll['antenna'] and dict_pll['extra_coup_sig'] is None:
-				print('Extra signal to coupling!')
+			if dict_pll['antenna']:
+				print('Antenna input signal added to coupling!')
 				self.compute = lambda x_ext, ant_in, x_feed, idx_time: np.mean(
-														self.G_kl * self.h((x_ext - x_feed) / self.div + self.phase_shift) + self.activate_Rx * self.h(ant_in - x_feed / self.div))
+											self.G_kl * self.h((x_ext - x_feed) / self.div + self.phase_shift) + self.activate_Rx * self.h(ant_in - x_feed / self.div))
 
-			elif not dict_pll['antenna'] and dict_pll['extra_coup_sig'] == 'injection2ndHarm':
-				print('Setup PLL with injection locking signal! Initial self.K2nd_k=', self.K2nd_k, 'Hz')
-				if self.intr_freq_rad == 0 and not dict_pll['syncF'] == 0:
-					self.intr_freq_rad = 2 * np.pi * dict_pll['syncF']
-
-				normalized_mutual_coupling = 0
-				second_harmonic_from_feedback = 1
-
-				# case of second harmonic injection locking driven by feedback signal with twice the frequency and coupling capacity proportional to the number of inputs
-				if normalized_mutual_coupling == 0 and second_harmonic_from_feedback == 1:
-					self.compute = lambda x_ext, ant_in, x_feed, idx_time: np.sum(self.G_kl * (-1) * self.h((x_ext - x_feed) / self.div)) - self.K2nd_k * self.h(
-																						(2.0 * x_feed) / self.div)
-				# case of second harmonic injection locking driven by feedback signal with twice the frequency and all oscillators having the same coupling capacity w.r.t. their first harmonic coupling
-				elif normalized_mutual_coupling == 1 and second_harmonic_from_feedback == 1:
-					self.compute = lambda x_ext, ant_in, x_feed, idx_time: np.mean(self.G_kl * (-1) * self.h((x_ext - x_feed) / self.div)) - self.K2nd_k * self.h(
-																						(2.0 * x_feed) / self.div)
-				# case of second harmonic injection locking by external reference signal which is equal to all oscillators
-				elif normalized_mutual_coupling == 0 and second_harmonic_from_feedback == 0:
-					self.compute = lambda x_ext, ant_in, x_feed, idx_time: np.mean(self.G_kl * self.h((x_ext - x_feed) / self.div)) - self.K2nd_k * self.h(
-																							(2.0 * (self.omega * idx_time * self.dt - x_feed)) / self.div)
-
-
-				# case of only perturbing with second harmonic injection locking, i.e., using an external reference signal at about twice the intrinsic frequency
-				# self.compute = lambda x_ext, ant_in, x_feed, idx_time: - self.K2nd_k * self.h((2.0 * (self.omega * idx_time * self.dt - x_feed)) / self.div)
-
-				# self.compute = lambda x_ext, ant_in, x_feed, idx_time: np.mean(self.G_kl * self.h((x_ext - x_feed) / self.div)) - self.K2nd_k * self.h(
-				# 																										(2.0 * self.omega * idx_time * self.dt) / self.div)
-				# self.compute = lambda x_ext, ant_in, x_feed, idx_time: np.sum(self.G_kl * self.h((x_ext - x_feed) / self.div)) - self.K2nd_k * self.h(2.0 * x_feed / self.div)
-				# self.compute = lambda x_ext, ant_in, x_feed, idx_time: np.mean(self.G_kl * self.h((x_ext - x_feed) / self.div)) - self.K2nd_k * self.h(
-				# 																										-(2.0 * (self.omega * idx_time * self.dt) - x_feed) / self.div)
-				# self.compute = lambda x_ext, ant_in, x_feed, idx_time: np.mean(self.G_kl * self.h((x_ext - x_feed) / self.div)) - self.K2nd_k * self.h(
-				# 																										(2.0 * (self.omega * idx_time * self.dt - x_feed)) / self.div)
-				# self.compute = lambda x_ext, ant_in, x_feed, idx_time: np.mean(self.G_kl * self.h((x_ext - x_feed) / self.div + self.phase_shift)) - np.mean(
-				# 																										self.K2nd_k * self.h((2.0 * (x_ext - x_feed)) / self.div))
-
-				# self.compute = self.coupling_function_InjectLocking()
-				# self.compute = lambda x_ext, ant_in, x_feed, idx_time: np.array(self.G_kl) @ self.h((x_ext - x_feed) / self.div) - self.K2nd_k * self.h(
-				# 	(2.0 * self.omega * idx_time * self.dt) / self.div)
-				# self.compute = lambda x_ext, ant_in, x_feed, idx_time: np.mean(self.G_kl * self.h((x_ext - x_feed) / self.div)) - np.mean(
-				# 	self.G_kl * self.K2nd_k * self.h((2.0 * x_ext - x_feed) / self.div))
-				# self.compute = lambda x_ext, ant_in, x_feed, idx_time: np.mean(self.G_kl * self.h((x_ext - x_feed) / self.div)) - np.mean(
-				# 	self.K2nd_k * self.h((2 * np.append(x_ext, x_feed)) / self.div))
-				# self.compute = lambda x_ext, ant_in, x_feed, idx_time: np.mean(self.G_kl * self.h((2 * x_ext - x_feed) / self.div))
+			# elif not dict_pll['antenna'] and dict_pll['extra_coup_sig'] == 'injection2ndHarm':
+			# 	print('Setup PLL with injection locking signal! Initial self.K2nd_k=', self.K2nd_k, 'Hz')
+			# 	if self.intrinsic_freq_rad == 0 and not dict_pll['syncF'] == 0:
+			# 		self.intrinsic_freq_rad = 2 * np.pi * dict_pll['syncF']
+			#
+			# 	# case of second harmonic injection locking driven by feedback signal with twice the frequency and coupling capacity proportional to the number of inputs
+			# 	if normalized_mutual_coupling == 0:
+			# 		self.compute = lambda x_ext, ant_in, x_feed: np.sum(self.G_kl * (-1) * self.h((x_ext - x_feed) / self.div))
+			# 	# case of second harmonic injection locking driven by feedback signal with twice the frequency and all oscillators having the same coupling capacity w.r.t. their first harmonic coupling
+			# 	elif normalized_mutual_coupling == 1:
+			# 		self.compute = lambda x_ext, ant_in, x_feed: np.mean(self.G_kl * (-1) * self.h((x_ext - x_feed) / self.div))
 			else:
-				print('Simulating coupling function h(.) of the phase-differences as specified in dictPLL. The individial feed-forward path gains are G_%il=%0.2f' % (self.pll_id, self.G_kl))
-				self.compute = lambda x_ext, ant_in, x_feed, idx_time:  np.mean(self.G_kl * self.h((x_ext - x_feed) / self.div + self.phase_shift))
+				print('Simulating coupling function h(.) of the phase-differences as specified in dictPLL. The individial feed-forward path gains are G_%il=' % (self.pll_id), self.G_kl)
+				# case of second harmonic injection locking driven by feedback signal with twice the frequency and coupling capacity proportional to the number of inputs
+				if self.normalized_mutual_coupling is not True:
+					self.compute = lambda x_ext, ant_in, x_feed: np.sum(self.G_kl * self.h((x_ext - x_feed) / self.div + self.phase_shift))
+				# case of second harmonic injection locking driven by feedback signal with twice the frequency and all oscillators having the same coupling capacity w.r.t. their first harmonic coupling
+				elif self.normalized_mutual_coupling is True:
+					self.compute = lambda x_ext, ant_in, x_feed: np.mean(self.G_kl * self.h((x_ext - x_feed) / self.div + self.phase_shift))
+				else:
+					print('Chose whether the coupling is normalized or not!')
+					sys.exit()
 
 		elif dict_pll['includeCompHF']:
 			print('High frequency components actived!')
-
 			# depending on the coupling function this implements an XOR (triangular) or mixer PD (cos/sin) including the HF terms
-			if dict_pll['antenna'] and dict_pll['extra_coup_sig'] is None:
+			if dict_pll['antenna']:
+				print('Antenna input signal added to coupling!')
 				if dict_pll['typeVCOsig'] == 'analogHF':							# this becomes the coupling function for analog VCO output signals
-					self.compute = lambda x_ext, ant_in, x_feed, idx_time: np.mean(self.G_kl * self.hf( x_ext / self.div ) * self.hf( x_feed / self.div + self.phase_shift )
+					self.compute = lambda x_ext, ant_in, x_feed: np.mean(self.G_kl * self.hf( x_ext / self.div ) * self.hf( x_feed / self.div + self.phase_shift )
 																				  + self.activate_Rx * self.a(ant_in) * self.hf(x_feed / self.div + self.phase_shift ))
 
 				elif dict_pll['typeVCOsig'] == 'digitalHF':						# this becomes the coupling function for digital VCO output signals
-					self.compute = lambda x_ext, ant_in, x_feed, idx_time: np.mean(self.G_kl * (self.hf(x_ext / self.div) * (1.0 - self.hf(x_feed / self.div + self.phase_shift))
+					self.compute = lambda x_ext, ant_in, x_feed: np.mean(self.G_kl * (self.hf(x_ext / self.div) * (1.0 - self.hf(x_feed / self.div + self.phase_shift))
 																								+ (1.0 - self.hf(x_ext / self.div)) * self.hf(x_feed / self.div + self.phase_shift))
 																								+ self.h(ant_in) * (1.0 - self.hf(x_feed / self.div + self.phase_shift))
 																								+ (1.0 - self.hf(ant_in)) * self.hf(x_feed / self.div + self.phase_shift))
-			elif not dict_pll['antenna'] and dict_pll['extra_coup_sig'] == 'injection2ndHarm':
-				print('Setup PLL with injection locking signal! RECHECK!')
-				self.compute = lambda x_ext, ant_in, x_feed, idx_time: np.mean(self.G_kl * (self.h( ( 2 * x_ext - x_feed ) / self.div + self.phase_shift )
-																							   + self.h( ( 2 * self.intr_freq_rad * idx_time * self.dt) / self.div)))
 			else:
 				if dict_pll['typeVCOsig'] == 'analogHF':							# this becomes the coupling function for analog VCO output signals
-					self.compute = lambda x_ext, ant_in, x_feed, idx_time: np.mean( self.G_kl * self.hf( x_ext / self.div ) * self.hf( x_feed / self.div + self.phase_shift ) )
+					self.compute = lambda x_ext, ant_in, x_feed: np.mean( self.G_kl * self.hf( x_ext / self.div ) * self.hf( x_feed / self.div + self.phase_shift ) )
 
 				elif dict_pll['typeVCOsig'] == 'digitalHF':						# this becomes the coupling function for digital VCO output signals
-					self.compute = lambda x_ext, ant_in, x_feed, idx_time: np.mean( self.G_kl * ( self.hf( x_ext / self.div )*(1.0-self.hf( x_feed / self.div + self.phase_shift ))
+					self.compute = lambda x_ext, ant_in, x_feed: np.mean( self.G_kl * ( self.hf( x_ext / self.div )*(1.0-self.hf( x_feed / self.div + self.phase_shift ))
 																				+ (1.0-self.hf( x_ext / self.div ))*self.hf( x_feed / self.div + self.phase_shift ) ) )
 			print('High frequency components activated, using:', inspect.getsourcelines(self.compute)[0][0])
 		else:
 			print('Phase detector and combiner problem, dictPLL[*includeCompHF*] should either be True or False, check PhaseDetectorCombiner in pll_lib! ')
-
-	def evolve_coupling_strength_inject_lock(self, new_coupling_strength_injection_locking, dict_net: dict) -> None:
-		"""
-		Evolves the values of the coupling strength of the second harmonic injection signals in time.
-
-		Args:
-			new_coupling_strength_injection_locking: the new value for the coupling strength of the injection signals,
-			either a scalar or an array with individual values for each oscillator in the network
-			dict_net: network related properties and parameters
-		"""
-		self.K2nd_k = get_from_value_or_list(self.pll_id, new_coupling_strength_injection_locking / self.K_rad, dict_net['Nx'] * dict_net['Ny'])
-		# print('Injection lock coupling strength for PLL%i changed, new value:'%self.idx_self, self.K2nd_k); #time.sleep(1)
 
 	def next(self, feedback_delayed_phases: np.ndarray, transmission_delayed_phases: np.ndarray, antenna_in: float, index_current_time: int = 0) -> np.float:
 		"""
@@ -628,11 +607,93 @@ class PhaseDetectorCombiner:
 
 		if self.idx_neighbors:  # check whether there are neighbors
 			# x_neighbours = x_delayed[self.idx_neighbors]	# extract the states of all coupling neighbors at t-tau and save to x_neighbours
-			self.y = self.compute(transmission_delayed_phases, antenna_in, feedback_delayed_phases, index_current_time)
+			self.y = self.compute(transmission_delayed_phases, antenna_in, feedback_delayed_phases)
 		else:  # this is triggered, e.g., in the case of reference oscillators that receive no input
 			# print('No neighbors found, setting self.y to zero! Check for digital PLLs or other types.')
 			self.y = 0.0
 		return self.y
+
+
+class InjectionLockingSignal:
+	"""The Injection_locking_signal generates a 2nd harmonic signal (w.r.t. to the intrinsic frequency of the PLL) that is fed as a perturbation to each oscillator..
+
+		Attributes:
+			pll_id: the oscillator's identity
+			intrinsic_freq: intrinsic frequency in Hz
+			intrinsic_freq_rad: intrinsic frequency in radHz
+			mean_intrinsic_freq: mean intrinsic frequency in Hz over the network of oscillators
+			mean_intrinsic_freq_rad: mean intrinsic frequency in radHz over the network of oscillators
+			K_rad: coupling strength in radHz
+			dt: time increment
+			div: the division value of the frequency divider
+			h: the coupling function of the phase detector (HF components ideally damped)
+			hp: derivative of coupling function h
+			hf: the function of the VCO output signal, needed for HF cases (HF components included)
+			a: the wave form of the wireless signal
+			K2nd_k: coupling strength for injection of 2nd harmonic, divide by PLL coupling strength as this is later multiplied again
+
+	"""
+	def __init__(self, pll_id: int, dict_pll: dict, dict_net: dict) -> None:
+		"""
+		Args:
+			pll_id: the oscillator's identity
+			dict_pll: oscillator related properties and parameters
+			dict_net: network related properties and parameters
+			dict_data: database for simulation results
+		"""
+		self.dt = dict_pll['dt']
+		self.pll_id = pll_id
+		self.intrinsic_freq = get_from_value_or_list(pll_id, dict_pll['intrF'], dict_net['Nx'] * dict_net['Ny'])
+		self.intrinsic_freq_rad = 2.0 * np.pi * self.intrinsic_freq
+		self.mean_intrinsic_freq = np.mean(dict_pll['intrF'])
+		self.mean_intrinsic_freq_rad = 2.0 * np.pi * self.mean_intrinsic_freq
+		self.dt = dict_pll['dt']
+		self.div = dict_pll['div']
+		self.h = dict_pll['coup_fct_sig']
+		self.hp = dict_pll['derivative_coup_fct']
+		self.hf = dict_pll['vco_out_sig']
+		self.K2nd_k = get_from_value_or_list(pll_id, dict_pll['coupStr_2ndHarm'], dict_net['Nx'] * dict_net['Ny'])
+		self.K2nd_rad_k = 2 * np.pi * self.K2nd_k
+
+		if self.K2nd_k is not None:
+			print('Setup PLL with injection locking signal! Initial self.K2nd_k=', self.K2nd_k, 'Hz')
+		second_harmonic_from_feedback = 1
+
+		# case of second harmonic injection locking driven by feedback signal with twice the frequency and coupling capacity proportional to the number of inputs
+		if second_harmonic_from_feedback == 1:
+			self.compute = lambda x_feed, idx_time: - self.K2nd_rad_k * self.h((2.0 * x_feed) / self.div)
+		# case of second harmonic injection locking by external reference signal which is equal to all oscillators
+		elif second_harmonic_from_feedback == 0:
+			self.compute = lambda x_feed, idx_time: - self.K2nd_rad_k * self.h((2.0 * (self.omega * idx_time * self.dt - x_feed)) / self.div)
+
+	def next(self, feedback_delayed_phases: np.ndarray, index_current_time: int = 0) -> np.float:
+		"""
+		Generates the second harmonic injection locking signal at time t.
+
+		Args:
+			feedback_delayed_phases: the feedback delayed phases of all oscillators in the network at the current time
+			index_current_time: current time step
+
+		Returns:
+			phase detector output of feedback signal mixed with phase shifted feedback signal
+		"""
+
+		second_harmonic_injection_locking_signal = self.compute(feedback_delayed_phases, index_current_time)
+
+		return second_harmonic_injection_locking_signal
+
+	def evolve_coupling_strength_inject_lock(self, new_coupling_strength_injection_locking, dict_net: dict) -> None:
+		"""
+		Evolves the values of the coupling strength of the second harmonic injection signals in time.
+
+		Args:
+			new_coupling_strength_injection_locking: the new value for the coupling strength of the injection signals,
+			either a scalar or an array with individual values for each oscillator in the network
+			dict_net: network related properties and parameters
+		"""
+		self.K2nd_k = get_from_value_or_list(self.pll_id, new_coupling_strength_injection_locking, dict_net['Nx'] * dict_net['Ny'])
+		self.K2nd_rad_k = 2 * np.pi * self.K2nd_k
+		# print('Injection lock coupling strength for PLL%i changed, new value:'%self.idx_self, self.K2nd_k); #time.sleep(1)
 
 
 class Delayer:
@@ -685,7 +746,7 @@ class Delayer:
 												or dict_net['special_case'] == 'distanceDepTransmissionDelay' ) and not dict_net['special_case'] == 'timeDepTransmissionDelay' ):
 
 			if np.array(dict_pll['transmission_delay']).ndim == 1:				# tau_k case -- all inputs are subject to the same transmission delay
-				print('Delayer has different delays for each oscillator! Hence: tau_k are introduced and all incoming signals are subject to the same time delay.')
+				print('Delayer has different delays for each oscillator k, but all inputs are equally delayed! Hence: tau_k are introduced and all incoming signals are subject to the same time delay.')
 				self.transmit_delay_steps= int(np.round(dict_pll['transmission_delay'][self.pll_id] / self.dt))
 				self.pick_delayed_phases = lambda phi, t, abs_t, tau_k: phi[(t-tau_k)%self.phi_array_len, self.neighbor_ids]
 
@@ -701,7 +762,7 @@ class Delayer:
 		elif (dict_net['special_case'] == 'timeDepTransmissionDelay'):
 
 			print('Time dependent transmission delay set!')
-			time_dep_delay = setup.setupTimeDependentParameter(dict_net, dict_pll, dict_data, parameter='transmission_delay', afterTsimPercent=0.25, forAllPLLsDifferent=False)
+			time_dep_delay = setup.setup_time_dependent_parameter(dict_net, dict_pll, dict_data, parameter='transmission_delay', afterTsimPercent=0.25, forAllPLLsDifferent=False)
 
 			if len(time_dep_delay[:,0]) == dict_net['Nx']*dict_net['Ny']:		# if there is a matrix, i.e., different time-dependencies for different delay, then use this
 				print('Test')
@@ -867,13 +928,15 @@ class PhaseLockedLoop:
 
 	def __init__(self, pll_id: int, delayer: Delayer, phase_detector_combiner: PhaseDetectorCombiner,
 				 low_pass_filter: LowPassFilter, signal_controlled_oscillator: SignalControlledOscillator,
-				 counter: Counter):
+				 inject_second_harm_signal: InjectionLockingSignal, counter: Counter):
 		"""
 			Args:
 				delayer: 						organizes delayed coupling
 				phase_detector_combiner: 		extracts phase relations between feedback and external signals
 				low_pass_filter: 				filters high frequency components (first or second order low pass)
-				signal_controlled_oscillator 	determines instantaneous frequency of autonomous oscillator with respect to an input signal
+				band_pass_filter:				filters frequency components from a signal outside a certain bandwidth
+				signal_controlled_oscillator: 	determines instantaneous frequency of autonomous oscillator with respect to an input signal
+				inject_second_harm_signal:		injects a higher harmonic signal to the PLL, e.g., 2nd harmonic injection locking
 				counter:						derives a clock / time from the oscillators clocking signal
 				pll_id:							identifier of the oscillator within the network
 				pll_rx_signal_distance_threshold distance threshold beyond which no signal from other oscillators can be received (e.g., in wireless coupling)
@@ -885,7 +948,9 @@ class PhaseLockedLoop:
 		self.delayer = delayer
 		self.phase_detector_combiner = phase_detector_combiner
 		self.low_pass_filter = low_pass_filter
+		self.band_pass_filter = None 			# band_pass_filter --> write class for the band pass filter and add it to the PLLs when generating the objects
 		self.signal_controlled_oscillator = signal_controlled_oscillator
+		self.inject_second_harm_signal = inject_second_harm_signal
 		self.counter = counter
 		self.pll_id = pll_id
 
@@ -921,39 +986,70 @@ class PhaseLockedLoop:
 		control_signal = self.low_pass_filter.next(phase_detector_output)
 
 		updated_phase = self.signal_controlled_oscillator.next(control_signal)[0]
+
 		return updated_phase
 
-	# NOTE: found better solution, of ok... delete this when you see it
-	# def next_N_sequential_LFs(self, index_current_time_absolute: int, length_phase_memory: int, phase_memory: np.ndarray, order_filter: int) -> np.ndarray:
-	# 	""" Function that evolves the oscillator forward in time by one increment based on the external signals and internal dynamics.
-	# 		1) delayer obtains past states of neighbors in the network coupled to this oscillator and the current state of the oscillator itself
-	# 		2) from these states the input phase relations are evaluated by the phase detector and combiner which yields the PD signal (averaged over all inputs)
-	# 		3) the PD signal is fed into the loop filter and yields the control signal
-	# 		4) the voltage controlled oscillator evolves the phases according to the control signal
-	#
-	# 		Args:
-	# 			index_current_time_absolute: current time within simulation
-	# 			length_phase_memory: length of container that stores the phases of the oscillators, needed for organizing the cyclic memory to handle the delay
-	# 			phase_memory: holds the phases of all oscillators for at least the time [-tau_max, 0], denotes the memory necessary for the time delay
-	# 			order_filter: integer that
-	#
-	# 		Returns:
-	# 			updated phase incrementing the time by one step
-	#
-	# 		Raises:
-	# 	"""
-	# 	feedback_delayed_phases, transmission_delayed_phases = self.delayer.next(index_current_time_absolute % length_phase_memory, phase_memory, index_current_time_absolute)
-	#
-	# 	phase_detector_output = self.phase_detector_combiner.next(feedback_delayed_phases, transmission_delayed_phases, 0, index_current_time_absolute)
-	#
-	# 	input = phase_detector_output
-	# 	for i in range(order_filter):											# apply first order loop filter (identical RC) sequentially
-	# 		input = self.low_pass_filter.next(input)
-	#
-	# 	control_signal = input
-	#
-	# 	updated_phase = self.signal_controlled_oscillator.next(control_signal)[0]
-	# 	return updated_phase
+	def next_ising_shil(self, index_current_time_absolute: int, length_phase_memory: int, phase_memory: np.ndarray) -> np.ndarray:
+		""" Function that evolves the oscillator forward in time by one increment based on the external signals and internal dynamics.
+
+			Here the SHIL (second harmonic injection locking signal is added to each oscillator -- will not be filtered by an LF)
+
+			1) delayer obtains past states of neighbors in the network coupled to this oscillator and the current state of the oscillator itself
+			2) from these states the input phase relations are evaluated by the phase detector and combiner which yields the PD signal (averaged over all inputs)
+			3) the PD signal is fed into the loop filter and yields the control signal which is then added to the 2nd harmonic injection locking signal
+			4) the voltage controlled oscillator evolves the phases according to the control signal
+
+			Args:
+				index_current_time_absolute: current time within simulation
+				length_phase_memory: length of container that stores the phases of the oscillators, needed for organizing the cyclic memory to handle the delay
+				phase_memory: holds the phases of all oscillators for at least the time [-tau_max, 0], denotes the memory necessary for the time delay
+
+			Returns:
+				updated phase incrementing the time by one step
+
+			Raises:
+		"""
+		feedback_delayed_phases, transmission_delayed_phases = self.delayer.next(index_current_time_absolute % length_phase_memory, phase_memory, index_current_time_absolute)
+
+		phase_detector_output = self.phase_detector_combiner.next(feedback_delayed_phases, transmission_delayed_phases, 0, index_current_time_absolute)
+
+		control_signal = self.low_pass_filter.next(phase_detector_output) + self.inject_second_harm_signal.next(feedback_delayed_phases, index_current_time_absolute)
+
+		updated_phase = self.signal_controlled_oscillator.next(control_signal)[0]
+
+		return updated_phase
+
+	def next_ising_shil_filter_simulated(self, index_current_time_absolute: int, length_phase_memory: int, phase_memory: np.ndarray) -> np.ndarray:
+		""" Function that evolves the oscillator forward in time by one increment based on the external signals and internal dynamics.
+
+			Here the SHIL (second harmonic injection locking signal is added to each oscillator -- will not be filtered by an LF)
+
+			1) delayer obtains past states of neighbors in the network coupled to this oscillator and the current state of the oscillator itself
+			2) from these states the input phase relations are evaluated by the phase detector and combiner which yields the PD signal (averaged over all inputs)
+			3) the PD signal is fed into the loop filter and yields the control signal which is then added to the 2nd harmonic injection locking signal
+			4) the voltage controlled oscillator evolves the phases according to the control signal
+
+			Args:
+				index_current_time_absolute: current time within simulation
+				length_phase_memory: length of container that stores the phases of the oscillators, needed for organizing the cyclic memory to handle the delay
+				phase_memory: holds the phases of all oscillators for at least the time [-tau_max, 0], denotes the memory necessary for the time delay
+
+			Returns:
+				updated phase incrementing the time by one step
+
+			Raises:
+		"""
+		feedback_delayed_phases, transmission_delayed_phases = self.delayer.next(index_current_time_absolute % length_phase_memory, phase_memory, index_current_time_absolute)
+
+		phase_detector_output = self.phase_detector_combiner.next(feedback_delayed_phases, transmission_delayed_phases, 0, index_current_time_absolute)
+
+		second_harm_inject_locking_signal = self.inject_second_harm_signal.next(feedback_delayed_phases, index_current_time_absolute)
+
+		control_signal = self.low_pass_filter.next(phase_detector_output) + self.band_pass_filter.next(second_harm_inject_locking_signal)
+
+		updated_phase = self.signal_controlled_oscillator.next(control_signal)[0]
+
+		return updated_phase
 
 	def clock_periods_count(self, current_phase_state: np.ndarray) -> int:
 		""" Function that counts the periods of oscillations that have passed for the oscillator. This enables the derivation of a time,

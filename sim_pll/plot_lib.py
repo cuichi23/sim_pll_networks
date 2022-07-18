@@ -3,6 +3,7 @@
 from __future__ import division
 from __future__ import print_function
 
+import random
 import numpy as np
 import numpy.ma as ma
 import matplotlib
@@ -17,9 +18,11 @@ import matplotlib.cm as cm
 from scipy import optimize
 from mpl_toolkits.axes_grid1.inset_locator import zoomed_inset_axes
 from mpl_toolkits.axes_grid1.inset_locator import mark_inset
+from scipy.ndimage.filters import uniform_filter1d
 #from scipy.interpolate import spline
 from scipy.special import lambertw
 from scipy.signal import square
+import allantools
 import itertools
 import math
 
@@ -111,7 +114,7 @@ def plotPSD(dictPLL, dictNet, dictData, plotlist=[], saveData=False):
 	else:
 		plotlist = []
 		for i in range(len(dictData['phi'][0,:])):								# calculate spectrum of signals for all oscillators
-			ftemp, Pxx_temp = eva.calcSpectrum(dictData['phi'][:,i], dictPLL, dictNet, i, dictPLL['percent_of_Tsim'])
+			ftemp, Pxx_temp = eva.calcSpectrum(dictData['phi'][:, i], dictPLL, dictNet, i, dictPLL['percent_of_Tsim'])
 			f.append(ftemp[0])
 			# print('Test Pxx_temp[0]:', Pxx_temp[0])
 			Pxx_db.append(Pxx_temp[0])
@@ -119,10 +122,10 @@ def plotPSD(dictPLL, dictNet, dictData, plotlist=[], saveData=False):
 
 
 	fig1 = plt.figure(num=1, figsize=(figwidth, figheight), dpi=dpi_val, facecolor='w', edgecolor='k')
-	fig1.canvas.set_window_title('spectral density of synchronized state')		# plot spectrum
+	fig1.canvas.manager.set_window_title('spectral density of synchronized state')		# plot spectrum
 	fig1.set_size_inches(plot_size_inches_x, plot_size_inches_y)
 
-	plt.xlabel('frequencies [Hz]', fontdict = labelfont, labelpad=labelpadxaxis); plt.ylabel('P [dBm]', fontdict = labelfont, labelpad=labelpadyaxis);
+	plt.xlabel('frequencies [Hz]', fontdict=labelfont, labelpad=labelpadxaxis); plt.ylabel('P [dBm]', fontdict=labelfont, labelpad=labelpadyaxis);
 	plt.tick_params(axis='both', which='major', labelsize=tickSize)
 
 	for i in range(len(f)):
@@ -134,7 +137,7 @@ def plotPSD(dictPLL, dictNet, dictData, plotlist=[], saveData=False):
 		plt.plot(f[i], Pxx_db[i], '-', label='PLL%i' %(plotlist[i]))
 
 
-	plt.title(r'power spectrum $\Delta f=$%0.5E, peak at $Pxx_0^\textrm{peak}$=%0.2f' %((f[0][2]-f[0][1]), peak_power_val[0]), fontdict = labelfont)
+	plt.title(r'power spectrum $\Delta f=$%0.5E, peak at $Pxx_0^\textrm{peak}$=%0.2f' %((f[0][2]-f[0][1]), peak_power_val[0]), fontdict=labelfont)
 	plt.legend(loc='upper right')
 	plt.grid()
 
@@ -146,7 +149,11 @@ def plotPSD(dictPLL, dictNet, dictData, plotlist=[], saveData=False):
 	plt.savefig('results/powerdensity_dB_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.svg' %(np.mean(dictPLL['coupK']), np.mean(dictPLL['cutFc']), np.mean(dictPLL['syncF']), np.mean(dictPLL['transmission_delay']), np.mean(dictPLL['noiseVarVCO']), now.year, now.month, now.day), dpi=dpi_val, bbox_inches = "tight")
 	plt.savefig('results/powerdensity_dB_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.png' %(np.mean(dictPLL['coupK']), np.mean(dictPLL['cutFc']), np.mean(dictPLL['syncF']), np.mean(dictPLL['transmission_delay']), np.mean(dictPLL['noiseVarVCO']), now.year, now.month, now.day), dpi=dpi_val, bbox_inches = "tight")
 
-	plt.xlim(frequency_of_max_peak[i]-1.2*np.min(dictPLL['coupK']),frequency_of_max_peak[i]+1.2*np.max(dictPLL['coupK']));
+	plt.xlim(0, 3.8 * np.min(dictPLL['intrF']));
+	plt.savefig('results/powerdensityLessFreq_dB_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.svg' % (np.mean(dictPLL['coupK']), np.mean(dictPLL['cutFc']), np.mean(dictPLL['syncF']), np.mean(dictPLL['transmission_delay']), np.mean(dictPLL['noiseVarVCO']), now.year, now.month, now.day), dpi=dpi_val)
+	plt.savefig('results/powerdensityLessFreq_dB_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.png' % (np.mean(dictPLL['coupK']), np.mean(dictPLL['cutFc']), np.mean(dictPLL['syncF']), np.mean(dictPLL['transmission_delay']), np.mean(dictPLL['noiseVarVCO']), now.year, now.month, now.day), dpi=dpi_val)
+
+	plt.xlim(frequency_of_max_peak[i]-1.2*np.min(dictPLL['coupK']),frequency_of_max_peak[i]+1.2*np.max(dictPLL['coupK']))
 	for i in range(len(f)):
 		plt.plot(f[i][index_of_highest_peak[i]-int(0.1*np.min(dictPLL['intrF'])/(f[0][2]-f[0][1]))], Pxx_db[i][index_of_highest_peak[i]], 'r*',
 			 	 f[i][index_of_highest_peak[i]+int(0.1*np.min(dictPLL['intrF'])/(f[0][2]-f[0][1]))], Pxx_db[i][index_of_highest_peak[i]], 'r*')
@@ -174,7 +181,7 @@ def plotPSD(dictPLL, dictNet, dictData, plotlist=[], saveData=False):
 	plt.xlim(0, 8.5*np.min(dictPLL['intrF']));
 
 	fig2 = plt.figure(num=2, figsize=(figwidth, figheight), dpi=dpi_val, facecolor='w', edgecolor='k')	# plot spectrum
-	fig2.canvas.set_window_title('one-sided spectral density')
+	fig2.canvas.manager.set_window_title('one-sided spectral density')
 	fig2.set_size_inches(plot_size_inches_x, plot_size_inches_y);
 
 	xHz = 0.001; onsidedPSD_params = []; oneSidPSDwidthsm3dB = []; quality_factors = []; # distance from the principle peak to measure damping
@@ -237,7 +244,7 @@ def plotPSD(dictPLL, dictNet, dictData, plotlist=[], saveData=False):
 	#plt.plot(10.0*np.log10(powerspecPLL1['f'][0][index_of_highest_peak[i]:coup1_times_X].copy()-frequency_of_max_peak[i]), !!!!! , 'y-', label=r'$1/f^2$')
 	plt.legend(loc='upper right')
 	# plt.xlim([0,f01+20*max(Kvco1,Kvco2)]);	#plt.ylim(-100,0);
-	plt.xlabel(r'$10\log_{10}\left(f-f_{\rm peak}\right)$ [Hz]', fontdict = labelfont, labelpad=labelpadxaxis); plt.ylabel(r'$P$ [dBm]', fontdict = labelfont, labelpad=labelpadyaxis)
+	plt.xlabel(r'$10\log_{10}\left(f-f_{\rm peak}\right)$ [Hz]', fontdict=labelfont, labelpad=labelpadxaxis); plt.ylabel(r'$P$ [dBm]', fontdict=labelfont, labelpad=labelpadyaxis)
 	plt.tick_params(axis='both', which='major', labelsize=35); plt.grid();
 	plt.savefig('results/onsidedPSD_dBm_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.svg' %(np.mean(dictPLL['coupK']), np.mean(dictPLL['cutFc']), np.mean(dictPLL['syncF']), np.mean(dictPLL['transmission_delay']), np.mean(dictPLL['noiseVarVCO']), now.year, now.month, now.day), dpi=dpi_val, bbox_inches = "tight")
 	plt.savefig('results/onsidedPSD_dBm_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.png' %(np.mean(dictPLL['coupK']), np.mean(dictPLL['cutFc']), np.mean(dictPLL['syncF']), np.mean(dictPLL['transmission_delay']), np.mean(dictPLL['noiseVarVCO']), now.year, now.month, now.day), dpi=dpi_val, bbox_inches = "tight")
@@ -272,15 +279,15 @@ def plotPhases2pi(dictPLL, dictNet, dictData):
 	linet		= ['-', '-.', '--', ':', 'densily dashdotdotted', 'densely dashed']
 
 	fig3 = plt.figure(num=3, figsize=(figwidth, figheight), dpi=dpi_val, facecolor='w', edgecolor='k')
-	fig3.canvas.set_window_title('phases')  									# plot the phase
+	fig3.canvas.manager.set_window_title('phases')  									# plot the phase
 	fig3.set_size_inches(plot_size_inches_x, plot_size_inches_y)
 
 
 	plt.plot(dictData['t'], dictData['phi']%(2*np.pi), linewidth=1, linestyle=linet[0])
 	plt.plot(dictData['t'][dictNet['max_delay_steps']-1], dictData['phi'][int(dictNet['max_delay_steps'])-1,0]%(2*np.pi)+0.05,'go')
 
-	plt.xlabel(r'$\frac{\omega t}{2\pi}$', fontdict = labelfont, labelpad=labelpadxaxis)
-	plt.ylabel(r'$\theta(t)_{\textrm{mod}\,2\pi}$', fontdict = labelfont, labelpad=labelpadyaxis)
+	plt.xlabel(r'$\frac{\omega t}{2\pi}$', fontdict=labelfont, labelpad=labelpadxaxis)
+	plt.ylabel(r'$\theta(t)_{\textrm{mod}\,2\pi}$', fontdict=labelfont, labelpad=labelpadyaxis)
 	plt.tick_params(axis='both', which='major', labelsize=tickSize)
 	# plt.legend(loc='upper right')
 
@@ -303,14 +310,14 @@ def plotPhasesInf(dictPLL, dictNet, dictData):
 	linet		= ['-', '-.', '--', ':', 'densily dashdotdotted', 'densely dashed']
 
 	fig4 = plt.figure(num=4, figsize=(figwidth, figheight), dpi=dpi_val, facecolor='w', edgecolor='k')
-	fig4.canvas.set_window_title('phases')  							 		# plot the phase
+	fig4.canvas.manager.set_window_title('phases')  							 		# plot the phase
 	fig4.set_size_inches(plot_size_inches_x, plot_size_inches_y)
 
 	plt.plot(dictData['t'], dictData['phi'], linewidth=1, linestyle=linet[0])
 	plt.plot(dictData['t'][dictNet['max_delay_steps']-1], dictData['phi'][int(dictNet['max_delay_steps'])-1,0]+0.05,'go')
 
-	plt.xlabel(r'$\frac{\omega t}{2\pi}$', fontdict = labelfont, labelpad=labelpadxaxis)
-	plt.ylabel(r'$\theta(t)$', fontdict = labelfont, labelpad=labelpadyaxis)
+	plt.xlabel(r'$\frac{\omega t}{2\pi}$', fontdict=labelfont, labelpad=labelpadxaxis)
+	plt.ylabel(r'$\theta(t)$', fontdict=labelfont, labelpad=labelpadyaxis)
 	plt.tick_params(axis='both', which='major', labelsize=tickSize)
 	# plt.legend(loc='upper right')
 
@@ -333,20 +340,20 @@ def plotFrequency(dictPLL, dictNet, dictData):
 	linet		= ['-', '-.', '--', ':', 'densily dashdotdotted', 'densely dashed']
 
 	fig5 = plt.figure(num=5, figsize=(figwidth, figheight), dpi=dpi_val, facecolor='w', edgecolor='k')
-	fig5.canvas.set_window_title('frequency')  							 		# plot the phase
+	fig5.canvas.manager.set_window_title('frequency')  							 		# plot the phase
 	fig5.set_size_inches(plot_size_inches_x, plot_size_inches_y)
 
 	phidot = np.diff(dictData['phi'], axis=0)/dictPLL['dt'];
 	plt.plot(dictData['t'][0:-1], phidot, linewidth=1, linestyle=linet[0])
 	plt.plot(dictData['t'][dictNet['max_delay_steps']-1], phidot[int(dictNet['max_delay_steps'])-1,0]+0.001,'go')
 
-	plt.xlabel(r'$\frac{\omega t}{2\pi}$', fontdict = labelfont, labelpad=labelpadxaxis)
-	plt.ylabel(r'$\theta(t)$', fontdict = labelfont, labelpad=labelpadyaxis)
+	plt.xlabel(r'$\frac{\omega t}{2\pi}$', fontdict=labelfont, labelpad=labelpadxaxis)
+	plt.ylabel(r'$\theta(t)$', fontdict=labelfont, labelpad=labelpadyaxis)
 	plt.tick_params(axis='both', which='major', labelsize=tickSize)
 	# plt.legend(loc='upper right')
 
-	plt.xlabel(r'$t\,[T_{\omega}]$', fontdict = labelfont, labelpad=labelpadxaxis)
-	plt.ylabel(r'$\dot{\phi}(t)$ [rad Hz]', fontdict = labelfont, labelpad=labelpadyaxis)
+	plt.xlabel(r'$t\,[T_{\omega}]$', fontdict=labelfont, labelpad=labelpadxaxis)
+	plt.ylabel(r'$\dot{\phi}(t)$ [rad Hz]', fontdict=labelfont, labelpad=labelpadyaxis)
 	plt.savefig('results/freq-t_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.svg' %(np.mean(dictPLL['coupK']), np.mean(dictPLL['cutFc']), np.mean(dictPLL['syncF']), np.mean(dictPLL['transmission_delay']), np.mean(dictPLL['noiseVarVCO']), now.year, now.month, now.day), dpi=dpi_val, bbox_inches = "tight")
 	plt.savefig('results/freq-t_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.png' %(np.mean(dictPLL['coupK']), np.mean(dictPLL['cutFc']), np.mean(dictPLL['syncF']), np.mean(dictPLL['transmission_delay']), np.mean(dictPLL['noiseVarVCO']), now.year, now.month, now.day), dpi=dpi_val, bbox_inches = "tight")
 	plt.xlim([np.mean(dictPLL['transmission_delay']) - 25*1.0/(np.min(dictPLL['intrF'])), np.mean(dictPLL['transmission_delay']) + 35*1.0/(np.min(dictPLL['intrF']))]);
@@ -369,7 +376,7 @@ def plotOrderPara(dictPLL, dictNet, dictData):
 	dictPLL, dictNet = prepareDictsForPlotting(dictPLL, dictNet)
 
 	fig6 = plt.figure(num=6, figsize=(figwidth, figheight), dpi=dpi_val, facecolor='w', edgecolor='k')
-	fig6.canvas.set_window_title('order parameter over time')					# plot the order parameter in dependence of time
+	fig6.canvas.manager.set_window_title('order parameter over time')					# plot the order parameter in dependence of time
 	fig6.set_size_inches(plot_size_inches_x, plot_size_inches_y)
 
 	plt.plot(dictData['t'], dictData['orderParam'])
@@ -377,8 +384,8 @@ def plotOrderPara(dictPLL, dictNet, dictData):
 	if -int(dictPLL['timeSeriesAverTime']*1.0/(dictData['F1']*dictPLL['dt'])) >= 0:
 		plt.axvspan(dictData['t'][-int(dictPLL['timeSeriesAverTime']*1.0/(dictData['F1']*dictPLL['dt']))], dictData['t'][-1], color='b', alpha=0.3)
 	plt.title(r'mean order parameter $\bar{R}=$%.2f, and $\bar{\sigma}=$%.4f' %(np.mean(dictData['orderParam'][-int(round(dictPLL['timeSeriesAverTime']*1.0/(dictData['F1']*dictPLL['dt']))):]), np.std(dictData['orderParam'][-int(round(dictPLL['timeSeriesAverTime']*1.0/(dictData['F1']*dictPLL['dt']))):])), fontdict = titlefont)
-	plt.xlabel(r'$t\,[T_{\omega}]$', fontdict = labelfont, labelpad=labelpadxaxis)
-	plt.ylabel(r'$R(t,m_x=%d,m_y=%d )$' %(dictNet['mx'],dictNet['my']), fontdict = labelfont, labelpad=labelpadyaxis)
+	plt.xlabel(r'$t\,[T_{\omega}]$', fontdict=labelfont, labelpad=labelpadxaxis)
+	plt.ylabel(r'$R(t,m_x=%d,m_y=%d )$' %(dictNet['mx'],dictNet['my']), fontdict=labelfont, labelpad=labelpadyaxis)
 	plt.tick_params(axis='both', which='major', labelsize=tickSize)
 
 	plt.savefig('results/orderP-t_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.svg' %(np.mean(dictPLL['coupK']), np.mean(dictPLL['cutFc']), np.mean(dictPLL['syncF']), np.mean(dictPLL['transmission_delay']), np.mean(dictPLL['noiseVarVCO']), now.year, now.month, now.day), bbox_inches = "tight")
@@ -389,9 +396,16 @@ def plotOrderPara(dictPLL, dictNet, dictData):
 		plt.xlim([0, 15])
 	plt.savefig('results/orderPFin-t_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.svg' %(np.mean(dictPLL['coupK']), np.mean(dictPLL['cutFc']), np.mean(dictPLL['syncF']), np.mean(dictPLL['transmission_delay']), np.mean(dictPLL['noiseVarVCO']), now.year, now.month, now.day), bbox_inches = "tight")
 	plt.savefig('results/orderPFin-t_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.png' %(np.mean(dictPLL['coupK']), np.mean(dictPLL['cutFc']), np.mean(dictPLL['syncF']), np.mean(dictPLL['transmission_delay']), np.mean(dictPLL['noiseVarVCO']), now.year, now.month, now.day), dpi=dpi_val, bbox_inches = "tight")
-	plt.xlim([0, np.mean(dictPLL['transmission_delay'])+125*1.0/(dictData['F1'])]); # plt.ylim([]);
+	plt.xlim([0, np.mean(dictPLL['transmission_delay'])+125*1.0/(dictData['F1'])]) # plt.ylim([]);
 	plt.savefig('results/orderPInit-t_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.svg' %(np.mean(dictPLL['coupK']), np.mean(dictPLL['cutFc']), np.mean(dictPLL['syncF']), np.mean(dictPLL['transmission_delay']), np.mean(dictPLL['noiseVarVCO']), now.year, now.month, now.day), bbox_inches = "tight")
 	plt.savefig('results/orderPInit-t_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.png' %(np.mean(dictPLL['coupK']), np.mean(dictPLL['cutFc']), np.mean(dictPLL['syncF']), np.mean(dictPLL['transmission_delay']), np.mean(dictPLL['noiseVarVCO']), now.year, now.month, now.day), dpi=dpi_val, bbox_inches = "tight")
+	plt.xlim([0, np.mean(dictPLL['transmission_delay']) + 2250 * 1.0 / (dictData['F1'])]) # plt.ylim([]);
+	plt.savefig('results/orderPInit1-t_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.svg' % (
+	np.mean(dictPLL['coupK']), np.mean(dictPLL['cutFc']), np.mean(dictPLL['syncF']), np.mean(dictPLL['transmission_delay']), np.mean(dictPLL['noiseVarVCO']), now.year, now.month, now.day),
+				bbox_inches="tight")
+	plt.savefig('results/orderPInit1-t_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.png' % (
+	np.mean(dictPLL['coupK']), np.mean(dictPLL['cutFc']), np.mean(dictPLL['syncF']), np.mean(dictPLL['transmission_delay']), np.mean(dictPLL['noiseVarVCO']), now.year, now.month, now.day),
+				dpi=dpi_val, bbox_inches="tight")
 	#print('\nlast entry order parameter: R-1 = %.3e' % (dictData['orderParam'][-1]-1) )
 	#print('\nlast entries order parameter: R = ', dictData['orderParam'][-25:])
 
@@ -404,14 +418,14 @@ def plotPhaseRela(dictPLL, dictNet, dictData):
 	dictPLL, dictNet = prepareDictsForPlotting(dictPLL, dictNet)
 
 	fig7 = plt.figure(num=7, figsize=(figwidth, figheight), dpi=dpi_val, facecolor='w', edgecolor='k')
-	fig7.canvas.set_window_title('phase relations')
+	fig7.canvas.manager.set_window_title('phase relations')
 	fig7.set_size_inches(plot_size_inches_x, plot_size_inches_y)
 
 	if not dictNet['topology'] == 'compareEntrVsMutual':
 		plt.plot(dictData['t'][::dictPLL['sampleFplot']],((dictData['phi'][::dictPLL['sampleFplot'],0]-dictData['phi'][::dictPLL['sampleFplot'],1]+np.pi)%(2.*np.pi))-np.pi,label=r'$\phi_{0}-\phi_{1}$')			#math.fmod(phi[:,:], 2.*np.pi))
 		if not dictNet['Nx']*dictNet['Ny'] == 2:
-			plt.plot(dictData['t'][::dictPLL['sampleFplot']],((dictData['phi'][::dictPLL['sampleFplot'],1]-dictData['phi'][::dictPLL['sampleFplot'],2]+np.pi)%(2.*np.pi))-np.pi,label=r'$\phi_{1}-\phi_{2}$')
-			plt.plot(dictData['t'][::dictPLL['sampleFplot']],((dictData['phi'][::dictPLL['sampleFplot'],0]-dictData['phi'][::dictPLL['sampleFplot'],2]+np.pi)%(2.*np.pi))-np.pi,label=r'$\phi_{0}-\phi_{2}$')
+			plt.plot(dictData['t'][::dictPLL['sampleFplot']], ((dictData['phi'][::dictPLL['sampleFplot'],1]-dictData['phi'][::dictPLL['sampleFplot'],2]+np.pi)%(2.*np.pi))-np.pi,label=r'$\phi_{1}-\phi_{2}$')
+			plt.plot(dictData['t'][::dictPLL['sampleFplot']], ((dictData['phi'][::dictPLL['sampleFplot'],0]-dictData['phi'][::dictPLL['sampleFplot'],2]+np.pi)%(2.*np.pi))-np.pi,label=r'$\phi_{0}-\phi_{2}$')
 		plt.plot(np.mean(dictPLL['transmission_delay']), ((dictData['phi'][int(round(np.mean(dictPLL['transmission_delay'])/dictPLL['dt'])),0]-dictData['phi'][int(round(np.mean(dictPLL['transmission_delay'])/dictPLL['dt'])),1]+np.pi)%(2.*np.pi))-np.pi, 'yo', ms=5)
 		#plt.axvspan(t[-int(5.5*1.0/(dictData['F1']*dictPLL['dt']))]*dictPLL['dt'], t[-1]*dictPLL['dt'], color='b', alpha=0.3)
 		if dictNet['Nx']*dictNet['Ny']>=3:
@@ -419,8 +433,8 @@ def plotPhaseRela(dictPLL, dictNet, dictData):
 																np.mod(dictData['phi'][-10][1]-dictData['phi'][-10][0]+np.pi, 2.0*np.pi)-np.pi - (np.mod(dictData['phi'][-10][2]-dictData['phi'][-10][0]+np.pi, 2.0*np.pi)-np.pi), 0 ), fontdict = titlefont)
 		else:
 			plt.title(r'phases [rad]', fontdict = titlefont)
-		plt.xlabel(r'$t\,[T_{\omega}]$', fontdict = labelfont, labelpad=labelpadxaxis)
-		plt.ylabel(r'$\phi_k(t)-\phi_0(t)$', fontdict = labelfont, labelpad=labelpadyaxis)
+		plt.xlabel(r'$t\,[T_{\omega}]$', fontdict=labelfont, labelpad=labelpadxaxis)
+		plt.ylabel(r'$\phi_k(t)-\phi_0(t)$', fontdict=labelfont, labelpad=labelpadyaxis)
 		plt.tick_params(axis='both', which='major', labelsize=tickSize)
 
 		plt.legend(loc='upper right');
@@ -436,8 +450,8 @@ def plotPhaseRela(dictPLL, dictNet, dictData):
 		#plt.plot(np.mean(dictPLL['transmission_delay']), ((dictData['phi'][int(round(np.mean(dictPLL['transmission_delay'])/dictPLL['dt'])),0]-dictData['phi'][int(round(np.mean(dictPLL['transmission_delay'])/dictPLL['dt'])),1]+np.pi)%(2.*np.pi))-np.pi, 'yo', ms=5)
 		plt.axvspan(dictData['t'][-int(5.5*1.0/(dictData['F1']*dictPLL['dt']))], dictData['t'][-1], color='b', alpha=0.3)
 		plt.title(r'phases-differences between the clocks', fontdict = titlefont)
-		plt.xlabel(r'$t\,[T_{\omega}]$', fontdict = labelfont, labelpad=labelpadxaxis)
-		plt.ylabel(r'$\phi_k(t)-\phi_0(t)$', fontdict = labelfont, labelpad=labelpadyaxis)
+		plt.xlabel(r'$t\,[T_{\omega}]$', fontdict=labelfont, labelpad=labelpadxaxis)
+		plt.ylabel(r'$\phi_k(t)-\phi_0(t)$', fontdict=labelfont, labelpad=labelpadyaxis)
 		plt.tick_params(axis='both', which='major', labelsize=tickSize)
 
 		plt.legend(loc='upper right');
@@ -454,7 +468,7 @@ def plotPhaseDiff(dictPLL, dictNet, dictData):
 	dictPLL, dictNet = prepareDictsForPlotting(dictPLL, dictNet)
 
 	fig8 = plt.figure(num=8, figsize=(figwidth, figheight), dpi=dpi_val, facecolor='w', edgecolor='k')
-	fig8.canvas.set_window_title('phase configuration with respect to the phase of osci 0')
+	fig8.canvas.manager.set_window_title('phase configuration with respect to the phase of osci 0')
 	fig8.set_size_inches(plot_size_inches_x, plot_size_inches_y)
 
 	if len(dictData['phi'][:,0]) > dictPLL['treshold_maxT_to_plot'] * (1.0/(np.min(dictPLL['intrF'])*dictPLL['dt'])):	# (1.0/(np.min(dictPLL['intrF'])*dictPLL['dt'])) steps for one period
@@ -468,8 +482,8 @@ def plotPhaseDiff(dictPLL, dictNet, dictData):
 																		np.mod(dictData['phi'][-10][2]-dictData['phi'][-10][0]+np.pi, 2.0*np.pi)-np.pi ), fontdict = titlefont)
 		else:
 			plt.title(r'phase differences $\Delta\phi_{10}=%.4f$ [rad]' %( np.mod(dictData['phi'][-10][1]-dictData['phi'][-10][0]+np.pi, 2.0*np.pi)-np.pi ), fontdict = titlefont)
-		plt.xlabel(r'$t\,[T_{\omega}]$', fontdict = labelfont, labelpad=labelpadxaxis)
-		plt.ylabel(r'$\phi_k(t)-\phi_0(t)$', fontdict = labelfont, labelpad=labelpadyaxis)
+		plt.xlabel(r'$t\,[T_{\omega}]$', fontdict=labelfont, labelpad=labelpadxaxis)
+		plt.ylabel(r'$\phi_k(t)-\phi_0(t)$', fontdict=labelfont, labelpad=labelpadyaxis)
 		plt.tick_params(axis='both', which='major', labelsize=tickSize)
 		plt.legend(loc='upper right');
 	else:
@@ -485,8 +499,8 @@ def plotPhaseDiff(dictPLL, dictNet, dictData):
 																		np.mod(dictData['phi'][-10][2]-dictData['phi'][-10][0]+np.pi, 2.0*np.pi)-np.pi ), fontdict = titlefont)
 		else:
 			plt.title(r'phase differences $\Delta\phi_{10}=%.4f$ [rad]' %( np.mod(dictData['phi'][-10][1]-dictData['phi'][-10][0]+np.pi, 2.0*np.pi)-np.pi ), fontdict = titlefont)
-		plt.xlabel(r'$t\,[T_{\omega}]$', fontdict = labelfont, labelpad=labelpadxaxis)
-		plt.ylabel(r'$\phi_k(t)-\phi_0(t)$', fontdict = labelfont, labelpad=labelpadyaxis)
+		plt.xlabel(r'$t\,[T_{\omega}]$', fontdict=labelfont, labelpad=labelpadxaxis)
+		plt.ylabel(r'$\phi_k(t)-\phi_0(t)$', fontdict=labelfont, labelpad=labelpadyaxis)
 		plt.tick_params(axis='both', which='major', labelsize=tickSize)
 		plt.legend(loc='upper right');
 	plt.savefig('results/phaseConf-t_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.svg' %(np.mean(dictPLL['coupK']), np.mean(dictPLL['cutFc']), np.mean(dictPLL['syncF']), np.mean(dictPLL['transmission_delay']), np.mean(dictPLL['noiseVarVCO']), now.year, now.month, now.day), bbox_inches = "tight")
@@ -508,13 +522,13 @@ def plotClockTime(dictPLL, dictNet, dictData):
 	linet		= ['-', '-.', '--', ':', 'densily dashdotdotted', 'densely dashed']
 
 	fig9 = plt.figure(num=9, figsize=(figwidth, figheight), dpi=dpi_val, facecolor='w', edgecolor='k')
-	fig9.canvas.set_window_title('clock time') 							 		# plot the clocks' time
+	fig9.canvas.manager.set_window_title('clock time') 							 		# plot the clocks' time
 	fig9.set_size_inches(plot_size_inches_x, plot_size_inches_y)
 
 	plt.plot(dictData['t'], dictData['clock_counter'], linewidth=1, linestyle=linet[0])
 
-	plt.xlabel(r'$\frac{\omega t}{2\pi}$', fontdict = labelfont, labelpad=labelpadxaxis)
-	plt.ylabel(r'count $\frac{T}{2}$', fontdict = labelfont, labelpad=labelpadyaxis)
+	plt.xlabel(r'$\frac{\omega t}{2\pi}$', fontdict=labelfont, labelpad=labelpadxaxis)
+	plt.ylabel(r'count $\frac{T}{2}$', fontdict=labelfont, labelpad=labelpadyaxis)
 	plt.tick_params(axis='both', which='major', labelsize=tickSize)
 	# plt.legend(loc='upper right')
 
@@ -533,13 +547,13 @@ def plotCtrlSigDny(dictPLL, dictNet, dictData):
 	linet		= ['-', '-.', '--', ':', 'densily dashdotdotted', 'densely dashed']
 
 	fig10 = plt.figure(num=10, figsize=(figwidth, figheight), dpi=dpi_val, facecolor='w', edgecolor='k')
-	fig10.canvas.set_window_title('time-series control voltage')		 		# plot the time evolution of the control signal
+	fig10.canvas.manager.set_window_title('time-series control voltage')		 		# plot the time evolution of the control signal
 	fig10.set_size_inches(plot_size_inches_x, plot_size_inches_y)
 
 	plt.plot(dictData['t'], dictData['ctrl'], linewidth=1, linestyle=linet[0])
 
-	plt.xlabel(r'$\frac{\omega t}{2\pi}$', fontdict = labelfont, labelpad=labelpadxaxis)
-	plt.ylabel(r'$V_\textrm{ctrl}(t)$', fontdict = labelfont, labelpad=labelpadyaxis)
+	plt.xlabel(r'$\frac{\omega t}{2\pi}$', fontdict=labelfont, labelpad=labelpadxaxis)
+	plt.ylabel(r'$V_\textrm{ctrl}(t)$', fontdict=labelfont, labelpad=labelpadyaxis)
 	plt.tick_params(axis='both', which='major', labelsize=tickSize)
 	# plt.legend(loc='upper right')
 
@@ -558,21 +572,21 @@ def plotOscSignal(dictPLL, dictNet, dictData, plotEveryDt=1):
 	linet		= ['-', '-.', '--', ':', 'densily dashdotdotted', 'densely dashed']
 
 	fig11 = plt.figure(num=11, figsize=(figwidth, figheight), dpi=dpi_val, facecolor='w', edgecolor='k')
-	fig11.canvas.set_window_title('time-series signals')		 		   # plot the time evolution of the control signal
+	fig11.canvas.manager.set_window_title('time-series signals')		 		   # plot the time evolution of the control signal
 	fig11.set_size_inches(plot_size_inches_x, plot_size_inches_y)
 
 	ax11 = fig11.add_subplot(211)
 
 	for i in range(len(dictData['phi'][0,:])):
 		plt.plot((dictData['t'][::plotEveryDt]), dictPLL['vco_out_sig'](dictData['phi'][::plotEveryDt,i]), label='sig PLL%i' %(i))
-		plt.ylabel(r'$s( \theta(t) )$', fontdict = labelfont, labelpad=labelpadyaxis)
+		plt.ylabel(r'$s( \theta(t) )$', fontdict=labelfont, labelpad=labelpadyaxis)
 		plt.tick_params(axis='both', which='major', labelsize=tickSize)
 
 	ax12 = fig11.add_subplot(212)
 
 	for i in range(len(dictData['phi'][0,:])):
 		plt.plot((dictData['t'][::plotEveryDt]), dictPLL['vco_out_sig'](dictData['phi'][::plotEveryDt,i]/dictPLL['div']), label='sig PLL%i' %(i))
-		plt.ylabel(r'$s( \theta(t)/ %i )$'%dictPLL['div'], fontdict = labelfont, labelpad=labelpadyaxis)
+		plt.ylabel(r'$s( \theta(t)/ %i )$'%dictPLL['div'], fontdict=labelfont, labelpad=labelpadyaxis)
 		plt.tick_params(axis='both', which='major', labelsize=tickSize)
 
 
@@ -601,13 +615,13 @@ def plot_instfreq_vs_timedependent_parameter(dictPLL, dictNet, dictData):
 	y_axis_scaling = (2.0*np.pi*np.mean(dictPLL['intrF']))
 
 	fig12 = plt.figure(num=12, figsize=(figwidth, figheight), dpi=dpi_val, facecolor='w', edgecolor='k')
-	fig12.canvas.set_window_title('instantaneous frequency as function of time-dependent parameter')
+	fig12.canvas.manager.set_window_title('instantaneous frequency as function of time-dependent parameter')
 	fig12.set_size_inches(plot_size_inches_x, plot_size_inches_y)
 
 	plt.plot(dictData['timeDependentParameter'][0,0:len(dictData['phi'][:,0])-1]*x_axis_scaling, (np.diff(dictData['phi'], axis=0)/dictPLL['dt'])/y_axis_scaling, 'b-')
 
-	plt.xlabel(dyn_x_label, fontdict = labelfont, labelpad=labelpadxaxis)
-	plt.ylabel(r'$\frac{\dot{\theta}_k(t)}{\omega}$', fontdict = labelfont, labelpad=labelpadyaxis)
+	plt.xlabel(dyn_x_label, fontdict=labelfont, labelpad=labelpadxaxis)
+	plt.ylabel(r'$\frac{\dot{\theta}_k(t)}{\omega}$', fontdict=labelfont, labelpad=labelpadyaxis)
 	plt.tick_params(axis='both', which='major', labelsize=tickSize)
 	# plt.legend(loc='upper right')
 
@@ -616,13 +630,13 @@ def plot_instfreq_vs_timedependent_parameter(dictPLL, dictNet, dictData):
 
 	if dictPLL['div'] != 1:
 		fig1212 = plt.figure(num=1212, figsize=(figwidth, figheight), dpi=dpi_val, facecolor='w', edgecolor='k')
-		fig1212.canvas.set_window_title('instantaneous frequency as function of time-dependent parameter')
+		fig1212.canvas.manager.set_window_title('instantaneous frequency as function of time-dependent parameter')
 		fig1212.set_size_inches(plot_size_inches_x, plot_size_inches_y)
 
 		plt.plot(dictData['timeDependentParameter'][0,0:len(dictData['phi'][:,0])-1]*x_axis_scaling, (np.diff(dictData['phi']/dictPLL['div'], axis=0)/dictPLL['dt'])/y_axis_scaling, 'b-')
 
-		plt.xlabel(dyn_x_label, fontdict = labelfont, labelpad=labelpadxaxis)
-		plt.ylabel(r'$\frac{\dot{\theta}^\textrm{HF}_k(t)}{v\,\omega}$', fontdict = labelfont, labelpad=labelpadyaxis)
+		plt.xlabel(dyn_x_label, fontdict=labelfont, labelpad=labelpadxaxis)
+		plt.ylabel(r'$\frac{\dot{\theta}^\textrm{HF}_k(t)}{v\,\omega}$', fontdict=labelfont, labelpad=labelpadyaxis)
 		plt.tick_params(axis='both', which='major', labelsize=tickSize)
 		# plt.legend(loc='upper right')
 
@@ -638,7 +652,7 @@ def plotPhasesAndPhaseRelations(dictPLL, dictNet, dictData):
 	dictPLL, dictNet = prepareDictsForPlotting(dictPLL, dictNet)
 
 	fig13 = plt.figure(num=13, figsize=(figwidth, figheight), dpi=dpi_val, facecolor='w', edgecolor='k')
-	fig13.canvas.set_window_title('time-series phases and phase-differences')	# time-series phases and phase-differences
+	fig13.canvas.manager.set_window_title('time-series phases and phase-differences')	# time-series phases and phase-differences
 	fig13.set_size_inches(plot_size_inches_x, plot_size_inches_y)
 
 	return None
@@ -650,7 +664,7 @@ def plotFreqAndOrderP_cutAxis(dictPLL, dictNet, dictData):
 	dictPLL, dictNet = prepareDictsForPlotting(dictPLL, dictNet)
 
 	fig14 = plt.figure(num=14, figsize=(figwidth, figheight), dpi=dpi_val, facecolor='w', edgecolor='k')
-	fig14.canvas.set_window_title('time-series frequency and order parameter')	# frequency and order parameter
+	fig14.canvas.manager.set_window_title('time-series frequency and order parameter')	# frequency and order parameter
 	fig14.set_size_inches(plot_size_inches_x, plot_size_inches_y)
 
 	return None
@@ -662,7 +676,7 @@ def plotPhasesAndPhaseRelations_cutAxis(dictPLL, dictNet, dictData):
 	dictPLL, dictNet = prepareDictsForPlotting(dictPLL, dictNet)
 
 	fig15 = plt.figure(num=15, figsize=(figwidth, figheight), dpi=dpi_val, facecolor='w', edgecolor='k')
-	fig15.canvas.set_window_title('time-series phases and phase-differences')	# time-series phases and phase-differences
+	fig15.canvas.manager.set_window_title('time-series phases and phase-differences')	# time-series phases and phase-differences
 	fig15.set_size_inches(plot_size_inches_x, plot_size_inches_y)
 
 	return None
@@ -673,7 +687,7 @@ def deltaThetaDot_vs_deltaTheta(dictPLL, dictNet, deltaTheta, deltaThetaDot, col
 
 	#dictPLL, dictNet = prepareDictsForPlotting(dictPLL, dictNet)
 	fig16 = plt.figure(num=16, figsize=(figwidth, figheight), dpi=dpi_val, facecolor='w', edgecolor='k')
-	fig16.canvas.set_window_title('time-series phases and phase-differences')	# time-series phases and phase-differences
+	fig16.canvas.manager.set_window_title('time-series phases and phase-differences')	# time-series phases and phase-differences
 
 
 	plt.plot(deltaTheta, deltaThetaDot, '-', color=color, alpha=alpha)			# plot trajectory
@@ -681,7 +695,7 @@ def deltaThetaDot_vs_deltaTheta(dictPLL, dictNet, deltaTheta, deltaThetaDot, col
 	plt.plot(deltaTheta[-1], deltaThetaDot[-1], 'x', color=color, alpha=alpha)	# plot final state cross
 
 	fig17 = plt.figure(num=17, figsize=(figwidth, figheight), dpi=dpi_val, facecolor='w', edgecolor='k')
-	fig17.canvas.set_window_title('time-series phases and phase-differences')	# time-series phases and phase-differences
+	fig17.canvas.manager.set_window_title('time-series phases and phase-differences')	# time-series phases and phase-differences
 	fig17.set_size_inches(plot_size_inches_x, plot_size_inches_y)
 
 	plt.plot(deltaTheta[0], deltaThetaDot[0], 'o', color=color, alpha=alpha)	# plot initial dot
@@ -695,13 +709,13 @@ def plotOrderPvsTimeDepPara(dictPLL, dictNet, dictData, dictAlgo):
 	dictPLL, dictNet = prepareDictsForPlotting(dictPLL, dictNet)
 
 	fig18 = plt.figure(num=18, figsize=(figwidth, figheight), dpi=dpi_val, facecolor='w', edgecolor='k')
-	fig18.canvas.set_window_title('order parameter as function of time-dependent parameter')	# time-series phases and phase-differences
+	fig18.canvas.manager.set_window_title('order parameter as function of time-dependent parameter')	# time-series phases and phase-differences
 	fig18.set_size_inches(plot_size_inches_x, plot_size_inches_y)
 
 	plt.plot(dictData['timeDependentParameter'][0], dictData['orderParam'], 'b-')
 
-	plt.xlabel(r'$K$', fontdict = labelfont, labelpad=labelpadxaxis)
-	plt.ylabel(r'$R(t)$', fontdict = labelfont, labelpad=labelpadyaxis)
+	plt.xlabel(r'$K$', fontdict=labelfont, labelpad=labelpadxaxis)
+	plt.ylabel(r'$R(t)$', fontdict=labelfont, labelpad=labelpadyaxis)
 	plt.tick_params(axis='both', which='major', labelsize=tickSize)
 	# plt.legend(loc='upper right')
 
@@ -727,7 +741,7 @@ def plotFreqAndPhaseDiff(dictPLL, dictNet, dictData, plotlist=[], ylim_percent_o
 	dictPLL, dictNet = prepareDictsForPlotting(dictPLL, dictNet)
 
 	fig19 = plt.figure(num=19, figsize=(figwidth, figheight), dpi=dpi_val, facecolor='w', edgecolor='k')
-	fig19.canvas.set_window_title('time-series frequency and phase difference')	# frequency and order parameter
+	fig19.canvas.manager.set_window_title('time-series frequency and phase difference')	# frequency and order parameter
 	fig19.set_size_inches(plot_size_inches_x, plot_size_inches_y)
 
 	ax011 = fig19.add_subplot(211)
@@ -736,7 +750,10 @@ def plotFreqAndPhaseDiff(dictPLL, dictNet, dictData, plotlist=[], ylim_percent_o
 	phidot = np.diff(dictData['phi'], axis=0)/dictPLL['dt']
 	if not dictPLL['intrF'] == 0:
 		if isinstance(dictPLL['intrF'], list) or isinstance(dictPLL['intrF'], np.ndarray):
-			phidot = phidot / (2.0*np.pi*np.mean(dictPLL['intrF']))
+			if dictNet['topology'].find('entrain') != -1:
+				phidot = phidot / (2.0 * np.pi * np.mean(dictPLL['intrF'][1:]))
+			else:
+				phidot = phidot / (2.0*np.pi*np.mean(dictPLL['intrF']))
 			ylabelname = r'$\frac{\dot{\theta}_k(t)}{\bar{\omega}_k}$'
 		else:
 			phidot = phidot / (2.0*np.pi*dictPLL['intrF'])
@@ -751,7 +768,7 @@ def plotFreqAndPhaseDiff(dictPLL, dictNet, dictData, plotlist=[], ylim_percent_o
 				phidot[int(0.75 * np.round(np.mean(dictPLL['transmission_delay']) / dictPLL['dt']))::dictPLL['sampleFplot'], plotlist], linewidth=2, linestyle=linet[0])
 	# plt.plot(dictData['t'][dictNet['max_delay_steps']-1], phidot[int(dictNet['max_delay_steps'])-1,0]+0.001,'go')
 
-	plt.xlabel(r'$\frac{\omega t}{2\pi}$', fontdict = labelfont, labelpad=labelpadxaxis)
+	plt.xlabel(r'$\frac{\omega t}{2\pi}$', fontdict=labelfont, labelpad=labelpadxaxis)
 	plt.ylabel(ylabelname, fontdict=labelfont, labelpad=labelpadyaxis)
 	ax011.tick_params(axis='both', which='major', labelsize=tickSize, pad=1)
 	ax011.set_xlim([dictData['t'][int(0.75*np.round(np.mean(dictPLL['transmission_delay'])/dictPLL['dt']))], dictData['t'][-1]])
@@ -859,7 +876,7 @@ def plotFreqAndOrderPar(dictPLL, dictNet, dictData, plotlist=[]):
 	dictPLL, dictNet = prepareDictsForPlotting(dictPLL, dictNet)
 
 	fig20 = plt.figure(num=20, figsize=(figwidth, figheight), dpi=dpi_val, facecolor='w', edgecolor='k')
-	fig20.canvas.set_window_title('time-series frequency and order parameter')	# frequency and order parameter
+	fig20.canvas.manager.set_window_title('time-series frequency and order parameter')	# frequency and order parameter
 	fig20.set_size_inches(plot_size_inches_x, plot_size_inches_y)
 
 	ax011 = fig20.add_subplot(211)
@@ -868,7 +885,10 @@ def plotFreqAndOrderPar(dictPLL, dictNet, dictData, plotlist=[]):
 	phidot = np.diff(dictData['phi'], axis=0)/dictPLL['dt']
 	if not dictPLL['intrF'] == 0:
 		if isinstance(dictPLL['intrF'], list) or isinstance(dictPLL['intrF'], np.ndarray):
-			phidot = phidot / (2.0*np.pi*np.mean(dictPLL['intrF']))
+			if dictNet['topology'].find('entrain') != -1:
+				phidot = phidot / (2.0 * np.pi * np.mean(dictPLL['intrF'][1:]))
+			else:
+				phidot = phidot / (2.0 * np.pi * np.mean(dictPLL['intrF']))
 			ylabelname = r'$\frac{\dot{\theta}_k(t)}{\bar{\omega}_k}$'
 		else:
 			phidot = phidot / (2.0*np.pi*dictPLL['intrF'])
@@ -883,8 +903,8 @@ def plotFreqAndOrderPar(dictPLL, dictNet, dictData, plotlist=[]):
 				phidot[int(0.75 * np.round(np.mean(dictPLL['transmission_delay']) / dictPLL['dt']))::dictPLL['sampleFplot'], plotlist], linewidth=2, linestyle=linet[0])
 	# plt.plot(dictData['t'][dictNet['max_delay_steps']-1], phidot[int(dictNet['max_delay_steps'])-1,0]+0.001,'go')
 
-	plt.xlabel(r'$\frac{\omega t}{2\pi}$', fontdict = labelfont, labelpad=labelpadxaxis)
-	plt.ylabel(ylabelname, fontdict = labelfont, labelpad=labelpadyaxis)
+	plt.xlabel(r'$\frac{\omega t}{2\pi}$', fontdict=labelfont, labelpad=labelpadxaxis)
+	plt.ylabel(ylabelname, fontdict=labelfont, labelpad=labelpadyaxis)
 	ax011.tick_params(axis='both', which='major', labelsize=tickSize, pad=1)
 	ax011.set_xlim([dictData['t'][int(0.75*np.round(np.mean(dictPLL['transmission_delay'])/dictPLL['dt']))], dictData['t'][-1]])
 	plt.grid();
@@ -893,10 +913,10 @@ def plotFreqAndOrderPar(dictPLL, dictNet, dictData, plotlist=[]):
 
 	plt.plot(dictData['t'][int(0.75*np.round(np.mean(dictPLL['transmission_delay'])/dictPLL['dt'])):-1:dictPLL['sampleFplot']], dictData['orderParam'][int(0.75*np.round(np.mean(dictPLL['transmission_delay'])/dictPLL['dt'])):-1:dictPLL['sampleFplot']], linewidth=1.5)
 	plt.xlabel(r'$\omega t/2\pi$', fontdict=labelfont, labelpad=-5)
-	plt.ylabel(r'$R(t)$',rotation=90, fontdict=labelfont, labelpad=40)
+	plt.ylabel(r'$R(t)$', rotation=90, fontdict=labelfont, labelpad=40)
 	ax012.tick_params(axis='both', which='major', labelsize=tickSize, pad=1)
 	ax012.set_xlim([dictData['t'][int(0.75*np.round(np.mean(dictPLL['transmission_delay'])/dictPLL['dt']))], dictData['t'][-1]])
-	plt.grid();
+	plt.grid()
 
 	plt.savefig('results/freq_orderPar_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.png' %(np.mean(dictPLL['coupK']), np.mean(dictPLL['cutFc']), np.mean(dictPLL['syncF']), np.mean(dictPLL['transmission_delay']), np.mean(dictPLL['noiseVarVCO']), now.year, now.month, now.day), dpi=dpi_val, bbox_inches = "tight")
 	plt.savefig('results/freq_orderPar_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.svg' %(np.mean(dictPLL['coupK']), np.mean(dictPLL['cutFc']), np.mean(dictPLL['syncF']), np.mean(dictPLL['transmission_delay']), np.mean(dictPLL['noiseVarVCO']), now.year, now.month, now.day), dpi=dpi_val, bbox_inches = "tight")
@@ -981,10 +1001,10 @@ def plot_histogram(dictPLL: dict, dictNet: dict, dictData: dict, at_index: int =
 	elif phase_wrap == 3:	# plot phase-differences in [0, 2*pi] interval
 		shift2piWin = 0
 
-	fig, ax = plt.figure(figsize=(figwidth, figheight), dpi=dpi_val, facecolor='w', edgecolor='k')
-	fig.canvas.set_window_title('histogram of %s at time=%0.2f'%(plot_variable, at_index*dictPLL['dt']))  # frequency and order parameter
+	fig = plt.figure(figsize=(figwidth, figheight), dpi=dpi_val, facecolor='w', edgecolor='k')    # fig, ax =
+	fig.canvas.manager.set_window_title('histogram of %s at time=%0.2f' % (plot_variable, at_index*dictPLL['dt']))  # frequency and order parameter
 	fig.set_size_inches(plot_size_inches_x, plot_size_inches_y)
-	ax = ax.ravel()
+	#ax = ax.ravel()
 
 	if plot_variable == 'frequency':
 		print('phases to calculate frequency data:', dictData['phi'][(at_index - 3):(at_index - 1), plotlist])
@@ -1009,15 +1029,27 @@ def plot_histogram(dictPLL: dict, dictNet: dict, dictData: dict, at_index: int =
 	plt.savefig('results/histogram_%s_atTime%0.2f_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.svg' % (plot_variable, at_index*dictPLL['dt'], np.mean(dictPLL['coupK']),
 		np.mean(dictPLL['cutFc']), np.mean(dictPLL['syncF']), np.mean(dictPLL['transmission_delay']), np.mean(dictPLL['noiseVarVCO']), now.year, now.month, now.day), dpi=dpi_val, bbox_inches = "tight")
 
-	return ax
+	return None #ax
 
 
 #################################################################################################################################################################################
 
 def plot_time_dependent_parameter(dictPLL: dict, dictNet: dict, dictData: dict, time_dependent_parameter: np.ndarray, y_label: str):
+	"""Function that plots the time dependence of a variable or parameter.
+
+				Args:
+					dictNet:  contains as parameters the information about properties of the network to be simulated, the initial conditions and the synchronized states under investigation
+					dictPLL:  contains as parameters the information about properties of the PLLs, its components, the time delays, the types of signals exchanged
+					dictData: contains the results of the simulation, i.e., the phases of all oscillators, time dependent parameters, etc.
+					time_dependent_parameter: array of the time-dependent parameter/variable
+					y_label: name of that variable or parameter, also used to label the y-axis of the plot
+
+				Returns:
+					saves plotted data to files
+			"""
 
 	fig = plt.figure(figsize=(figwidth, figheight), dpi=dpi_val, facecolor='w', edgecolor='k')
-	fig.canvas.set_window_title('time dependence of %s' % (y_label))  # frequency and order parameter
+	fig.canvas.manager.set_window_title('time dependence of %s' % (y_label))  # frequency and order parameter
 	fig.set_size_inches(plot_size_inches_x, plot_size_inches_y)
 
 	t = np.arange(0, dictNet['max_delay_steps']+dictPLL['sim_time_steps']) * dictPLL['dt']
@@ -1033,6 +1065,123 @@ def plot_time_dependent_parameter(dictPLL: dict, dictNet: dict, dictData: dict, 
 	return None
 
 # ################################################################################################################################################################################
+
+def plot_allan_variance(dictPLL: dict, dictNet: dict, dictData: dict, t_transients_decayed: float, plotlist: list = [0], type_def_allan: str = 'overlapping_adev', phase_or_freq: str = 'frequency', max_integration_time: float = 1000):
+	"""Function that plots the Allan variance of the a frequency or phase time-series. Uses the Allan variance python library: https://allantools.readthedocs.io/en/latest/.
+
+				Args:
+					dictNet:  contains as parameters the information about properties of the network to be simulated, the initial conditions and the synchronized states under investigation
+					dictPLL:  contains as parameters the information about properties of the PLLs, its components, the time delays, the types of signals exchanged
+					dictData: contains the results of the simulation, i.e., the phases of all oscillators, time dependent parameters, etc.
+					t_transients_decayed: time after which transients have decayed to choose the part of the time-series to be analyzed
+					plotlist: list of all indexes of oscillators to be plotted/evaluated
+					type_def_allan: what type of Allan variance should be plotted, choose from 'overlapping_adev', 'modified_adev'
+					phase_or_freq: whether to generate of the frequency or the phase time-series (i.e., plotting frequency stability vs plotting ....): 'frequency', 'phase'
+
+				Returns:
+					saves plotted data to files
+			"""
+
+	dictPLL, dictNet = prepareDictsForPlotting(dictPLL, dictNet)
+	largest_averaging_window = max_integration_time
+	# A: make sure, that transients are not incorporated
+	# HOWTO 2) to determine the time to solutions, we find the time at the which the asymptotic value of the order parameter has been reached, we count from the time when we start increasing one of the coupling strengths
+	order_param_change_treshold = 0.01
+	smoothing = True
+	if smoothing:						# we find the last transient changes of the order parameter before its fluctuations/changes become smaller than the threshold
+		temp = np.where(uniform_filter1d((np.diff(dictData['orderParam'][dictNet['max_delay_steps']:]) / dictPLL['dt']), size=int(0.5 * np.mean(dictPLL['intrF']) / dictPLL['dt']), mode='reflect') > order_param_change_treshold)
+		# print('temp=', temp[0])
+	else:
+		temp = np.where((np.diff(dictData['orderParam'][dictNet['max_delay_steps']:]) / dictPLL['dt']) > order_param_change_treshold)
+		# print('temp=', temp[0])
+
+	if not len(temp[0]) == 0:
+		time_to_transient_decay = temp[0][-1] * dictPLL['dt']
+	else:
+		time_to_transient_decay = 0.2 * dictNet['Tsim']
+
+	if t_transients_decayed > time_to_transient_decay:
+		print('Initially provided time at which transients have decayed is larger then that measured from the order parameter. Adjusted to new time!')
+		t_transients_decayed = time_to_transient_decay
+	else:
+		print('Initially provided time at which transients have decayed is smaller then that measured from the order parameter. Adjusted to new time!')
+		t_transients_decayed = time_to_transient_decay
+
+	max_integration_time = dictNet['Tsim'] - t_transients_decayed - 5
+
+	# test whether time set for transients to have decayed is smaller than the simulation time
+	if dictNet['Tsim'] - t_transients_decayed >= max_integration_time:
+		print('Please adjust the t_transients_decayed to be smaller than the length of the time-series simulated.')
+
+	# list of averaging time/integration time, x-axis
+	tau_integration = np.logspace(start=0, stop=np.log10(largest_averaging_window), num=50, base=10)
+	if phase_or_freq == 'frequency':
+		y = np.diff(dictData['phi'][int(t_transients_decayed/dictPLL['dt']):-1, plotlist], axis=0) / dictPLL['dt']
+		data_type = 'freq'
+	elif phase_or_freq == 'phase':
+		print('Phase data transformed into phase in seconds for the allanvariance library used.')
+		sys.exit()			# use instantaneous frequency and phase to calculate a time  time-series in seconds, see docs of allanlib
+		y = dictData['phi'][int(t_transients_decayed/dictPLL['dt']):-1, plotlist]
+		data_type = 'phase'
+
+	# sample rate in Hz of the input data
+	sample_rate = 1 / dictPLL['dt']
+	t2_data_all_clocks = []
+	ad_data_all_clocks = []
+
+	for i in plotlist:
+		#print('Data:', y[:, i])
+		# compute the overlapping ADEV or... or...
+		if type_def_allan == 'overlapping_adev':
+			print('Calculating overlapping Allan variance for oscillator %i!'%(i))
+			(t2, ad, ade, adn) = allantools.oadev(y[:, i], rate=sample_rate, data_type=data_type, taus=tau_integration)
+			t2_data_all_clocks.append(t2)
+			ad_data_all_clocks.append(ad)
+		elif type_def_allan == 'modified_adev':
+			print('Calculating modified Allan variance for oscillator %i!'%(i))
+			(t2, ad, ade, adn) = allantools.mdev(y[:, i], rate=sample_rate, data_type=data_type, taus=tau_integration)
+			t2_data_all_clocks.append(t2)
+			ad_data_all_clocks.append(ad)
+		else:
+			print('Other types of Allan variances need to be implemented! See: https://allantools.readthedocs.io/en/latest/readme_copy.html#minimal-example-phase-data')
+
+	# create here a reference from a GWN source
+	if type_def_allan == 'overlapping_adev':
+		(t2_data_gwn_ref, ad_data_gwn_ref, errors, ns) = allantools.oadev(np.random.normal(0, np.sqrt(dictPLL['noiseVarVCO'] * dictPLL['dt']), len(y[:, 0])))
+	elif type_def_allan == 'modified_adev':
+		(t2_data_gwn_ref, ad_data_gwn_ref, errors, ns) = allantools.mdev(np.random.normal(0, np.sqrt(dictPLL['noiseVarVCO'] * dictPLL['dt']), len(y[:, 0])))
+	else:
+		print('Other types of Allan variances need to be implemented! See: https://allantools.readthedocs.io/en/latest/readme_copy.html#minimal-example-phase-data')
+
+	fig = plt.figure(figsize=(figwidth, figheight), dpi=dpi_val, facecolor='w', edgecolor='k')
+	fig.canvas.manager.set_window_title('%s Allan variance' % (type_def_allan))  # frequency and order parameter
+	fig.set_size_inches(plot_size_inches_x, plot_size_inches_y)
+
+	colors = ['b', 'r', 'c', 'g', 'k', 'm']
+	symbol = ['d', 'D', 's', 'o', 'v', '<', '>', '1', '2', '3', '4', '8', 's', 'p', 'P', 'h', 'H', 'x', 'X']
+
+	plt.loglog(t2_data_gwn_ref, ad_data_gwn_ref, 'y--', label=r'GWN(0, $\sigma_\textrm{vco}$)')
+	for i in range(len(plotlist)):
+		color_symbol = colors[i % len(colors)] + symbol[np.random.randint(0, len(symbol)-1)]
+		print('Picked symbol: ', color_symbol)
+		plt.loglog(t2_data_all_clocks, ad_data_all_clocks, color_symbol, markersize=2, label='PLL%i'%(plotlist[i]))
+
+	title_string = 'Allan variance of oscillators in loglog'
+	plt.title(title_string)
+	handles, labels = plt.gca().get_legend_handles_labels()
+	by_label = dict(zip(labels, handles))
+	plt.legend(by_label.values(), by_label.keys())
+	plt.xlabel(r'$\tau$')
+	plt.ylabel(r'$\sigma_\textrm{y}(\tau)$')
+
+	plt.savefig('results/%s_Allan_fsample%0.2f_%d_%d_%d.png' % (type_def_allan, dictPLL['sampleF'], now.year, now.month, now.day), dpi=dpi_val, bbox_inches = "tight")
+	plt.savefig('results/%s_Allan_fsample%0.2f_%d_%d_%d.svg' % (type_def_allan, dictPLL['sampleF'], now.year, now.month, now.day), dpi=dpi_val, bbox_inches = "tight")
+
+	return None
+
+# ################################################################################################################################################################################
+
+
 #
 # fig110 = plt.figure()
 # fig110.set_size_inches(plot_size_inches_x, plot_size_inches_y)

@@ -37,7 +37,8 @@ def getDicts(Fsim=55):
 		'my': -999,																# twist/chequerboard in y-direction
 		'topology': 'square-open',												# 1d) ring, chain, 2d) square-open, square-periodic, hexagonal...
 																				# 3) global, entrainOne-[ring,chain,square-open], entrainAll-[ring,chain,square-open], entrainPLLsHierarch, compareEntrVsMutual
-		'Tsim': 25,															# simulation time in multiples of the period
+		'normalize_mutual_coupling_by_inputs': True,  							# divide the sum over all inputs to a PLL by the number of inputs YES/NO -> True/False
+		'Tsim': 25,																# simulation time in multiples of the period
 		'computeFreqAndStab': False,											# compute linear stability and global frequency if possible: True or False
 		'phi_array_mult_tau': 1,												# how many multiples of the delay is stored of the phi time series
 		'phiPerturb': [0 for i in range(256)],									# delta-perturbation on initial state -- PROVIDE EITHER ONE OF THEM! if [] set to zero
@@ -79,8 +80,9 @@ def getDicts(Fsim=55):
 		'posZ': 0,
 		'initAntennaState': 0,
 		'antenna_sig': coupfct.sine,											# type of signal received by the antenna
-		'coup_fct_phase_shift': 0,												# phase shift in the coupling function in [0, 2pi], so far constant... may later dynamic
+		'coup_fct_phase_shift': 0,												# phase shift (not divided) in the coupling function in [0, 2pi], so far constant... may later dynamic
 		'extra_coup_sig': None,													# choose from: 'injection2ndHarm', None
+		'shil_generation_through_filter': False,  								# whether or not the SHIL signal is generated artificially or via the filtering through a band-pass filter
 		'coupStr_2ndHarm': 0.6,													# the coupling constant for the injection of the 2nd harmonic: float, will be independent of 'coupK'
 		'typeOfHist': 'syncState',												# string, choose from: 'freeRunning', 'syncState'
 		'sampleF': Fsim,														# sampling frequency
@@ -94,8 +96,7 @@ def getDicts(Fsim=55):
 	}
 
 	dictAlgo={
-		'bruteForceBasinStabMethod': 'single',									# pick method for setting realizations 'single', 'classicBruteForceMethodRotatedSpace', 'listOfInitialPhaseConfigurations', 'single', 'statistics'
-		'paramDiscretization': [7, 1],#[15, 10],								# parameter discetization for brute force parameter space scans
+		'bruteForceBasinStabMethod': 'single',									# pick method for setting realizations 'single', 'classicBruteForceMethodRotatedSpace', 'listOfInitialPhaseConfigurations', 'testNetworkMotifIsing'		'paramDiscretization': [7, 1],#[15, 10],								# parameter discetization for brute force parameter space scans
 		'param_id': 'None',														# parameter to be changed between different realizations, according to the min_max_range_parameter: 'None' or string of any other parameter
 		'min_max_range_parameter': [1-5E-9, 1+5E-9],							# specifies within which min and max value to linspace the initial frequency difference (w.r.t. HF Frequency, not divided)
 		'store_ctrl_and_clock': False,											# whether or not the control signals and clock signal is being computed (time and memory usage)

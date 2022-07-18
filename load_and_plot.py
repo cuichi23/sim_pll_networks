@@ -108,7 +108,7 @@ print('updated intrinsic freq:', dictPLL['intrF'])
 # 	}
 # else:
 # 	print('dictAlgo has been loaded!')
-#dictPLL, dictNet, dictAlgo = chk_dicts.check_dicts_consistency(dictPLL, dictNet, dictAlgo)
+dictPLL, dictNet, dictAlgo = chk_dicts.check_dicts_consistency(dictPLL, dictNet, dictAlgo)
 ################################################################################
 ################################################################################
 

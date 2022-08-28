@@ -615,7 +615,7 @@ class PhaseDetectorCombiner:
 
 
 class InjectionLockingSignal:
-	"""The Injection_locking_signal generates a 2nd harmonic signal (w.r.t. to the intrinsic frequency of the PLL) that is fed as a perturbation to each oscillator..
+	"""The Injection_locking_signal generates a 2nd harmonic signal (w.r.t. to the instantaneous frequency of the PLL) that is fed as a perturbation to each oscillator.
 
 		Attributes:
 			pll_id: the oscillator's identity
@@ -657,7 +657,10 @@ class InjectionLockingSignal:
 
 		if self.K2nd_k is not None:
 			print('Setup PLL with injection locking signal! Initial self.K2nd_k=', self.K2nd_k, 'Hz')
-		second_harmonic_from_feedback = 1
+
+		# ************************************ change this and introduce that choice or variable in the dicts
+		second_harmonic_from_feedback = 1	 #
+		# ************************************
 
 		# case of second harmonic injection locking driven by feedback signal with twice the frequency and coupling capacity proportional to the number of inputs
 		if second_harmonic_from_feedback == 1:

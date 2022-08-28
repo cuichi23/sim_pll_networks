@@ -66,14 +66,14 @@ annotationfont = {
 		}
 
 
-def evaluateSimulationIsing(poolData: dict, phase_wrap=0, number_of_bins=25, prob_density=False, order_param_solution=0.0, number_of_expected_oscis_in_one_group=10) -> None:
+def evaluateSimulationIsing(poolData: dict, phase_wrap=0, number_of_histogram_bins=25, prob_density=False, order_param_solution=0.0, number_of_expected_oscis_in_one_group=10) -> None:
 	"""
 		Evaluates the simulations with SHIL, solving the MAX-cut problem in this case
 
 		Args:
 			poolData: [dict] contains all the data of the simulations to be evaluated and the settings
 			phase_wrap: [integer] whether phases are wrapped into the interval 0) [0, 2*pi), 1) [-pi, pi), or 2) [-pi/2, 3*pi/2)
-			number_of_bins: [integer] the number of bins of the histogram of phases plotted for the final state of the simulation
+			number_of_histogram_bins: [integer] the number of bins of the histogram of phases plotted for the final state of the simulation
 			prob_density: [boolean] whether histograms are normalized to become probability densities
 			order_param_solution: [float] expected order parameter of the asymptotic state if the correct benchmark solution has been found
 			number_of_expected_oscis_in_one_group: [integer] number of oscillators in the one of the two groups that form asymptotically
@@ -297,10 +297,10 @@ def evaluateSimulationIsing(poolData: dict, phase_wrap=0, number_of_bins=25, pro
 
 
 		if phase_wrap == 0:  # plot phase differences in [-inf, inf), i.e., we use the unwrapped phases that have counted the cycles/periods
-			ax20[i].hist(poolData[0][i]['dictData']['phi'][-3, :] - poolData[0][i]['dictData']['phi'][-2, 0], bins=number_of_bins, rwidth=0.9, density=prob_density)
+			ax20[i].hist(poolData[0][i]['dictData']['phi'][-3, :] - poolData[0][i]['dictData']['phi'][-2, 0], bins=number_of_histogram_bins, rwidth=0.9, density=prob_density)
 		elif phase_wrap != 0:
 			# print('histogram_data (wrapping if phase):', ((dictData['phi'][at_index, plotlist] + shift2piWin) % (2 * np.pi)) - shift2piWin)
-			ax20[i].hist((((poolData[0][i]['dictData']['phi'][-3, :] - poolData[0][i]['dictData']['phi'][-2, 0] + shift2piWin) % (2.0 * np.pi)) - shift2piWin), bins=number_of_bins, rwidth=0.9, density=prob_density)
+			ax20[i].hist((((poolData[0][i]['dictData']['phi'][-3, :] - poolData[0][i]['dictData']['phi'][-2, 0] + shift2piWin) % (2.0 * np.pi)) - shift2piWin), bins=number_of_histogram_bins, rwidth=0.9, density=prob_density)
 
 		for j in range(len(poolData[0][i]['dictData']['phi'][0, :])):
 			if shift2piWin != 0:
@@ -334,7 +334,7 @@ def evaluateSimulationIsing(poolData: dict, phase_wrap=0, number_of_bins=25, pro
 
 		if i == int( len(poolData[0][:]) / 2 ):
 			ax16[i].set_ylabel(r'$\Delta\theta(t)$', fontsize=axisLabel)
-			ax161[i].set_ylabel(r'$\langle\Delta\theta(t)\rangle_{%0.1f T}$'%(number_of_intrinsic_periods_smoothing), fontsize=axisLabel)
+			ax161[i].set_ylabel(r'$\langle\Delta\theta(t)\rangle_{%0.1f T}$' % number_of_intrinsic_periods_smoothing, fontsize=axisLabel)
 			ax17[i].set_ylabel(r'$\dot{\theta}(t)$ in radHz', fontsize=axisLabel)
 			ax18[i].set_ylabel(r'$R(t)$', fontsize=axisLabel)
 			ax19[i].set_ylabel(r'$s(t)$', fontsize=axisLabel)
@@ -441,3 +441,43 @@ def evaluateSimulationIsing(poolData: dict, phase_wrap=0, number_of_bins=25, pro
 	plt.show()
 
 	return None
+
+
+class EvaluateAndPlotIsingMachineSimulation:
+	"""Methods to evaluate automatically the time-series of Ising Machine simulations for networks of electronic oscillators. Plot the results.
+
+		Attributes:
+			pll_id: the oscillator's identity
+			intrinsic_freq: intrinsic frequency in Hz
+			intrinsic_freq_rad: intrinsic frequency in radHz
+
+	"""
+	def __init__(self, poolData: dict, phase_wrap=0, number_of_histogram_bins=25, prob_density=False, order_param_solution=0.0, number_of_expected_oscis_in_one_group=10) -> None:
+		"""
+		Args:
+			poolData: [dict] contains all the data of the simulations to be evaluated and the settings
+			phase_wrap: [integer] whether phases are wrapped into the interval 0) [0, 2*pi), 1) [-pi, pi), or 2) [-pi/2, 3*pi/2)
+			number_of_histogram_bins: [integer] the number of bins of the histogram of phases plotted for the final state of the simulation
+			prob_density: [boolean] whether histograms are normalized to become probability densities
+			order_param_solution: [float] expected order parameter of the asymptotic state if the correct benchmark solution has been found
+			number_of_expected_oscis_in_one_group: [integer] number of oscillators in the one of the two groups that form asymptotically
+		"""
+
+		if phase_wrap == 1:  	# plot phase-differences in [-pi, pi) interval
+			self.shift2piWin = np.pi
+		elif phase_wrap == 2:  # plot phase-differences in [-pi/2, 3*pi/2) interval
+			self.shift2piWin = 0.5 * np.pi
+		elif phase_wrap == 3:  # plot phase-differences in [0, 2*pi) interval
+			self.shift2piWin = 0
+
+	def function(self, argument) -> None:
+		"""
+		Does XY.
+
+		Args:
+			argument: explanation
+
+		Returns:
+		"""
+
+		return None

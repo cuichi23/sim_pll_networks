@@ -95,10 +95,12 @@ def getDicts(Fsim=55):
 	}
 
 	dictAlgo={
-		'bruteForceBasinStabMethod': 'listOfInitialPhaseConfigurations',		# pick method for setting realizations 'classicBruteForceMethodRotatedSpace', 'listOfInitialPhaseConfigurations'
-		'paramDiscretization': [7, 1],#[15, 10],								# parameter discetization for brute force parameter space scans
+		'bruteForceBasinStabMethod': 'listOfInitialPhaseConfigurations',		# pick method for setting realizations 'single', 'classicBruteForceMethodRotatedSpace', 'listOfInitialPhaseConfigurations', 'testNetworkMotifIsing', 'statistics'
+		'paramDiscretization': [7, 1],           								# parameter discetization for brute force parameter space scans, e.g., [15, 10], [15, 1]
 		'param_id': 'None',														# parameter to be changed between different realizations, according to the min_max_range_parameter: 'None' or string of any other parameter
 		'min_max_range_parameter': [0.95, 1.05],								# specifies within which min and max value to linspace the initial frequency difference (w.r.t. HF Frequency, not divided)
+		'param_id_1': 'None',  													# parameter to be changed between different realizations, according to the min_max_range_parameter: 'None' or string of any other parameter
+		'min_max_range_parameter_1': [0.95, 1.05],  							# specifies within which min and max value to linspace the initial frequency difference (w.r.t. HF Frequency, not divided)
 		'store_ctrl_and_clock': False,											# whether or not the control signals and clock signal is being computed (time and memory usage)
 		'store_phases_tau_array': True  										# whether or not the phases are saved when simulation on tau-array
 	}

@@ -97,7 +97,7 @@ def generate_space(dict_pll: dict, dict_net: dict, dict_data: dict):
 
 def generate_phi0(dict_net: dict) -> None:
 	"""
-	Set the initial phase perturbation of each oscillator in the network
+	Set the initial phase perturbation of each oscillator in the network depending on the type of solution to be investigated.
 
 	Args:
 		dict_net:  [dict] contains the setup information for the network and simulation
@@ -106,11 +106,11 @@ def generate_phi0(dict_net: dict) -> None:
 		None
 	"""
 
-	if ( dict_net['topology'] == 'entrainOne' or dict_net['topology'] == 'entrainAll' ):
+	if 'entrainOne' in dict_net['topology'] or 'entrainAll' in dict_net['topology']:
 		print('Provide phase-configuration for these cases in physical coordinates!')
 		#phiM  = eva.rotate_phases(phiSr.flatten(), isInverse=False);
 		phiM  = dict_net['phiConfig']											# phiConfig: user specified configuration of initial phi states
-		special_case = 0;
+		special_case = 0
 		if special_case == 1:
 			phiS  = np.array([2., 2., 2.])
 			dict_net.update({'phiSr': eva.rotate_phases(phiS.flatten(), isInverse=True)})
@@ -184,7 +184,10 @@ def generate_phi0(dict_net: dict) -> None:
 			# 	dict_net.update({'phiPerturb': np.zeros(dict_net['Nx']*dict_net['Ny'])})
 			# 	dict_net.update({'phiPerturbRot': np.zeros(dict_net['Nx']*dict_net['Ny'])})
 
-	twistdelta=0; cheqdelta=0; twistdelta_x=0; twistdelta_y=0;
+	twistdelta = 0
+	cheqdelta = 0
+	twistdelta_x = 0
+	twistdelta_y = 0
 	if not ( dict_net['topology'] == 'ring' or dict_net['topology'] == 'chain' ):
 		if dict_net['topology'] == 'square-open' or dict_net['topology'] == 'hexagon' or dict_net['topology'] == 'octagon':
 			cheqdelta_x = np.pi 												# phase difference between neighboring oscillators in a stable chequerboard state
@@ -468,45 +471,45 @@ def setup_topology(dict_net: dict) -> Union[DiGraph, {is_multigraph, is_directed
 
 		elif dict_net['topology'] == 'hexagon':
 			print('\nIf Nx =! Ny, then check the graph that is generated again!')
-			G=nx.grid_2d_graph(dict_net['Nx'],dict_net['Ny'])							# why not ..._graph(Nx,Ny) ? NOTE the for n in G: loop has to be changed, loop over nx and ny respectively, etc....
+			G = nx.grid_2d_graph(dict_net['Nx'],dict_net['Ny'])							# why not ..._graph(Nx,Ny) ? NOTE the for n in G: loop has to be changed, loop over nx and ny respectively, etc....
 			for n in G:
-				x,y=n
-				if x>0 and y>0:
-					G.add_edge(n,(x-1,y-1))
-				if x<Nx-1 and y<Ny-1:
-					G.add_edge(n,(x+1,y+1))
+				x, y = n
+				if x > 0 and y > 0:
+					G.add_edge(n, (x-1, y-1))
+				if x < Nx-1 and y < Ny-1:
+					G.add_edge(n, (x+1, y+1))
 
 		elif dict_net['topology'] == 'hexagon-periodic':
-			G=nx.grid_2d_graph(dict_net['Nx'],dict_net['Ny'], periodic=True)
+			G = nx.grid_2d_graph(dict_net['Nx'],dict_net['Ny'], periodic=True)
 			for n in G:
-				x,y=n
-				G.add_edge(n, ((x-1)%dict_net['Nx'], (y-1)%dict_net['Ny']))
+				x, y = n
+				G.add_edge(n, ((x-1) % dict_net['Nx'], (y-1) % dict_net['Ny']))
 
 		elif dict_net['topology'] == 'octagon':									# why not ..._graph(Nx,Ny) ? NOTE the for n in G: loop has to be changed, loop over nx and ny respectively, etc....
 			print('\nIf Nx =! Ny, then check the graph that is generated again!')
-			G=nx.grid_2d_graph(dict_net['Nx'],dict_net['Ny'])
+			G = nx.grid_2d_graph(dict_net['Nx'],dict_net['Ny'])
 			for n in G:
-				x,y=n
-				if x>0 and y>0:
-					G.add_edge(n,(x-1,y-1))
-				if x<Nx-1 and y<Ny-1:
-					G.add_edge(n,(x+1,y+1))
-				if x<Nx-1 and y>0:
-					G.add_edge(n,(x+1,y-1))
-				if x<Nx-1 and y>0:
-					G.add_edge(n,(x+1,y-1))
-				if x>0 and y<Ny-1:
-					G.add_edge(n,(x-1,y+1))
+				x, y = n
+				if x > 0 and y > 0:
+					G.add_edge(n, (x-1, y-1))
+				if x < Nx-1 and y < Ny-1:
+					G.add_edge(n, (x+1, y+1))
+				if x < Nx-1 and y > 0:
+					G.add_edge(n, (x+1, y-1))
+				if x < Nx-1 and y > 0:
+					G.add_edge(n, (x+1, y-1))
+				if x > 0 and y < Ny-1:
+					G.add_edge(n, (x-1, y+1))
 
 		elif dict_net['topology'] == 'octagon-periodic':
-			G=nx.grid_2d_graph(dict_net['Nx'],dict_net['Ny'], periodic=True)
+			G = nx.grid_2d_graph(dict_net['Nx'], dict_net['Ny'], periodic=True)
 			for n in G:
-				x,y=n
-				G.add_edge(n, ((x-1)%dict_net['Nx'], (y-1)%dict_net['Ny']))
-				G.add_edge(n, ((x-1)%dict_net['Nx'], (y+1)%dict_net['Ny']))
+				x, y = n
+				G.add_edge(n, ((x-1) % dict_net['Nx'], (y-1) % dict_net['Ny']))
+				G.add_edge(n, ((x-1) % dict_net['Nx'], (y+1) % dict_net['Ny']))
 
 		# G = nx.convert_node_labels_to_integers(G)
-		G = nx.convert_node_labels_to_integers(G, first_label=0, ordering='sorted') # converts 2d coordinates to 1d index of integers, e.g., k=0,...,N-1
+		G = nx.convert_node_labels_to_integers(G, first_label=0, ordering='sorted') 						# converts 2d coordinates to 1d index of integers, e.g., k=0,...,N-1
 
 	if dict_net['Nx']*dict_net['Ny'] < 36 and not (dict_net['special_case'] == 'timeDepChangeOfCoupStr' or dict_net['special_case'] == 'timeDepInjectLockCoupStr'):
 		plt.figure(99999)
@@ -530,7 +533,7 @@ def all_initial_phase_combinations(dict_pll: dict, dict_net: dict, dict_algo: di
 		paramDiscretization: [integer] specifies the discretization of the parameters
 
 	Returns:
-		time series as np.ndarray that contains the values of the parameter over time
+		a list of lists and a list of all combinations of this
 	"""
 
 	if isinstance(paramDiscretization, np.int):
@@ -539,7 +542,8 @@ def all_initial_phase_combinations(dict_pll: dict, dict_net: dict, dict_algo: di
 		paramDiscr = paramDiscretization
 		print('List of paramDiscretizations was provided individually for the x- and y-axis.')
 	else:
-		print('Variable paramDiscretization needs to be integer or list of integers!'); sys.exit()
+		print('Variable paramDiscretization needs to be integer or list of integers!')
+		sys.exit()
 
 	if dict_net['Nx']*dict_net['Ny'] == 2:
 		if dict_algo['bruteForceBasinStabMethod'] == 'listOfInitialPhaseConfigurations' and ( isinstance(dict_algo['min_max_range_parameter'], list) or isinstance(dict_algo['min_max_range_parameter'], np.ndarray) ):
@@ -608,5 +612,30 @@ def all_initial_phase_combinations(dict_pll: dict, dict_net: dict, dict_algo: di
 		allPoints 			= list(_allPoints)									# scanValues is a list of lists: create a new list that gives all the possible combinations of items between the lists
 		allPoints 			= np.array(allPoints) 								# convert the list to an array
 	#print('scanValues:', scanValues, '\tallPoints:', allPoints); sys.exit()
+
+	return scanValues, allPoints
+
+################################################################################
+def all_parameter_combinations_2d(dict_pll: dict, dict_net: dict, dict_algo: dict):
+	"""
+	Generates all parameter combinations for the different simulation realizations to be computed.
+
+	Args:
+		dict_pll:  [dict] contains the setup information for the PLL objects
+		dict_net:  [dict] contains the setup information for the network and simulation
+		dict_algo: [dict] contains the information which parameters are being changed, with which discretization
+
+	Returns:
+		list of lists with parameters to be scanned and array
+	"""
+
+	parameter_sweep_0 = np.linspace( dict_algo['min_max_range_parameter'][0], dict_algo['min_max_range_parameter'][1], dict_algo['paramDiscretization'][0] )
+	parameter_sweep_1 = np.linspace( dict_algo['min_max_range_parameter_1'][0], dict_algo['min_max_range_parameter_1'][1], dict_algo['paramDiscretization'][1] )
+
+	scanValues = np.array([parameter_sweep_0, parameter_sweep_1], dtype=object)
+	_allPoints = itertools.product(scanValues[0], scanValues[1])
+	allPoints = list(_allPoints)  								# scanValues is a list of lists: create a new list that gives all the possible combinations of items between the lists
+	allPoints = np.array(allPoints)  							# convert the list to an array
+
 
 	return scanValues, allPoints

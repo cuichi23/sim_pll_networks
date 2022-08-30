@@ -636,7 +636,7 @@ def evolve_system_on_tsim_array_time_dependent_change_of_coupling_strength_shil(
 		# phidot = (phi[1:,0]-phi[:-1,0])/(2*np.pi*dictPLL['dt'])
 		# line = livplt.live_plotter(tlive, phidot, line)
 
-	t = np.arange(0,len(phi_store[0:dictNet['max_delay_steps']+dictPLL['sim_time_steps'],0]))*dictPLL['dt']
+	t = np.arange(0, len(phi_store[0:dictNet['max_delay_steps']+dictPLL['sim_time_steps'], 0]))*dictPLL['dt']
 	dictData.update({'t': t, 'phi': phi_store, 'clock_counter': clk_store, 'timeDepPara': couplingStrVal_vs_time})
 
 

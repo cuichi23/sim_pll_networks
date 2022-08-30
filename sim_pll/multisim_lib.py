@@ -99,9 +99,8 @@ def distributeProcesses(dictNet: dict, dictPLL: dict, dictAlgo=None) -> object:
 			print('scanValues:', scanValues); #sys.exit()
 
 	elif dictAlgo['bruteForceBasinStabMethod'] == 'two_parameter_sweep':  	# organize after the data has been collected
-		scanValues, allPoints = setup.all_initial_phase_combinations(dictPLL, dictNet, dictAlgo,
-																	 paramDiscretization=dictAlgo['paramDiscretization'])  # set paramDiscretization for the number of points to be simulated
-		print('scanning 2d parameter regime {', dictAlgo['param_id'], dictAlgo['param_id_1'], '} allPoints:', [allPoints], '\nscanValues', scanValues)
+		scanValues, allPoints = setup.all_parameter_combinations_2d(dictPLL, dictNet, dictAlgo)  # set paramDiscretization for the number of points to be simulated
+		print('scanning 2d parameter regime {', dictAlgo['param_id'], ',', dictAlgo['param_id_1'], '} allPoints:', [allPoints], '\nscanValues', scanValues)
 		Nsim = allPoints.shape[0]
 		print('multiprocessing', Nsim, 'realizations')
 
@@ -113,7 +112,7 @@ def distributeProcesses(dictNet: dict, dictPLL: dict, dictAlgo=None) -> object:
 	number_period_dyn = 20.5
 	initPhiPrime0 = 0
 
-	np.random.seed(self)
+	np.random.seed()
 	poolData = []																# should this be recasted to be an np.array?
 	freeze_support()
 	pool = Pool(processes=6)													# create a Pool object, pick number of processes
@@ -174,7 +173,11 @@ def distributeProcesses(dictNet: dict, dictPLL: dict, dictAlgo=None) -> object:
 		plt.show()
 
 	elif dictAlgo['bruteForceBasinStabMethod'] == 'classicBruteForceMethodRotatedSpace':
-		print('Implement evaluation as in the old version! Copy plots, etc...'); sys.exit()
+		print('Implement evaluation as in the old version! Copy plots, etc...')
+		sys.exit()
+
+	elif dictAlgo['bruteForceBasinStabMethod'] == 'two_parameter_sweep':
+		eva.XYZ
 
 	return poolData
 
@@ -287,15 +290,15 @@ def multihelper(iterConfig, initPhiPrime0, dictNet, dictPLL, dictAlgo, param_id=
 	elif dictAlgo['bruteForceBasinStabMethod'] == 'two_parameter_sweep':
 		change_param = list(iterConfig)
 
-		print('change_param:', change_param)
+		print('######### realization: {delay, intrinsic freqs.} #########\n', change_param[0], change_param[1])
 
 		# make also copies of all other dictionaries so that later changes to not interfere with other realizations
 		dictPLLRea = dictPLL.copy()
 		dictAlgoRea = dictAlgo.copy()
 		dictNetRea = dictNet.copy()
 		if not dictAlgo['param_id'] == 'None' and not dictAlgo['param_id_1'] == 'None':
-			dictPLLRea.update({'intrF': change_param[0]})
-			dictPLLRea.update({'phiPerturb': change_param[1]})
+			dictPLLRea.update({dictAlgo['param_id']: change_param[0]})
+			dictPLLRea.update({dictAlgo['param_id_1']: change_param[1]})
 			# print('dictNet[*phiPerturb*]', dictNet['phiPerturb'])
 		else:
 			print('No parameters for sweep specified -- hence simulating the same parameter set for all realizations!')

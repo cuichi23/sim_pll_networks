@@ -115,7 +115,9 @@ def check_dicts_consistency(dictPLL, dictNet, dictAlgo):
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+	# if 'entrain' in dict_net['topology'] and (dict_algo['param_id'] == 'intrF' or dict_algo['param_id_1'] == 'intrF'):
 	if dictNet['topology'].find('entrain') != -1:
+		print('Simulation of entrainment case: the first component of the list of intrinsic frequencies denotes that of the reference oscillator!')
 		if isinstance(dictPLL['coupK'], list) or isinstance(dictPLL['coupK'], np.ndarray):
 			if not dictPLL['coupK'][0] == 0:
 				print('ABORT: simulating a topology with a reference oscillator. This needs to be the one indexed by k=0, hence dictPLL[*coupK*][0] needs to be zero!')
@@ -194,9 +196,7 @@ def check_dicts_consistency(dictPLL, dictNet, dictAlgo):
 
 	return dictPLL, dictNet, dictAlgo
 
-
-
-
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
 # helper functions

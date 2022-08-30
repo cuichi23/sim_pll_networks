@@ -32,7 +32,7 @@ def getDicts(Fsim=125):
 	dictNet={
 		'Nx': 3,																# oscillators in x-direction
 		'Ny': 1,																# oscillators in y-direction
-		'mx': 0	,																# twist/chequerboard in x-direction (depends on closed or open boundary conditions)
+		'mx': 0,																# twist/chequerboard in x-direction (depends on closed or open boundary conditions)
 		'my': 0,																# twist/chequerboard in y-direction
 		'topology': 'entrainOne-ring',											# 1d) ring, chain, 2d) square-open, square-periodic, hexagonal...
 																				# 3) global, entrainOne-[ring,chain,square-open], entrainAll-[ring,chain,square-open], entrainPLLsHierarch, compareEntrVsMutual
@@ -50,10 +50,10 @@ def getDicts(Fsim=125):
 	}
 
 	dictPLL={
-		'intrF': [2.4, 1.004, 0.996],											# intrinsic frequency in Hz
-		'syncF': 2.4,															# frequency of synchronized state in Hz
+		'intrF': [2.4, 1.004, 0.996],											# intrinsic frequency in Hz: Note that always he first entry is that of the reference!
+		'syncF': 1,																# frequency of synchronized state in Hz
 		'coupK': [0., 0.408, 0.4225],											# [random.uniform(0.3, 0.4) for i in range(dictNet['Nx']*dictNet['Ny'])],# coupling strength (like phase model: K = Kvco/2 * G_all, NOTE: the /2 is for coupling functions that have peak2peal amplitude 2) in Hz float or [random.uniform(minK, maxK) for i in range(dictNet['Nx']*dictNet['Ny'])]
-		'gPDin': 8.5,																# gains of the different inputs to PD k from input l -- G_kl, see PD, set to 1 and all G_kl=1 (so far only implemented for some cases, check!): np.random.uniform(0.95,1.05,size=[dictNet['Nx']*dictNet['Ny'],dictNet['Nx']*dictNet['Ny']])
+		'gPDin': 1.0,	#8.5													# gains of the different inputs to PD k from input l -- G_kl, see PD, set to 1 and all G_kl=1 (so far only implemented for some cases, check!): np.random.uniform(0.95,1.05,size=[dictNet['Nx']*dictNet['Ny'],dictNet['Nx']*dictNet['Ny']])
 		'gPDin_symmetric': True,												# set to True if G_kl == G_lk, False otherwise
 		'cutFc': [0., 0.0156, 0.0156],											# LF cut-off frequency in Hz, None for no LF, or e.g., N=9 with mean 0.015: [0.05,0.015,0.00145,0.001,0.0001,0.001,0.00145,0.015,0.05], [0.0148, 0.0148, 0.0957, 0.0957, 0.0148, 0.0148, 0.0957, 0.0957, 0.0148, 0.0148, 0.0957, 0.0957, 0.0148, 0.0148, 0.0957, 0.0957] # [0.0148, 0.0957, 0.0148, 0.0957, 0.0148, 0.0957, 0.0148, 0.0957, 0.0148, 0.0957, 0.0148, 0.0957, 0.0148, 0.0957, 0.0148, 0.0957], #
 		'orderLF': 1,															# order of LF filter, either 1 or 2 at the moment (not compatible with synctools!)
@@ -96,9 +96,9 @@ def getDicts(Fsim=125):
 
 	dictAlgo={
 		'bruteForceBasinStabMethod': 'two_parameter_sweep',						# pick method for setting realizations 'single', 'classicBruteForceMethodRotatedSpace', 'listOfInitialPhaseConfigurations', 'two_parameter_sweep'
-		'paramDiscretization': [7, 7],											# parameter discretization for brute force initial phases and parameter space scans
+		'paramDiscretization': [3, 3],											# parameter discretization for brute force initial phases and parameter space scans
 		'param_id': 'tranmission_delay',										# parameter to be changed between different realizations, according to the min_max_range_parameter: 'None' or string of any other parameter
-		'min_max_range_parameter': [0.0, 5.0],									# specifies within which min and max value to linspace the initial frequency difference (w.r.t. HF Frequency, not divided)
+		'min_max_range_parameter': [0.1, 5.0],									# specifies within which min and max value to linspace the initial frequency difference (w.r.t. HF Frequency, not divided)
 		'param_id_1': 'intrF',  												# parameter to be changed between different realizations, according to the min_max_range_parameter: 'None' or string of any other parameter
 		'min_max_range_parameter_1': [0.7, 1.3],  								# specifies within which min and max value to linspace the initial frequency difference (w.r.t. HF Frequency, not divided)
 		'store_ctrl_and_clock': True,											# whether the control signals and clock signal is being computed (time and memory usage)

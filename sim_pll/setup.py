@@ -2,7 +2,8 @@
 from __future__ import division
 from __future__ import print_function
 
-import sys, gc
+import sys
+import gc
 import numpy as np
 #cimport numpy as np
 #cimport cython
@@ -12,6 +13,8 @@ from scipy.signal import square
 from scipy.stats import cauchy
 
 import itertools
+
+from typing import Union
 
 #import matplotlib
 import matplotlib.pyplot as plt
@@ -372,7 +375,7 @@ def setup_time_dependent_parameter(dict_net: dict, dict_pll: dict, dict_data: di
 
 
 ################################################################################
-def setup_topology(dict_net: dict) -> Union[DiGraph, {is_multigraph, is_directed, add_node, nodes, remove_node, add_edges_from}]:
+def setup_topology(dict_net: dict):
 	"""
 	Generate a graph object of the network with the specified topology to compute the interactions between the oscillators.
 	Will be used to assign the coupling partners of each oscillator.
@@ -631,6 +634,17 @@ def all_parameter_combinations_2d(dict_pll: dict, dict_net: dict, dict_algo: dic
 
 	parameter_sweep_0 = np.linspace( dict_algo['min_max_range_parameter'][0], dict_algo['min_max_range_parameter'][1], dict_algo['paramDiscretization'][0] )
 	parameter_sweep_1 = np.linspace( dict_algo['min_max_range_parameter_1'][0], dict_algo['min_max_range_parameter_1'][1], dict_algo['paramDiscretization'][1] )
+
+	# in the case of entrainment only the frequency of the reference oscillator is to be changed
+	if 'entrain' in dict_net['topology'] and dict_algo['param_id'] == 'intrF':
+		print('In the case of entrainment only the frequency of the reference oscillator is to be changed!')
+		temp = dict_pll['intrF'][1:]
+		parameter_sweep_0 = [[i]+temp for i in parameter_sweep_0]
+	elif 'entrain' in dict_net['topology'] and dict_algo['param_id_1'] == 'intrF':
+		print('In the case of entrainment only the frequency of the reference oscillator is to be changed!')
+		temp = dict_pll['intrF'][1:]
+		parameter_sweep_1 = [[i] + temp for i in parameter_sweep_1]
+
 
 	scanValues = np.array([parameter_sweep_0, parameter_sweep_1], dtype=object)
 	_allPoints = itertools.product(scanValues[0], scanValues[1])

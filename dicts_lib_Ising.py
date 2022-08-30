@@ -37,7 +37,7 @@ def getDicts(Fsim=125):
 		'topology': 'global',													# 1d) ring, chain, 2d) square-open, square-periodic, hexagonal...
 																				# 3) global, entrainOne-[ring,chain,square-open], entrainAll-[ring,chain,square-open], entrainPLLsHierarch, compareEntrVsMutual
 		'normalize_mutual_coupling_by_inputs': False, 							# divide the sum over all inputs to a PLL by the number of inputs YES/NO -> True/False
-		'Tsim': 4500,															# simulation time in multiples of the period
+		'Tsim': 45,															# simulation time in multiples of the period
 		'computeFreqAndStab': False,											# compute linear stability and global frequency if possible: True or False (only identical oscis and Kuramoto 2nd order)
 		'phi_array_mult_tau': 1,												# how many multiples of the delay is stored of the phi time series
 		'phiInitConfig': [],#[0, np.pi, np.pi, np.pi],							# phase-configuration of sync state,  []: automatic, else provide list

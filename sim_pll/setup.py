@@ -111,8 +111,12 @@ def generate_phi0(dict_net: dict) -> None:
 
 	if 'entrainOne' in dict_net['topology'] or 'entrainAll' in dict_net['topology']:
 		print('Provide phase-configuration for these cases in physical coordinates!')
+		sys.exit()
 		#phiM  = eva.rotate_phases(phiSr.flatten(), isInverse=False);
-		phiM  = dict_net['phiConfig']											# phiConfig: user specified configuration of initial phi states
+		phiM = dict_net['phiConfig']											# phiConfig: user specified configuration of initial phi states
+
+		replace here to calculate that externally from a script?!
+
 		special_case = 0
 		if special_case == 1:
 			phiS  = np.array([2., 2., 2.])
@@ -632,8 +636,8 @@ def all_parameter_combinations_2d(dict_pll: dict, dict_net: dict, dict_algo: dic
 		list of lists with parameters to be scanned and array
 	"""
 
-	parameter_sweep_0 = np.linspace( dict_algo['min_max_range_parameter'][0], dict_algo['min_max_range_parameter'][1], dict_algo['paramDiscretization'][0] )
-	parameter_sweep_1 = np.linspace( dict_algo['min_max_range_parameter_1'][0], dict_algo['min_max_range_parameter_1'][1], dict_algo['paramDiscretization'][1] )
+	parameter_sweep_0 = np.linspace(dict_algo['min_max_range_parameter'][0], dict_algo['min_max_range_parameter'][1], dict_algo['paramDiscretization'][0])
+	parameter_sweep_1 = np.linspace(dict_algo['min_max_range_parameter_1'][0], dict_algo['min_max_range_parameter_1'][1], dict_algo['paramDiscretization'][1])
 
 	# in the case of entrainment only the frequency of the reference oscillator is to be changed
 	if 'entrain' in dict_net['topology'] and dict_algo['param_id'] == 'intrF':
@@ -645,11 +649,13 @@ def all_parameter_combinations_2d(dict_pll: dict, dict_net: dict, dict_algo: dic
 		temp = dict_pll['intrF'][1:]
 		parameter_sweep_1 = [[i] + temp for i in parameter_sweep_1]
 
-
 	scanValues = np.array([parameter_sweep_0, parameter_sweep_1], dtype=object)
-	_allPoints = itertools.product(scanValues[0], scanValues[1])
+
+	if 'entrain' in dict_net['topology'] and (isinstance(dict_pll['intrF'], list) or isinstance(dict_pll['intrF'], np.ndarray)):
+		_allPoints = itertools.product([i[0] for i in scanValues[0]], scanValues[1])
+	else:
+		_allPoints = itertools.product(scanValues[0], scanValues[1])
 	allPoints = list(_allPoints)  								# scanValues is a list of lists: create a new list that gives all the possible combinations of items between the lists
 	allPoints = np.array(allPoints)  							# convert the list to an array
-
 
 	return scanValues, allPoints

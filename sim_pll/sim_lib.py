@@ -240,10 +240,10 @@ def perform_simulation_case(dictNet: dict, dictPLL: dict, dictAlgo: dict, dictDa
 				evolve_system_on_tsim_array_time_dependent_change_of_coupling_strength_shil_explicit_shil_filtering(dictNet, dictPLL, pll_list, dictData, dictAlgo)
 		else:
 			evolve_system_on_tsim_array_time_dependent_change_of_coupling_strength(dictNet, dictPLL, pll_list, dictData, dictAlgo)
-		# run evaluations
-		perform_evaluation(dictNet, dictPLL, dictData)
-		if dictAlgo['bruteForceBasinStabMethod'] is None:
-			plot.plotOrderPvsTimeDepPara(dictPLL, dictNet, dictData, dictAlgo)
+	# run evaluations
+	perform_evaluation(dictNet, dictPLL, dictData)
+	if dictAlgo['bruteForceBasinStabMethod'] is None:
+		plot.plotOrderPvsTimeDepPara(dictPLL, dictNet, dictData, dictAlgo)
 
 
 def perform_evaluation(dictNet: dict, dictPLL: dict, dictData: dict) -> None:
@@ -808,16 +808,16 @@ def distributed_pll_in_3d_mobile(dictNet, dictPLL, phi, pos, coup_matrix, clock_
 
 		# set the current time-delays and coupling parterns is range for all oscillators receiving signals from past or current neighbors:
 		# NOTE that there is a time shift by the maximum delay until an oscillator receives the signal of an oscillator that enters his reception zone
-		[pll.delayer.set_list_of_current_neighbors(current_adjacency_matrix[:,pll.pll_id].tolist()) for pll in pll_list]
-		[pll.delayer.set_current_transmit_delay_steps(current_transmit_delay_steps[:,pll.pll_id].tolist()) for pll in pll_list]
+		[pll.delayer.set_list_of_current_neighbors(current_adjacency_matrix[:, pll.pll_id].tolist()) for pll in pll_list]
+		[pll.delayer.set_current_transmit_delay_steps(current_transmit_delay_steps[:, pll.pll_id].tolist()) for pll in pll_list]
 		# advance the phases of all oscillators by one time-increment
-		phi[(idx_time+1)%phi_array_len,:] = [pll.next(idx_time,phi_array_len,phi) for pll in pll_list] # now the network is iterated, starting at t=0 with the history as prepared above
+		phi[(idx_time+1) % phi_array_len, :] = [pll.next(idx_time, phi_array_len, phi) for pll in pll_list] # now the network is iterated, starting at t=0 with the history as prepared above
 		# calculate the clocks' state from the current phases
-		clock_counter[(idx_time+1)%phi_array_len,:] = [pll.clock_halfperiods_count(phi[(idx_time+1)%phi_array_len,pll.pll_id]) for pll in pll_list]
+		clock_counter[(idx_time+1) % phi_array_len, :] = [pll.clock_halfperiods_count(phi[(idx_time+1) % phi_array_len, pll.pll_id]) for pll in pll_list]
 
 		# write out current states to data containers
-		clock_signal_store[idx_time+1,:] = clock_counter[(idx_time+1)%phi_array_len,:]
-		phases_store[idx_time+1,:] = phi[(idx_time+1)%phi_array_len,:]
+		clock_signal_store[idx_time+1, :] = clock_counter[(idx_time+1) % phi_array_len, :]
+		phases_store[idx_time+1, :] = phi[(idx_time+1) % phi_array_len, :]
 
 
 	t = np.arange(0,len(phi_store[0:dictNet['max_delay_steps']+dictPLL['sim_time_steps'],0]))*dictPLL['dt']

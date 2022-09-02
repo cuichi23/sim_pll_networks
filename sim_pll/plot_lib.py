@@ -1179,6 +1179,490 @@ def plot_allan_variance(dictPLL: dict, dictNet: dict, dictData: dict, t_transien
 
 	return None
 
+#################################################################################################################################################################################
+
+def plotParameterSpaceVsOrderParam(pool_data: dict, average_time_order_parameter_in_periods: np.float, axis_normalization=True):
+	""" Function that plots the last value and an average of the order parameter in a 2d parameter space in two individual plots.
+		Each plot comes as a scatterplot and an imshow.
+
+		Args:
+			pool_data: contains the results of all simulations (realizations), i.e., the phases of all oscillators, time dependent parameters, etc.
+			average_time_order_parameter_in_periods: determines over how many periods of the intrinsic PLL frequency averages of the order parameter are performed
+			axis_normalization: whether the axis of the plot are normalized or not: default True
+
+		Returns:
+			saves plotted data to files
+	"""
+
+	dictNet = pool_data[0][0]['dictNet']
+	dictAlgo = pool_data[0][0]['dictAlgo']
+
+	# prepare colormap for scatter plot that is always in [0, 1] or [min(results), max(results)]
+	cdict = {
+		'red': ((0.0, 0.25, .25), (0.02, .59, .59), (1., 1., 1.)),
+		'green': ((0.0, 0.0, 0.0), (0.02, .45, .45), (1., .97, .97)),
+		'blue': ((0.0, 1.0, 1.0), (0.02, .75, .75), (1., 0.45, 0.45))
+	}
+	# cmaps['Diverging'] = [ 'PiYG', 'PRGn', 'BrBG', 'PuOr', 'RdGy', 'RdBu', 'RdYlBu', 'RdYlGn', 'Spectral', 'coolwarm', 'bwr', 'seismic']
+
+	# if (topology == 'entrainOne' or topology == 'entrainAll'):
+	# 	# cmap=plt.cm.get_cmap('Blues', 6)
+	# 	cmap 	  = plt.cm.get_cmap('seismic', 256);
+	# 	cmap1 	  = plt.cm.get_cmap('seismic', 256);
+	# 	colormap  = eva.shiftedColorMap(cmap,  start=0.0, midpoint=absR_conf, stop=1.0, name='shiftedcmap')
+	# 	colormap1 = eva.shiftedColorMap(cmap1, start=0.0, midpoint=absR_conf, stop=1.0, name='shiftedcmap1')
+	# 	print('absR_conf=', absR_conf, ', min(results[:,1])=', min(results[:,1]), ', max(results[:,1])=', max(results[:,1]))
+	# else:
+	colormap = matplotlib.colors.LinearSegmentedColormap('my_colormap', cdict, 1024)
+
+	# extract the results from the data dictionary for plotting '''
+	results = []
+	for i in range(dictAlgo['paramDiscretization'][0] * dictAlgo['paramDiscretization'][1]):
+		if 'entrain' in dictNet['topology'] and (isinstance(pool_data[0][i]['dictPLL']['intrF'], list) or isinstance(pool_data[0][i]['dictPLL']['intrF'], np.ndarray)):
+			averaging_time_as_index = np.int(average_time_order_parameter_in_periods * np.mean(pool_data[0][i]['dictPLL']['intrF'][1:]) / pool_data[0][i]['dictPLL']['dt'])
+		else:
+			averaging_time_as_index = np.int(average_time_order_parameter_in_periods * np.mean(pool_data[0][i]['dictPLL']['intrF']) / pool_data[0][i]['dictPLL']['dt'])
+		results.append([pool_data[0][i]['dictData']['R'][-1], np.mean(pool_data[0][i]['dictData']['R'][-averaging_time_as_index:]), np.std(pool_data[0][i]['dictData']['R'][-averaging_time_as_index:])])
+	results = np.array(results)
+
+	# set the normalization of the axis
+	normalization_x = 1
+	normalization_y = 1
+	x_label = 'tbs'
+	y_label = 'tbs'
+	if axis_normalization:
+		if dictAlgo['param_id'] == 'intrF':
+			if 'entrain' in dictNet['topology'] and (isinstance(pool_data[0][0]['dictPLL']['intrF'], list) or isinstance(pool_data[0][0]['dictPLL']['intrF'], np.ndarray)):
+				normalization_x = 1 / np.mean(pool_data[0][0]['dictPLL']['intrF'][1:])
+			else:
+				normalization_x = 1 / np.mean(pool_data[0][0]['dictPLL']['intrF'])
+			x_label = r'$f_\textrm{R}/\langle f \rangle$'
+		else:
+			x_label = r'$f$\,[Hz]'
+			print('Introduce normalization in plot_lib.plotParameterSpaceVsOrderParam() function!')
+		if dictAlgo['param_id_1'] == 'transmission_delay':
+			if 'entrain' in dictNet['topology'] and (isinstance(pool_data[0][0]['dictPLL']['intrF'], list) or isinstance(pool_data[0][0]['dictPLL']['intrF'], np.ndarray)):
+				normalization_y = np.mean(pool_data[0][0]['dictPLL']['intrF'][1:])
+			else:
+				normalization_y = np.mean(pool_data[0][0]['dictPLL']['intrF'])
+			y_label = r'$\tau_{kl}/T_{\omega}$'
+		else:
+			y_label = r'$\tau_{kl}$'
+			print('Introduce normalization in plot_lib.plotParameterSpaceVsOrderParam() function!')
+
+	# start plotting
+	fig1 = plt.figure(figsize=(figwidth, figheight), dpi=dpi_val, facecolor='w', edgecolor='k')
+	fig1.canvas.manager.set_window_title('parameter space %s vs %s' % (dictAlgo['param_id'], dictAlgo['param_id_1']))
+	fig1.set_size_inches(plot_size_inches_x, plot_size_inches_y)
+
+	tempresults = results[:, 0].reshape(dictAlgo['paramDiscretization'][0], dictAlgo['paramDiscretization'][1])
+	tempresults = np.transpose(tempresults)
+	# print('tempresults:', tempresults)
+	tempresults_ma = ma.masked_where(tempresults < 0, tempresults)  # Create masked array
+	# print('tempresult_ma:', tempresults_ma)
+	# print('initPhiPrime0:', initPhiPrime0)
+	plt.imshow(tempresults_ma.astype(float), interpolation='nearest', cmap=cm.coolwarm, aspect='auto', origin='lower',
+			   extent=(dictAlgo['min_max_range_parameter'][0], dictAlgo['min_max_range_parameter'][1], dictAlgo['min_max_range_parameter_1'][0], dictAlgo['min_max_range_parameter_1'][1]), vmin=0, vmax=1)
+	plt.title(r'last $R(t)$')
+	plt.xlabel(x_label)
+	plt.ylabel(y_label)
+	plt.xlim([1.05 * dictAlgo['min_max_range_parameter'][0], 1.05 * dictAlgo['min_max_range_parameter'][1]])
+	plt.ylim([1.05 * dictAlgo['min_max_range_parameter_1'][0], 1.05 * dictAlgo['min_max_range_parameter_1'][1]])
+	plt.colorbar()
+
+	plt.savefig('results/param_space_%s_vs_%s_lastR_imshow_%d_%d_%d.png' % (dictAlgo['param_id'], dictAlgo['param_id_1'], now.year, now.month, now.day), dpi=dpi_val, bbox_inches="tight")
+	plt.savefig('results/param_space_%s_vs_%s_lastR_imshow_%d_%d_%d.svg' % (dictAlgo['param_id'], dictAlgo['param_id_1'], now.year, now.month, now.day), dpi=dpi_val, bbox_inches="tight")
+
+
+	fig2 = plt.figure(figsize=(figwidth, figheight), dpi=dpi_val, facecolor='w', edgecolor='k')
+	fig2.canvas.manager.set_window_title('parameter space %s vs %s' % (dictAlgo['param_id'], dictAlgo['param_id_1']))
+	fig2.set_size_inches(plot_size_inches_x, plot_size_inches_y)
+
+	tempresults = results[:, 1].reshape(dictAlgo['paramDiscretization'][0], dictAlgo['paramDiscretization'][1])
+	tempresults = np.transpose(tempresults)
+	# print('tempresults:', tempresults)
+	tempresults_ma = ma.masked_where(tempresults < 0, tempresults)  # Create masked array
+	# print('tempresult_ma:', tempresults_ma)
+	# print('initPhiPrime0:', initPhiPrime0)
+	plt.imshow(tempresults_ma.astype(float), interpolation='nearest', cmap=cm.coolwarm, aspect='auto', origin='lower',
+			   extent=(dictAlgo['min_max_range_parameter'][0], dictAlgo['min_max_range_parameter'][1], dictAlgo['min_max_range_parameter_1'][0], dictAlgo['min_max_range_parameter_1'][1]), vmin=0, vmax=1)
+	plt.title(r'mean $R(t)$')
+	plt.xlabel(x_label)
+	plt.ylabel(y_label)
+	plt.xlim([1.05 * dictAlgo['min_max_range_parameter'][0], 1.05 * dictAlgo['min_max_range_parameter'][1]])
+	plt.ylim([1.05 * dictAlgo['min_max_range_parameter_1'][0], 1.05 * dictAlgo['min_max_range_parameter_1'][1]])
+	plt.colorbar()
+
+	plt.savefig('results/param_space_%s_vs_%s_meanR_imshow_%d_%d_%d.png' % (dictAlgo['param_id'], dictAlgo['param_id_1'], now.year, now.month, now.day), dpi=dpi_val, bbox_inches="tight")
+	plt.savefig('results/param_space_%s_vs_%s_meanR_imshow_%d_%d_%d.svg' % (dictAlgo['param_id'], dictAlgo['param_id_1'], now.year, now.month, now.day), dpi=dpi_val, bbox_inches="tight")
+
+
+	fig3 = plt.figure(figsize=(figwidth, figheight), dpi=dpi_val, facecolor='w', edgecolor='k')
+	fig3.canvas.manager.set_window_title('parameter space %s vs %s' % (dictAlgo['param_id'], dictAlgo['param_id_1']))
+	fig3.set_size_inches(plot_size_inches_x, plot_size_inches_y)
+
+	plt.clf()
+	ax = plt.subplot(1, 1, 1)
+	ax.set_aspect('equal')
+
+	plt.scatter(dictAlgo['allPoints'][:, 0], dictAlgo['allPoints'][:, 1], c=results[:, 0], alpha=0.5, edgecolor='', cmap=colormap, vmin=0, vmax=1)
+	plt.title(r'last $R(t)$')
+	plt.xlabel(x_label)
+	plt.ylabel(y_label)
+	plt.xlim([1.05 * dictAlgo['min_max_range_parameter'][0], 1.05 * dictAlgo['min_max_range_parameter'][1]])
+	plt.ylim([1.05 * dictAlgo['min_max_range_parameter_1'][0], 1.05 * dictAlgo['min_max_range_parameter_1'][1]])
+	plt.colorbar()
+	plt.savefig('results/param_space_%s_vs_%s_lastR_imshow_%d_%d_%d.png' % (dictAlgo['param_id'], dictAlgo['param_id_1'], now.year, now.month, now.day), dpi=dpi_val, bbox_inches="tight")
+	plt.savefig('results/param_space_%s_vs_%s_lastR_imshow_%d_%d_%d.svg' % (dictAlgo['param_id'], dictAlgo['param_id_1'], now.year, now.month, now.day), dpi=dpi_val, bbox_inches="tight")
+
+
+	fig4 = plt.figure(figsize=(figwidth, figheight), dpi=dpi_val, facecolor='w', edgecolor='k')
+	fig4.canvas.manager.set_window_title('parameter space %s vs %s' % (dictAlgo['param_id'], dictAlgo['param_id_1']))
+	fig4.set_size_inches(plot_size_inches_x, plot_size_inches_y)
+
+	plt.clf()
+	ax = plt.subplot(1, 1, 1)
+	ax.set_aspect('equal')
+	plt.scatter(dictAlgo['allPoints'][:, 0], dictAlgo['allPoints'][:, 1], c=results[:, 1], alpha=0.5, edgecolor='', cmap=colormap, vmin=0, vmax=1)
+	plt.title(r'mean $R(t)$')
+	plt.xlabel(x_label)
+	plt.ylabel(y_label)
+	plt.xlim([1.05 * dictAlgo['min_max_range_parameter'][0], 1.05 * dictAlgo['min_max_range_parameter'][1]])
+	plt.ylim([1.05 * dictAlgo['min_max_range_parameter_1'][0], 1.05 * dictAlgo['min_max_range_parameter_1'][1]])
+	plt.colorbar()
+	plt.savefig('results/param_space_%s_vs_%s_meanR_scatter_%d_%d_%d.png' % (dictAlgo['param_id'], dictAlgo['param_id_1'], now.year, now.month, now.day), dpi=dpi_val, bbox_inches="tight")
+	plt.savefig('results/param_space_%s_vs_%s_meanR_scatter_%d_%d_%d.svg' % (dictAlgo['param_id'], dictAlgo['param_id_1'], now.year, now.month, now.day), dpi=dpi_val, bbox_inches="tight")
+
+	return None
+
+# ################################################################################################################################################################################
+
+def plotInitPhaseConfigVsOrderParam(pool_data: dict, average_time_order_parameter_in_periods: np.float, axis_normalization=True):
+	"""Function that plots the last value and an average of the order parameter as a function of the initial phase-configuration  in two individual plots.
+		The initial phase configuration is expressed as the phase differences for 2d and 3d phase spaces. Each plot comes as a scatterplot and an imshow.
+
+		Args:
+			pool_data: contains the results of all simulations (realizations), i.e., the phases of all oscillators, time dependent parameters, etc.
+			average_time_order_parameter_in_periods: determines over how many periods of the intrinsic PLL frequency averages of the order parameter are performed
+			axis_normalization: whether the axis of the plot are normalized or not: default True
+
+		Returns:
+			saves plotted data to files
+	"""
+
+	dictNet = pool_data[0][0]['dictNet']
+	dictAlgo = pool_data[0][0]['dictAlgo']
+
+	# prepare colormap for scatter plot that is always in [0, 1] or [min(results), max(results)]
+	cdict = {
+		'red': ((0.0, 0.25, .25), (0.02, .59, .59), (1., 1., 1.)),
+		'green': ((0.0, 0.0, 0.0), (0.02, .45, .45), (1., .97, .97)),
+		'blue': ((0.0, 1.0, 1.0), (0.02, .75, .75), (1., 0.45, 0.45))
+	}
+	# cmaps['Diverging'] = [ 'PiYG', 'PRGn', 'BrBG', 'PuOr', 'RdGy', 'RdBu', 'RdYlBu', 'RdYlGn', 'Spectral', 'coolwarm', 'bwr', 'seismic']
+
+	# if (topology == 'entrainOne' or topology == 'entrainAll'):
+	# 	# cmap=plt.cm.get_cmap('Blues', 6)
+	# 	cmap 	  = plt.cm.get_cmap('seismic', 256);
+	# 	cmap1 	  = plt.cm.get_cmap('seismic', 256);
+	# 	colormap  = eva.shiftedColorMap(cmap,  start=0.0, midpoint=absR_conf, stop=1.0, name='shiftedcmap')
+	# 	colormap1 = eva.shiftedColorMap(cmap1, start=0.0, midpoint=absR_conf, stop=1.0, name='shiftedcmap1')
+	# 	print('absR_conf=', absR_conf, ', min(results[:,1])=', min(results[:,1]), ', max(results[:,1])=', max(results[:,1]))
+	# else:
+	colormap = matplotlib.colors.LinearSegmentedColormap('my_colormap', cdict, 1024)
+
+
+
+
+	# we want to plot all the m-twist locations in rotated phase space: calculate phases, rotate and then plot into the results
+	twist_points = np.zeros((N, N), dtype=np.float)  # twist points in physical phase space
+	twist_pointsR = np.zeros((N, N), dtype=np.float)  # twist points in rotated phase space
+	alltwistP = []
+
+	if F_Omeg > 0:  # for f=0, there would otherwies be a float division by zero
+		F1 = F_Omeg
+	else:
+		F1 = 1.1
+
+	if N == 2:  # this part is for calculating the points of m-twist solutions in the rotated space, they are plotted later
+		d1 = 0
+		d2 = 1
+		pass
+	if N == 3:
+		d1 = 1
+		d2 = 2
+		for i in range(N):
+			twistdelta = (2.0 * np.pi * i / (1.0 * N))
+			twist_points[i, :] = np.array([0.0, twistdelta, 2.0 * twistdelta])  # write m-twist phase configuation in phase space of phases
+			# print(i,'-twist points:\n', twist_points[i,:], '\n')
+			for m in range(-2, 3):
+				for n in range(-2, 3):
+					vtemp = twist_points[i, :] + np.array([0.0, 2.0 * np.pi * m, 2.0 * np.pi * n])
+					alltwistP.append(vtemp)
+		# print('vtemp:', vtemp, '\n')
+
+		if (topology == 'entrainOne' or topology == 'entrainAll'):
+			alltwistP = phiConfig  # phase-configuration of entrained synced state
+			if not len(phiConfig) == 0:
+				R_config = eva.calcKuramotoOrderParameter(phiConfig);
+				absR_conf = np.abs(R_config)
+			alltwistPR = np.transpose(eva.rotate_phases(np.transpose(alltwistP), isInverse=True))  # express the points in rotated phase space
+			print('value of unadjusted order parameter of the expected phase-configuration:', absR_conf)
+		# phi_constant_expected = eva.rotate_phases(phiMr, isInverse=False)
+		# r = eva.calcKuramotoOrderParEntrainSelfOrgState(phi[-int(numb_av_T*1.0/(F1*dt)):, :], phi_constant_expected);
+		# orderparam = eva.calcKuramotoOrderParEntrainSelfOrgState(phi[:, :], phi_constant_expected);
+		else:
+			alltwistP = np.array(alltwistP);
+			# print('alltwistP:\n', alltwistP, '\n')
+			alltwistPR = np.transpose(eva.rotate_phases(np.transpose(alltwistP), isInverse=True))  # express the points in rotated phase space
+	# print('alltwistP rotated (alltwistPR):\n', alltwistPR, '\n')
+
+
+
+
+
+
+
+
+
+
+
+
+
+	fig1 = plt.figure(figsize=(figwidth, figheight), dpi=dpi_val, facecolor='w', edgecolor='k')
+	fig1.canvas.manager.set_window_title('parameter space of initial phase configuration')
+	fig1.set_size_inches(plot_size_inches_x, plot_size_inches_y)
+
+	ax.set_aspect('equal')
+	plt.scatter(allPoints[:, 0] + phiMr[d1], allPoints[:, 1] + phiMr[d2], c=results[:, 0], alpha=0.5, edgecolor='', cmap=colormap, vmin=0, vmax=1)
+	plt.title(r'mean $R(t,m=%d)$, constant dim: $\phi_0^{\prime}=%.2f$' % (int(k), initPhiPrime0))
+	if N == 3:
+		plt.xlabel(r'$\phi_1^{\prime}$')
+		plt.ylabel(r'$\phi_2^{\prime}$')
+	elif N == 2:
+		plt.xlabel(r'$\phi_0^{\prime}$')
+		plt.ylabel(r'$\phi_1^{\prime}$')
+	if (N == 3 and not (topology == "square-open" or topology == "chain" or topology == "entrainOne" or topology == "entrainAll")):
+		plt.plot(alltwistPR[:, 1], alltwistPR[:, 2], 'yo', ms=8)
+	if (N == 3 and (topology == "entrainOne" or topology == "entrainAll")):
+		plt.plot(alltwistPR[1], alltwistPR[2], 'yo', ms=2)
+	plt.xlim([1.05 * allPoints[:, 0].min() + phiMr[d1], 1.05 * allPoints[:, 0].max() + phiMr[d1]])
+	plt.ylim([1.05 * allPoints[:, 1].min() + phiMr[d2], 1.05 * allPoints[:, 1].max() + phiMr[d2]])
+	plt.colorbar()
+
+
+
+	t = np.arange(0, dictNet['max_delay_steps']+dictPLL['sim_time_steps']) * dictPLL['dt']
+	plt.plot(t, time_dependent_parameter)
+	plt.xlabel('time')
+	plt.ylabel(y_label)
+
+	plt.savefig('results/param_space_%s_vs_%s_lastR_scatter_%d_%d_%d.png' % (dictAlgo['param_id'], dictAlgo['param_id_1'], now.year, now.month, now.day), dpi=dpi_val, bbox_inches="tight")
+	plt.savefig('results/param_space_%s_vs_%s_lastR_scatter_%d_%d_%d.svg' % (dictAlgo['param_id'], dictAlgo['param_id_1'], now.year, now.month, now.day), dpi=dpi_val, bbox_inches="tight")
+
+
+
+	plt.savefig('results/param_space_%s_vs_%s_meanR_scatter_%d_%d_%d.png' % (dictAlgo['param_id'], dictAlgo['param_id_1'], now.year, now.month, now.day), dpi=dpi_val, bbox_inches="tight")
+	plt.savefig('results/param_space_%s_vs_%s_meanR_scatter_%d_%d_%d.svg' % (dictAlgo['param_id'], dictAlgo['param_id_1'], now.year, now.month, now.day), dpi=dpi_val, bbox_inches="tight")
+
+
+
+	plt.savefig('results/param_space_%s_vs_%s_lastR_imshow_%d_%d_%d.png' % (dictAlgo['param_id'], dictAlgo['param_id_1'], now.year, now.month, now.day), dpi=dpi_val, bbox_inches="tight")
+	plt.savefig('results/param_space_%s_vs_%s_lastR_imshow_%d_%d_%d.svg' % (dictAlgo['param_id'], dictAlgo['param_id_1'], now.year, now.month, now.day), dpi=dpi_val, bbox_inches="tight")
+
+
+
+	plt.savefig('results/param_space_%s_vs_%s_meanR_imshow_%d_%d_%d.png' % (dictAlgo['param_id'], dictAlgo['param_id_1'], now.year, now.month, now.day), dpi=dpi_val, bbox_inches="tight")
+	plt.savefig('results/param_space_%s_vs_%s_meanR_imshow_%d_%d_%d.svg' % (dictAlgo['param_id'], dictAlgo['param_id_1'], now.year, now.month, now.day), dpi=dpi_val, bbox_inches="tight")
+
+
+
+
+
+
+
+	''' IMPORTANT: since we add the perturbations additively, here we need to shift allPoints around the initial phases of the respective m-twist state, using phiMr '''
+	plt.figure(1)
+	# plot the mean of the order parameter over a period 2T
+	plt.clf()
+	ax = plt.subplot(1, 1, 1)
+	ax.set_aspect('equal')
+	plt.scatter(allPoints[:, 0] + phiMr[d1], allPoints[:, 1] + phiMr[d2], c=results[:, 0], alpha=0.5, edgecolor='', cmap=colormap, vmin=0, vmax=1)
+	plt.title(r'mean $R(t,m=%d )$, constant dim: $\phi_0^{\prime}=%.2f$' % (int(k), initPhiPrime0))
+	if N == 3:
+		plt.xlabel(r'$\phi_1^{\prime}$')
+		plt.ylabel(r'$\phi_2^{\prime}$')
+	elif N == 2:
+		plt.xlabel(r'$\phi_0^{\prime}$')
+		plt.ylabel(r'$\phi_1^{\prime}$')
+	if (N == 3 and not (topology == "square-open" or topology == "chain" or topology == "entrainOne" or topology == "entrainAll")):
+		plt.plot(alltwistPR[:, 1], alltwistPR[:, 2], 'yo', ms=8)
+	if (N == 3 and (topology == "entrainOne" or topology == "entrainAll")):
+		plt.plot(alltwistPR[1], alltwistPR[2], 'yo', ms=2)
+	plt.xlim([1.05 * allPoints[:, 0].min() + phiMr[d1], 1.05 * allPoints[:, 0].max() + phiMr[d1]])
+	plt.ylim([1.05 * allPoints[:, 1].min() + phiMr[d2], 1.05 * allPoints[:, 1].max() + phiMr[d2]])
+	plt.colorbar()
+	plt.savefig('results/rot_red_PhSpac_meanR_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_%d_%d_%d.pdf' % (K, Fc, F_Omeg, delay, now.year, now.month, now.day), dpi=dpi_value)
+	plt.savefig('results/rot_red_PhSpac_meanR_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_%d_%d_%d.png' % (K, Fc, F_Omeg, delay, now.year, now.month, now.day), dpi=dpi_value)
+
+	plt.figure(2)
+	plt.clf()
+	ax = plt.subplot(1, 1, 1)
+	ax.set_aspect('equal')
+	plt.scatter(allPoints[:, 0] + phiMr[d1], allPoints[:, 1] + phiMr[d2], c=results[:, 1], alpha=0.5, edgecolor='', cmap=colormap, vmin=0.0, vmax=1.0)
+	plt.title(r'last $R(t,m=%d )$, constant dim: $\phi_0^{\prime}=%.2f$' % (int(k), initPhiPrime0))
+	if N == 3:
+		plt.xlabel(r'$\phi_1^{\prime}$')
+		plt.ylabel(r'$\phi_2^{\prime}$')
+	elif N == 2:
+		plt.xlabel(r'$\phi_0^{\prime}$')
+		plt.ylabel(r'$\phi_1^{\prime}$')
+	if (N == 3 and not (topology == "square-open" or topology == "chain" or topology == "entrainOne" or topology == "entrainAll")):
+		plt.plot(alltwistPR[:, 1], alltwistPR[:, 2], 'yo', ms=8)
+	if (N == 3 and (topology == "entrainOne" or topology == "entrainAll")):
+		plt.plot(alltwistPR[1], alltwistPR[2], 'yo', ms=2)
+	plt.xlim([1.05 * allPoints[:, 0].min() + phiMr[d1], 1.05 * allPoints[:, 0].max() + phiMr[d1]])
+	plt.ylim([1.05 * allPoints[:, 1].min() + phiMr[d2], 1.05 * allPoints[:, 1].max() + phiMr[d2]])
+	plt.colorbar()
+	plt.savefig('results/rot_red_PhSpac_lastR_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_%d_%d_%d.pdf' % (K, Fc, F_Omeg, delay, now.year, now.month, now.day), dpi=dpi_value)
+	plt.savefig('results/rot_red_PhSpac_lastR_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_%d_%d_%d.png' % (K, Fc, F_Omeg, delay, now.year, now.month, now.day), dpi=dpi_value)
+
+	plt.figure(3)
+	plt.clf()
+	ax = plt.subplot(1, 1, 1)
+	ax.set_aspect('equal')
+	tempresults = results[:, 0].reshape((paramDiscretization, paramDiscretization))  # np.flipud()
+	tempresults = np.transpose(tempresults)
+	# print('tempresults:', tempresults)
+	tempresults_ma = ma.masked_where(tempresults < 0, tempresults)  # Create masked array
+	# print('tempresult_ma:', tempresults_ma)
+	# print('initPhiPrime0:', initPhiPrime0)
+	plt.imshow(tempresults_ma.astype(float), interpolation='nearest', cmap=cm.coolwarm, aspect='auto', origin='lower',
+			   extent=(allPoints[:, 0].min() + phiMr[d1], allPoints[:, 0].max() + phiMr[d1], allPoints[:, 1].min() + phiMr[d2], allPoints[:, 1].max() + phiMr[d2]), vmin=0, vmax=1)
+	plt.title(r'mean $R(t,m=%d )$, constant dim: $\phi_0^{\prime}=%.2f$' % (int(k), initPhiPrime0))
+	if N == 3:
+		plt.xlabel(r'$\phi_1^{\prime}$')
+		plt.ylabel(r'$\phi_2^{\prime}$')
+	elif N == 2:
+		plt.xlabel(r'$\phi_0^{\prime}$')
+		plt.ylabel(r'$\phi_1^{\prime}$')
+	if (N == 3 and not (topology == "square-open" or topology == "chain" or topology == "entrainOne" or topology == "entrainAll")):
+		plt.plot(alltwistPR[:, 1], alltwistPR[:, 2], 'yo', ms=8)
+	if (N == 3 and (topology == "entrainOne" or topology == "entrainAll")):
+		plt.plot(alltwistPR[1], alltwistPR[2], 'yo', ms=2)
+	plt.xlim([1.05 * allPoints[:, 0].min() + phiMr[d1], 1.05 * allPoints[:, 0].max() + phiMr[d1]])
+	plt.ylim([1.05 * allPoints[:, 1].min() + phiMr[d2], 1.05 * allPoints[:, 1].max() + phiMr[d2]])
+	plt.colorbar()
+	plt.savefig('results/imsh_PhSpac_meanR_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_%d_%d_%d.pdf' % (K, Fc, F_Omeg, delay, now.year, now.month, now.day), dpi=dpi_value)
+	plt.savefig('results/imsh_PhSpac_meanR_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_%d_%d_%d.png' % (K, Fc, F_Omeg, delay, now.year, now.month, now.day), dpi=dpi_value)
+
+	plt.figure(4)
+	plt.clf()
+	ax = plt.subplot(1, 1, 1)
+	ax.set_aspect('equal')
+	tempresults = results[:, 1].reshape((paramDiscretization, paramDiscretization))  # np.flipud()
+	tempresults = np.transpose(tempresults)
+	tempresults_ma = ma.masked_where(tempresults < 0, tempresults)  # Create masked array
+	plt.imshow(tempresults_ma.astype(float), interpolation='nearest', cmap=cm.coolwarm, aspect='auto', origin='lower',
+			   extent=(allPoints[:, 0].min() + phiMr[d1], allPoints[:, 0].max() + phiMr[d1], allPoints[:, 1].min() + phiMr[d2], allPoints[:, 1].max() + phiMr[d2]), vmin=0, vmax=1)
+	plt.title(r'last $R(t,m=%d )$, constant dim: $\phi_0^{\prime}=%.2f$' % (int(k), initPhiPrime0))
+	if N == 3:
+		plt.xlabel(r'$\phi_1^{\prime}$')
+		plt.ylabel(r'$\phi_2^{\prime}$')
+	elif N == 2:
+		plt.xlabel(r'$\phi_0^{\prime}$')
+		plt.ylabel(r'$\phi_1^{\prime}$')
+	if (N == 3 and not (topology == "square-open" or topology == "chain" or topology == "entrainOne" or topology == "entrainAll")):
+		plt.plot(alltwistPR[:, 1], alltwistPR[:, 2], 'yo', ms=8)
+	if (N == 3 and (topology == "entrainOne" or topology == "entrainAll")):
+		plt.plot(alltwistPR[1], alltwistPR[2], 'yo', ms=2)
+	plt.xlim([1.05 * allPoints[:, 0].min() + phiMr[d1], 1.05 * allPoints[:, 0].max() + phiMr[d1]])
+	plt.ylim([1.05 * allPoints[:, 1].min() + phiMr[d2], 1.05 * allPoints[:, 1].max() + phiMr[d2]])
+	plt.colorbar()
+	plt.savefig('results/imsh_PhSpac_lastR_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_%d_%d_%d.pdf' % (K, Fc, F_Omeg, delay, now.year, now.month, now.day), dpi=dpi_value)
+	plt.savefig('results/imsh_PhSpac_lastR_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_%d_%d_%d.png' % (K, Fc, F_Omeg, delay, now.year, now.month, now.day), dpi=dpi_value)
+
+	# plt.figure(5)
+	# plt.clf()
+	# ax = plt.subplot(1, 1, 1)
+	# ax.set_aspect('equal')
+	# plt.scatter(allPoints[:,0]+phiMr[d1], allPoints[:,1]+phiMr[d2], c=results[:,0], alpha=0.5, edgecolor='', cmap='jet')#, vmin=0, vmax=1)
+	# plt.title(r'mean $R(t,m=%d )$, constant dim: $\phi_0^{\prime}=%.2f$' %(int(k) ,initPhiPrime0) )
+	# if N==3:
+	# 	plt.xlabel(r'$\phi_1^{\prime}$')
+	# 	plt.ylabel(r'$\phi_2^{\prime}$')
+	# elif N==2:
+	# 	plt.xlabel(r'$\phi_0^{\prime}$')
+	# 	plt.ylabel(r'$\phi_1^{\prime}$')
+	# if N==3 and topology != "square-open" and topology != "chain":
+	# 	plt.plot(alltwistPR[:,1],alltwistPR[:,2], 'yo', ms=4)
+	# plt.xlim([1.05*allPoints[:,0].min()+phiMr[d1], 1.05*allPoints[:,0].max()+phiMr[d1]])
+	# plt.ylim([1.05*allPoints[:,1].min()+phiMr[d2], 1.05*allPoints[:,1].max()+phiMr[d2]])
+	# plt.colorbar()
+	# plt.savefig('results/rot_redColor_PhSpac_meanR_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_%d_%d_%d.pdf' %(K, Fc, F_Omeg, delay, now.year, now.month, now.day), dpi=dpi_value)
+	# plt.savefig('results/rot_redColor_PhSpac_meanR_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_%d_%d_%d.png' %(K, Fc, F_Omeg, delay, now.year, now.month, now.day), dpi=dpi_value)
+
+	plt.figure(5)
+	plt.clf()
+	my_cmap = matplotlib.cm.get_cmap('jet')
+	my_cmap.set_under('w')
+	ax = plt.subplot(1, 1, 1)
+	ax.set_aspect('equal')
+	plt.scatter(allPoints[:, 0] + phiMr[d1], allPoints[:, 1] + phiMr[d2], c=results[:, 0], s=10, alpha=0.5, edgecolor='', cmap=my_cmap, vmin=0.0, vmax=1.0)  # , vmin=0, vmax=1)
+	plt.title(r'mean $R(t,m=%d )$, constant dim: $\phi_0^{\prime}=%.2f$' % (int(k), initPhiPrime0))
+	if N == 3:
+		plt.xlabel(r'$\phi_1^{\prime}$')
+		plt.ylabel(r'$\phi_2^{\prime}$')
+	elif N == 2:
+		plt.xlabel(r'$\phi_0^{\prime}$')
+		plt.ylabel(r'$\phi_1^{\prime}$')
+	if (N == 3 and not (topology == "square-open" or topology == "chain" or topology == "entrainOne" or topology == "entrainAll")):
+		plt.plot(alltwistPR[:, 1], alltwistPR[:, 2], 'yo', ms=8)
+	if (N == 3 and (topology == "entrainOne" or topology == "entrainAll")):
+		plt.plot(alltwistPR[1], alltwistPR[2], 'yo', ms=2)
+	plt.xlim([1.05 * allPoints[:, 0].min() + phiMr[d1], 1.05 * allPoints[:, 0].max() + phiMr[d1]])
+	plt.ylim([1.05 * allPoints[:, 1].min() + phiMr[d2], 1.05 * allPoints[:, 1].max() + phiMr[d2]])
+	plt.colorbar()
+	plt.savefig('results/rot_redColor_PhSpac_meanR_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_%d_%d_%d.pdf' % (K, Fc, F_Omeg, delay, now.year, now.month, now.day), dpi=dpi_value)
+	plt.savefig('results/rot_redColor_PhSpac_meanR_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_%d_%d_%d.png' % (K, Fc, F_Omeg, delay, now.year, now.month, now.day), dpi=dpi_value)
+
+	plt.figure(6)
+	plt.clf()
+	my_cmap = matplotlib.cm.get_cmap('jet')
+	my_cmap.set_under('w')
+	ax = plt.subplot(1, 1, 1)
+	ax.set_aspect('equal')
+	plt.scatter(allPoints[:, 0] + phiMr[d1], allPoints[:, 1] + phiMr[d2], c=results[:, 0], s=5, alpha=0.5, edgecolor='', cmap=my_cmap, vmin=0.0, vmax=1.0)  # , vmin=0, vmax=1)
+	plt.title(r'mean $R(t,m=%d )$, constant dim: $\phi_0^{\prime}=%.2f$' % (int(k), initPhiPrime0))
+	if N == 3:
+		plt.xlabel(r'$\phi_1^{\prime}$')
+		plt.ylabel(r'$\phi_2^{\prime}$')
+	elif N == 2:
+		plt.xlabel(r'$\phi_0^{\prime}$')
+		plt.ylabel(r'$\phi_1^{\prime}$')
+	if (N == 3 and not (topology == "square-open" or topology == "chain" or topology == "entrainOne" or topology == "entrainAll")):
+		plt.plot(alltwistPR[:, 1], alltwistPR[:, 2], 'yo', ms=8)
+	if (N == 3 and (topology == "entrainOne" or topology == "entrainAll")):
+		plt.plot(alltwistPR[1], alltwistPR[2], 'yo', ms=2)
+	plt.xlim([1.05 * allPoints[:, 0].min() + phiMr[d1], 1.05 * allPoints[:, 0].max() + phiMr[d1]])
+	plt.ylim([1.05 * allPoints[:, 1].min() + phiMr[d2], 1.05 * allPoints[:, 1].max() + phiMr[d2]])
+	plt.colorbar()
+	plt.savefig('results/rot_redColor5_PhSpac_meanR_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_%d_%d_%d.pdf' % (K, Fc, F_Omeg, delay, now.year, now.month, now.day), dpi=dpi_value)
+	plt.savefig('results/rot_redColor5_PhSpac_meanR_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_%d_%d_%d.png' % (K, Fc, F_Omeg, delay, now.year, now.month, now.day), dpi=dpi_value)
+
+	plt.draw()
+	if show_plot:
+		plt.show()
+	plt.show()
+	return 0.0
+
+
+
+
+
+
+	return None
+
 # ################################################################################################################################################################################
 
 

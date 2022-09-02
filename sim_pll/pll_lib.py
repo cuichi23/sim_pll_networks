@@ -202,7 +202,8 @@ class LowPassFilter:
 		func = lambda t, z: self.second_order_ordinary_diff_eq(t, z, phase_detector_output)
 		sol = solve_ivp(func, [self.t[0], self.t[1]], [2 * self.control_signal / self.b, self.derivative_control_signal], method='RK45', t_eval=self.t, dense_output=False, events=None, vectorized=False, rtol=1e-12)
 		if not sol.success:
-			print('solve_ivp integration of 2nd order LF failed! Aborting.'); sys.exit()
+			print('solve_ivp integration of 2nd order LF failed! Aborting.')
+			sys.exit()
 		# print('sol: ', sol)
 		control_signal 			= sol.y[0][1]
 		self.derivative_control_signal   = sol.y[1][1]

@@ -414,26 +414,26 @@ def fitModelDemir(f_model,d_model,fitrange=0):
 
 def obtainOrderParam(dictPLL, dictNet, dictData):
 	''' MODIFIED KURAMOTO ORDER PARAMETERS '''
-	numb_av_T = 3																			   	# number of periods of free-running frequencies to average over
+	numb_av_T = 2.5																			   	# number of periods of free-running frequencies to average over
 	if np.min(dictPLL['intrF']) > 0:														 	# for f=0, there would otherwise be a float division by zero
-		F1=np.min(dictPLL['intrF'])
+		F1 = np.min(dictPLL['intrF'])
 	else:
-		F1=np.min(dictPLL['intrF'])+1E-3
+		F1 = np.min(dictPLL['intrF'])+1E-3
 
 	if dictNet['topology'] == "square-periodic" or dictNet['topology'] == "hexagon-periodic" or dictNet['topology'] == "octagon-periodic":
 		r = oracle_mTwistOrderParameter2d(dictData['phi'][-int(numb_av_T*1.0/(F1*dictPLL['dt'])):, :], dictNet['Nx'], dictNet['Ny'], dictNet['mx'], dictNet['my'])
 		orderparam = oracle_mTwistOrderParameter2d(dictData['phi'][:, :], dictNet['Nx'], dictNet['Ny'], dictNet['mx'], dictNet['my'])
 	elif dictNet['topology'] == "square-open" or dictNet['topology'] == "hexagon" or dictNet['topology'] == "octagon":
-		if dictNet['mx']==1 and dictNet['my']==1:
+		if dictNet['mx'] == 1 and dictNet['my'] == 1:
 			ktemp=2
-		elif dictNet['mx']==1 and dictNet['my']==0:
+		elif dictNet['mx'] == 1 and dictNet['my'] == 0:
 			ktemp=0
-		elif dictNet['mx']==0 and dictNet['my']==1:
-			ktemp=1
-		elif dictNet['mx']==0 and dictNet['my']==0:
-			ktemp=3
+		elif dictNet['mx'] == 0 and dictNet['my'] == 1:
+			ktemp = 1
+		elif dictNet['mx'] == 0 and dictNet['my'] == 0:
+			ktemp = 3
 		else:
-			ktemp=4
+			ktemp = 4
 		"""
 				ktemp == 0 : x  checkerboard state
 				ktemp == 1 : y  checkerboard state
@@ -471,7 +471,7 @@ def obtainOrderParam(dictPLL, dictNet, dictData):
 			"""
 		r = oracle_CheckerboardOrderParameter1d(dictData['phi'][-int(numb_av_T*1.0/(F1*dictPLL['dt'])):, :], dictNet['mx'])
 		orderparam = oracle_CheckerboardOrderParameter1d(dictData['phi'][:, :])							# calculate the order parameter for all times
-	elif ( dictNet['topology'] == "ring" or dictNet['topology'] == 'global'):
+	elif dictNet['topology'] == "ring" or dictNet['topology'] == 'global':
 		# print('Calculate order parameter for ring or global topology. For phases: ', dictData['phi'])
 		time.sleep(5)
 		r = oracle_mTwistOrderParameter(dictData['phi'][-int(numb_av_T*1.0/(F1*dictPLL['dt'])):, :], dictNet['mx'])# calculate the m-twist order parameter for a time interval of 2 times the eigenperiod, ry is imaginary part
@@ -479,8 +479,8 @@ def obtainOrderParam(dictPLL, dictNet, dictData):
 	elif "entrain" in dictNet['topology']:
 		# ( dictNet['topology'] == "entrainOne" or dictNet['topology'] == "entrainAll" or dictNet['topology'] == "entrainPLLsHierarch"):
 		phi_constant_expected = dictNet['phiInitConfig']
-		r = calcKuramotoOrderParEntrainSelfOrgState(dictData['phi'][-int(numb_av_T*1.0/(F1*dictPLL['dt'])):, :], phi_constant_expected);
-		orderparam = calcKuramotoOrderParEntrainSelfOrgState(dictData['phi'][:, :], phi_constant_expected);
+		r = calcKuramotoOrderParEntrainSelfOrgState(dictData['phi'][-int(numb_av_T*1.0/(F1*dictPLL['dt'])):, :], phi_constant_expected)
+		orderparam = calcKuramotoOrderParEntrainSelfOrgState(dictData['phi'][:, :], phi_constant_expected)
 	# r = oracle_mTwistOrderParameter(dictData['phi'][-int(2*1.0/(F1*dictPLL['dt'])):, :], dictNet['mx'])			# calculate the m-twist order parameter for a time interval of 2 times the eigenperiod, ry is imaginary part
 	# orderparam = oracle_mTwistOrderParameter(dictData['phi'][:, :], dictNet['mx'])					# calculate the m-twist order parameter for all times
 	# print('mean of modulus of the order parameter, R, over 2T:', np.mean(r), ' last value of R', r[-1])

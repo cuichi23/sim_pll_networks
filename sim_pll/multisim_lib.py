@@ -50,6 +50,7 @@ def distributeProcesses(dictNet: dict, dictPLL: dict, dictAlgo=None) -> object:
 																	paramDiscretization=dictAlgo['paramDiscretization'])  # set paramDiscretization for the number of points to be simulated
 		print('allPoints:', [allPoints], '\nscanValues', scanValues)
 		Nsim = allPoints.shape[0]
+		dictAlgo.update({'scanValues': scanValues, 'allPoints': allPoints})
 		print('multiprocessing', Nsim, 'realizations')
 
 	elif dictAlgo['bruteForceBasinStabMethod'] == 'listOfInitialPhaseConfigurations':	# so far for N=2, work it out for N>2
@@ -102,6 +103,7 @@ def distributeProcesses(dictNet: dict, dictPLL: dict, dictAlgo=None) -> object:
 		scanValues, allPoints = setup.all_parameter_combinations_2d(dictPLL, dictNet, dictAlgo)  # set paramDiscretization for the number of points to be simulated
 		print('scanning 2d parameter regime {', dictAlgo['param_id'], ',', dictAlgo['param_id_1'], '} allPoints:', [allPoints], '\nscanValues', scanValues)
 		Nsim = allPoints.shape[0]
+		dictAlgo.update({'scanValues': scanValues, 'allPoints': allPoints})
 		print('multiprocessing', Nsim, 'realizations')
 
 	elif dictAlgo['bruteForceBasinStabMethod'] == 'statistics':		# organize after the data has been collected
@@ -114,8 +116,8 @@ def distributeProcesses(dictNet: dict, dictPLL: dict, dictAlgo=None) -> object:
 
 	np.random.seed()
 	poolData = []																# should this be recasted to be an np.array?
-	freeze_support()
 	pool = Pool(processes=6)													# create a Pool object, pick number of processes
+	freeze_support()
 
 	# def multihelper(phiSr, initPhiPrime0, dictNet, dictPLL, phi, clock_counter, pll_list):
 	if dictAlgo['bruteForceBasinStabMethod'] == 'classicBruteForceMethodRotatedSpace':
@@ -177,7 +179,10 @@ def distributeProcesses(dictNet: dict, dictPLL: dict, dictAlgo=None) -> object:
 		sys.exit()
 
 	elif dictAlgo['bruteForceBasinStabMethod'] == 'two_parameter_sweep':
-		eva.XYZ
+		average_time_order_parameter_in_periods = 1.5
+		plot.plotParameterSpaceVsOrderParam(poolData, average_time_order_parameter_in_periods)
+		plt.draw()
+		plt.show()
 
 	return poolData
 
@@ -290,7 +295,7 @@ def multihelper(iterConfig, initPhiPrime0, dictNet, dictPLL, dictAlgo, param_id=
 	elif dictAlgo['bruteForceBasinStabMethod'] == 'two_parameter_sweep':
 		change_param = list(iterConfig)
 
-		print('######### realization: {delay, intrinsic freqs.} #########\n', change_param[0], change_param[1])
+		# print('######### realization: {delay, intrinsic freqs.} #########\n', change_param[0], change_param[1])
 
 		# make also copies of all other dictionaries so that later changes to not interfere with other realizations
 		dictPLLRea = dictPLL.copy()
@@ -300,6 +305,7 @@ def multihelper(iterConfig, initPhiPrime0, dictNet, dictPLL, dictAlgo, param_id=
 			dictPLLRea.update({dictAlgo['param_id']: change_param[0]})
 			dictPLLRea.update({dictAlgo['param_id_1']: change_param[1]})
 			# print('dictNet[*phiPerturb*]', dictNet['phiPerturb'])
+			# print('\n\nCHANGED dict for realization: ', dictPLLRea[dictAlgo['param_id']], dictPLLRea[dictAlgo['param_id_1']])
 		else:
 			print('No parameters for sweep specified -- hence simulating the same parameter set for all realizations!')
 

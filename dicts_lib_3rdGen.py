@@ -31,34 +31,34 @@ gc.enable()
 def getDicts(Fsim=55):
 
 	dictNet={
-		'Nx': 16,																# oscillators in x-direction
-		'Ny': 16,																# oscillators in y-direction
+		'Nx': 3,																# oscillators in x-direction
+		'Ny': 1,																# oscillators in y-direction
 		'mx': 0,																# twist/chequerboard in x-direction (depends on closed or open boundary conditions)
 		'my': -999,																# twist/chequerboard in y-direction
-		'topology': 'square-open',												# 1d) ring, chain, 2d) square-open, square-periodic, hexagonal...
+		'topology': 'chain',													# 1d) ring, chain, 2d) square-open, square-periodic, hexagonal...
 																				# 3) global, entrainOne-[ring,chain,square-open], entrainAll-[ring,chain,square-open], entrainPLLsHierarch, compareEntrVsMutual
 		'normalize_mutual_coupling_by_inputs': True,  							# divide the sum over all inputs to a PLL by the number of inputs YES/NO -> True/False
-		'Tsim': 25,																# simulation time in multiples of the period
+		'Tsim': 2500,															# simulation time in multiples of the period
 		'computeFreqAndStab': False,											# compute linear stability and global frequency if possible: True or False
 		'phi_array_mult_tau': 1,												# how many multiples of the delay is stored of the phi time series
-		'phiPerturb': [0 for i in range(256)],									# delta-perturbation on initial state -- PROVIDE EITHER ONE OF THEM! if [] set to zero
+		'phiPerturb': [0 for i in range(3)],									# delta-perturbation on initial state -- PROVIDE EITHER ONE OF THEM! if [] set to zero
 		'phiPerturbRot': [],													# delta-perturbation on initial state -- in rotated space
-		'phiInitConfig': [0 for i in range(256)],								# phase-configuration of sync state,  []: automatic, else provide list
+		'phiInitConfig': [0 for i in range(3)],									# phase-configuration of sync state,  []: automatic, else provide list
 		'freq_beacons': 0.25,													# frequency of external sender beacons, either a float or a list
-		'special_case': 'False', #'timeDepTransmissionDelay',#'False'			# 'False', or 'test_case', 'timeDepInjectLockCoupStr', 'timeDepTransmissionDelay', 'timeDepChangeOfCoupStr'
-		'typeOfTimeDependency': 'triangle',#'linear',							# 'exponential', 'linear', 'quadratic', 'triangle', 'cosine'
+		'special_case': 'timeDepTransmissionDelay', #'False'					# 'False', or 'test_case', 'timeDepInjectLockCoupStr', 'timeDepTransmissionDelay', 'timeDepChangeOfCoupStr'
+		'typeOfTimeDependency': 'triangle', #'linear',							# adiabatic-{'exponential', 'linear', 'quadratic', 'triangle', 'cosine'} vs freerun-{'exponential', 'linear', 'quadratic', 'triangle', 'cosine'}
 		'min_max_rate_timeDepPara': [2.85, 3.15, 0.000075/100]					# provide a list with min, max and rate of the time-dependent parameter
 	}
 
 	dictPLL={
 		'intrF': 1,																# intrinsic frequency in Hz [random.uniform(0.95, 1.05) for i in range(dictNet['Nx']*dictNet['Ny'])]
-		'syncF': 0.9968,															# frequency of synchronized state in Hz
-		'coupK': [random.uniform(0.0049, 0.0051) for i in range(dictNet['Nx']*dictNet['Ny'])], # [random.uniform(0.3, 0.4) for i in range(dictNet['Nx']*dictNet['Ny'])],# coupling strength (like phase model: K = Kvco/2 * G_all, NOTE: the /2 is for coupling functions that have peak2peal amplitude 2) in Hz float or [random.uniform(minK, maxK) for i in range(dictNet['Nx']*dictNet['Ny'])]
+		'syncF': 0.9968,														# frequency of synchronized state in Hz
+		'coupK': 0.01152, 														# [random.uniform(0.3, 0.4) for i in range(dictNet['Nx']*dictNet['Ny'])],# coupling strength (like phase model: K = Kvco/2 * G_all, NOTE: the /2 is for coupling functions that have peak2peal amplitude 2) in Hz float or [random.uniform(minK, maxK) for i in range(dictNet['Nx']*dictNet['Ny'])]
 		'gPDin': 1,																# gains of the different inputs to PD k from input l -- G_kl, see PD, set to 1 and all G_kl=1 (so far only implemented for some cases, check!): np.random.uniform(0.95,1.05,size=[dictNet['Nx']*dictNet['Ny'],dictNet['Nx']*dictNet['Ny']])
 		'gPDin_symmetric': True,												# set to True if G_kl == G_lk, False otherwise
-		'cutFc': [random.uniform(0.001, 0.0015) for i in range(dictNet['Nx']*dictNet['Ny'])], # LF cut-off frequency in Hz, here N=9 with mean 0.015: [0.05,0.015,0.00145,0.001,0.0001,0.001,0.00145,0.015,0.05]
-		'orderLF': 1,															# order of LF filter, either 1 or 2 at the moment
-		'div': 16,																# divisor of divider (int)
+		'cutFc': 4.045E-5, 														# LF cut-off frequency in Hz, here N=9 with mean 0.015: [0.05,0.015,0.00145,0.001,0.0001,0.001,0.00145,0.015,0.05], [random.uniform(0.001, 0.0015) for i in range(dictNet['Nx']*dictNet['Ny'])]
+		'orderLF': 2,															# order of LF filter, either 1 or 2 at the moment
+		'div': 512,																# divisor of divider (int)
 		'friction_coefficient': 1,												# friction coefficient of 2nd order Kuramoto models
 		'fric_coeff_PRE_vs_PRR': 'PRE',											# 'PRR': friction coefficient multiplied to instant. AND intrin. freq, 'PRE': friction coefficient multiplied only to instant. freq
 		'noiseVarVCO': 1E-9,													# variance of VCO GWN
@@ -84,7 +84,7 @@ def getDicts(Fsim=55):
 		'extra_coup_sig': None,													# choose from: 'injection2ndHarm', None
 		'shil_generation_through_filter': False,  								# whether or not the SHIL signal is generated artificially or via the filtering through a band-pass filter
 		'coupStr_2ndHarm': 0.6,													# the coupling constant for the injection of the 2nd harmonic: float, will be independent of 'coupK'
-		'typeOfHist': 'syncState',												# string, choose from: 'freeRunning', 'syncState'
+		'typeOfHist': 'freeRunning',											# string, choose from: 'freeRunning', 'syncState'
 		'sampleF': Fsim,														# sampling frequency
 		'sampleFplot': 25,														# sampling frequency for reduced plotting (every sampleFplot time step)
 		'treshold_maxT_to_plot': 1E6,											# maximum number of periods to plot for some plots
@@ -99,6 +99,8 @@ def getDicts(Fsim=55):
 		'bruteForceBasinStabMethod': 'single',									# pick method for setting realizations 'single', 'classicBruteForceMethodRotatedSpace', 'listOfInitialPhaseConfigurations', 'testNetworkMotifIsing'		'paramDiscretization': [7, 1],#[15, 10],								# parameter discetization for brute force parameter space scans
 		'param_id': 'None',														# parameter to be changed between different realizations, according to the min_max_range_parameter: 'None' or string of any other parameter
 		'min_max_range_parameter': [1-5E-9, 1+5E-9],							# specifies within which min and max value to linspace the initial frequency difference (w.r.t. HF Frequency, not divided)
+		'param_id_1': 'tranmission_delay',  									# parameter to be changed between different realizations, according to the min_max_range_parameter: 'None' or string of any other parameter
+		'min_max_range_parameter_1': [0.1, 2.6],  								# specifies within which min and max value to linspace the initial frequency difference (w.r.t. HF Frequency, not divided)
 		'store_ctrl_and_clock': False,											# whether or not the control signals and clock signal is being computed (time and memory usage)
 		'store_phases_tau_array': True  # whether or not the phases are saved when simulation on tau-array
 	}

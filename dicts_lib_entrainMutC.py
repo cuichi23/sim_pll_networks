@@ -96,7 +96,7 @@ def getDicts(Fsim=125):
 
 	dictAlgo={
 		'bruteForceBasinStabMethod': 'two_parameter_sweep',						# pick method for setting realizations 'single', 'classicBruteForceMethodRotatedSpace', 'listOfInitialPhaseConfigurations', 'two_parameter_sweep'
-		'paramDiscretization': [3, 3],										# parameter discretization for brute force initial phases and parameter space scans
+		'paramDiscretization': [3, 3],											# parameter discretization for brute force initial phases and parameter space scans
 		'param_id': 'intrF',													# parameter to be changed between different realizations, according to the min_max_range_parameter: 'None' or string of any other parameter
 		'min_max_range_parameter': [0.55, 1.45],								# specifies within which min and max value to linspace the initial frequency difference (w.r.t. HF Frequency, not divided)
 		'param_id_1': 'tranmission_delay',  									# parameter to be changed between different realizations, according to the min_max_range_parameter: 'None' or string of any other parameter

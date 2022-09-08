@@ -110,17 +110,17 @@ def plotTest(params):
 ################################################################################
 
 
-def prepareDictsForPlotting(dictPLL, dictNet):
+def prepareDictsForPlotting(dict_pll, dict_net):
 
-	if dictPLL['cutFc'] is None:
-		dictPLL.update({'cutFc': np.inf})
+	if dict_pll['cutFc'] is None:
+		dict_pll.update({'cutFc': np.inf})
 
-	if not np.abs(np.min(dictPLL['intrF'])) > 1E-17:									# for f=0, there would otherwies be a float division by zero
-		dictPLL.update({'intrF': 1})
+	if not np.abs(np.min(dict_pll['intrF'])) > 1E-17:									# for f=0, there would otherwies be a float division by zero
+		dict_pll.update({'intrF': 1})
 		print('Since intrinsic frequency was zero: for plotting set to one to generate boundaries!')
 
 
-	return dictPLL, dictNet
+	return dict_pll, dict_net
 
 
 def saveDictionaries(dictToSave, name, K, tau, Fc, Nx, Ny, mx, my, topology):
@@ -138,72 +138,72 @@ def saveDictionaries(dictToSave, name, K, tau, Fc, Nx, Ny, mx, my, topology):
 
 ################################################################################
 
-def calculateEigenvalues(dictNet, dictPLL):
+def calculateEigenvalues(dict_net, dict_pll):
 	''' Calculate eigenvalues zeta for networks of homogeneous PLL '''
 
-	if dictNet['topology'] == 'global':											# test whether global coupling topology
+	if dict_net['topology'] == 'global':											# test whether global coupling topology
 		print('All to all coupling topology identified!')
-		zeta = 1/(dictNet['Nx']*dictNet['Ny']-1)
-		dictNet.update({'zeta': zeta})
+		zeta = 1/(dict_net['Nx']*dict_net['Ny']-1)
+		dict_net.update({'zeta': zeta})
 
-	# if dictNet['Ny'] == 1:														# check whether 2D or 1D topology
+	# if dict_net['Ny'] == 1:														# check whether 2D or 1D topology
 	# 	print('1d network topology identified!')
-	# 	if dictNet['topology'] == 'ring':
+	# 	if dict_net['topology'] == 'ring':
 	# 		zeta = 1
-	# 		dictNet.update({'zeta': zeta})
-	# 	elif dictNet['topology'] == 'chain':
-	# 		if dictNet['mx'] == 0:
+	# 		dict_net.update({'zeta': zeta})
+	# 	elif dict_net['topology'] == 'chain':
+	# 		if dict_net['mx'] == 0:
 	# 			zeta = 1
-	# 			dictNet.update({'zeta': zeta})
-	# 		elif dictNet['mx'] > 0:
-	# 			zeta = np.cos(np.arange(0,dictNet['Nx'])*np.pi/(dictNet['Nx']-1))
-	# 			dictNet.update({'zeta': zeta})
+	# 			dict_net.update({'zeta': zeta})
+	# 		elif dict_net['mx'] > 0:
+	# 			zeta = np.cos(np.arange(0,dict_net['Nx'])*np.pi/(dict_net['Nx']-1))
+	# 			dict_net.update({'zeta': zeta})
 	# 	else:
 	# 		print('Coupling topology not yet implemented, add expression for eigenvalues or brute-force solve!')
 	#
-	# elif dictNet['Ny'] > 1:
+	# elif dict_net['Ny'] > 1:
 	# 	print('2d network topology identified!')
-	# 	if dictNet['topology'] == 'square-open':
+	# 	if dict_net['topology'] == 'square-open':
 	# 		zeta = 1
-	# 		dictNet.update({'zeta': zeta})
-	# 	elif dictNet['topology'] == 'square-periodic':
+	# 		dict_net.update({'zeta': zeta})
+	# 	elif dict_net['topology'] == 'square-periodic':
 	# 		zeta = 1
-	# 		dictNet.update({'zeta': zeta})
+	# 		dict_net.update({'zeta': zeta})
 	# 	else:
 	# 		print('Coupling topology not yet implemented, add expression for eigenvalues or brute-force solve!')
 	#
-	return dictNet, dictPLL
+	return dict_net, dict_pll
 
 ################################################################################
 
 ''' CALCULATE SPECTRUM '''
-def calcSpectrum( phi, dictPLL, dictNet, psd_id=0, percentOfTsim=0.5 ): #phi,Fsample,couplingfct,waveform=None,expectedFreq=-999,evalAllRealizations=False,decayTimeSlowestMode=None
+def calcSpectrum( phi, dict_pll, dict_net, psd_id=0, percentOfTsim=0.5 ): #phi,Fsample,couplingfct,waveform=None,expectedFreq=-999,evalAllRealizations=False,decayTimeSlowestMode=None
 
 	Pxx_dBm=[]; Pxx_dBV=[]; f=[];
 	try:
 		windowset='boxcar' # here we choose boxcar since a modification of the ends of the time-series is not necessary for an integer number of periods
 		print('Trying to cut integer number of periods! Inside calcSpectrum.')
-		if dictPLL['extra_coup_sig'] is None:
-			analyzeL = findIntTinSig.cutTimeSeriesOfIntegerPeriod(dictPLL['sampleF'], dictNet['Tsim'], dictPLL['transmission_delay'], dictPLL['syncF'],
-																np.max(dictPLL['coupK']), phi, psd_id, percentOfTsim)
+		if dict_pll['extra_coup_sig'] is None:
+			analyzeL = findIntTinSig.cutTimeSeriesOfIntegerPeriod(dict_pll['sampleF'], dict_net['Tsim'], dict_pll['transmission_delay'], dict_pll['syncF'],
+																np.max(dict_pll['coupK']), phi, psd_id, percentOfTsim)
 		else:
-			analyzeL = findIntTinSig.cutTimeSeriesOfIntegerPeriod(dictPLL['sampleF'], dictNet['Tsim'], dictPLL['transmission_delay'], dictPLL['syncF'],
-																np.max([np.max(dictPLL['coupK']), np.max(dictPLL['coupStr_2ndHarm'])]), phi, psd_id, percentOfTsim)
+			analyzeL = findIntTinSig.cutTimeSeriesOfIntegerPeriod(dict_pll['sampleF'], dict_net['Tsim'], dict_pll['transmission_delay'], dict_pll['syncF'],
+																np.max([np.max(dict_pll['coupK']), np.max(dict_pll['coupStr_2ndHarm'])]), phi, psd_id, percentOfTsim)
 	except:
 		windowset='hamming' 													#'hamming' #'hamming', 'boxcar'
 		print('\n\nError in cutTimeSeriesOfIntegerPeriod-function! Not picking integer number of periods for PSD! Using window %s!\n\n'%windowset)
-		analyzeL= [ int( dictNet['Tsim']*dictPLL['sampleF']*(1-percentOfTsim) ), int( dictNet['Tsim']*dictPLL['sampleF'] )-1 ]
+		analyzeL= [ int( dict_net['Tsim']*dict_pll['sampleF']*(1-percentOfTsim) ), int( dict_net['Tsim']*dict_pll['sampleF'] )-1 ]
 
 	window = scipy.signal.get_window(windowset, analyzeL[1]-analyzeL[0], fftbins=True);
 	#print('Length window:', len(window), '\tshape window:', np.shape(window))
-	print('\nCurrent window option is', windowset, 'for waveform', inspect.getsourcelines(dictPLL['PSD_from_signal'])[0][0],
+	print('\nCurrent window option is', windowset, 'for waveform', inspect.getsourcelines(dict_pll['PSD_from_signal'])[0][0],
 			'NOTE: in principle can always choose to be sin() for cleaner PSD in first harmonic approximation of the signal.')
 	print('Calculate spectrum for',percentOfTsim,'percent of the time-series. Implement better solution using decay times.')
 
-	tsdata		= dictPLL['PSD_from_signal'](phi[analyzeL[0]:analyzeL[1]])
+	tsdata		= dict_pll['PSD_from_signal'](phi[analyzeL[0]:analyzeL[1]])
 	#print('Length tsdata:', len(tsdata), '\tshape tsdata:', np.shape(tsdata))
 
-	ftemp, Vxx 	= scipy.signal.periodogram(tsdata, dictPLL['sampleF'], return_onesided=True, window=window, scaling='density', axis=0) #  returns Pxx with dimensions [V^2] if scaling='spectrum' and [V^2/Hz] if if scaling='density'
+	ftemp, Vxx 	= scipy.signal.periodogram(tsdata, dict_pll['sampleF'], return_onesided=True, window=window, scaling='density', axis=0) #  returns Pxx with dimensions [V^2] if scaling='spectrum' and [V^2/Hz] if if scaling='density'
 	P0 = 1E-3; R=50; 															# for P0 in [mW/Hz] and R [ohm]
 
 	Pxx_dBm.append( 10*np.log10((Vxx/R)/P0) )
@@ -412,25 +412,25 @@ def fitModelDemir(f_model,d_model,fitrange=0):
 ################################################################################
 ################################################################################
 
-def obtainOrderParam(dictPLL, dictNet, dictData):
+def obtainOrderParam(dict_pll, dict_net, dictData):
 	''' MODIFIED KURAMOTO ORDER PARAMETERS '''
 	numb_av_T = 2.5																			   	# number of periods of free-running frequencies to average over
-	if np.min(dictPLL['intrF']) > 0:														 	# for f=0, there would otherwise be a float division by zero
-		F1 = np.min(dictPLL['intrF'])
+	if np.min(dict_pll['intrF']) > 0:														 	# for f=0, there would otherwise be a float division by zero
+		F1 = np.min(dict_pll['intrF'])
 	else:
-		F1 = np.min(dictPLL['intrF'])+1E-3
+		F1 = np.min(dict_pll['intrF'])+1E-3
 
-	if dictNet['topology'] == "square-periodic" or dictNet['topology'] == "hexagon-periodic" or dictNet['topology'] == "octagon-periodic":
-		r = oracle_mTwistOrderParameter2d(dictData['phi'][-int(numb_av_T*1.0/(F1*dictPLL['dt'])):, :], dictNet['Nx'], dictNet['Ny'], dictNet['mx'], dictNet['my'])
-		orderparam = oracle_mTwistOrderParameter2d(dictData['phi'][:, :], dictNet['Nx'], dictNet['Ny'], dictNet['mx'], dictNet['my'])
-	elif dictNet['topology'] == "square-open" or dictNet['topology'] == "hexagon" or dictNet['topology'] == "octagon":
-		if dictNet['mx'] == 1 and dictNet['my'] == 1:
+	if dict_net['topology'] == "square-periodic" or dict_net['topology'] == "hexagon-periodic" or dict_net['topology'] == "octagon-periodic":
+		r = oracle_mTwistOrderParameter2d(dictData['phi'][-int(numb_av_T*1.0/(F1*dict_pll['dt'])):, :], dict_net['Nx'], dict_net['Ny'], dict_net['mx'], dict_net['my'])
+		orderparam = oracle_mTwistOrderParameter2d(dictData['phi'][:, :], dict_net['Nx'], dict_net['Ny'], dict_net['mx'], dict_net['my'])
+	elif dict_net['topology'] == "square-open" or dict_net['topology'] == "hexagon" or dict_net['topology'] == "octagon":
+		if dict_net['mx'] == 1 and dict_net['my'] == 1:
 			ktemp=2
-		elif dictNet['mx'] == 1 and dictNet['my'] == 0:
+		elif dict_net['mx'] == 1 and dict_net['my'] == 0:
 			ktemp=0
-		elif dictNet['mx'] == 0 and dictNet['my'] == 1:
+		elif dict_net['mx'] == 0 and dict_net['my'] == 1:
 			ktemp = 1
-		elif dictNet['mx'] == 0 and dictNet['my'] == 0:
+		elif dict_net['mx'] == 0 and dict_net['my'] == 0:
 			ktemp = 3
 		else:
 			ktemp = 4
@@ -440,49 +440,49 @@ def obtainOrderParam(dictPLL, dictNet, dictData):
 				ktemp == 2 : xy checkerboard state
 				ktemp == 3 : in-phase synchronized
 			"""
-		r = oracle_CheckerboardOrderParameter2d(dictData['phi'][-int(numb_av_T*1.0/(F1*dictPLL['dt'])):, :], dictNet['Nx'], dictNet['Ny'], ktemp)
+		r = oracle_CheckerboardOrderParameter2d(dictData['phi'][-int(numb_av_T*1.0/(F1*dict_pll['dt'])):, :], dict_net['Nx'], dict_net['Ny'], ktemp)
 		# ry = np.nonzero(rmat > 0.995)[0]
 		# rx = np.nonzero(rmat > 0.995)[1]
-		orderparam = oracle_CheckerboardOrderParameter2d(dictData['phi'][:, :], dictNet['Nx'], dictNet['Ny'], ktemp)
-	elif dictNet['topology'] == "compareEntrVsMutual":
-		rMut 	 = oracle_mTwistOrderParameter(dictData['phi'][-int(numb_av_T*1.0/(F1*dictPLL['dt'])):, 0:2], dictNet['mx']);
-		orderMut = oracle_mTwistOrderParameter(dictData['phi'][:, 0:2], dictNet['mx']);
-		rEnt 	 = oracle_mTwistOrderParameter(dictData['phi'][-int(numb_av_T*1.0/(F1*dictPLL['dt'])):, 2:4], dictNet['mx']);
-		orderEnt = oracle_mTwistOrderParameter(dictData['phi'][:, 2:4], dictNet['mx']);
+		orderparam = oracle_CheckerboardOrderParameter2d(dictData['phi'][:, :], dict_net['Nx'], dict_net['Ny'], ktemp)
+	elif dict_net['topology'] == "compareEntrVsMutual":
+		rMut 	 = oracle_mTwistOrderParameter(dictData['phi'][-int(numb_av_T*1.0/(F1*dict_pll['dt'])):, 0:2], dict_net['mx']);
+		orderMut = oracle_mTwistOrderParameter(dictData['phi'][:, 0:2], dict_net['mx']);
+		rEnt 	 = oracle_mTwistOrderParameter(dictData['phi'][-int(numb_av_T*1.0/(F1*dict_pll['dt'])):, 2:4], dict_net['mx']);
+		orderEnt = oracle_mTwistOrderParameter(dictData['phi'][:, 2:4], dict_net['mx']);
 		if isPlottingTimeSeries:
 			figwidth  = 6; figheight = 5; t = np.arange(dictData['phi'].shape[0]); now = datetime.datetime.now();
 			fig0 = plt.figure(num=0, figsize=(figwidth, figheight), dpi=150, facecolor='w', edgecolor='k')
 			fig0.canvas.manager.set_window_title('order parameters mutual and entrained')			   # plot orderparameter
 			plt.clf()
-			plt.plot((dictData['t']*dictPLL['dt']), orderMut,'b-',  label='2 mutual coupled PLLs' )
-			plt.plot((dictData['t']*dictPLL['dt']), orderEnt,'r--', label='one entrained PLL')
-			plt.plot(dictPLL['transmission_delay'], orderMut[int(round(dictPLL['transmission_delay']/dictPLL['dt']))], 'yo', ms=5)						   # mark where the simulation starts
-			plt.axvspan(dictData['t'][-int(2*1.0/(F1*dictPLL['dt']))]*dictPLL['dt'], dictData['t'][-1]*dictPLL['dt'], color='b', alpha=0.3)
+			plt.plot((dictData['t']*dict_pll['dt']), orderMut,'b-',  label='2 mutual coupled PLLs' )
+			plt.plot((dictData['t']*dict_pll['dt']), orderEnt,'r--', label='one entrained PLL')
+			plt.plot(dict_pll['transmission_delay'], orderMut[int(round(dict_pll['transmission_delay']/dict_pll['dt']))], 'yo', ms=5)						   # mark where the simulation starts
+			plt.axvspan(dictData['t'][-int(2*1.0/(F1*dict_pll['dt']))]*dict_pll['dt'], dictData['t'][-1]*dict_pll['dt'], color='b', alpha=0.3)
 			plt.xlabel(r'$t$ $[s]$'); plt.legend();
-			plt.ylabel(r'$R( t,m = %d )$' % dictNet['mx'])
-			plt.savefig('results/orderparam_mutual_entrained_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.pdf' %(np.mean(dictPLL['coupK']), np.mean(dictPLL['cutFc']), np.mean(dictPLL['syncF']), np.mean(dictPLL['transmission_delay']), np.mean(dictPLL['noiseVarVCO']), now.year, now.month, now.day))
-			plt.savefig('results/orderparam_mutual_entrained_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.png' %(np.mean(dictPLL['coupK']), np.mean(dictPLL['cutFc']), np.mean(dictPLL['syncF']), np.mean(dictPLL['transmission_delay']), np.mean(dictPLL['noiseVarVCO']), now.year, now.month, now.day), dpi=300)
-			r = np.zeros(len(dictData['phi'][-int(numb_av_T*1.0/(F1*dictPLL['dt'])):,0]))
+			plt.ylabel(r'$R( t,m = %d )$' % dict_net['mx'])
+			plt.savefig('results/orderparam_mutual_entrained_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.pdf' %(np.mean(dict_pll['coupK']), np.mean(dict_pll['cutFc']), np.mean(dict_pll['syncF']), np.mean(dict_pll['transmission_delay']), np.mean(dict_pll['noiseVarVCO']), now.year, now.month, now.day))
+			plt.savefig('results/orderparam_mutual_entrained_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.png' %(np.mean(dict_pll['coupK']), np.mean(dict_pll['cutFc']), np.mean(dict_pll['syncF']), np.mean(dict_pll['transmission_delay']), np.mean(dict_pll['noiseVarVCO']), now.year, now.month, now.day), dpi=300)
+			r = np.zeros(len(dictData['phi'][-int(numb_av_T*1.0/(F1*dict_pll['dt'])):,0]))
 			orderparam = np.zeros(len(dictData['phi'][:, 0]))
-	elif dictNet['topology'] == "chain":
+	elif dict_net['topology'] == "chain":
 		"""
-				dictNet['mx']  > 0 : x  checkerboard state
-				dictNet['mx'] == 0 : in-phase synchronized
+				dict_net['mx']  > 0 : x  checkerboard state
+				dict_net['mx'] == 0 : in-phase synchronized
 			"""
-		r = oracle_CheckerboardOrderParameter1d(dictData['phi'][-int(numb_av_T*1.0/(F1*dictPLL['dt'])):, :], dictNet['mx'])
+		r = oracle_CheckerboardOrderParameter1d(dictData['phi'][-int(numb_av_T*1.0/(F1*dict_pll['dt'])):, :], dict_net['mx'])
 		orderparam = oracle_CheckerboardOrderParameter1d(dictData['phi'][:, :])							# calculate the order parameter for all times
-	elif dictNet['topology'] == "ring" or dictNet['topology'] == 'global':
+	elif dict_net['topology'] == "ring" or dict_net['topology'] == 'global':
 		# print('Calculate order parameter for ring or global topology. For phases: ', dictData['phi'])
 		time.sleep(5)
-		r = oracle_mTwistOrderParameter(dictData['phi'][-int(numb_av_T*1.0/(F1*dictPLL['dt'])):, :], dictNet['mx'])# calculate the m-twist order parameter for a time interval of 2 times the eigenperiod, ry is imaginary part
-		orderparam = oracle_mTwistOrderParameter(dictData['phi'][:, :], dictNet['mx'])					# calculate the m-twist order parameter for all times
-	elif "entrain" in dictNet['topology']:
-		# ( dictNet['topology'] == "entrainOne" or dictNet['topology'] == "entrainAll" or dictNet['topology'] == "entrainPLLsHierarch"):
-		phi_constant_expected = dictNet['phiInitConfig']
-		r = calcKuramotoOrderParEntrainSelfOrgState(dictData['phi'][-int(numb_av_T*1.0/(F1*dictPLL['dt'])):, :], phi_constant_expected)
+		r = oracle_mTwistOrderParameter(dictData['phi'][-int(numb_av_T*1.0/(F1*dict_pll['dt'])):, :], dict_net['mx'])# calculate the m-twist order parameter for a time interval of 2 times the eigenperiod, ry is imaginary part
+		orderparam = oracle_mTwistOrderParameter(dictData['phi'][:, :], dict_net['mx'])					# calculate the m-twist order parameter for all times
+	elif "entrain" in dict_net['topology']:
+		# ( dict_net['topology'] == "entrainOne" or dict_net['topology'] == "entrainAll" or dict_net['topology'] == "entrainPLLsHierarch"):
+		phi_constant_expected = dict_net['phiInitConfig']
+		r = calcKuramotoOrderParEntrainSelfOrgState(dictData['phi'][-int(numb_av_T*1.0/(F1*dict_pll['dt'])):, :], phi_constant_expected)
 		orderparam = calcKuramotoOrderParEntrainSelfOrgState(dictData['phi'][:, :], phi_constant_expected)
-	# r = oracle_mTwistOrderParameter(dictData['phi'][-int(2*1.0/(F1*dictPLL['dt'])):, :], dictNet['mx'])			# calculate the m-twist order parameter for a time interval of 2 times the eigenperiod, ry is imaginary part
-	# orderparam = oracle_mTwistOrderParameter(dictData['phi'][:, :], dictNet['mx'])					# calculate the m-twist order parameter for all times
+	# r = oracle_mTwistOrderParameter(dictData['phi'][-int(2*1.0/(F1*dict_pll['dt'])):, :], dict_net['mx'])			# calculate the m-twist order parameter for a time interval of 2 times the eigenperiod, ry is imaginary part
+	# orderparam = oracle_mTwistOrderParameter(dictData['phi'][:, :], dict_net['mx'])					# calculate the m-twist order parameter for all times
 	# print('mean of modulus of the order parameter, R, over 2T:', np.mean(r), ' last value of R', r[-1])
 	print('mean of modulus of the order parameter, R, over 2T:', np.mean(r), ' last value of R', r[-1])
 
@@ -490,10 +490,10 @@ def obtainOrderParam(dictPLL, dictNet, dictData):
 
 ################################################################################
 
-def evaluateSimulationsChrisHoyer(poolData):
+def evaluateSimulationsChrisHoyer(pool_data):
 
-	#print('poolData', poolData[0][0])
-	# poolData = load(...)														# in principle saved pool data can be loaded and plotted
+	#print('pool_data', pool_data[0][0])
+	# pool_data = load(...)														# in principle saved pool data can be loaded and plotted
 
 	# plot parameter
 	axisLabel  = 60;
@@ -505,7 +505,7 @@ def evaluateSimulationsChrisHoyer(poolData):
 	alpha 	   = 0.5;
 	linewidth  = 0.5;
 
-	unit_cell = PhaseDifferenceCell(poolData[0][0]['dictNet']['Nx']*poolData[0][0]['dictNet']['Ny'])
+	unit_cell = PhaseDifferenceCell(pool_data[0][0]['dict_net']['Nx']*pool_data[0][0]['dict_net']['Ny'])
 	threshold_statState = np.pi/15
 
 	fig16 = plt.figure(num=16, figsize=(figwidth, figheight), dpi=dpi_val, facecolor='w', edgecolor='k')
@@ -532,29 +532,29 @@ def evaluateSimulationsChrisHoyer(poolData):
 	fig19.canvas.manager.set_window_title('LF (cross-coupling) basin attraction plot')			 			# basin attraction plot
 	ax19 = fig19.add_subplot(111)
 
-	delay_steps	= int( np.floor( poolData[0][0]['dictPLL']['transmission_delay'] / poolData[0][0]['dictPLL']['dt'] ) )
-	stats_init_phase_conf_final_state = np.empty([len(poolData[0][:]), 5])
-	deltaThetaDivSave		= np.empty( [len(poolData[0][:]), len(poolData[0][0]['dictData']['phi'][delay_steps+1::poolData[0][0]['dictPLL']['sampleFplot'],0])-0] )
-	deltaThetaDivDotSave	= np.empty( [len(poolData[0][:]), len(poolData[0][0]['dictData']['phi'][delay_steps+1::poolData[0][0]['dictPLL']['sampleFplot'],0])-0] )
+	delay_steps	= int( np.floor( pool_data[0][0]['dict_pll']['transmission_delay'] / pool_data[0][0]['dict_pll']['dt'] ) )
+	stats_init_phase_conf_final_state = np.empty([len(pool_data[0][:]), 5])
+	deltaThetaDivSave		= np.empty( [len(pool_data[0][:]), len(pool_data[0][0]['dictData']['phi'][delay_steps+1::pool_data[0][0]['dict_pll']['sampleFplot'],0])-0] )
+	deltaThetaDivDotSave	= np.empty( [len(pool_data[0][:]), len(pool_data[0][0]['dictData']['phi'][delay_steps+1::pool_data[0][0]['dict_pll']['sampleFplot'],0])-0] )
 
-	for i in range(len(poolData[0][:])):
-		#print('working on realization %i results from sim:'%i, poolData[0][i]['dictNet'], '\n', poolData[0][i]['dictPLL'], '\n', poolData[0][i]['dictData'],'\n\n')
+	for i in range(len(pool_data[0][:])):
+		#print('working on realization %i results from sim:'%i, pool_data[0][i]['dict_net'], '\n', pool_data[0][i]['dict_pll'], '\n', pool_data[0][i]['dictData'],'\n\n')
 
-		#print('Check whether perturbation is inside unit-cell (evaluation.py)! phiS:', poolData[0][i]['dictNet']['phiPerturb'], '\tInside? True/False:', unit_cell.is_inside((poolData[0][i]['dictNet']['phiPerturb']), isRotated=False)); time.sleep(2)
-		#print('How about phi, is it a key to dictData?', 'phi' in poolData[0][i]['dictData'])
-		if unit_cell.is_inside((poolData[0][i]['dictNet']['phiPerturb']), isRotated=False):	# NOTE this case is for scanValues set only in -pi to pi, we so not plot outside the unit cell
+		#print('Check whether perturbation is inside unit-cell (evaluation.py)! phiS:', pool_data[0][i]['dict_net']['phiPerturb'], '\tInside? True/False:', unit_cell.is_inside((pool_data[0][i]['dict_net']['phiPerturb']), isRotated=False)); time.sleep(2)
+		#print('How about phi, is it a key to dictData?', 'phi' in pool_data[0][i]['dictData'])
+		if unit_cell.is_inside((pool_data[0][i]['dict_net']['phiPerturb']), isRotated=False):	# NOTE this case is for scanValues set only in -pi to pi, we so not plot outside the unit cell
 
 			# test whether frequency is larger or smaller than mean intrinsic frequency as a first distinction between multistable synced states with the same phase relations but
 			# different frequency -- for more than 3 multistable in- or anti-phase synched states that needs to be reworked
-			if ( poolData[0][i]['dictData']['phi'][-1,0] - poolData[0][i]['dictData']['phi'][-2,0] ) / poolData[0][i]['dictPLL']['dt'] > np.mean( poolData[0][i]['dictPLL']['intrF'] ):
+			if ( pool_data[0][i]['dictData']['phi'][-1,0] - pool_data[0][i]['dictData']['phi'][-2,0] ) / pool_data[0][i]['dict_pll']['dt'] > np.mean( pool_data[0][i]['dict_pll']['intrF'] ):
 				initmarker = 'd'
 			else:
 				initmarker = 'o'
 
-			deltaTheta 			= poolData[0][i]['dictData']['phi'][:,0] - poolData[0][i]['dictData']['phi'][:,1]
-			deltaThetaDot		= np.diff( deltaTheta, axis=0 ) / poolData[0][i]['dictPLL']['dt']
-			deltaThetaDiv 		= poolData[0][i]['dictData']['phi'][:,0]/poolData[0][i]['dictPLL']['div'] - poolData[0][i]['dictData']['phi'][:,1]/poolData[0][i]['dictPLL']['div']
-			deltaThetaDivDot	= np.diff( deltaThetaDiv, axis=0 ) / poolData[0][i]['dictPLL']['dt']
+			deltaTheta 			= pool_data[0][i]['dictData']['phi'][:,0] - pool_data[0][i]['dictData']['phi'][:,1]
+			deltaThetaDot		= np.diff( deltaTheta, axis=0 ) / pool_data[0][i]['dict_pll']['dt']
+			deltaThetaDiv 		= pool_data[0][i]['dictData']['phi'][:,0]/pool_data[0][i]['dict_pll']['div'] - pool_data[0][i]['dictData']['phi'][:,1]/pool_data[0][i]['dict_pll']['div']
+			deltaThetaDivDot	= np.diff( deltaThetaDiv, axis=0 ) / pool_data[0][i]['dict_pll']['dt']
 
 			if np.abs( np.abs( (deltaTheta[-1]+np.pi)%(2.*np.pi)-np.pi ) - np.pi ) < threshold_statState:
 				color = 'r'														# anti-phase
@@ -565,11 +565,11 @@ def evaluateSimulationsChrisHoyer(poolData):
 
 
 			# plot for HF output
-			ax16.plot((deltaTheta[delay_steps+1::poolData[0][0]['dictPLL']['sampleFplot']]+np.pi)%(2.*np.pi)-np.pi, deltaThetaDot[delay_steps::poolData[0][0]['dictPLL']['sampleFplot']], '-', color=color, alpha=alpha, linewidth=linewidth)	 	# plot trajectory
+			ax16.plot((deltaTheta[delay_steps+1::pool_data[0][0]['dict_pll']['sampleFplot']]+np.pi)%(2.*np.pi)-np.pi, deltaThetaDot[delay_steps::pool_data[0][0]['dict_pll']['sampleFplot']], '-', color=color, alpha=alpha, linewidth=linewidth)	 	# plot trajectory
 			ax16.plot((deltaTheta[delay_steps]+np.pi)%(2.*np.pi)-np.pi, deltaThetaDot[delay_steps], 'o', color=color, alpha=alpha)	 		# plot initial dot
 			ax16.plot((deltaTheta[-1]+np.pi)%(2.*np.pi)-np.pi, deltaThetaDot[-1], 'x', color=color, alpha=alpha)						 	# plot final state cross
-			#plot_lib.deltaThetaDot_vs_deltaTheta(poolData[0][i]['dictPLL'], poolData[0][i]['dictNet'], (deltaTheta[1:]+np.pi)%(2.*np.pi)-np.pi, deltaThetaDot, color, alpha)
-			ax17.plot(deltaTheta[delay_steps+1::poolData[0][0]['dictPLL']['sampleFplot']], deltaThetaDot[delay_steps::poolData[0][0]['dictPLL']['sampleFplot']], '-', color=color, alpha=alpha, linewidth=linewidth)		# plot trajectory
+			#plot_lib.deltaThetaDot_vs_deltaTheta(pool_data[0][i]['dict_pll'], pool_data[0][i]['dict_net'], (deltaTheta[1:]+np.pi)%(2.*np.pi)-np.pi, deltaThetaDot, color, alpha)
+			ax17.plot(deltaTheta[delay_steps+1::pool_data[0][0]['dict_pll']['sampleFplot']], deltaThetaDot[delay_steps::pool_data[0][0]['dict_pll']['sampleFplot']], '-', color=color, alpha=alpha, linewidth=linewidth)		# plot trajectory
 			ax17.plot(deltaTheta[delay_steps], deltaThetaDot[delay_steps], 'o', color=color, alpha=alpha)			# plot initial dot
 			ax17.plot(deltaTheta[-1], deltaThetaDot[-1], 'x', color=color, alpha=alpha)							# plot final state cross
 
@@ -591,18 +591,18 @@ def evaluateSimulationsChrisHoyer(poolData):
 			stats_init_phase_conf_final_state[i,3] = deltaThetaDivDot[-1]									# save final freq. difference
 
 			# plot for LF output
-			ax18.plot((deltaThetaDiv[delay_steps+1::poolData[0][0]['dictPLL']['sampleFplot']]+np.pi)%(2.*np.pi)-np.pi, deltaThetaDivDot[delay_steps::poolData[0][0]['dictPLL']['sampleFplot']], '-', color=color, alpha=alpha, linewidth=linewidth)	# plot trajectory
+			ax18.plot((deltaThetaDiv[delay_steps+1::pool_data[0][0]['dict_pll']['sampleFplot']]+np.pi)%(2.*np.pi)-np.pi, deltaThetaDivDot[delay_steps::pool_data[0][0]['dict_pll']['sampleFplot']], '-', color=color, alpha=alpha, linewidth=linewidth)	# plot trajectory
 			ax18.plot((deltaThetaDiv[delay_steps]+np.pi)%(2.*np.pi)-np.pi, deltaThetaDivDot[delay_steps], 'o', color=color, alpha=alpha)		# plot initial dot
 			ax18.plot((deltaThetaDiv[-1]+np.pi)%(2.*np.pi)-np.pi, deltaThetaDivDot[-1], 'x', color=color, alpha=alpha)							# plot final state cross
-			#plot_lib.deltaThetaDivDot_vs_deltaThetaDiv(poolData[0][i]['dictPLL'], poolData[0][i]['dictNet'], (deltaThetaDiv[1:]+np.pi)%(2.*np.pi)-np.pi, deltaThetaDivDot, color, alpha)
-			ax19.plot(deltaThetaDiv[delay_steps+1::poolData[0][0]['dictPLL']['sampleFplot']], deltaThetaDivDot[delay_steps::poolData[0][0]['dictPLL']['sampleFplot']], '-', color=color, alpha=alpha, linewidth=linewidth)		# plot trajectory
+			#plot_lib.deltaThetaDivDot_vs_deltaThetaDiv(pool_data[0][i]['dict_pll'], pool_data[0][i]['dict_net'], (deltaThetaDiv[1:]+np.pi)%(2.*np.pi)-np.pi, deltaThetaDivDot, color, alpha)
+			ax19.plot(deltaThetaDiv[delay_steps+1::pool_data[0][0]['dict_pll']['sampleFplot']], deltaThetaDivDot[delay_steps::pool_data[0][0]['dict_pll']['sampleFplot']], '-', color=color, alpha=alpha, linewidth=linewidth)		# plot trajectory
 			ax19.plot(deltaThetaDiv[delay_steps], deltaThetaDivDot[delay_steps], 'o', color=color, alpha=alpha)			# plot initial dot
 			ax19.plot(deltaThetaDiv[-1], deltaThetaDivDot[-1], 'x', color=color, alpha=alpha)								# plot final state cross
 
 			ax181.plot((deltaThetaDiv[0]+np.pi)%(2.*np.pi)-np.pi, deltaThetaDivDot[0], initmarker, color=color, alpha=alpha) # plot initial dot
 
-			deltaThetaDivSave[i] 	= deltaThetaDiv[delay_steps+1::poolData[0][0]['dictPLL']['sampleFplot']]
-			deltaThetaDivDotSave[i] = deltaThetaDivDot[delay_steps::poolData[0][0]['dictPLL']['sampleFplot']]
+			deltaThetaDivSave[i] 	= deltaThetaDiv[delay_steps+1::pool_data[0][0]['dict_pll']['sampleFplot']]
+			deltaThetaDivDotSave[i] = deltaThetaDivDot[delay_steps::pool_data[0][0]['dict_pll']['sampleFplot']]
 
 	#plt.xlabel(r'$\Delta\theta(t)$')
 	#plt.ylabel(r'$\Delta\dot{\theta}(t)$')
@@ -619,22 +619,22 @@ def evaluateSimulationsChrisHoyer(poolData):
 	ax181.set_xlabel(r'$\Delta\theta(t)/v$ mod $2\pi$', fontsize=axisLabel)
 	ax181.set_ylabel(r'$\Delta\dot{\theta}(t)/v$', fontsize=axisLabel)
 
-	fig16.savefig('results/HF-2pi_periodic_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.png' %(np.mean(poolData[0][0]['dictPLL']['coupK']), np.mean(poolData[0][0]['dictPLL']['cutFc']), np.mean(poolData[0][0]['dictPLL']['syncF']), np.mean(poolData[0][0]['dictPLL']['transmission_delay']), np.mean(poolData[0][0]['dictPLL']['noiseVarVCO']), now.year, now.month, now.day), dpi=dpi_val)
-	fig16.savefig('results/HF-2pi_periodic_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.svg' %(np.mean(poolData[0][0]['dictPLL']['coupK']), np.mean(poolData[0][0]['dictPLL']['cutFc']), np.mean(poolData[0][0]['dictPLL']['syncF']), np.mean(poolData[0][0]['dictPLL']['transmission_delay']), np.mean(poolData[0][0]['dictPLL']['noiseVarVCO']), now.year, now.month, now.day), dpi=dpi_val)
-	fig17.savefig('results/HF_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.png' %(np.mean(poolData[0][0]['dictPLL']['coupK']), np.mean(poolData[0][0]['dictPLL']['cutFc']), np.mean(poolData[0][0]['dictPLL']['syncF']), np.mean(poolData[0][0]['dictPLL']['transmission_delay']), np.mean(poolData[0][0]['dictPLL']['noiseVarVCO']), now.year, now.month, now.day), dpi=dpi_val)
-	fig17.savefig('results/HF_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.svg' %(np.mean(poolData[0][0]['dictPLL']['coupK']), np.mean(poolData[0][0]['dictPLL']['cutFc']), np.mean(poolData[0][0]['dictPLL']['syncF']), np.mean(poolData[0][0]['dictPLL']['transmission_delay']), np.mean(poolData[0][0]['dictPLL']['noiseVarVCO']), now.year, now.month, now.day), dpi=dpi_val)
-	fig18.savefig('results/LF-2pi_periodic_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.png' %(np.mean(poolData[0][0]['dictPLL']['coupK']), np.mean(poolData[0][0]['dictPLL']['cutFc']), np.mean(poolData[0][0]['dictPLL']['syncF']), np.mean(poolData[0][0]['dictPLL']['transmission_delay']), np.mean(poolData[0][0]['dictPLL']['noiseVarVCO']), now.year, now.month, now.day), dpi=dpi_val)
-	fig18.savefig('results/LF-2pi_periodic_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.svg' %(np.mean(poolData[0][0]['dictPLL']['coupK']), np.mean(poolData[0][0]['dictPLL']['cutFc']), np.mean(poolData[0][0]['dictPLL']['syncF']), np.mean(poolData[0][0]['dictPLL']['transmission_delay']), np.mean(poolData[0][0]['dictPLL']['noiseVarVCO']), now.year, now.month, now.day), dpi=dpi_val)
-	fig19.savefig('results/LF_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.png' %(np.mean(poolData[0][0]['dictPLL']['coupK']), np.mean(poolData[0][0]['dictPLL']['cutFc']), np.mean(poolData[0][0]['dictPLL']['syncF']), np.mean(poolData[0][0]['dictPLL']['transmission_delay']), np.mean(poolData[0][0]['dictPLL']['noiseVarVCO']), now.year, now.month, now.day), dpi=dpi_val)
-	fig19.savefig('results/LF_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.svg' %(np.mean(poolData[0][0]['dictPLL']['coupK']), np.mean(poolData[0][0]['dictPLL']['cutFc']), np.mean(poolData[0][0]['dictPLL']['syncF']), np.mean(poolData[0][0]['dictPLL']['transmission_delay']), np.mean(poolData[0][0]['dictPLL']['noiseVarVCO']), now.year, now.month, now.day), dpi=dpi_val)
-	fig161.savefig('results/HF-multStabInfo_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.png' %(np.mean(poolData[0][0]['dictPLL']['coupK']), np.mean(poolData[0][0]['dictPLL']['cutFc']), np.mean(poolData[0][0]['dictPLL']['syncF']), np.mean(poolData[0][0]['dictPLL']['transmission_delay']), np.mean(poolData[0][0]['dictPLL']['noiseVarVCO']), now.year, now.month, now.day), dpi=dpi_val)
-	fig161.savefig('results/HF-multStabInfo_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.svg' %(np.mean(poolData[0][0]['dictPLL']['coupK']), np.mean(poolData[0][0]['dictPLL']['cutFc']), np.mean(poolData[0][0]['dictPLL']['syncF']), np.mean(poolData[0][0]['dictPLL']['transmission_delay']), np.mean(poolData[0][0]['dictPLL']['noiseVarVCO']), now.year, now.month, now.day), dpi=dpi_val)
-	fig181.savefig('results/LF-multStabInfo_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.png' %(np.mean(poolData[0][0]['dictPLL']['coupK']), np.mean(poolData[0][0]['dictPLL']['cutFc']), np.mean(poolData[0][0]['dictPLL']['syncF']), np.mean(poolData[0][0]['dictPLL']['transmission_delay']), np.mean(poolData[0][0]['dictPLL']['noiseVarVCO']), now.year, now.month, now.day), dpi=dpi_val)
-	fig181.savefig('results/LF-multStabInfo_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.svg' %(np.mean(poolData[0][0]['dictPLL']['coupK']), np.mean(poolData[0][0]['dictPLL']['cutFc']), np.mean(poolData[0][0]['dictPLL']['syncF']), np.mean(poolData[0][0]['dictPLL']['transmission_delay']), np.mean(poolData[0][0]['dictPLL']['noiseVarVCO']), now.year, now.month, now.day), dpi=dpi_val)
+	fig16.savefig('results/HF-2pi_periodic_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.png' %(np.mean(pool_data[0][0]['dict_pll']['coupK']), np.mean(pool_data[0][0]['dict_pll']['cutFc']), np.mean(pool_data[0][0]['dict_pll']['syncF']), np.mean(pool_data[0][0]['dict_pll']['transmission_delay']), np.mean(pool_data[0][0]['dict_pll']['noiseVarVCO']), now.year, now.month, now.day), dpi=dpi_val)
+	fig16.savefig('results/HF-2pi_periodic_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.svg' %(np.mean(pool_data[0][0]['dict_pll']['coupK']), np.mean(pool_data[0][0]['dict_pll']['cutFc']), np.mean(pool_data[0][0]['dict_pll']['syncF']), np.mean(pool_data[0][0]['dict_pll']['transmission_delay']), np.mean(pool_data[0][0]['dict_pll']['noiseVarVCO']), now.year, now.month, now.day), dpi=dpi_val)
+	fig17.savefig('results/HF_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.png' %(np.mean(pool_data[0][0]['dict_pll']['coupK']), np.mean(pool_data[0][0]['dict_pll']['cutFc']), np.mean(pool_data[0][0]['dict_pll']['syncF']), np.mean(pool_data[0][0]['dict_pll']['transmission_delay']), np.mean(pool_data[0][0]['dict_pll']['noiseVarVCO']), now.year, now.month, now.day), dpi=dpi_val)
+	fig17.savefig('results/HF_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.svg' %(np.mean(pool_data[0][0]['dict_pll']['coupK']), np.mean(pool_data[0][0]['dict_pll']['cutFc']), np.mean(pool_data[0][0]['dict_pll']['syncF']), np.mean(pool_data[0][0]['dict_pll']['transmission_delay']), np.mean(pool_data[0][0]['dict_pll']['noiseVarVCO']), now.year, now.month, now.day), dpi=dpi_val)
+	fig18.savefig('results/LF-2pi_periodic_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.png' %(np.mean(pool_data[0][0]['dict_pll']['coupK']), np.mean(pool_data[0][0]['dict_pll']['cutFc']), np.mean(pool_data[0][0]['dict_pll']['syncF']), np.mean(pool_data[0][0]['dict_pll']['transmission_delay']), np.mean(pool_data[0][0]['dict_pll']['noiseVarVCO']), now.year, now.month, now.day), dpi=dpi_val)
+	fig18.savefig('results/LF-2pi_periodic_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.svg' %(np.mean(pool_data[0][0]['dict_pll']['coupK']), np.mean(pool_data[0][0]['dict_pll']['cutFc']), np.mean(pool_data[0][0]['dict_pll']['syncF']), np.mean(pool_data[0][0]['dict_pll']['transmission_delay']), np.mean(pool_data[0][0]['dict_pll']['noiseVarVCO']), now.year, now.month, now.day), dpi=dpi_val)
+	fig19.savefig('results/LF_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.png' %(np.mean(pool_data[0][0]['dict_pll']['coupK']), np.mean(pool_data[0][0]['dict_pll']['cutFc']), np.mean(pool_data[0][0]['dict_pll']['syncF']), np.mean(pool_data[0][0]['dict_pll']['transmission_delay']), np.mean(pool_data[0][0]['dict_pll']['noiseVarVCO']), now.year, now.month, now.day), dpi=dpi_val)
+	fig19.savefig('results/LF_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.svg' %(np.mean(pool_data[0][0]['dict_pll']['coupK']), np.mean(pool_data[0][0]['dict_pll']['cutFc']), np.mean(pool_data[0][0]['dict_pll']['syncF']), np.mean(pool_data[0][0]['dict_pll']['transmission_delay']), np.mean(pool_data[0][0]['dict_pll']['noiseVarVCO']), now.year, now.month, now.day), dpi=dpi_val)
+	fig161.savefig('results/HF-multStabInfo_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.png' %(np.mean(pool_data[0][0]['dict_pll']['coupK']), np.mean(pool_data[0][0]['dict_pll']['cutFc']), np.mean(pool_data[0][0]['dict_pll']['syncF']), np.mean(pool_data[0][0]['dict_pll']['transmission_delay']), np.mean(pool_data[0][0]['dict_pll']['noiseVarVCO']), now.year, now.month, now.day), dpi=dpi_val)
+	fig161.savefig('results/HF-multStabInfo_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.svg' %(np.mean(pool_data[0][0]['dict_pll']['coupK']), np.mean(pool_data[0][0]['dict_pll']['cutFc']), np.mean(pool_data[0][0]['dict_pll']['syncF']), np.mean(pool_data[0][0]['dict_pll']['transmission_delay']), np.mean(pool_data[0][0]['dict_pll']['noiseVarVCO']), now.year, now.month, now.day), dpi=dpi_val)
+	fig181.savefig('results/LF-multStabInfo_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.png' %(np.mean(pool_data[0][0]['dict_pll']['coupK']), np.mean(pool_data[0][0]['dict_pll']['cutFc']), np.mean(pool_data[0][0]['dict_pll']['syncF']), np.mean(pool_data[0][0]['dict_pll']['transmission_delay']), np.mean(pool_data[0][0]['dict_pll']['noiseVarVCO']), now.year, now.month, now.day), dpi=dpi_val)
+	fig181.savefig('results/LF-multStabInfo_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.svg' %(np.mean(pool_data[0][0]['dict_pll']['coupK']), np.mean(pool_data[0][0]['dict_pll']['cutFc']), np.mean(pool_data[0][0]['dict_pll']['syncF']), np.mean(pool_data[0][0]['dict_pll']['transmission_delay']), np.mean(pool_data[0][0]['dict_pll']['noiseVarVCO']), now.year, now.month, now.day), dpi=dpi_val)
 
-	np.save('results/deltaThetaDivSave_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.npy' %(np.mean(poolData[0][0]['dictPLL']['coupK']), np.mean(poolData[0][0]['dictPLL']['cutFc']), np.mean(poolData[0][0]['dictPLL']['syncF']), np.mean(poolData[0][0]['dictPLL']['transmission_delay']), np.mean(poolData[0][0]['dictPLL']['noiseVarVCO']), now.year, now.month, now.day), deltaThetaDivSave)
-	np.save('results/deltaThetaDivDotSave_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.npy' %(np.mean(poolData[0][0]['dictPLL']['coupK']), np.mean(poolData[0][0]['dictPLL']['cutFc']), np.mean(poolData[0][0]['dictPLL']['syncF']), np.mean(poolData[0][0]['dictPLL']['transmission_delay']), np.mean(poolData[0][0]['dictPLL']['noiseVarVCO']), now.year, now.month, now.day), deltaThetaDivDotSave)
-	np.save('results/LF-stats_init_phase_conf_final_state_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.npy' %(np.mean(poolData[0][0]['dictPLL']['coupK']), np.mean(poolData[0][0]['dictPLL']['cutFc']), np.mean(poolData[0][0]['dictPLL']['syncF']), np.mean(poolData[0][0]['dictPLL']['transmission_delay']), np.mean(poolData[0][0]['dictPLL']['noiseVarVCO']), now.year, now.month, now.day), stats_init_phase_conf_final_state)
+	np.save('results/deltaThetaDivSave_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.npy' %(np.mean(pool_data[0][0]['dict_pll']['coupK']), np.mean(pool_data[0][0]['dict_pll']['cutFc']), np.mean(pool_data[0][0]['dict_pll']['syncF']), np.mean(pool_data[0][0]['dict_pll']['transmission_delay']), np.mean(pool_data[0][0]['dict_pll']['noiseVarVCO']), now.year, now.month, now.day), deltaThetaDivSave)
+	np.save('results/deltaThetaDivDotSave_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.npy' %(np.mean(pool_data[0][0]['dict_pll']['coupK']), np.mean(pool_data[0][0]['dict_pll']['cutFc']), np.mean(pool_data[0][0]['dict_pll']['syncF']), np.mean(pool_data[0][0]['dict_pll']['transmission_delay']), np.mean(pool_data[0][0]['dict_pll']['noiseVarVCO']), now.year, now.month, now.day), deltaThetaDivDotSave)
+	np.save('results/LF-stats_init_phase_conf_final_state_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.npy' %(np.mean(pool_data[0][0]['dict_pll']['coupK']), np.mean(pool_data[0][0]['dict_pll']['cutFc']), np.mean(pool_data[0][0]['dict_pll']['syncF']), np.mean(pool_data[0][0]['dict_pll']['transmission_delay']), np.mean(pool_data[0][0]['dict_pll']['noiseVarVCO']), now.year, now.month, now.day), stats_init_phase_conf_final_state)
 	plt.draw(); plt.show()
 
 	return None
@@ -976,7 +976,7 @@ def shiftedColorMap(cmap, start=0, midpoint=0.5, stop=1.0, name='shiftedcmap'):
 
 ################################################################################
 
-# def evaluateSimulationIsing(poolData, phase_wrap=0, number_of_bins=25, prob_density=False, order_param_solution=0.0, number_of_expected_oscis_in_one_group=10):
+# def evaluateSimulationIsing(pool_data, phase_wrap=0, number_of_bins=25, prob_density=False, order_param_solution=0.0, number_of_expected_oscis_in_one_group=10):
 #
 # 	# plot parameter
 # 	axisLabel = 9
@@ -1002,7 +1002,7 @@ def shiftedColorMap(cmap, start=0, midpoint=0.5, stop=1.0, name='shiftedcmap'):
 # 	elif phase_wrap == 3:			# plot phase-differences in [0, 2*pi] interval
 # 		shift2piWin = 0
 #
-# 	#unit_cell = PhaseDifferenceCell(poolData[0][0]['dictNet']['Nx']*poolData[0][0]['dictNet']['Ny'])
+# 	#unit_cell = PhaseDifferenceCell(pool_data[0][0]['dict_net']['Nx']*pool_data[0][0]['dict_net']['Ny'])
 # 	threshold_statState = np.pi/15
 # 	plotEveryDt = 1
 # 	numberColsPlt = 3
@@ -1010,38 +1010,38 @@ def shiftedColorMap(cmap, start=0, midpoint=0.5, stop=1.0, name='shiftedcmap'):
 # 	number_of_intrinsic_periods_smoothing = 1.5
 # 	print('For smoothing of phase-differences and order parameters we average over %0.2f periods of the ensemble mean intrinsic frequency.' % number_of_intrinsic_periods_smoothing)
 #
-# 	fig16, ax16 = plt.subplots(int(np.ceil(len(poolData[0][:])/numberColsPlt)), numberColsPlt, figsize=(figwidth, figheight), dpi=dpi_val, facecolor='w', edgecolor='k')
+# 	fig16, ax16 = plt.subplots(int(np.ceil(len(pool_data[0][:])/numberColsPlt)), numberColsPlt, figsize=(figwidth, figheight), dpi=dpi_val, facecolor='w', edgecolor='k')
 # 	fig16.canvas.manager.set_window_title('Ising different initial conditions, fixed topology, phase relations')					# phase relations
-# 	if isinstance( poolData[0][0]['dictPLL']['cutFc'], np.float):
-# 		fig16.suptitle(r'parameters: $f=$%0.2f Hz, $K=$%0.2f Hz/V, $K^\textrm{I}=$%0.2f Hz/V, $f_c=$%0.2f Hz, $\tau=$%0.2f s'%(poolData[0][0]['dictPLL']['intrF'], poolData[0][0]['dictPLL']['coupK'], poolData[0][0]['dictPLL']['coupStr_2ndHarm'], poolData[0][0]['dictPLL']['cutFc'], poolData[0][0]['dictPLL']['transmission_delay']))
+# 	if isinstance( pool_data[0][0]['dict_pll']['cutFc'], np.float):
+# 		fig16.suptitle(r'parameters: $f=$%0.2f Hz, $K=$%0.2f Hz/V, $K^\textrm{I}=$%0.2f Hz/V, $f_c=$%0.2f Hz, $\tau=$%0.2f s'%(pool_data[0][0]['dict_pll']['intrF'], pool_data[0][0]['dict_pll']['coupK'], pool_data[0][0]['dict_pll']['coupStr_2ndHarm'], pool_data[0][0]['dict_pll']['cutFc'], pool_data[0][0]['dict_pll']['transmission_delay']))
 # 	fig16.subplots_adjust(hspace=0.4, wspace=0.4)
 # 	ax16 = ax16.ravel()
 #
-# 	fig161, ax161 = plt.subplots(int(np.ceil(len(poolData[0][:]) / numberColsPlt)), numberColsPlt, figsize=(figwidth, figheight), dpi=dpi_val, facecolor='w', edgecolor='k')
+# 	fig161, ax161 = plt.subplots(int(np.ceil(len(pool_data[0][:]) / numberColsPlt)), numberColsPlt, figsize=(figwidth, figheight), dpi=dpi_val, facecolor='w', edgecolor='k')
 # 	fig161.canvas.manager.set_window_title('Ising different initial conditions, fixed topology, smoothed out phase relations')  # phase relations
-# 	if isinstance(poolData[0][0]['dictPLL']['cutFc'], np.float):
+# 	if isinstance(pool_data[0][0]['dict_pll']['cutFc'], np.float):
 # 		fig161.suptitle(r'parameters: $f=$%0.2f Hz, $K=$%0.2f Hz/V, $K^\textrm{I}=$%0.2f Hz/V, $f_c=$%0.2f Hz, $\tau=$%0.2f s' % (
-# 		poolData[0][0]['dictPLL']['intrF'], poolData[0][0]['dictPLL']['coupK'], poolData[0][0]['dictPLL']['coupStr_2ndHarm'], poolData[0][0]['dictPLL']['cutFc'],
-# 		poolData[0][0]['dictPLL']['transmission_delay']))
+# 		pool_data[0][0]['dict_pll']['intrF'], pool_data[0][0]['dict_pll']['coupK'], pool_data[0][0]['dict_pll']['coupStr_2ndHarm'], pool_data[0][0]['dict_pll']['cutFc'],
+# 		pool_data[0][0]['dict_pll']['transmission_delay']))
 # 	fig161.subplots_adjust(hspace=0.4, wspace=0.4)
 # 	ax161 = ax161.ravel()
 #
-# 	fig17, ax17 = plt.subplots(int(np.ceil(len(poolData[0][:])/numberColsPlt_widePlt)), numberColsPlt_widePlt, figsize=(figwidth, figheight), dpi=dpi_val, facecolor='w', edgecolor='k')
+# 	fig17, ax17 = plt.subplots(int(np.ceil(len(pool_data[0][:])/numberColsPlt_widePlt)), numberColsPlt_widePlt, figsize=(figwidth, figheight), dpi=dpi_val, facecolor='w', edgecolor='k')
 # 	fig17.canvas.manager.set_window_title('Ising different initial conditions, fixed topology, inst. frequencies')					# inst. frequencies
 # 	fig17.subplots_adjust(hspace=0.4, wspace=0.4)
 # 	ax17 = ax17.ravel()
 #
-# 	fig18, ax18 = plt.subplots(int(np.ceil(len(poolData[0][:])/numberColsPlt)), numberColsPlt, figsize=(figwidth, figheight), dpi=dpi_val, facecolor='w', edgecolor='k')
+# 	fig18, ax18 = plt.subplots(int(np.ceil(len(pool_data[0][:])/numberColsPlt)), numberColsPlt, figsize=(figwidth, figheight), dpi=dpi_val, facecolor='w', edgecolor='k')
 # 	fig18.canvas.manager.set_window_title('Ising different initial conditions, fixed topology, order parameter')					# order parameter
 # 	fig18.subplots_adjust(hspace=0.4, wspace=0.4)
 # 	ax18 = ax18.ravel()
 #
-# 	fig19, ax19 = plt.subplots(int(np.ceil(len(poolData[0][:])/numberColsPlt_widePlt)), numberColsPlt_widePlt, figsize=(figwidth, figheight), dpi=dpi_val, facecolor='w', edgecolor='k')
+# 	fig19, ax19 = plt.subplots(int(np.ceil(len(pool_data[0][:])/numberColsPlt_widePlt)), numberColsPlt_widePlt, figsize=(figwidth, figheight), dpi=dpi_val, facecolor='w', edgecolor='k')
 # 	fig19.canvas.manager.set_window_title('Ising different initial conditions, fixed topology, signals')							# signals
 # 	fig19.subplots_adjust(hspace=0.4, wspace=0.4)
 # 	ax19 = ax19.ravel()
 #
-# 	fig20, ax20 = plt.subplots(int(np.ceil(len(poolData[0][:]) / numberColsPlt)), numberColsPlt, figsize=(figwidth, figheight), dpi=dpi_val, facecolor='w', edgecolor='k')
+# 	fig20, ax20 = plt.subplots(int(np.ceil(len(pool_data[0][:]) / numberColsPlt)), numberColsPlt, figsize=(figwidth, figheight), dpi=dpi_val, facecolor='w', edgecolor='k')
 # 	fig20.canvas.manager.set_window_title('Ising different initial conditions, fixed topology, histograms')  # signals
 # 	fig20.subplots_adjust(hspace=0.4, wspace=0.4)
 # 	ax20 = ax20.ravel()
@@ -1049,7 +1049,7 @@ def shiftedColorMap(cmap, start=0, midpoint=0.5, stop=1.0, name='shiftedcmap'):
 # 	fig99, ax99 = plt.subplots(1, 1, figsize=(figwidth, figheight), dpi=dpi_val, facecolor='w', edgecolor='k')
 # 	fig99.canvas.manager.set_window_title('Network view of result.')  # network
 #
-# 	if len(poolData[0][:]) > threshold_realizations_plot: # only plot when many realizations are computed for overview
+# 	if len(pool_data[0][:]) > threshold_realizations_plot: # only plot when many realizations are computed for overview
 # 		fig21, ax21 = plt.subplots(1, 1, figsize=(figwidth, figheight), dpi=dpi_val, facecolor='w', edgecolor='k')
 # 		fig21.canvas.manager.set_window_title('all order parameters (solution correct: solid, incorrect: dashed line)')  # all order parameters
 # 		fig21.set_size_inches(plot_size_inches_x, plot_size_inches_y)
@@ -1062,29 +1062,29 @@ def shiftedColorMap(cmap, start=0, midpoint=0.5, stop=1.0, name='shiftedcmap'):
 # 		fig22.canvas.manager.set_window_title('distribution of times to solution')  # all order parameters
 # 		fig22.set_size_inches(plot_size_inches_x, plot_size_inches_y)
 #
-# 	# print('poolData in eva.evaluateSimulationIsing(poolData):', poolData)
+# 	# print('pool_data in eva.evaluateSimulationIsing(pool_data):', pool_data)
 #
 # 	print('For evaluation of asymptotic order parameter we average over %0.2f periods of the ensemble mean intrinsic frequency.' % number_of_intrinsic_periods_smoothing)
 #
 # 	sol_time = []
 # 	success_count = 0
 # 	success_count_test1 = 0
-# 	group_oscillators_maxcut = np.zeros([len(poolData[0][:]), len(poolData[0][0]['dictData']['phi'][0, :])])
+# 	group_oscillators_maxcut = np.zeros([len(pool_data[0][:]), len(pool_data[0][0]['dictData']['phi'][0, :])])
 #
 # 	# loop over the realizations
-# 	for i in range(len(poolData[0][:])):
-# 		deltaTheta = np.zeros([len(poolData[0][i]['dictData']['phi'][0, :]), len(poolData[0][i]['dictData']['phi'][:, 0])])
-# 		signalOut  = np.zeros([len(poolData[0][i]['dictData']['phi'][0, :]), len(poolData[0][i]['dictData']['phi'][:, 0])])
+# 	for i in range(len(pool_data[0][:])):
+# 		deltaTheta = np.zeros([len(pool_data[0][i]['dictData']['phi'][0, :]), len(pool_data[0][i]['dictData']['phi'][:, 0])])
+# 		signalOut  = np.zeros([len(pool_data[0][i]['dictData']['phi'][0, :]), len(pool_data[0][i]['dictData']['phi'][:, 0])])
 #
-# 		thetaDot = np.diff( poolData[0][i]['dictData']['phi'][:, :], axis=0 ) / poolData[0][i]['dictPLL']['dt']				# compute frequencies and order parameter
-# 		r, orderparam, F1 = obtainOrderParam(poolData[0][i]['dictPLL'], poolData[0][i]['dictNet'], poolData[0][i]['dictData'])
+# 		thetaDot = np.diff( pool_data[0][i]['dictData']['phi'][:, :], axis=0 ) / pool_data[0][i]['dict_pll']['dt']				# compute frequencies and order parameter
+# 		r, orderparam, F1 = obtainOrderParam(pool_data[0][i]['dict_pll'], pool_data[0][i]['dict_net'], pool_data[0][i]['dictData'])
 #
-# 		ax18[i].plot( poolData[0][i]['dictData']['t'][::plotEveryDt], orderparam[::plotEveryDt], label=r'$R_\textrm{final}=%0.2f$'%(orderparam[-1]), linewidth=linewidth )
+# 		ax18[i].plot( pool_data[0][i]['dictData']['t'][::plotEveryDt], orderparam[::plotEveryDt], label=r'$R_\textrm{final}=%0.2f$'%(orderparam[-1]), linewidth=linewidth )
 #
 # 		# HOWTO 1) to determine whether the correct solution has be found, we test for the asymptotic value of the order parameter
 # 		order_param_diff_expected_value_threshold = 0.01
 # 		correct_solution_test0 = False
-# 		if np.abs(np.mean(orderparam[-int(number_of_intrinsic_periods_smoothing * np.mean(poolData[0][i]['dictPLL']['intrF']) / poolData[0][i]['dictPLL']['dt']):]) - order_param_solution) < order_param_diff_expected_value_threshold:
+# 		if np.abs(np.mean(orderparam[-int(number_of_intrinsic_periods_smoothing * np.mean(pool_data[0][i]['dict_pll']['intrF']) / pool_data[0][i]['dict_pll']['dt']):]) - order_param_solution) < order_param_diff_expected_value_threshold:
 # 			print('Order parameter predicted for solution=%0.2f has been reached. Averaged over last %i periods of the intrinsic frequency for realization %i.'%(order_param_solution, number_of_intrinsic_periods_smoothing, i))
 # 			success_count += 1					# to calculate the probability of finding the correct solutions
 # 			correct_solution_test0 = True		# this is needed to decide for which realizations we need to measure the time to solution
@@ -1093,16 +1093,16 @@ def shiftedColorMap(cmap, start=0, midpoint=0.5, stop=1.0, name='shiftedcmap'):
 # 		group1 = 0
 # 		group2 = 0
 # 		correct_solution_test1 = False
-# 		for j in range(len(poolData[0][i]['dictData']['phi'][0, :])):
+# 		for j in range(len(pool_data[0][i]['dictData']['phi'][0, :])):
 # 			# calculate mean phase difference over an interval of 'number_of_intrinsic_periods_smoothing' periods at the end of all oscillators with respect to oscillator zero
-# 			# interval_index = -int(number_of_intrinsic_periods_smoothing * np.mean(poolData[0][i]['dictPLL']['intrF']) / poolData[0][i]['dictPLL']['dt'])
-# 			temp_phase_diff = np.mean(poolData[0][i]['dictData']['phi'][-int(number_of_intrinsic_periods_smoothing * np.mean(poolData[0][i]['dictPLL']['intrF']) / poolData[0][i]['dictPLL']['dt']):, 0] - poolData[0][i]['dictData']['phi'][-int(number_of_intrinsic_periods_smoothing * np.mean(poolData[0][i]['dictPLL']['intrF']) / poolData[0][i]['dictPLL']['dt']):, j])
+# 			# interval_index = -int(number_of_intrinsic_periods_smoothing * np.mean(pool_data[0][i]['dict_pll']['intrF']) / pool_data[0][i]['dict_pll']['dt'])
+# 			temp_phase_diff = np.mean(pool_data[0][i]['dictData']['phi'][-int(number_of_intrinsic_periods_smoothing * np.mean(pool_data[0][i]['dict_pll']['intrF']) / pool_data[0][i]['dict_pll']['dt']):, 0] - pool_data[0][i]['dictData']['phi'][-int(number_of_intrinsic_periods_smoothing * np.mean(pool_data[0][i]['dict_pll']['intrF']) / pool_data[0][i]['dict_pll']['dt']):, j])
 # 			print('Realization %i, mean phase difference {mod 2pi into [-pi, pi)} between k=0 and k=%i is deltaPhi=%0.2f'%(i, j, ((temp_phase_diff+np.pi) % (2*np.pi))-np.pi))
 # 			if np.abs(((temp_phase_diff+np.pi) % (2*np.pi))-np.pi) < np.pi/2:
 # 				group1 += 1
 # 			else:
 # 				group2 += 1
-# 		if not group1+group2 == len(poolData[0][i]['dictData']['phi'][0, :]):
+# 		if not group1+group2 == len(pool_data[0][i]['dictData']['phi'][0, :]):
 # 			print('ERROR: check!')
 # 			sys.exit()
 # 		if group1 == number_of_expected_oscis_in_one_group or group2 == number_of_expected_oscis_in_one_group:
@@ -1116,29 +1116,29 @@ def shiftedColorMap(cmap, start=0, midpoint=0.5, stop=1.0, name='shiftedcmap'):
 # 			if correct_solution_test1:
 # 				# when the derivative of the order parameter is close to zero, we expect that the asymptotic state has been reached
 # 				# here we look for the cases where this is NOT the case yet, then the last entry of the resulting vector will be the transition time from transient to asymptotic dynamics
-# 				derivative_order_param_smoothed = (np.diff( uniform_filter1d( orderparam[poolData[0][i]['dictNet']['max_delay_steps']:],
-# 					size=int(15 * number_of_intrinsic_periods_smoothing * np.mean(poolData[0][i]['dictPLL']['intrF']) / poolData[0][i]['dictPLL']['dt']), mode='reflect') ) / poolData[0][i]['dictPLL']['dt'])
+# 				derivative_order_param_smoothed = (np.diff( uniform_filter1d( orderparam[pool_data[0][i]['dict_net']['max_delay_steps']:],
+# 					size=int(15 * number_of_intrinsic_periods_smoothing * np.mean(pool_data[0][i]['dict_pll']['intrF']) / pool_data[0][i]['dict_pll']['dt']), mode='reflect') ) / pool_data[0][i]['dict_pll']['dt'])
 #
-# 				rolling_std_derivative_order_param_smoothed = pd.Series(derivative_order_param_smoothed).rolling(int(15 * number_of_intrinsic_periods_smoothing * np.mean(poolData[0][i]['dictPLL']['intrF']) / poolData[0][i]['dictPLL']['dt'])).std()
+# 				rolling_std_derivative_order_param_smoothed = pd.Series(derivative_order_param_smoothed).rolling(int(15 * number_of_intrinsic_periods_smoothing * np.mean(pool_data[0][i]['dict_pll']['intrF']) / pool_data[0][i]['dict_pll']['dt'])).std()
 #
-# 				#temp = np.where( (np.diff( uniform_filter1d( orderparam[(poolData[0][i]['dictData']['tstep_annealing_start'] + poolData[0][i]['dictNet']['max_delay_steps']):],
-# 				#	size=int(15 * number_of_intrinsic_periods_smoothing * np.mean(poolData[0][i]['dictPLL']['intrF']) / poolData[0][i]['dictPLL']['dt']), mode='reflect') ) / poolData[0][i]['dictPLL']['dt']) > order_param_change_threshold )
+# 				#temp = np.where( (np.diff( uniform_filter1d( orderparam[(pool_data[0][i]['dictData']['tstep_annealing_start'] + pool_data[0][i]['dict_net']['max_delay_steps']):],
+# 				#	size=int(15 * number_of_intrinsic_periods_smoothing * np.mean(pool_data[0][i]['dict_pll']['intrF']) / pool_data[0][i]['dict_pll']['dt']), mode='reflect') ) / pool_data[0][i]['dict_pll']['dt']) > order_param_change_threshold )
 # 				min_std = np.min(rolling_std_derivative_order_param_smoothed)
 # 				print('min_std:', min_std)
 # 				max_std = np.max(rolling_std_derivative_order_param_smoothed)
 # 				order_param_std_threshold = 0.1 * (max_std - min_std) + min_std
 # 				print('Realization %i, order_param_std_threshold to %0.02f, for {min_std, max_std} = {%0.2f,%0.2f} '%(i, order_param_std_threshold, min_std, max_std))
-# 				temp = np.where(rolling_std_derivative_order_param_smoothed[poolData[0][i]['dictData']['tstep_annealing_start']:] > order_param_std_threshold)
+# 				temp = np.where(rolling_std_derivative_order_param_smoothed[pool_data[0][i]['dictData']['tstep_annealing_start']:] > order_param_std_threshold)
 #
 # 				plt.plot(derivative_order_param_smoothed, 'b')
 # 				plt.plot(rolling_std_derivative_order_param_smoothed, 'r--')
-# 				plt.plot(temp[0][-1]-poolData[0][i]['dictData']['tstep_annealing_start'], 0, 'cd')
+# 				plt.plot(temp[0][-1]-pool_data[0][i]['dictData']['tstep_annealing_start'], 0, 'cd')
 #
 # 				# print('temp=', temp[0])
 # 				if not len(temp[0]) == 0:
 # 					# subtract from the last time when the transient dynamics caused order parameter fluctuations above the threshold the time when the annealing process started
 # 					# the substraction of the initial delay history is already done since we only search from tau onwards for the time at which the fluctuations fulfill the conditions
-# 					sol_time.append((temp[0][-1]) * poolData[0][i]['dictPLL']['dt'])
+# 					sol_time.append((temp[0][-1]) * pool_data[0][i]['dict_pll']['dt'])
 # 				else:
 # 					sol_time.append(np.inf)
 # 				# print('sol_time=', sol_time)
@@ -1147,56 +1147,56 @@ def shiftedColorMap(cmap, start=0, midpoint=0.5, stop=1.0, name='shiftedcmap'):
 # 			else:
 # 				sol_time.append(np.inf)
 #
-# 			ax18[i].plot( poolData[0][i]['dictData']['t'][(poolData[0][i]['dictData']['tstep_annealing_start'] + poolData[0][i]['dictNet']['max_delay_steps']):-1:plotEveryDt], uniform_filter1d((np.diff(
-# 										orderparam[(poolData[0][i]['dictData']['tstep_annealing_start'] + poolData[0][i]['dictNet']['max_delay_steps']):]) / poolData[0][i]['dictPLL']['dt']),
-# 										size=int(0.5 * np.mean(poolData[0][i]['dictPLL']['intrF']) / poolData[0][i]['dictPLL']['dt']), mode='reflect')[::plotEveryDt], 'r', linewidth=0.5, alpha=0.35 )
+# 			ax18[i].plot( pool_data[0][i]['dictData']['t'][(pool_data[0][i]['dictData']['tstep_annealing_start'] + pool_data[0][i]['dict_net']['max_delay_steps']):-1:plotEveryDt], uniform_filter1d((np.diff(
+# 										orderparam[(pool_data[0][i]['dictData']['tstep_annealing_start'] + pool_data[0][i]['dict_net']['max_delay_steps']):]) / pool_data[0][i]['dict_pll']['dt']),
+# 										size=int(0.5 * np.mean(pool_data[0][i]['dict_pll']['intrF']) / pool_data[0][i]['dict_pll']['dt']), mode='reflect')[::plotEveryDt], 'r', linewidth=0.5, alpha=0.35 )
 # 		else:
 # 			if correct_solution_test1:
-# 				temp = np.where( np.diff(orderparam[(poolData[0][i]['dictData']['tstep_annealing_start'] + poolData[0][i]['dictNet']['max_delay_steps']):]) / poolData[0][i]['dictPLL']['dt'] > order_param_change_threshold )
-# 				sol_time.append(temp[0][-1] * poolData[0][i]['dictPLL']['dt'])
+# 				temp = np.where( np.diff(orderparam[(pool_data[0][i]['dictData']['tstep_annealing_start'] + pool_data[0][i]['dict_net']['max_delay_steps']):]) / pool_data[0][i]['dict_pll']['dt'] > order_param_change_threshold )
+# 				sol_time.append(temp[0][-1] * pool_data[0][i]['dict_pll']['dt'])
 # 			else:
 # 				sol_time.append(np.inf)
 #
-# 			ax18[i].plot( poolData[0][i]['dictData']['t'][(poolData[0][i]['dictData']['tstep_annealing_start'] + poolData[0][i]['dictNet']['max_delay_steps']):-1:plotEveryDt], (np.diff(
-# 								orderparam[(poolData[0][i]['dictData']['tstep_annealing_start'] + poolData[0][i]['dictNet']['max_delay_steps']):]) / poolData[0][i]['dictPLL']['dt'])[::plotEveryDt], 'r', linewidth=0.5, alpha=0.35 )
+# 			ax18[i].plot( pool_data[0][i]['dictData']['t'][(pool_data[0][i]['dictData']['tstep_annealing_start'] + pool_data[0][i]['dict_net']['max_delay_steps']):-1:plotEveryDt], (np.diff(
+# 								orderparam[(pool_data[0][i]['dictData']['tstep_annealing_start'] + pool_data[0][i]['dict_net']['max_delay_steps']):]) / pool_data[0][i]['dict_pll']['dt'])[::plotEveryDt], 'r', linewidth=0.5, alpha=0.35 )
 #
-# 		ax18[i].plot(poolData[0][i]['dictData']['t'][(poolData[0][i]['dictData']['tstep_annealing_start'] + poolData[0][i]['dictNet']['max_delay_steps'])], 0, 'cd', markersize=1)
+# 		ax18[i].plot(pool_data[0][i]['dictData']['t'][(pool_data[0][i]['dictData']['tstep_annealing_start'] + pool_data[0][i]['dict_net']['max_delay_steps'])], 0, 'cd', markersize=1)
 # 		if correct_solution_test0 and sol_time[i] != np.inf:
-# 			ax18[i].plot(sol_time[i] + poolData[0][i]['dictData']['t'][(poolData[0][i]['dictData']['tstep_annealing_start'] + poolData[0][i]['dictNet']['max_delay_steps'])], 0, 'c*', markersize=1)
+# 			ax18[i].plot(sol_time[i] + pool_data[0][i]['dictData']['t'][(pool_data[0][i]['dictData']['tstep_annealing_start'] + pool_data[0][i]['dict_net']['max_delay_steps'])], 0, 'c*', markersize=1)
 #
-# 		if len(poolData[0][:]) > threshold_realizations_plot:
-# 			ax21.plot(poolData[0][i]['dictData']['t'][(poolData[0][i]['dictData']['tstep_annealing_start'] + poolData[0][i]['dictNet']['max_delay_steps'])], -0.05, 'cd', markersize=1)
+# 		if len(pool_data[0][:]) > threshold_realizations_plot:
+# 			ax21.plot(pool_data[0][i]['dictData']['t'][(pool_data[0][i]['dictData']['tstep_annealing_start'] + pool_data[0][i]['dict_net']['max_delay_steps'])], -0.05, 'cd', markersize=1)
 # 			if correct_solution_test0:
-# 				ax21.plot(poolData[0][i]['dictData']['t'][::plotEveryDt], orderparam[::plotEveryDt], '-', label=r'$R_\textrm{final}=%0.2f$' % (orderparam[-1]), linewidth=linewidth)
-# 				ax211.plot(poolData[0][i]['dictData']['t'][::plotEveryDt], uniform_filter1d(orderparam[::plotEveryDt],
-# 							size=int(number_of_intrinsic_periods_smoothing * np.mean(poolData[0][i]['dictPLL']['intrF']) / poolData[0][i]['dictPLL']['dt']), mode='reflect'), '-', label=r'$R_\textrm{final}=%0.2f$' % (orderparam[-1]), linewidth=linewidth)
+# 				ax21.plot(pool_data[0][i]['dictData']['t'][::plotEveryDt], orderparam[::plotEveryDt], '-', label=r'$R_\textrm{final}=%0.2f$' % (orderparam[-1]), linewidth=linewidth)
+# 				ax211.plot(pool_data[0][i]['dictData']['t'][::plotEveryDt], uniform_filter1d(orderparam[::plotEveryDt],
+# 							size=int(number_of_intrinsic_periods_smoothing * np.mean(pool_data[0][i]['dict_pll']['intrF']) / pool_data[0][i]['dict_pll']['dt']), mode='reflect'), '-', label=r'$R_\textrm{final}=%0.2f$' % (orderparam[-1]), linewidth=linewidth)
 # 				if sol_time[i] != np.inf:
-# 					ax21.plot(sol_time[i] + poolData[0][i]['dictData']['t'][(poolData[0][i]['dictData']['tstep_annealing_start'] + poolData[0][i]['dictNet']['max_delay_steps'])], -0.05, 'c*', markersize=1)
+# 					ax21.plot(sol_time[i] + pool_data[0][i]['dictData']['t'][(pool_data[0][i]['dictData']['tstep_annealing_start'] + pool_data[0][i]['dict_net']['max_delay_steps'])], -0.05, 'c*', markersize=1)
 # 			else:
-# 				ax21.plot(poolData[0][i]['dictData']['t'][::plotEveryDt], orderparam[::plotEveryDt], '--', label=r'$R_\textrm{final}=%0.2f$' % (orderparam[-1]), linewidth=linewidth)
-# 				ax211.plot(poolData[0][i]['dictData']['t'][::plotEveryDt], uniform_filter1d(orderparam[::plotEveryDt],
-# 							size=int(number_of_intrinsic_periods_smoothing * np.mean(poolData[0][i]['dictPLL']['intrF']) / poolData[0][i]['dictPLL']['dt']), mode='reflect'), '--', label=r'$R_\textrm{final}=%0.2f$' % (orderparam[-1]), linewidth=linewidth)
+# 				ax21.plot(pool_data[0][i]['dictData']['t'][::plotEveryDt], orderparam[::plotEveryDt], '--', label=r'$R_\textrm{final}=%0.2f$' % (orderparam[-1]), linewidth=linewidth)
+# 				ax211.plot(pool_data[0][i]['dictData']['t'][::plotEveryDt], uniform_filter1d(orderparam[::plotEveryDt],
+# 							size=int(number_of_intrinsic_periods_smoothing * np.mean(pool_data[0][i]['dict_pll']['intrF']) / pool_data[0][i]['dict_pll']['dt']), mode='reflect'), '--', label=r'$R_\textrm{final}=%0.2f$' % (orderparam[-1]), linewidth=linewidth)
 #
 #
 # 		if phase_wrap == 0:  # plot phase differences in [-inf, inf), i.e., we use the unwrapped phases that have counted the cycles/periods
-# 			ax20[i].hist(poolData[0][i]['dictData']['phi'][-3, :] - poolData[0][i]['dictData']['phi'][-2, 0], bins=number_of_bins, rwidth=0.9, density=prob_density)
+# 			ax20[i].hist(pool_data[0][i]['dictData']['phi'][-3, :] - pool_data[0][i]['dictData']['phi'][-2, 0], bins=number_of_bins, rwidth=0.9, density=prob_density)
 # 		elif phase_wrap != 0:
 # 			# print('histogram_data (wrapping if phase):', ((dictData['phi'][at_index, plotlist] + shift2piWin) % (2 * np.pi)) - shift2piWin)
-# 			ax20[i].hist((((poolData[0][i]['dictData']['phi'][-3, :] - poolData[0][i]['dictData']['phi'][-2, 0] + shift2piWin) % (2.0 * np.pi)) - shift2piWin), bins=number_of_bins, rwidth=0.9, density=prob_density)
+# 			ax20[i].hist((((pool_data[0][i]['dictData']['phi'][-3, :] - pool_data[0][i]['dictData']['phi'][-2, 0] + shift2piWin) % (2.0 * np.pi)) - shift2piWin), bins=number_of_bins, rwidth=0.9, density=prob_density)
 #
 # 		final_phase_oscillator = []
-# 		for j in range(len(poolData[0][i]['dictData']['phi'][0, :])):
+# 		for j in range(len(pool_data[0][i]['dictData']['phi'][0, :])):
 # 			if shift2piWin != 0:
-# 				deltaTheta[j] = (((poolData[0][i]['dictData']['phi'][:, 0] - poolData[0][i]['dictData']['phi'][:, j]) + shift2piWin) % (2.0 * np.pi)) - shift2piWin 		# calculate phase-differnce w.r.t. osci k=0
+# 				deltaTheta[j] = (((pool_data[0][i]['dictData']['phi'][:, 0] - pool_data[0][i]['dictData']['phi'][:, j]) + shift2piWin) % (2.0 * np.pi)) - shift2piWin 		# calculate phase-differnce w.r.t. osci k=0
 # 			else:
-# 				deltaTheta[j] = poolData[0][i]['dictData']['phi'][:, 0] - poolData[0][i]['dictData']['phi'][:, j]
-# 			signalOut[j] = poolData[0][i]['dictPLL']['vco_out_sig'](poolData[0][i]['dictData']['phi'][:, j])				# generate signals for all phase histories
+# 				deltaTheta[j] = pool_data[0][i]['dictData']['phi'][:, 0] - pool_data[0][i]['dictData']['phi'][:, j]
+# 			signalOut[j] = pool_data[0][i]['dict_pll']['vco_out_sig'](pool_data[0][i]['dictData']['phi'][:, j])				# generate signals for all phase histories
 #
 # 			# save in which binarized state the oscillator was at the end of the realization, averaged over
-# 			if np.mean(deltaTheta[j][-int(number_of_intrinsic_periods_smoothing * np.mean(poolData[0][i]['dictPLL']['intrF']) / poolData[0][i]['dictPLL']['dt']):-1]) - 0 < 0.2:
+# 			if np.mean(deltaTheta[j][-int(number_of_intrinsic_periods_smoothing * np.mean(pool_data[0][i]['dict_pll']['intrF']) / pool_data[0][i]['dict_pll']['dt']):-1]) - 0 < 0.2:
 # 				group_oscillators_maxcut[i, j] = -1
 # 				final_phase_oscillator.append('zero')
-# 			elif np.mean(deltaTheta[j][-int(number_of_intrinsic_periods_smoothing * np.mean(poolData[0][i]['dictPLL']['intrF']) / poolData[0][i]['dictPLL']['dt']):-1]) - np.pi < 0.2:
+# 			elif np.mean(deltaTheta[j][-int(number_of_intrinsic_periods_smoothing * np.mean(pool_data[0][i]['dict_pll']['intrF']) / pool_data[0][i]['dict_pll']['dt']):-1]) - np.pi < 0.2:
 # 				group_oscillators_maxcut[i, j] = 1
 # 				final_phase_oscillator.append('pi')
 # 			else:
@@ -1208,29 +1208,29 @@ def shiftedColorMap(cmap, start=0, midpoint=0.5, stop=1.0, name='shiftedcmap'):
 # 			else:
 # 				linestyle = '-'
 #
-# 			ax16[i].plot( poolData[0][i]['dictData']['t'][::plotEveryDt], deltaTheta[j, ::plotEveryDt], linestyle, linewidth=linewidth, label='sig PLL%i' %(j))
-# 			ax161[i].plot(poolData[0][i]['dictData']['t'], uniform_filter1d(deltaTheta[j, :], size=int(number_of_intrinsic_periods_smoothing * np.mean(poolData[0][i]['dictPLL']['intrF']) / poolData[0][i]['dictPLL']['dt']), mode='reflect'), linestyle, linewidth=linewidth, label='sig PLL%i' % (j))
-# 			ax19[i].plot( poolData[0][i]['dictData']['t'][::plotEveryDt], poolData[0][i]['dictPLL']['vco_out_sig'](poolData[0][i]['dictData']['phi'][::plotEveryDt, j]), linewidth=linewidth, label='sig PLL%i' %(j))
-# 			ax17[i].plot( poolData[0][i]['dictData']['t'][1::plotEveryDt], thetaDot[::plotEveryDt, j], linewidth=linewidth, label='sig PLL%i' %(j))
+# 			ax16[i].plot( pool_data[0][i]['dictData']['t'][::plotEveryDt], deltaTheta[j, ::plotEveryDt], linestyle, linewidth=linewidth, label='sig PLL%i' %(j))
+# 			ax161[i].plot(pool_data[0][i]['dictData']['t'], uniform_filter1d(deltaTheta[j, :], size=int(number_of_intrinsic_periods_smoothing * np.mean(pool_data[0][i]['dict_pll']['intrF']) / pool_data[0][i]['dict_pll']['dt']), mode='reflect'), linestyle, linewidth=linewidth, label='sig PLL%i' % (j))
+# 			ax19[i].plot( pool_data[0][i]['dictData']['t'][::plotEveryDt], pool_data[0][i]['dict_pll']['vco_out_sig'](pool_data[0][i]['dictData']['phi'][::plotEveryDt, j]), linewidth=linewidth, label='sig PLL%i' %(j))
+# 			ax17[i].plot( pool_data[0][i]['dictData']['t'][1::plotEveryDt], thetaDot[::plotEveryDt, j], linewidth=linewidth, label='sig PLL%i' %(j))
 #
-# 		print('working on realization %i results from sim:'%i, poolData[0][i]['dictNet'], '\n', poolData[0][i]['dictPLL'], '\n', poolData[0][i]['dictData'], '\n\n')
+# 		print('working on realization %i results from sim:'%i, pool_data[0][i]['dict_net'], '\n', pool_data[0][i]['dict_pll'], '\n', pool_data[0][i]['dictData'], '\n\n')
 #
-# 		if i == int( len(poolData[0][:]) / 2 ):
+# 		if i == int( len(pool_data[0][:]) / 2 ):
 # 			ax16[i].set_ylabel(r'$\Delta\theta(t)$', fontsize=axisLabel)
 # 			ax161[i].set_ylabel(r'$\langle\Delta\theta(t)\rangle_{%0.1f T}$'%(number_of_intrinsic_periods_smoothing), fontsize=axisLabel)
 # 			ax17[i].set_ylabel(r'$\dot{\theta}(t)$ in radHz', fontsize=axisLabel)
 # 			ax18[i].set_ylabel(r'$R(t)$', fontsize=axisLabel)
 # 			ax19[i].set_ylabel(r'$s(t)$', fontsize=axisLabel)
 # 			ax20[i].set_ylabel(r'$H\left(\Delta\theta(t)\right)$', fontsize=axisLabel)
-# 		if i == len(poolData[0][:])-2:
+# 		if i == len(pool_data[0][:])-2:
 # 			ax16[i].set_xlabel(r'$t$ in $[s]$', fontsize=axisLabel)
 # 			ax161[i].set_xlabel(r'$t$ in $[s]$', fontsize=axisLabel)
 # 			ax18[i].set_xlabel(r'$t$ in $[s]$', fontsize=axisLabel)
 # 			ax20[i].set_xlabel(r'$\Delta\theta(t)$ in $[rad]$', fontsize=axisLabel)
-# 		if i == len(poolData[0][:])-1:
+# 		if i == len(pool_data[0][:])-1:
 # 			ax17[i].set_xlabel(r'$t$ in $[s]$', fontsize=axisLabel)
 # 			ax19[i].set_xlabel(r'$t$ in $[s]$', fontsize=axisLabel)
-# 		if len(poolData[0][:]) > threshold_realizations_plot and i == len(poolData[0][:])-1:
+# 		if len(pool_data[0][:]) > threshold_realizations_plot and i == len(pool_data[0][:])-1:
 # 			ax21.set_xlabel(r'$t$ in $[s]$', fontsize=axisLabel)
 # 			ax21.set_ylabel(r'$R(t)$', fontsize=axisLabel)
 # 			ax21.tick_params(labelsize=tickSize)
@@ -1252,10 +1252,10 @@ def shiftedColorMap(cmap, start=0, midpoint=0.5, stop=1.0, name='shiftedcmap'):
 # 		#if i == 0:
 # 		print('Plotting the network and its binarized asymptotic state.')
 # 		color_map = []
-# 		if isinstance(poolData[0][i]['dictPLL']['gPDin'], list):
-# 			network_graph = nx.from_numpy_array(np.array(poolData[0][i]['dictPLL']['gPDin']))
+# 		if isinstance(pool_data[0][i]['dict_pll']['gPDin'], list):
+# 			network_graph = nx.from_numpy_array(np.array(pool_data[0][i]['dict_pll']['gPDin']))
 # 		else:
-# 			network_graph = nx.from_numpy_array(poolData[0][i]['dictPLL']['gPDin'])
+# 			network_graph = nx.from_numpy_array(pool_data[0][i]['dict_pll']['gPDin'])
 # 		print('len(final_phase_oscillator)=', len(final_phase_oscillator))
 # 		for node in network_graph:
 # 			print('Working on node %i'%(node))
@@ -1275,19 +1275,19 @@ def shiftedColorMap(cmap, start=0, midpoint=0.5, stop=1.0, name='shiftedcmap'):
 # 	if len(sol_time_without_inf_entries) == 0:
 # 		print('All times to solution were evaluated as np.inf and hence the mean time so solution is np.inf!')
 # 		sol_time_without_inf_entries = np.array([np.inf])
-# 	print('success_count: ', success_count, 'len(poolData[0][:]: ', len(poolData[0][:]), 'sol_time:', sol_time)
+# 	print('success_count: ', success_count, 'len(pool_data[0][:]: ', len(pool_data[0][:]), 'sol_time:', sol_time)
 # 	results_string = 'Final evaluation:\n1) for a total of %i realizations, success probability (evaluation R) = %0.4f\n2) and success probability evaluating groups separated by pi = %0.4f\n3) average time to solution = %0.4f seconds, i.e., %0.2f mean intrinsic periods.\n4) average time to solution without infinity entries= %0.4f seconds, i.e., %0.2f mean intrinsic periods.\n5) fastest and slowest time to solution in multiples of periods: {%0.2f, %0.2f}'%(
-# 		len(poolData[0][:]), success_count / len(poolData[0][:]), success_count_test1 / len(poolData[0][:]),
+# 		len(pool_data[0][:]), success_count / len(pool_data[0][:]), success_count_test1 / len(pool_data[0][:]),
 # 		np.mean(sol_time),
-# 		np.mean(sol_time)/np.mean(poolData[0][i]['dictPLL']['intrF']),
+# 		np.mean(sol_time)/np.mean(pool_data[0][i]['dict_pll']['intrF']),
 # 		np.mean(sol_time_without_inf_entries),
-# 		np.mean(sol_time_without_inf_entries)/np.mean(poolData[0][i]['dictPLL']['intrF']),
-# 		np.min(sol_time)/np.mean(poolData[0][i]['dictPLL']['intrF']),
-# 		np.max(sol_time)/np.mean(poolData[0][i]['dictPLL']['intrF']))
-# 	if len(poolData[0][:]) > threshold_realizations_plot:
+# 		np.mean(sol_time_without_inf_entries)/np.mean(pool_data[0][i]['dict_pll']['intrF']),
+# 		np.min(sol_time)/np.mean(pool_data[0][i]['dict_pll']['intrF']),
+# 		np.max(sol_time)/np.mean(pool_data[0][i]['dict_pll']['intrF']))
+# 	if len(pool_data[0][:]) > threshold_realizations_plot:
 # 		props = dict(boxstyle='round', facecolor='wheat', alpha=0.5)
-# 		#ax21.text(0.25*poolData[0][0]['dictData']['t'][-1], 0.2, results_string, horizontalalignment='left', verticalalignment='bottom', bbox=props, fontsize=9)
-# 		ax211.text(0.25 * poolData[0][0]['dictData']['t'][-1], 0.2, results_string, horizontalalignment='left', verticalalignment='bottom', bbox=props, fontsize=9)
+# 		#ax21.text(0.25*pool_data[0][0]['dictData']['t'][-1], 0.2, results_string, horizontalalignment='left', verticalalignment='bottom', bbox=props, fontsize=9)
+# 		ax211.text(0.25 * pool_data[0][0]['dictData']['t'][-1], 0.2, results_string, horizontalalignment='left', verticalalignment='bottom', bbox=props, fontsize=9)
 #
 # 	print(results_string)
 #
@@ -1312,7 +1312,7 @@ def shiftedColorMap(cmap, start=0, midpoint=0.5, stop=1.0, name='shiftedcmap'):
 # 	fig19.savefig('results/signals_%d_%d_%d.png' % (now.year, now.month, now.day), dpi=dpi_val)
 # 	fig20.savefig('results/histograms_%d_%d_%d.png' % (now.year, now.month, now.day), dpi=dpi_val)
 # 	# fig99.savefig('results/network_asymptotic_state_%d_%d_%d.png' % (now.year, now.month, now.day), dpi=dpi_val)
-# 	if len(poolData[0][:]) > threshold_realizations_plot:
+# 	if len(pool_data[0][:]) > threshold_realizations_plot:
 # 		fig21.savefig('results/all_order_parameters_%d_%d_%d.svg' % (now.year, now.month, now.day), dpi=dpi_val)
 # 		fig21.savefig('results/all_order_parameters_%d_%d_%d.png' % (now.year, now.month, now.day), dpi=dpi_val)
 # 		fig211.savefig('results/all_order_parameters_smoothed_%d_%d_%d.svg' % (now.year, now.month, now.day), dpi=dpi_val)

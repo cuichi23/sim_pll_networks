@@ -37,46 +37,46 @@ COUPLING_FUNCTION_NEGSIN		= coupfct.neg_sine								#'-np.sin'
 # #############################################################################
 
 
-def generate_delay_plot(dictPLL, dictNet, isRadians=True, filename=None, max_delay_range=5.0):
+def generate_delay_plot(dict_pll, dict_net, isRadians=True, filename=None, max_delay_range=5.0):
 	# Setup sweep factory and create state list
 	n_points = 50 * max_delay_range
 	if isRadians:
-		if dictPLL['transmission_delay'] > 0.5 * max_delay_range:
-			tau_min = ( dictPLL['transmission_delay'] - 0.5 * max_delay_range ) / (dictPLL['intrF'] / (2 * np.pi))
-			tau_max = ( dictPLL['transmission_delay'] + 0.5 * max_delay_range ) / (dictPLL['intrF'] / (2 * np.pi))
+		if dict_pll['transmission_delay'] > 0.5 * max_delay_range:
+			tau_min = ( dict_pll['transmission_delay'] - 0.5 * max_delay_range ) / (dict_pll['intrF'] / (2 * np.pi))
+			tau_max = ( dict_pll['transmission_delay'] + 0.5 * max_delay_range ) / (dict_pll['intrF'] / (2 * np.pi))
 		else:
 			tau_min = 0.0
-			tau_max = max_delay_range / (dictPLL['intrF'] / (2 * np.pi))
-		f  = dictPLL['intrF'] / (2 * np.pi)
-		fc = dictPLL['cutFc'] / (2 * np.pi)
-		kc = dictPLL['coupK'] / (2 * np.pi)
+			tau_max = max_delay_range / (dict_pll['intrF'] / (2 * np.pi))
+		f  = dict_pll['intrF'] / (2 * np.pi)
+		fc = dict_pll['cutFc'] / (2 * np.pi)
+		kc = dict_pll['coupK'] / (2 * np.pi)
 	else:
-		if dictPLL['transmission_delay'] > 0.5 * max_delay_range:
-			tau_min = ( dictPLL['transmission_delay'] - 0.5 * max_delay_range ) / dictPLL['intrF']
-			tau_max = ( dictPLL['transmission_delay'] + 0.5 * max_delay_range ) / dictPLL['intrF']
+		if dict_pll['transmission_delay'] > 0.5 * max_delay_range:
+			tau_min = ( dict_pll['transmission_delay'] - 0.5 * max_delay_range ) / dict_pll['intrF']
+			tau_max = ( dict_pll['transmission_delay'] + 0.5 * max_delay_range ) / dict_pll['intrF']
 		else:
 
 			tau_min = 0.0
-			tau_max = max_delay_range / dictPLL['intrF']
-		f  = dictPLL['intrF']
-		fc = dictPLL['cutFc']
-		kc = dictPLL['coupK']
+			tau_max = max_delay_range / dict_pll['intrF']
+		f  = dict_pll['intrF']
+		fc = dict_pll['cutFc']
+		kc = dict_pll['coupK']
 	tau = np.linspace(tau_min, tau_max, n_points); #print('tau_min, tau_max, tau: ', tau_min, tau_max, tau)
-	dictPLL.update({'transmission_delay': tau})
-	sf  = SweepFactory(dictPLL, dictNet, isRadians=isRadians)
+	dict_pll.update({'transmission_delay': tau})
+	sf  = SweepFactory(dict_pll, dict_net, isRadians=isRadians)
 	fsl = sf.sweep()
-	if dictNet['mx'] == 0 and dictNet['my'] == -999:
-		dictTemp = copy.deepcopy(dictNet); dictTemp.update({'mx': 1});
-		sf1 = SweepFactory(dictPLL, dictTemp, isRadians=isRadians); fsl1 = sf1.sweep()
-	elif dictNet['mx'] == 1 and dictNet['my'] == -999:
-		dictTemp = copy.deepcopy(dictNet); dictTemp.update({'mx': 0});
-		sf1 = SweepFactory(dictPLL, dictTemp, isRadians=isRadians); fsl1 = sf1.sweep()
+	if dict_net['mx'] == 0 and dict_net['my'] == -999:
+		dictTemp = copy.deepcopy(dict_net); dictTemp.update({'mx': 1});
+		sf1 = SweepFactory(dict_pll, dictTemp, isRadians=isRadians); fsl1 = sf1.sweep()
+	elif dict_net['mx'] == 1 and dict_net['my'] == -999:
+		dictTemp = copy.deepcopy(dict_net); dictTemp.update({'mx': 0});
+		sf1 = SweepFactory(dict_pll, dictTemp, isRadians=isRadians); fsl1 = sf1.sweep()
 
 	# Create parameter string
 	str_para = ''
-	str_para += 'v = %i   mx = %i   my = %i' % (dictPLL['div'], dictNet['mx'], dictNet['my'])
-	str_para += '\n%s topology' % dictNet['topology']
-	str_para += ' N = %i   Nx = %i   Ny = %i' % (dictNet['Nx']*dictNet['Ny'], dictNet['Nx'], dictNet['Ny'])
+	str_para += 'v = %i   mx = %i   my = %i' % (dict_pll['div'], dict_net['mx'], dict_net['my'])
+	str_para += '\n%s topology' % dict_net['topology']
+	str_para += ' N = %i   Nx = %i   Ny = %i' % (dict_net['Nx']*dict_net['Ny'], dict_net['Nx'], dict_net['Ny'])
 	str_para += '\nF = %.2f Hz   Fc = %.2f Hz   Kc = %.2f Hz' % (f, fc, kc)
 
 	# Create figure
@@ -85,7 +85,7 @@ def generate_delay_plot(dictPLL, dictNet, isRadians=True, filename=None, max_del
 	plt.subplot(2, 1, 1)
 	plt.title(str_para)
 	plt.plot(fsl.get_tau(), fsl.get_omega(), 'b.')
-	if ( dictNet['mx'] == 0 or dictNet['mx'] == 1 ) and dictNet['my'] == -999:
+	if ( dict_net['mx'] == 0 or dict_net['mx'] == 1 ) and dict_net['my'] == -999:
 		plt.plot(fsl1.get_tau(), fsl1.get_omega(), 'k+', alpha=0.5)
 	plt.grid(True, ls='--')
 	plt.xlabel('delay [s]')
@@ -95,7 +95,7 @@ def generate_delay_plot(dictPLL, dictNet, isRadians=True, filename=None, max_del
 	plt.subplot(2, 1, 2)
 	plt.axhline(0, color='k')
 	plt.plot(fsl.get_tau(), np.real(fsl.get_lambda()), '.')
-	if ( dictNet['mx'] == 0 or dictNet['mx'] == 1 ) and dictNet['my'] == -999:
+	if ( dict_net['mx'] == 0 or dict_net['mx'] == 1 ) and dict_net['my'] == -999:
 		plt.plot(fsl1.get_tau(), fsl1.get_lambda(), 'k+', alpha=0.5)
 	plt.grid(True, ls='--')
 	plt.xlabel('delay [s]')
@@ -124,7 +124,7 @@ def generate_delay_plot(dictPLL, dictNet, isRadians=True, filename=None, max_del
 	plt.subplot(2, 1, 1)
 	plt.title(str_para)
 	plt.plot(fsl.get_tau()*fsl.get_omega()/(2*np.pi), fsl.get_omega(), '.')
-	if ( dictNet['mx'] == 0 or dictNet['mx'] == 1 ) and dictNet['my'] == -999:
+	if ( dict_net['mx'] == 0 or dict_net['mx'] == 1 ) and dict_net['my'] == -999:
 		plt.plot(fsl1.get_tau()*fsl1.get_omega()/(2*np.pi), fsl1.get_omega(), 'k+', alpha=0.5)
 	plt.grid(True, ls='--')
 	plt.xlabel('Omega delay')
@@ -134,7 +134,7 @@ def generate_delay_plot(dictPLL, dictNet, isRadians=True, filename=None, max_del
 	plt.subplot(2, 1, 2)
 	plt.axhline(0, color='k')
 	plt.plot(fsl.get_tau()*fsl.get_omega()/(2*np.pi), np.real(fsl.get_lambda()), '.')
-	if ( dictNet['mx'] == 0 or dictNet['mx'] == 1 ) and dictNet['my'] == -999:
+	if ( dict_net['mx'] == 0 or dict_net['mx'] == 1 ) and dict_net['my'] == -999:
 		plt.plot(fsl1.get_tau()*fsl1.get_omega()/(2*np.pi), np.real(fsl1.get_lambda()), 'k+', alpha=0.5)
 	plt.grid(True, ls='--')
 	plt.xlabel('Omega delay [s]')
@@ -147,7 +147,7 @@ def generate_delay_plot(dictPLL, dictNet, isRadians=True, filename=None, max_del
 
 	plt.title(str_para)
 	plt.plot(fsl.get_tau(), fsl.get_tau()*fsl.get_omega(isRadians=False), 'b.')
-	if ( dictNet['mx'] == 0 or dictNet['mx'] == 1 ) and dictNet['my'] == -999:
+	if ( dict_net['mx'] == 0 or dict_net['mx'] == 1 ) and dict_net['my'] == -999:
 		plt.plot(fsl1.get_tau(), fsl1.get_tau()*fsl1.get_omega(isRadians=False), 'k+', alpha=0.5)
 	plt.grid(True, ls='--')
 	plt.xlabel('delay [s]')
@@ -208,37 +208,37 @@ class SweepFactory(object):
 	   tsim : float
 			  simulation time
 	'''
-	def __init__(self, dictPLL, dictNet, isRadians=True):
-		self.n 			= dictNet['Nx']*dictNet['Ny']
-		self.nx 		= dictNet['Nx']
-		self.ny 		= dictNet['Ny']
-		self.tau 		= dictPLL['transmission_delay']
-		self.h 			= dictPLL['coup_fct_sig']
-		self.m 			= dictNet['mx']
-		self.mx 		= dictNet['mx']
-		self.my 		= dictNet['my']
-		self.tsim 		= dictNet['Tsim']
-		self.topology 	= dictNet['topology']
+	def __init__(self, dict_pll, dict_net, isRadians=True):
+		self.n 			= dict_net['Nx']*dict_net['Ny']
+		self.nx 		= dict_net['Nx']
+		self.ny 		= dict_net['Ny']
+		self.tau 		= dict_pll['transmission_delay']
+		self.h 			= dict_pll['coup_fct_sig']
+		self.m 			= dict_net['mx']
+		self.mx 		= dict_net['mx']
+		self.my 		= dict_net['my']
+		self.tsim 		= dict_net['Tsim']
+		self.topology 	= dict_net['topology']
 		self.c 			= 0                     								# just dummy variable here
-		self.v 			= dictPLL['div']
-		self.fric		= dictPLL['friction_coefficient']
+		self.v 			= dict_pll['div']
+		self.fric		= dict_pll['friction_coefficient']
 		self.dummy		= np.array([self.n])
 
-		if dictPLL['fric_coeff_PRE_vs_PRR'] == 'PRE':							# distinguish between the Kuramoto model as in the PRR paper Wetzel, Metevier, Gupta or the PRE paper Prousalis, Wetzel
+		if dict_pll['fric_coeff_PRE_vs_PRR'] == 'PRE':							# distinguish between the Kuramoto model as in the PRR paper Wetzel, Metevier, Gupta or the PRE paper Prousalis, Wetzel
 			self.fric_omega = 1.0												# PRE: Omega = omega/gamma + K/gamma * h[-Omega Tau], while PRR: Omega = omega + K/gamma * h[-Omega Tau]
-		elif dictPLL['fric_coeff_PRE_vs_PRR'] == 'PRR':
+		elif dict_pll['fric_coeff_PRE_vs_PRR'] == 'PRR':
 			self.fric_omega = 1.0/self.fric
 
 		# if parameters provided in rad*Hz
 		if isRadians:
-			self.w    = dictPLL['intrF']
-			self.k    = dictPLL['coupK']
-			self.wc   = dictPLL['cutFc']
+			self.w    = dict_pll['intrF']
+			self.k    = dict_pll['coupK']
+			self.wc   = dict_pll['cutFc']
 		# if parameters provided in Hz, multiply by 2pi, as needed in the phase model
 		else:
-			self.w    = 2.0*np.pi*dictPLL['intrF']           					# here, w = f
-			self.k    = 2.0*np.pi*dictPLL['coupK']           					# here, k is given in Hz instead rad*Hz
-			self.wc   = 2.0*np.pi*dictPLL['cutFc']           					# here, wc = fc
+			self.w    = 2.0*np.pi*dict_pll['intrF']           					# here, w = f
+			self.k    = 2.0*np.pi*dict_pll['coupK']           					# here, k is given in Hz instead rad*Hz
+			self.wc   = 2.0*np.pi*dict_pll['cutFc']           					# here, wc = fc
 
 		# Identify and store swept variable
 		self.key_sweep = self._identify_swept_variable()

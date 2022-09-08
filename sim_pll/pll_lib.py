@@ -293,7 +293,7 @@ class SignalControlledOscillator:
 		elif dict_pll['fric_coeff_PRE_vs_PRR'] == 'PRE':
 			if isinstance(dict_pll['intrF'], list):
 				intrinsic_freqs_temp = np.array(dict_pll['intrF'])
-				# if len(intrinsic_freqs_temp) != dictNet['Nx']*dictNet['Ny']:
+				# if len(intrinsic_freqs_temp) != dict_net['Nx']*dict_net['Ny']:
 				# 	print('Provide the correct number of individual intrinsic frequencies for the given network size, or alternatively a single value for all.'); sys.exit()
 			else:
 				intrinsic_freqs_temp = dict_pll['intrF']
@@ -314,7 +314,7 @@ class SignalControlledOscillator:
 			print('\nSet typeOfHist dict entry correctly!'); sys.exit()
 
 		if self.c > 0:															# create noisy VCO output
-			print('VCO output noise with variance=%0.5E and std=%0.5E is enabled!'%(self.c, np.sqrt(self.c)))
+			print('VCO output noise with variance=%0.5E and std=%0.5E is enabled!' % (self.c, np.sqrt(self.c)))
 			if self.response_vco == 'linear':										# this simulates a linear response of the VCO
 				self.evolve_phi = lambda w, K, x_ctrl, c, dt: (w + K * x_ctrl) * dt + np.random.normal(loc=0.0, scale=np.sqrt(c * dt))
 			elif not self.response_vco == 'linear':								# this simulates a user defined nonlinear VCO response
@@ -490,7 +490,7 @@ class PhaseDetectorCombiner:
 		self.a = dict_pll['antenna_sig']
 		self.normalized_mutual_coupling = dict_net['normalize_mutual_coupling_by_inputs']
 		# # here be careful! all parameters are specified in Hz -- in the equation however, we need radHz, hence 2*pi*... is needed
-		# if np.abs(self.K_rad) > 1E-16 and not dictNet['special_case'] == 'timeDepChangeOfCoupStr_noSHILfiltering':
+		# if np.abs(self.K_rad) > 1E-16 and not dict_net['special_case'] == 'timeDepChangeOfCoupStr_noSHILfiltering':
 		# 	# the division by self.K_rad is done since due to the structure of the program, this is multiplied again later
 		# 	self.K2nd_k	= get_from_value_or_list(pll_id, dict_pll['coupStr_2ndHarm'] / self.K_rad, dict_net['Nx'] * dict_net['Ny'])
 		# else:
@@ -535,7 +535,7 @@ class PhaseDetectorCombiner:
 			# 	elif normalized_mutual_coupling == 1:
 			# 		self.compute = lambda x_ext, ant_in, x_feed: np.mean(self.G_kl * (-1) * self.h((x_ext - x_feed) / self.div))
 			else:
-				print('Simulating coupling function h(.) of the phase-differences as specified in dictPLL. The individial feed-forward path gains are G_%il=' % (self.pll_id), self.G_kl)
+				print('Simulating coupling function h(.) of the phase-differences as specified in dict_pll. The individial feed-forward path gains are G_%il=' % (self.pll_id), self.G_kl)
 				# case of second harmonic injection locking driven by feedback signal with twice the frequency and coupling capacity proportional to the number of inputs
 				if self.normalized_mutual_coupling is not True:
 					self.compute = lambda x_ext, ant_in, x_feed: np.sum(self.G_kl * self.h((x_ext - x_feed) / self.div + self.phase_shift))
@@ -569,7 +569,7 @@ class PhaseDetectorCombiner:
 																				+ (1.0-self.hf( x_ext / self.div ))*self.hf( x_feed / self.div + self.phase_shift ) ) )
 			print('High frequency components activated, using:', inspect.getsourcelines(self.compute)[0][0])
 		else:
-			print('Phase detector and combiner problem, dictPLL[*includeCompHF*] should either be True or False, check PhaseDetectorCombiner in pll_lib! ')
+			print('Phase detector and combiner problem, dict_pll[*includeCompHF*] should either be True or False, check PhaseDetectorCombiner in pll_lib! ')
 
 	def next(self, feedback_delayed_phases: np.ndarray, transmission_delayed_phases: np.ndarray, antenna_in: float, index_current_time: int = 0) -> np.float:
 		"""

@@ -29,7 +29,7 @@ gc.enable();
 
 def getDicts(Fsim=125):
 
-	dictNet={
+	dict_net={
 		'Nx': 2,																# oscillators in x-direction
 		'Ny': 1,																# oscillators in y-direction
 		'mx': 0,																# twist/chequerboard in x-direction (depends on closed or open boundary conditions)
@@ -49,11 +49,11 @@ def getDicts(Fsim=125):
 		'min_max_rate_timeDepPara': [0, 0.5, 0.5/5]								# provide a list with min, max and rate of the time-dependent parameter
 	}
 
-	dictPLL={
+	dict_pll={
 		'intrF': 1.0,															# intrinsic frequency in Hz
 		'syncF': 1.0,															# frequency of synchronized state in Hz
-		'coupK': 27E-3,														# [random.uniform(0.3, 0.4) for i in range(dictNet['Nx']*dictNet['Ny'])],# coupling strength (like phase model: K = Kvco/2 * G_all, NOTE: the /2 is for coupling functions that have peak2peal amplitude 2) in Hz float or [random.uniform(minK, maxK) for i in range(dictNet['Nx']*dictNet['Ny'])]
-		'gPDin': 1,																# gains of the different inputs to PD k from input l -- G_kl, see PD, set to 1 and all G_kl=1 (so far only implemented for some cases, check!): np.random.uniform(0.95,1.05,size=[dictNet['Nx']*dictNet['Ny'],dictNet['Nx']*dictNet['Ny']])
+		'coupK': 27E-3,														# [random.uniform(0.3, 0.4) for i in range(dict_net['Nx']*dict_net['Ny'])],# coupling strength (like phase model: K = Kvco/2 * G_all, NOTE: the /2 is for coupling functions that have peak2peal amplitude 2) in Hz float or [random.uniform(minK, maxK) for i in range(dict_net['Nx']*dict_net['Ny'])]
+		'gPDin': 1,																# gains of the different inputs to PD k from input l -- G_kl, see PD, set to 1 and all G_kl=1 (so far only implemented for some cases, check!): np.random.uniform(0.95,1.05,size=[dict_net['Nx']*dict_net['Ny'],dict_net['Nx']*dict_net['Ny']])
 		'gPDin_symmetric': True,												# set to True if G_kl == G_lk, False otherwise
 		'cutFc': 1.1E-4,														# LF cut-off frequency in Hz, here N=9 with mean 0.015: [0.05,0.015,0.00145,0.001,0.0001,0.001,0.00145,0.015,0.05]
 		'orderLF': 1,															# order of LF filter, either 1 or 2 at the moment
@@ -63,7 +63,7 @@ def getDicts(Fsim=125):
 		'noiseVarVCO': 1E-9,													# variance of VCO GWN
 		'feedback_delay': 0,													# value of feedback delay in seconds
 		'feedback_delay_var': None, 											# variance of feedback delay
-		'transmission_delay': 0.55, 												# value of transmission delay in seconds, float (single), list (tau_k) or list of lists (tau_kl): np.random.uniform(min,max,size=[dictNet['Nx']*dictNet['Ny'],dictNet['Nx']*dictNet['Ny']]), OR [np.random.uniform(min,max) for i in range(dictNet['Nx']*dictNet['Ny'])]
+		'transmission_delay': 0.55, 												# value of transmission delay in seconds, float (single), list (tau_k) or list of lists (tau_kl): np.random.uniform(min,max,size=[dict_net['Nx']*dict_net['Ny'],dict_net['Nx']*dict_net['Ny']]), OR [np.random.uniform(min,max) for i in range(dict_net['Nx']*dict_net['Ny'])]
 		'transmission_delay_var': None, 										# variance of transmission delays
 		'distribution_for_delays': None,										# from what distribution are random delays drawn?
 		# choose from coupfct.<ID>: sine, cosine, neg_sine, neg_cosine, triangular, deriv_triangular, square_wave, pfd, inverse_cosine, inverse_sine
@@ -94,15 +94,15 @@ def getDicts(Fsim=125):
 		'space_dimensions_xyz': [10, 10, 10]									# dimension of the 3d space in which mobile oscillators can be simulated --> mode: 'distanceDepTransmissionDelay'
 	}
 
-	dictAlgo={
-		'bruteForceBasinStabMethod': 'single',									# pick method for setting realizations 'single', 'classicBruteForceMethodRotatedSpace', 'listOfInitialPhaseConfigurations', 'testNetworkMotifIsing'		'paramDiscretization': [7, 1],#[15, 10],								# parameter discetization for brute force parameter space scans
-		'param_id': 'None',														# parameter to be changed between different realizations, according to the min_max_range_parameter: 'None' or string of any other parameter
-		'min_max_range_parameter': [0.95, 1.05],								# specifies within which min and max value to linspace the initial frequency difference (w.r.t. HF Frequency, not divided)
+	dict_algo={
+		'parameter_space_sweeps': 'single',									# pick method for setting realizations 'single', 'classicBruteForceMethodRotatedSpace', 'listOfInitialPhaseConfigurations', 'testNetworkMotifIsing'		'paramDiscretization': [7, 1],#[15, 10],								# parameter discetization for brute force parameter space scans
+		'param_id_0': 'None',														# parameter to be changed between different realizations, according to the min_max_range_parameter: 'None' or string of any other parameter
+		'min_max_range_parameter_0': [0.95, 1.05],								# specifies within which min and max value to linspace the initial frequency difference (w.r.t. HF Frequency, not divided)
 		'store_ctrl_and_clock': False,											# whether or not the control signals and clock signal is being computed (time and memory usage)
 		'store_phases_tau_array': True  # whether or not the phases are saved when simulation on tau-array
 	}
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-	dictPLL, dictNet, dictAlgo = chk_dicts.check_dicts_consistency(dictPLL, dictNet, dictAlgo)
+	dict_pll, dict_net, dict_algo = chk_dicts.check_dicts_consistency(dict_pll, dict_net, dict_algo)
 
-	return dictPLL, dictNet, dictAlgo
+	return dict_pll, dict_net, dict_algo

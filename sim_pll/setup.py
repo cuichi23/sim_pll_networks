@@ -23,6 +23,7 @@ import time
 
 from sim_pll import pll_lib as pll
 from sim_pll import evaluation_lib as eva
+from sim_pll import entrain_mutual_lib as ent_mut
 
 ''' Enable automatic carbage collector '''
 gc.enable()
@@ -80,7 +81,7 @@ def output_pll_specs(pll_list: list, dict_data: dict, dict_pll: dict) -> dict:
 
 ################################################################################
 
-def generate_space(dict_pll: dict, dict_net: dict, dict_data: dict):
+def generate_space(dict_net: dict, dict_pll: dict, dict_data: dict):
 	"""
 	Creates a space object that provides a 3d space.
 
@@ -98,12 +99,13 @@ def generate_space(dict_pll: dict, dict_net: dict, dict_data: dict):
 
 ################################################################################
 
-def generate_phi0(dict_net: dict) -> None:
+def generate_phi0(dict_net: dict, dict_pll: dict) -> None:
 	"""
 	Set the initial phase perturbation of each oscillator in the network depending on the type of solution to be investigated.
 
 	Args:
 		dict_net:  [dict] contains the setup information for the network and simulation
+		dict_pll:  [dict] contains the setup information for the PLL objects
 
 	Returns:
 		None
@@ -111,48 +113,65 @@ def generate_phi0(dict_net: dict) -> None:
 
 	if 'entrainOne' in dict_net['topology'] or 'entrainAll' in dict_net['topology']:
 		print('Provide phase-configuration for these cases in physical coordinates!')
-		sys.exit()
 		#phiM  = eva.rotate_phases(phiSr.flatten(), isInverse=False);
-		phiM = dict_net['phiConfig']											# phiConfig: user specified configuration of initial phi states
+		# use phase_configuration_ref_to_one_for_chain_topology function from entrain_mutual_lib.py to calculate the phase configuration from the analytic expressions
+		if dict_net['topology'] == 'entrainOne-chain':
+			ent_mut.phase_configuration_ref_to_one_for_chain_topology(dict_net, dict_pll)
+		elif not dict_net['topology'] == 'entrainOne-chain':
+			dict_net.update({'phiInitConfig': [0 for i in range(dict_net['Nx']*dict_net['Ny'])]})
+			print('Initial phase configuration of entrained state WAS NOT calculated automatically: tbi!')
 
-		replace here to calculate that externally from a script?!
+		phiM = dict_net['phiInitConfig']  # phiConfig: user specified configuration of initial phi states
 
-		special_case = 0
-		if special_case == 1:
-			phiS  = np.array([2., 2., 2.])
-			dict_net.update({'phiSr': eva.rotate_phases(phiS.flatten(), isInverse=True)})
+		temporary_switch = 0
+		if temporary_switch == 1:
+			#phiS = np.array([2., 2., 2.])
+			#dict_net.update({'phiSr': eva.rotate_phases(phiS.flatten(), isInverse=True)})
+			dict_net.update({'phiPerturb': np.array([2., 2., 2.])})
+			dict_net.update({'phiPerturbRot': eva.rotate_phases(dict_net['phiPerturb'].flatten(), isInverse=True)})
 		else:
-			dict_net.update({'phiS': eva.rotate_phases(dict_net['phiSr'].flatten(), isInverse=False)})
+			#dict_net.update({'phiS': eva.rotate_phases(dict_net['phiSr'].flatten(), isInverse=False)})
 			#print('Calculated phiS=',phiS,' from phiSr=',phiSr,'.\n')
-		print('For entrainOne and entrainAll assumed initial phase-configuration of entrained synced state (physical coordinates):', phiM,
-				' and on top a perturbation of (rotated coordinates):', phiSr, '  and in (original coordinates):', phiS, '\n')
+			if len(dict_net['phiPerturb']) == 0 and len(dict_net['phiPerturbRot']) == 0:
+				print('Provide intitial phase perturbations in phase or rotated phase space!')
+			elif len(dict_net['phiPerturbRot']) == 0:
+				dict_net.update({'phiPerturbRot': eva.rotate_phases(np.array(dict_net['phiPerturb']).flatten(), isInverse=True)})
+			elif len(dict_net['phiPerturb']) == 0:
+				dict_net.update({'phiPerturb': eva.rotate_phases(np.array(dict_net['phiPerturbRot']).flatten(), isInverse=False)})
+
+		print('For entrainOne and entrainAll assumed initial phase-configuration of entrained synced state (physical coordinates):', dict_net['phiInitConfig'],
+				' and on top a perturbation of (rotated coordinates):', dict_net['phiPerturbRot'], ' and in (original coordinates):', dict_net['phiPerturb'], '\n')
+		#print('For entrainOne and entrainAll assumed initial phase-configuration of entrained synced state (physical coordinates):', phiM,
+		#  		' and on top a perturbation of (rotated coordinates):', phiSr, ' and in (original coordinates):', phiS, '\n')
 		#phiS  = phiSr;
 		#phiSr =	eva.rotate_phases(phiS.flatten(), isInverse=True)		  	# rotate back into rotated phase space for simulation
 		#print('For entrainOne and entrainAll assumed initial phase-configuration of entrained synced state (physical coordinates):', phiS, ' and (rotated coordinates):', phiSr, '\n')
 	elif dict_net['topology'] == 'compareEntrVsMutual':
-		print('REWORK THIS!'); sys.exit()
-		phiM  = dict_net['phiConfig'];
-		if not dict_net['phiPerturbRot']:
-			phiS = np.zeros(dict_net['Nx']*dict_net['Ny']);
+		print('REWORK THIS!')
+		sys.exit()
+		phiM = dict_net['phiConfig'];
+		if len(dict_net['phiPerturbRot']) == 0:
+			phiS = np.zeros(dict_net['Nx']*dict_net['Ny'])
 		dict_net.update({'phiPerturb': eva.rotate_phases(phiSr.flatten(), isInverse=False)})
 	else:
 		print('Run single time-series and plot phase and frequency time series!')
 		initPhiPrime0 = 0.0
 		#print('dict_net[*phiPerturbRot*]', dict_net['phiPerturbRot'], 'dict_net[*phiPerturb*]', dict_net['phiPerturb'])
-		if len(dict_net['phiPerturbRot']) > 0 and len( dict_net['phiPerturb'] ) == 0:#dict_net['phiPerturbRot'] and not dict_net['phiPerturb']:
+		if len(dict_net['phiPerturbRot']) > 0 and len(dict_net['phiPerturb']) == 0:			#dict_net['phiPerturbRot'] and not dict_net['phiPerturb']:
 			print('Parameters set, perturbations provided manually in rotated phase space of phases.')
 			#if len(dict_net['phiPerturbRot'].shape)==1:
-			if len(dict_net['phiPerturbRot'])==dict_net['Nx']*dict_net['Ny']:
+			if len(dict_net['phiPerturbRot']) == dict_net['Nx']*dict_net['Ny']:
 				print('Shift along the first axis in rotated phase space, equivalent to phase kick of all oscillators before simulation starts: phi`_0=', initPhiPrime0)
-				dict_net['phiPerturbRot'][0] = initPhiPrime0					# set value of the first dimension, phi'_0, the axis along which all phase differences are preserved
-				dict_net.update({'phiPerturb': eva.rotate_phases(dict_net['phiPerturbRot'], isInverse=False)}) # rotate back into physical phase space for simulation
+				dict_net['phiPerturbRot'][0] = initPhiPrime0			# set value of the first dimension, phi'_0, the axis along which all phase differences are preserved
+				dict_net.update({'phiPerturb': eva.rotate_phases(dict_net['phiPerturbRot'], isInverse=False)}) 		# rotate back into physical phase space for simulation
 				print('\nPerturbations in ROTATED phase space:', dict_net['phiPerturbRot'])
 				print('Dirac delta phase perturbation in ORIGINAL phase space:', dict_net['phiPerturb'])
 			else:
 				dict_net.update({'phiPerturb': np.zeros(dict_net['Nx']*dict_net['Ny'])})
 				dict_net.update({'phiPerturbRot': eva.rotate_phases(dict_net['phiPerturb'], isInverse=True)})
 				dict_net['phiPerturbRot'][0] = initPhiPrime0
-				print('No perturbations defined, work it out! So far no perturbations are set, i.e., all zero!'); #sys.exit()
+				print('No perturbations defined, work it out! So far no perturbations are set, i.e., all zero!')
+				#sys.exit()
 
 			# elif len(dict_net['phiPerturbRot'].shape)==2:
 			# 	if len(dict_net['phiPerturbRot'][0,:])==dict_net['Nx']*dict_net['Ny']:
@@ -162,13 +181,13 @@ def generate_phi0(dict_net: dict) -> None:
 			# 		dict_net.update({'phiPerturb': eva.rotate_phases(dict_net['phiPerturbRot'].flatten(), isInverse=False)}) # rotate back into physical phase space for simulation
 			# 		print('dirac delta phase perturbation in ORIGINAL phase space:', dict_net['phiPerturb'], '\n')
 
-		elif len(dict_net['phiPerturbRot']) == 0 and len( dict_net['phiPerturb'] ) > 0: #dict_net['phiPerturb'] and not dict_net['phiPerturbRot']:
+		elif len(dict_net['phiPerturbRot']) == 0 and len(dict_net['phiPerturb']) > 0: 					#dict_net['phiPerturb'] and not dict_net['phiPerturbRot']:
 			print('Parameters set, perturbations provided manually in original phase space of phases.')
 			#if len(dict_net['phiPerturb'].shape)==1:
-			if len(dict_net['phiPerturb'])==dict_net['Nx']*dict_net['Ny']:
+			if len(dict_net['phiPerturb']) == dict_net['Nx']*dict_net['Ny']:
 				dict_net.update({'phiPerturbRot': eva.rotate_phases(dict_net['phiPerturb'], isInverse=True)})
 				print('shift along the first axis in rotated phase space, equivalent to phase kick of all oscillators before simulation starts: phi`_0=', initPhiPrime0)
-				dict_net['phiPerturbRot'][0] = initPhiPrime0						# set value of the first dimension, phi'_0, the axis along which all phase differences are preserved
+				dict_net['phiPerturbRot'][0] = initPhiPrime0		# set value of the first dimension, phi'_0, the axis along which all phase differences are preserved
 				print('\nPerturbations in ROTATED phase space:', dict_net['phiPerturbRot'])
 				print('Dirac delta phase perturbation in ORIGINAL phase space:', dict_net['phiPerturb'])
 			else:
@@ -195,24 +214,24 @@ def generate_phi0(dict_net: dict) -> None:
 	cheqdelta = 0
 	twistdelta_x = 0
 	twistdelta_y = 0
-	if not ( dict_net['topology'] == 'ring' or dict_net['topology'] == 'chain' ):
+	if not (dict_net['topology'] == 'ring' or dict_net['topology'] == 'chain'):
 		if dict_net['topology'] == 'square-open' or dict_net['topology'] == 'hexagon' or dict_net['topology'] == 'octagon':
-			cheqdelta_x = np.pi 												# phase difference between neighboring oscillators in a stable chequerboard state
-			cheqdelta_y = np.pi 												# phase difference between neighboring oscillators in a stable chequerboard state
+			cheqdelta_x = np.pi 																				# phase difference between neighboring oscillators in a stable chequerboard state
+			cheqdelta_y = np.pi 																				# phase difference between neighboring oscillators in a stable chequerboard state
 			# print('phase differences of',k,'-twist:', twistdelta, '\n')
 			if (dict_net['mx'] == 0 and dict_net['my'] == 0):
-				dict_net.update( {'phiInitConfig': np.zeros(dict_net['Nx']*dict_net['Ny'])} )	# phiInitConfig denotes the unperturbed initial phases according to the m-twist state under investigation
+				dict_net.update( {'phiInitConfig': np.zeros(dict_net['Nx']*dict_net['Ny'])} )					# phiInitConfig denotes the unperturbed initial phases according to the m-twist state under investigation
 
-			elif (dict_net['mx'] != 0 and dict_net['my'] != 0):
-				for rows in range(dict_net['Ny']):								# set the mx-my-twist state's initial condition (history of "perfect" configuration)
+			elif dict_net['mx'] != 0 and dict_net['my'] != 0:
+				for rows in range(dict_net['Ny']):																# set the mx-my-twist state's initial condition (history of "perfect" configuration)
 					phiMtemp = np.arange(cheqdelta_y*rows, dict_net['Nx']*cheqdelta_x+cheqdelta_y*rows, cheqdelta_x)
 					dict_net['phiInitConfig'].append(phiMtemp)
 				dict_net.update( {'phiInitConfig': np.array(dict_net['phiInitConfig'])%(2.0*np.pi)} )
 				#phiM = phiM.flatten();  # print('phiM: ', phiM, ' phiM.ndim: ', phiM.ndim)
 				dict_net.update( {'phiInitConfig': np.concatenate( dict_net['phiInitConfig'], axis=0 )} )
 
-			elif (dict_net['mx'] == 0 and dict_net['my'] != 0):					# prepare chequerboard only in y-direction
-				for rows in range(dict_net['Ny']):								# set the chequerboard state's initial condition (history of "perfect" configuration)
+			elif dict_net['mx'] == 0 and dict_net['my'] != 0:													# prepare chequerboard only in y-direction
+				for rows in range(dict_net['Ny']):																# set the chequerboard state's initial condition (history of "perfect" configuration)
 					phiMtemp = np.arange(0.0, (dict_net['Nx'])*cheqdelta_x, cheqdelta_x)
 					dict_net['phiInitConfig'].append(phiMtemp)
 					#print('rows:', rows, 'dict_net[*phiInitConfig*]',dict_net['phiInitConfig'])
@@ -221,26 +240,26 @@ def generate_phi0(dict_net: dict) -> None:
 				dict_net.update( {'phiInitConfig': np.concatenate( dict_net['phiInitConfig'], axis=0 )} )
 				#print('dict_net[*phiInitConfig*]',dict_net['phiInitConfig']); sys.exit()
 
-			elif (dict_net['mx'] != 0 and dict_net['my'] == 0):											# prepare chequerboard only in x-direction
-				for columns in range(dict_net['Nx']):													# set the chequerboard state's initial condition (history of "perfect" configuration)
+			elif dict_net['mx'] != 0 and dict_net['my'] == 0:													# prepare chequerboard only in x-direction
+				for columns in range(dict_net['Nx']):															# set the chequerboard state's initial condition (history of "perfect" configuration)
 					phiMtemp = np.arange(0.0, (dict_net['Ny'])*cheqdelta_y, cheqdelta_y)
 					dict_net['phiInitConfig'].append(phiMtemp)
-				dict_net.update( {'phiInitConfig': np.array(phiM)%(2.0*np.pi)} )
+				dict_net.update({'phiInitConfig': np.array(phiM)%(2.0*np.pi)})
 				# phiM = phiM.flatten(); # print('phiM: ', phiM)
-				dict_net.update( {'phiInitConfig': np.concatenate( dict_net['phiInitConfig'], axis=0 )} )
+				dict_net.update({'phiInitConfig': np.concatenate( dict_net['phiInitConfig'], axis=0)})
 
-		elif (dict_net['topology'] == 'hexagon-periodic' or dict_net['topology'] == 'octagon-periodic' or dict_net['topology'] == 'square-periodic'):
-			twistdelta_x = ( 2.0 * np.pi * dict_net['my'] / ( float( dict_net['Nx'] ) ) )				# phase difference between neighboring oscillators in a stable m-twist state
-			twistdelta_y = ( 2.0 * np.pi * dict_net['my'] / ( float( dict_net['Ny'] ) ) )				# phase difference between neighboring oscillators in a stable m-twist state
+		elif dict_net['topology'] == 'hexagon-periodic' or dict_net['topology'] == 'octagon-periodic' or dict_net['topology'] == 'square-periodic':
+			twistdelta_x = ( 2.0 * np.pi * dict_net['my'] / ( float( dict_net['Nx'] ) ) )						# phase difference between neighboring oscillators in a stable m-twist state
+			twistdelta_y = ( 2.0 * np.pi * dict_net['my'] / ( float( dict_net['Ny'] ) ) )						# phase difference between neighboring oscillators in a stable m-twist state
 			# print('phase differences of',k,'-twist:', twistdelta, '\n')
 			# print('N =', N, '    Nx =', Nx, '    Ny =', Ny, '    k =', k, '    kx =', kx, '    ky =', ky)
-			if (dict_net['mx'] == 0 and dict_net['my'] == 0):
+			if dict_net['mx'] == 0 and dict_net['my'] == 0:
 				dict_net.update( {'phiInitConfig': np.zeros(dict_net['Nx']*dict_net['Ny'])} ) # phiM denotes the unperturbed initial phases according to the m-twist state under investigation
 				print('Length, type and shape of phiM:', len(dict_net['phiInitConfig']), type(dict_net['phiInitConfig']), dict_net['phiInitConfig'].shape)
 			else:
 				# print('type phiM at initialization', type(phiM))
 				# print('Entering loop over Ny to set initial phiM.')
-				for rows in range(dict_net['Ny']):														# set the mx-my-twist state's initial condition (history of "perfect" configuration)
+				for rows in range(dict_net['Ny']):																# set the mx-my-twist state's initial condition (history of "perfect" configuration)
 					# print('loop #', rows)
 					#phiMtemp = np.arange(twistdelta_y*rows, Nx*twistdelta_x+twistdelta_y*rows, twistdelta_x)
 					phiMtemp = twistdelta_x * np.arange(dict_net['Nx']) + twistdelta_y * rows
@@ -252,12 +271,14 @@ def generate_phi0(dict_net: dict) -> None:
 				# print('phiM[1,]', phiM[1,])
 				# print('phiM(array)=', phiM, '    of type ', type(phiM), '    and shape ', phiM.shape)
 
-				phiMreorder=np.zeros(dict_net['Nx']*dict_net['Ny']); counter=0;		 						# could be replaced by phiM = np.concatenate( phiM, axis=0 )
+				phiMreorder=np.zeros(dict_net['Nx']*dict_net['Ny'])					 							# could be replaced by phiM = np.concatenate( phiM, axis=0 )
+				counter = 0
 				for i in range(dict_net['Nx']):
 					for j in range(dict_net['Ny']):
 						# print('counter:', counter)
-						phiMreorder[counter]=dict_net['phiInitConfig'][i][j]; counter=counter+1;
-				dict_net.update({'phiInitConfig': phiMreorder%(2.0*np.pi)} )
+						phiMreorder[counter] = dict_net['phiInitConfig'][i][j]
+						counter += 1
+				dict_net.update({'phiInitConfig': phiMreorder % (2.0*np.pi)})
 				# print('phiMreorderd: ', phiM, '    of type ', type(phiM), '    and shape ', phiM.shape)
 
 				# NOPE phiM = np.reshape(phiM, (np.product(phiM.shape),))
@@ -265,16 +286,16 @@ def generate_phi0(dict_net: dict) -> None:
 				# phiM = phiM[:][:].flatten();
 				# print('phiMflattened: ', phiM, '    of type ', type(phiM), '    and shape ', phiM.shape)
 				# print('Length, type and shape of phiMflattened that was generated:', len(phiM), type(phiM), phiM.shape)
-	if ( dict_net['topology'] == 'ring' or dict_net['topology'] == 'chain' ):
+	if dict_net['topology'] == 'ring' or dict_net['topology'] == 'chain':
 		if dict_net['topology'] == 'chain':
 			cheqdelta = np.pi																					# phase difference between neighboring oscillators in a stable chequerboard state
 			if dict_net['mx'] == 0:
-				dict_net.update( {'phiInitConfig': np.zeros(dict_net['Nx']*dict_net['Ny'])} )					# phiM denotes the unperturbed initial phases according to the chequerboard state under investigation
+				dict_net.update({'phiInitConfig': np.zeros(dict_net['Nx']*dict_net['Ny'])})						# phiM denotes the unperturbed initial phases according to the chequerboard state under investigation
 			else:
-				dict_net.update( {'phiInitConfig': np.arange(0.0, dict_net['Nx']*dict_net['Ny']*cheqdelta, cheqdelta)} ) # vector mit N entries from 0 increasing by twistdelta for every element, i.e., the phase-configuration
+				dict_net.update({'phiInitConfig': np.arange(0.0, dict_net['Nx']*dict_net['Ny']*cheqdelta, cheqdelta)}) # vector mit N entries from 0 increasing by twistdelta for every element, i.e., the phase-configuration
 				# print('phiM: ', phiM)																			# in the original phase space of an chequerboard solution
 		else:
-			twistdelta = ( 2.0 * np.pi * dict_net['mx'] / ( float( dict_net['Nx']*dict_net['Ny'] ) ) )			# phase difference between neighboring oscillators in a stable m-twist state
+			twistdelta = (2.0 * np.pi * dict_net['mx'] / (float( dict_net['Nx']*dict_net['Ny'])))				# phase difference between neighboring oscillators in a stable m-twist state
 			# print('phase differences of',k,'-twist:', twistdelta, '\n')
 			if dict_net['mx'] == 0:
 				dict_net.update( {'phiInitConfig': np.zeros(dict_net['Nx']*dict_net['Ny'])} )					# phiM denotes the unperturbed initial phases according to the m-twist state under investigation
@@ -283,7 +304,7 @@ def generate_phi0(dict_net: dict) -> None:
 				dict_net.update({'phiInitConfig': np.array(dict_net['phiInitConfig'])%(2.0*np.pi)})				# bring back into interval [0 2pi]
 		print('dict_net[*phiInitConfig*]:\t', dict_net['phiInitConfig'])										# in the original phase space of an m-twist solution
 	if dict_net['topology'] == 'global' or dict_net['topology'] == 'entrainPLLsHierarch':
-		dict_net.update( {'phiInitConfig': np.zeros(dict_net['Nx']*dict_net['Ny'])} )							# for all-to-all coupling we assume no twist states with m > 0
+		dict_net.update({'phiInitConfig': np.zeros(dict_net['Nx']*dict_net['Ny'])})								# for all-to-all coupling we assume no twist states with m > 0
 
 
 ################################################################################
@@ -553,8 +574,8 @@ def all_initial_phase_combinations(dict_pll: dict, dict_net: dict, dict_algo: di
 		sys.exit()
 
 	if dict_net['Nx']*dict_net['Ny'] == 2:
-		if dict_algo['bruteForceBasinStabMethod'] == 'listOfInitialPhaseConfigurations' and ( isinstance(dict_algo['min_max_range_parameter'], list) or isinstance(dict_algo['min_max_range_parameter'], np.ndarray) ):
-			tempDetune = ( dict_algo['min_max_range_parameter'][1] - dict_algo['min_max_range_parameter'][0] ) / dict_pll['div'];
+		if dict_algo['parameter_space_sweeps'] == 'listOfInitialPhaseConfigurations' and ( isinstance(dict_algo['min_max_range_parameter_0'], list) or isinstance(dict_algo['min_max_range_parameter_0'], np.ndarray) ):
+			tempDetune = ( dict_algo['min_max_range_parameter_0'][1] - dict_algo['min_max_range_parameter_0'][0] ) / dict_pll['div'];
 			scanValueslist1 = list( np.linspace(-dict_pll['div']*(np.pi), +dict_pll['div']*(np.pi), paramDiscr[0]) ) 		# all entries are in rotated, and reduced phase space NOTE: adjust unit cell accordingly!
 			scanValueslist2 = list( np.linspace(-tempDetune/2.0, tempDetune/2.0, paramDiscr[1]) )	# all entries are in rotated, and reduced phase space NOTE: adjust unit cell accordingly!
 			#print('scanValueslist2', scanValueslist2)
@@ -636,14 +657,14 @@ def all_parameter_combinations_2d(dict_pll: dict, dict_net: dict, dict_algo: dic
 		list of lists with parameters to be scanned and array
 	"""
 
-	parameter_sweep_0 = np.linspace(dict_algo['min_max_range_parameter'][0], dict_algo['min_max_range_parameter'][1], dict_algo['paramDiscretization'][0])
+	parameter_sweep_0 = np.linspace(dict_algo['min_max_range_parameter_0'][0], dict_algo['min_max_range_parameter_0'][1], dict_algo['paramDiscretization'][0])
 	parameter_sweep_1 = np.linspace(dict_algo['min_max_range_parameter_1'][0], dict_algo['min_max_range_parameter_1'][1], dict_algo['paramDiscretization'][1])
 
 	# in the case of entrainment only the frequency of the reference oscillator is to be changed
-	if 'entrain' in dict_net['topology'] and dict_algo['param_id'] == 'intrF':
+	if 'entrain' in dict_net['topology'] and dict_algo['param_id_0'] == 'intrF':
 		print('In the case of entrainment only the frequency of the reference oscillator is to be changed!')
 		temp = dict_pll['intrF'][1:]
-		parameter_sweep_0 = [[i]+temp for i in parameter_sweep_0]
+		parameter_sweep_0 = [[i] + temp for i in parameter_sweep_0]
 	elif 'entrain' in dict_net['topology'] and dict_algo['param_id_1'] == 'intrF':
 		print('In the case of entrainment only the frequency of the reference oscillator is to be changed!')
 		temp = dict_pll['intrF'][1:]

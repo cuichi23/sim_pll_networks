@@ -25,7 +25,7 @@ import coupling_fct_lib as coupfct
 
 ''' Set system and network parameters here, be careful as there are no sanity checks! This can be improved in the future. '''
 
-dictNet={
+dict_net={
 	'Nx': 2,																	# oscillators in x-direction
 	'Ny': 1,																	# oscillators in y-direction
 	'mx': 0	,																	# twist/chequerboard in x-direction (depends on closed or open boundary conditions)
@@ -39,35 +39,35 @@ dictNet={
 	'calcSynctoolsStab': True													# also calclate stability from synctools - time consuming!
 }
 
-dictPLL={
+dict_pll={
 	'analyzeFreq': 'max',														# choose from 'max', 'min', 'middle' --> which of up to three multistable Omega to analyze
 	'intrF': 1.0,																# intrinsic frequency in Hz
 	'syncF': 1.0,																# frequency of synchronized state in Hz
-	'coupK': 0.2, #0.0004,														# [random.uniform(0.3, 0.4) for i in range(dictNet['Nx']*dictNet['Ny'])],# coupling strength in Hz float or [random.uniform(minK, maxK) for i in range(dictNet['Nx']*dictNet['Ny'])]
+	'coupK': 0.2, #0.0004,														# [random.uniform(0.3, 0.4) for i in range(dict_net['Nx']*dict_net['Ny'])],# coupling strength in Hz float or [random.uniform(minK, maxK) for i in range(dict_net['Nx']*dict_net['Ny'])]
 	'cutFc': 0.014, # 0.0008 ,#0.1,											# LF cut-off frequency in Hz, None for no LF, or e.g., N=9 with mean 0.015: [0.05,0.015,0.00145,0.001,0.0001,0.001,0.00145,0.015,0.05]
 	'div': 1, #1024,															# divisor of divider (int)
 	'friction_coefficient': 2,													# friction coefficient of 2nd order Kuramoto models
 	'fric_coeff_PRE_vs_PRR': 'PRE',												# 'PRR': friction coefficient multiplied to instant. AND intrin. freq, 'PRE': friction coefficient multiplied only to instant. freq
 	'feedback_delay': 0,														# value of feedback delay in seconds
 	'feedback_delay_var': None, 												# variance of feedback delay
-	'transmission_delay': 0.65, 												# value of transmission delay in seconds, float (single), list (tau_k) or list of lists (tau_kl): np.random.uniform(min,max,size=[dictNet['Nx']*dictNet['Ny'],dictNet['Nx']*dictNet['Ny']]), OR [np.random.uniform(min,max) for i in range(dictNet['Nx']*dictNet['Ny'])]
+	'transmission_delay': 0.65, 												# value of transmission delay in seconds, float (single), list (tau_k) or list of lists (tau_kl): np.random.uniform(min,max,size=[dict_net['Nx']*dict_net['Ny'],dict_net['Nx']*dict_net['Ny']]), OR [np.random.uniform(min,max) for i in range(dict_net['Nx']*dict_net['Ny'])]
 	# choose from coupfct.<ID>: sine, cosine, neg_sine, neg_cosine, triangular, deriv_triangular, square_wave, pfd, inverse_cosine, inverse_sine
 	'coup_fct_sig': coupfct.sine,												# coupling function h(x) for PLLs with ideally filtered PD signals:
 	'derivative_coup_fct': coupfct.cosine,										# derivative h'(x) of coupling function h(x)
 	'inve_deriv_coup_fct': coupfct.inverse_cosine								# inverse of derivative of coupling function
 }
 
-#synctools.generate_delay_plot(dictPLL, dictNet, isRadians=False)
+#synctools.generate_delay_plot(dict_pll, dict_net, isRadians=False)
 #sys.exit()
 
-w 		= 2.0*np.pi*dictPLL['intrF']
-wc		= 2.0*np.pi*dictPLL['cutFc']
-z 		= dictNet['zeta']														# eigenvalue of the perturbation mode
-psi		= dictNet['psi']														# imaginary part of complex representation of zeta in polar coordinates
-fric 	= dictPLL['friction_coefficient']
+w 		= 2.0*np.pi*dict_pll['intrF']
+wc		= 2.0*np.pi*dict_pll['cutFc']
+z 		= dict_net['zeta']														# eigenvalue of the perturbation mode
+psi		= dict_net['psi']														# imaginary part of complex representation of zeta in polar coordinates
+fric 	= dict_pll['friction_coefficient']
 
-h  		= dictPLL['coup_fct_sig']
-hp 		= dictPLL['derivative_coup_fct']
+h  		= dict_pll['coup_fct_sig']
+hp 		= dict_pll['derivative_coup_fct']
 
 beta 	= 0#np.pi																# choose according to choice of mx, my and the topology!
 
@@ -88,34 +88,34 @@ OmegInTauVsK = np.zeros([len(tau), len(K)]); alpha = np.zeros([len(tau), len(K)]
 CondStab = np.zeros([len(tau), len(K)]);
 t0 = time.time()
 for i in range(len(tau)):
-	dictPLL.update({'transmission_delay': tau[i]})								# set this temporarly to one value -- in seconds
+	dict_pll.update({'transmission_delay': tau[i]})								# set this temporarly to one value -- in seconds
 	for j in range(len(K)):
-		dictPLL.update({'coupK': K[j]/(2*np.pi)})								# set this temporarly to one value -- in Hz
+		dict_pll.update({'coupK': K[j]/(2*np.pi)})								# set this temporarly to one value -- in Hz
 		isRadian 	= False														# set this False to get values returned in [Hz] instead of [rad * Hz]
-		sf 			= synctools.SweepFactory(dictPLL, dictNet, isRadians=isRadian)
+		sf 			= synctools.SweepFactory(dict_pll, dict_net, isRadians=isRadian)
 		fsl 		= sf.sweep()
-		if dictNet['calcSynctoolsStab']:
+		if dict_net['calcSynctoolsStab']:
 			para_mat = fsl.get_parameter_matrix(isRadians=isRadian)
 		else:
 			para_mat = fsl.get_parameter_matrix_nostab(isRadians=isRadian)
 		if len(para_mat[:,4]) > 1:												# if there are more than one solution/state
-			#print('Found multistability of synchronized state, Omega:', para_mat[:,4], '\tfor (K, tau, beta)=(', dictPLL['coupK'], dictPLL['transmission_delay'], beta,')\nPick state with largest frequency!')
-			if dictPLL['analyzeFreq'] == 'max':									# pick the frequency
+			#print('Found multistability of synchronized state, Omega:', para_mat[:,4], '\tfor (K, tau, beta)=(', dict_pll['coupK'], dict_pll['transmission_delay'], beta,')\nPick state with largest frequency!')
+			if dict_pll['analyzeFreq'] == 'max':									# pick the frequency
 				index = np.argmax(para_mat[:,4], axis=0)
-			elif dictPLL['analyzeFreq'] == 'min':
+			elif dict_pll['analyzeFreq'] == 'min':
 				index = np.argmin(para_mat[:,4], axis=0)
-			elif dictPLL['analyzeFreq'] == 'middle':
+			elif dict_pll['analyzeFreq'] == 'middle':
 				index = np.where(para_mat[:,4]==sorted(para_mat[:,4])[1])[0][0]
 			OmegInTauVsK[i,j] = 2.0*np.pi*para_mat[index,4];
 			#print('Picked frequency [Hz]: ', OmegInTauVsK[i,j]/(2.0*np.pi), '\tdivision: ', para_mat[index,12], '\tK [Hz]: ', para_mat[index,1])
-			alpha[i,j]    = ((2.0*np.pi*para_mat[index,1]/para_mat[index,12])*dictPLL['derivative_coup_fct']( (-2.0*np.pi*para_mat[index,4]*para_mat[index,3]+beta)/para_mat[index,12] ))
+			alpha[i,j]    = ((2.0*np.pi*para_mat[index,1]/para_mat[index,12])*dict_pll['derivative_coup_fct']( (-2.0*np.pi*para_mat[index,4]*para_mat[index,3]+beta)/para_mat[index,12] ))
 			ReLambda[i,j] = para_mat[index,5]
 			ImLambda[i,j] = para_mat[index,6]
 		else:																	# if there is only one solution/state
-			#print('Found one synchronized state, Omega:', para_mat[:,4], '\tfor (K, tau, beta)=(', dictPLL['coupK'], dictPLL['transmission_delay'], beta,').')
+			#print('Found one synchronized state, Omega:', para_mat[:,4], '\tfor (K, tau, beta)=(', dict_pll['coupK'], dict_pll['transmission_delay'], beta,').')
 			OmegInTauVsK[i,j] = 2.0*np.pi*para_mat[:,4][0];
 			#print('Picked frequency [Hz]: ', OmegInTauVsK[i,j]/(2.0*np.pi), '\tdivision: ', para_mat[:,12], '\tK [Hz]: ', para_mat[:,1])
-			alpha[i,j]    = ((2.0*np.pi*para_mat[:,1]/para_mat[:,12])*dictPLL['derivative_coup_fct']( (-2.0*np.pi*para_mat[:,4]*para_mat[:,3]+beta)/para_mat[:,12] ))[0]
+			alpha[i,j]    = ((2.0*np.pi*para_mat[:,1]/para_mat[:,12])*dict_pll['derivative_coup_fct']( (-2.0*np.pi*para_mat[:,4]*para_mat[:,3]+beta)/para_mat[:,12] ))[0]
 			ReLambda[i,j] = para_mat[:,5][0]
 			ImLambda[i,j] = para_mat[:,6][0]
 		# diff1zeta = wc*fric**2/(2*alpha[i,j]) - ( 1 - np.sqrt(1 - np.abs(np.array(z))**2) )
@@ -137,8 +137,8 @@ print('Time computation in sweep_factory: ', (time.time()-t0), ' seconds');
 #print('OmegInTauVsK', OmegInTauVsK, '\ttype(OmegInTauVsK)', type(OmegInTauVsK))
 print('CondStab', CondStab)
 
-dictPLL.update({'transmission_delay': tau})										# set coupling strength key in dictPLL back to the array
-dictPLL.update({'coupK': K})													# set coupling strength key in dictPLL back to the array
+dict_pll.update({'transmission_delay': tau})										# set coupling strength key in dict_pll back to the array
+dict_pll.update({'coupK': K})													# set coupling strength key in dict_pll back to the array
 
 loopP1	= 'tau'																	# x-axis
 loopP2 	= 'K'																	# y-axis
@@ -153,7 +153,7 @@ paramsDict = {'h': h, 'hp': hp, 'w': w, 'K': K, 'wc': wc, 'fric': fric, 'Omeg': 
 # makePlotsFromSynctoolsResults(figID, x, y,  z, rescale_x, rescale_y, rescale_z, x_label, y_label, z_label, x_identifier, y_identifier, z_identifier)
 paraPlot.makePlotsFromSynctoolsResults(100, tau, K, OmegInTauVsK, w/(2.0*np.pi), 1.0/w, 1.0,
 				r'$\frac{\omega\tau}{2\pi}$', r'$\frac{K}{\omega}$', r'$\Omega$', 'tau', 'K', 'Omeg', None, cm.coolwarm)
-if dictNet['calcSynctoolsStab']:
+if dict_net['calcSynctoolsStab']:
 	paraPlot.makePlotsFromSynctoolsResults(101, tau, K, ReLambda, w/(2.0*np.pi), 1.0/w, w/(2.0*np.pi),
 					r'$\frac{\omega\tau}{2\pi}$', r'$\frac{K}{\omega}$', r'$\frac{\textrm{Re}(\lambda)\omega}{2\pi}$', 'tau', 'K', 'ReLambda', None, cm.PuOr)
 	paraPlot.makePlotsFromSynctoolsResults(102, tau, K, ImLambda, w/(2.0*np.pi), 1.0/w, 1.0/w,

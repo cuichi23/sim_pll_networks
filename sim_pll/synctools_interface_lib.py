@@ -289,6 +289,7 @@ class SweepFactory(object):
 		# Initilaize coupling function
 
 		#print('inspect.getsourcelines(self.h)[0][0]', inspect.getsourcelines(self.h)[0][0][27:])
+		print('self.h', self.h)
 
 		if self.h == COUPLING_FUNCTION_TRIANGLE:								# inspect.getsourcelines(self.h)[0][0][27:35]
 			h_func = st.Triangle(1.0 / (2.0 * np.pi))

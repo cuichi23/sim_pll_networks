@@ -38,7 +38,7 @@ def getDicts(Fsim=125):
 		'topology': 'entrainOne-chain',											# 1d) ring, chain, 2d) square-open, square-periodic, hexagonal...
 																				# 3) global, entrainOne-[ring,chain,square-open], entrainAll-[ring,chain,square-open], entrainPLLsHierarch, compareEntrVsMutual
 		'normalize_mutual_coupling_by_inputs': True,  							# divide the sum over all inputs to a PLL by the number of inputs YES/NO -> True/False
-		'Tsim': 2500,															# simulation time in multiples of the period
+		'Tsim': 500,															# simulation time in multiples of the period
 		'computeFreqAndStab':  False,											# compute linear stability and global frequency if possible: True or False
 		'phi_array_mult_tau': 1,												# how many multiples of the delay is stored of the phi time series
 		'phiPerturb': [random.uniform(0, 1E-8) for i in range(3)],				# delta-perturbation on initial state -- PROVIDE EITHER ONE OF THEM! if [] set to zero
@@ -97,7 +97,7 @@ def getDicts(Fsim=125):
 
 	dict_algo = {
 		'parameter_space_sweeps': 'two_parameter_sweep',						# pick method for setting realizations 'single', 'classicBruteForceMethodRotatedSpace', 'listOfInitialPhaseConfigurations', 'two_parameter_sweep'
-		'paramDiscretization': [30, 30],										# parameter discretization for brute force initial phases and parameter space scans
+		'paramDiscretization': [3, 3],										# parameter discretization for brute force initial phases and parameter space scans
 		'param_id_0': 'intrF',													# parameter to be changed between different realizations, according to the min_max_range_parameter: 'None' or string of any other parameter
 		'min_max_range_parameter_0': [0.55, 1.45],								# specifies within which min and max value to linspace the initial frequency difference (w.r.t. HF Frequency, not divided)
 		'param_id_1': 'transmission_delay',  									# parameter to be changed between different realizations, according to the min_max_range_parameter: 'None' or string of any other parameter

@@ -44,7 +44,7 @@ dict_pll={
 	'intrF': 1.0,																# intrinsic frequency in Hz
 	'syncF': 1.0,																# frequency of synchronized state in Hz
 	'coupK': 0.2, #0.0004,														# [random.uniform(0.3, 0.4) for i in range(dict_net['Nx']*dict_net['Ny'])],# coupling strength in Hz float or [random.uniform(minK, maxK) for i in range(dict_net['Nx']*dict_net['Ny'])]
-	'cutFc': 0.014, # 0.0008 ,#0.1,											# LF cut-off frequency in Hz, None for no LF, or e.g., N=9 with mean 0.015: [0.05,0.015,0.00145,0.001,0.0001,0.001,0.00145,0.015,0.05]
+	'cutFc': 0.014, # 0.0008 ,#0.1,												# LF cut-off frequency in Hz, None for no LF, or e.g., N=9 with mean 0.015: [0.05,0.015,0.00145,0.001,0.0001,0.001,0.00145,0.015,0.05]
 	'div': 1, #1024,															# divisor of divider (int)
 	'friction_coefficient': 2,													# friction coefficient of 2nd order Kuramoto models
 	'fric_coeff_PRE_vs_PRR': 'PRE',												# 'PRR': friction coefficient multiplied to instant. AND intrin. freq, 'PRE': friction coefficient multiplied only to instant. freq
@@ -57,6 +57,7 @@ dict_pll={
 	'inve_deriv_coup_fct': coupfct.inverse_cosine								# inverse of derivative of coupling function
 }
 
+print('coupling function: ', dict_pll['coup_fct_sig'])
 #synctools.generate_delay_plot(dict_pll, dict_net, isRadians=False)
 #sys.exit()
 
@@ -80,8 +81,10 @@ beta 	= 0#np.pi																# choose according to choice of mx, my and the to
 #K		= 2.0*np.pi*np.arange(0.0001, 0.1, 0.06285/(4.0*np.pi) ) #0.001, 0.4
 #tau 	= np.arange(120900, 121100, 0.05)# 2.5
 #K		= 2.0*np.pi*np.arange(0.0001, 0.08, 0.006285/(2.0*np.pi) ) #0.001, 0.4
-tau 	= np.arange(0, 16, 0.05)# 2.5
-K		= 2.0*np.pi*np.arange(0.001, 0.8, 0.06285/(2.0*np.pi) ) #0.001, 0.4
+#tau 	= np.arange(0, 16, 0.05)# 2.5
+#K		= 2.0*np.pi*np.arange(0.001, 0.8, 0.06285/(2.0*np.pi) ) #0.001, 0.4
+tau 	= np.arange(0, 8, 0.5)# 2.5
+K		= 2.0*np.pi*np.arange(0.001, 0.8, 6.285/(1.0*np.pi) ) #0.001, 0.4
 
 fzeta = 1+np.sqrt(1-np.max(np.abs(z))**2)
 OmegInTauVsK = np.zeros([len(tau), len(K)]); alpha = np.zeros([len(tau), len(K)]); ReLambda = np.zeros([len(tau), len(K)]); ImLambda = np.zeros([len(tau), len(K)]);
@@ -127,8 +130,8 @@ for i in range(len(tau)):
 		# else:
 		# 	CondStab[i,j] = None
 		if wc*fric**2/(2*alpha[i,j]) > fzeta:
-			CondStab[i,j] = 0
- 		elif wc*fric**2/(2*alpha[i,j]) > 1:
+			CondStab[i, j] = 0
+		elif wc*fric**2/(2*alpha[i,j]) > 1:
 			CondStab[i,j] = 1
 		else:
 			CondStab[i,j] = None
@@ -158,7 +161,8 @@ if dict_net['calcSynctoolsStab']:
 					r'$\frac{\omega\tau}{2\pi}$', r'$\frac{K}{\omega}$', r'$\frac{\textrm{Re}(\lambda)\omega}{2\pi}$', 'tau', 'K', 'ReLambda', None, cm.PuOr)
 	paraPlot.makePlotsFromSynctoolsResults(102, tau, K, ImLambda, w/(2.0*np.pi), 1.0/w, 1.0/w,
 					r'$\frac{\omega\tau}{2\pi}$', r'$\frac{K}{\omega}$', r'$\frac{\textrm{Im}(\lambda)}{\omega}$', 'tau', 'K', 'ImLambda', None, cm.PuOr)
-plt.draw(); #plt.show();
+plt.draw()
+#plt.show()
 
 paraPlot.plotParametric(paramsDict)
 

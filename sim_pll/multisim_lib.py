@@ -78,7 +78,7 @@ def prepare_multiple_simulations(dict_net: dict, dict_pll: dict, dict_algo: dict
 		dict_algo.update({'scanValues': scanValues, 'allPoints': allPoints})
 		print('multiprocessing', Nsim, 'realizations')
 
-	elif dict_algo['parameter_space_sweeps'] == 'listOfInitialPhaseConfigurations':  # so far for N=2, work it out for N>2
+	elif dict_algo['parameter_space_sweeps'] == 'listOfInitialPhaseConfigurations':  									# so far for N=2, work it out for N>2
 		if (isinstance(dict_algo['paramDiscretization'], np.float) or isinstance(dict_algo['paramDiscretization'], np.int)) and (
 				isinstance(dict_algo['min_max_range_parameter_0'], np.float) or isinstance(dict_algo['min_max_range_parameter_0'], np.int)):
 			scanValues = np.linspace(-np.pi, np.pi, dict_algo['paramDiscretization'])

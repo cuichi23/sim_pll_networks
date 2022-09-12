@@ -111,15 +111,16 @@ def check_dicts_consistency(dict_pll, dict_net, dict_algo):
 
 	# consistency check for basin stability plots
 	#print('HERE type(dict_algo):', type(dict_algo))
-	if ( isinstance(dict_algo['paramDiscretization'], list) or isinstance(dict_algo['paramDiscretization'], np.ndarray) ):
+	if dict_algo['parameter_space_sweeps'] == 'listOfInitialPhaseConfigurations' and ( isinstance(dict_algo['paramDiscretization'], list) or isinstance(dict_algo['paramDiscretization'], np.ndarray) ):
 		if ( isinstance(dict_algo['min_max_range_parameter_0'], np.float) or isinstance(dict_algo['min_max_range_parameter_0'], np.int) ):
-			print('NOTE: in multisim_lib, the case listOfInitialPhaseConfigurations needs a minimum and maximum intrinsic frequency, e.g., [wmin, wmax]! Please povide.'); sys.exit()
+			print('NOTE: in multisim_lib, the case listOfInitialPhaseConfigurations needs a minimum and maximum intrinsic frequency, e.g., [wmin, wmax]! Please provide.')
+			sys.exit()
 
 			# Implement that here, see below for perturbations!
 
 			#dict_algo.update({'min_max_range_parameter_0': [0.99*dict_pll['intrF'], 1.01*dict_pll['intrF']]})
 		else:
-			print('NOTE: in multisim_lib, the minimum and maximum intrinsic frequency, [wmin, wmax] are used to calculate all initial detunings (including that with 0).')
+			print('NOTE: in multisim_lib, the minimum and maximum intrinsic frequency, [wmin, wmax] are used to calculate all initial detunings (including that with 0) - set via *min_max_range_parameter_0*.')
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

@@ -139,13 +139,9 @@ def generate_phi0(dict_net: dict, dict_pll: dict) -> None:
 			elif len(dict_net['phiPerturb']) == 0:
 				dict_net.update({'phiPerturb': eva.rotate_phases(np.array(dict_net['phiPerturbRot']).flatten(), isInverse=False)})
 
-		print('For entrainOne and entrainAll assumed initial phase-configuration of entrained synced state (physical coordinates):', dict_net['phiInitConfig'],
-				' and on top a perturbation of (rotated coordinates):', dict_net['phiPerturbRot'], ' and in (original coordinates):', dict_net['phiPerturb'], '\n')
-		#print('For entrainOne and entrainAll assumed initial phase-configuration of entrained synced state (physical coordinates):', phiM,
-		#  		' and on top a perturbation of (rotated coordinates):', phiSr, ' and in (original coordinates):', phiS, '\n')
-		#phiS  = phiSr;
-		#phiSr =	eva.rotate_phases(phiS.flatten(), isInverse=True)		  	# rotate back into rotated phase space for simulation
-		#print('For entrainOne and entrainAll assumed initial phase-configuration of entrained synced state (physical coordinates):', phiS, ' and (rotated coordinates):', phiSr, '\n')
+		print('entrainOne or entrainAll topology, {tau, f_R}=', dict_pll['transmission_delay'], dict_pll['intrF'][0], ': assumed initial phase-configuration of entrained synced state (physical coordinates):', dict_net['phiInitConfig'],
+				' and on top a perturbation of (original coordinates):', dict_net['phiPerturb'], ' and in, (rotated coordinates):', dict_net['phiPerturbRot'], '\n')
+
 	elif dict_net['topology'] == 'compareEntrVsMutual':
 		print('REWORK THIS!')
 		sys.exit()
@@ -599,8 +595,8 @@ def all_initial_phase_combinations(dict_pll: dict, dict_net: dict, dict_algo: di
 			scanValues = np.zeros((dict_net['Nx']*dict_net['Ny'], paramDiscr[0]), dtype=np.float) # create container for all points in the discretized rotated phase space, +/- pi around each dimension (unit area)
 			# scanValues[0,:] = np.linspace(phiMr[0]-(np.pi), phiMr[0]+(np.pi), paramDiscretization) 	# all entries are in rotated, and reduced phase space
 			# scanValues[1,:] = np.linspace(phiMr[1]-(np.pi), phiMr[1]+(np.pi), paramDiscretization) 	# all entries are in rotated, and reduced phase space
-			scanValues[0,:] = np.linspace(-(np.pi), +(np.pi), paramDiscr[0]) 	# all entries are in rotated, and reduced phase space NOTE: adjust unit cell accordingly!
-			scanValues[1,:] = np.linspace(-(np.pi), +(np.pi), paramDiscr[0]) 	# all entries are in rotated, and reduced phase space NOTE: adjust unit cell accordingly!
+			scanValues[0, :] = np.linspace(-(np.pi), +(np.pi), paramDiscr[0]) 	# all entries are in rotated, and reduced phase space NOTE: adjust unit cell accordingly!
+			scanValues[1, :] = np.linspace(-(np.pi), +(np.pi), paramDiscr[0]) 	# all entries are in rotated, and reduced phase space NOTE: adjust unit cell accordingly!
 			#print('row', i,'of matrix with all intervals of the rotated phase space:\n', scanValues[i,:], '\n')
 
 			_allPoints 		= itertools.product(*scanValues)
@@ -626,7 +622,7 @@ def all_initial_phase_combinations(dict_pll: dict, dict_net: dict, dict_algo: di
 				#scanValues[i,:] = np.linspace(-0.35*np.pi, 0.35*np.pi, paramDiscretization)
 				scanValues[i, :] = np.linspace(-1.35*np.pi, 1.35*np.pi, paramDiscr[0])
 
-			print('row', i,'of matrix with all intervals of the rotated phase space:\n', scanValues[i,:], '\n')
+			print('row', i, 'of matrix with all intervals of the rotated phase space:\n', scanValues[i, :], '\n')
 
 		_allPoints 			= itertools.product(*scanValues)
 		allPoints 			= list(_allPoints)									# scanValues is a list of lists: create a new list that gives all the possible combinations of items between the lists
@@ -646,7 +642,7 @@ def all_initial_phase_combinations(dict_pll: dict, dict_net: dict, dict_algo: di
 				#scanValues[i,:] = np.linspace(-0.35*np.pi, 0.35*np.pi, paramDiscretization)
 				scanValues[i, :] = np.linspace(-1.35*np.pi, 1.35*np.pi, paramDiscr[0])
 
-			print('row', i,'of matrix with all intervals of the rotated phase space:\n', scanValues[i,:], '\n')
+			print('row', i,'of matrix with all intervals of the rotated phase space:\n', scanValues[i, :], '\n')
 
 		_allPoints 			= itertools.product(*scanValues)
 		allPoints 			= list(_allPoints)									# scanValues is a list of lists: create a new list that gives all the possible combinations of items between the lists

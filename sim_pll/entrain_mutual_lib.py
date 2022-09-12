@@ -131,12 +131,12 @@ def phase_configuration_ref_to_one_for_chain_topology(dict_net: dict, dict_pll: 
 	asymptotic_phase_configuration_entrained_sync_state = np.empty(dict_net['Nx'])
 	for i in range(dict_net['Nx']-1, 0, -1):
 		if i == dict_net['Nx']-1:												# since the last oscillator in the chain only has one input, it depends only on one beta which can be calculated
-			asymptotic_phase_configuration_entrained_sync_state[i] = -dict_pll['intrF'][0] * dict_pll['transmission_delay'] - dict_pll['div'] * dict_pll['inverse_coup_fct_sig'](
-				2 * (dict_pll['inverse_fct_vco_response'](dict_pll['intrF'][0]) - frequency_or_voltage[i]))
+			asymptotic_phase_configuration_entrained_sync_state[i] = -dict_pll['intrF'][i] * dict_pll['transmission_delay'] - dict_pll['div'] * dict_pll['inverse_coup_fct_sig'](
+				2 * (dict_pll['inverse_fct_vco_response'](dict_pll['intrF'][i]) - frequency_or_voltage[i]))
 		else:
-			asymptotic_phase_configuration_entrained_sync_state[i] = -dict_pll['intrF'][0] * dict_pll['transmission_delay'] - dict_pll['div'] * dict_pll['inverse_coup_fct_sig'](
-				2 * (dict_pll['inverse_fct_vco_response'](dict_pll['intrF'][0]) - frequency_or_voltage[i]) - dict_pll['coup_fct_sig'](
-					-dict_pll['intrF'][0] * dict_pll['transmission_delay'] - asymptotic_phase_configuration_entrained_sync_state[i + 1]))
+			asymptotic_phase_configuration_entrained_sync_state[i] = -dict_pll['intrF'][i] * dict_pll['transmission_delay'] - dict_pll['div'] * dict_pll['inverse_coup_fct_sig'](
+				2 * (dict_pll['inverse_fct_vco_response'](dict_pll['intrF'][i]) - frequency_or_voltage[i]) - dict_pll['coup_fct_sig'](
+					-dict_pll['intrF'][i] * dict_pll['transmission_delay'] - asymptotic_phase_configuration_entrained_sync_state[i+1]))
 
 
 	dict_net.update({'phiInitConfig': asymptotic_phase_configuration_entrained_sync_state})

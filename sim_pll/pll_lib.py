@@ -134,7 +134,7 @@ class LowPassFilter:
 				self.b = 1.0 / (2.0 * np.pi * self.cutoff_freq_Hz)
 			elif self.order_loop_filter >= 2:
 				if integrate_2nd_order_diff_eq:
-					print('I am the loop filter of PLL%i: order, a=%i (sequential RC LFs, using solve_ivp for 2 coupled first order ODEs). Friction coefficient set to %0.2f.' % (self.pll_id, self.order_loop_filter, self.friction_coefficient))
+					print('I am the loop filter of PLL%i: order, a=%i (sequential RC LFs without buffer, using solve_ivp for 2 coupled first order ODEs). Friction coefficient set to %0.2f.' % (self.pll_id, self.order_loop_filter, self.friction_coefficient))
 					self.evolve = lambda xPD: self.solve_2nd_order_ordinary_diff_eq(xPD)
 					a = self.order_loop_filter
 					self.b = 1.0 / (2.0 * np.pi * self.cutoff_freq_Hz * a)
@@ -144,7 +144,7 @@ class LowPassFilter:
 					self.evolve = lambda xPD: self.nth_order_sequential_lf(xPD)
 					self.b = 1.0 / (2.0 * np.pi * self.cutoff_freq_Hz)
 		elif self.cutoff_freq_Hz is None or self.cutoff_freq_Hz == 0:
-			print('No cut-off frequency defined (cutFc=%s), hence simulating without loop filter!'%self.cutoff_freq_Hz)
+			print('No cut-off frequency defined (cutFc=%s), hence simulating without loop filter!' % self.cutoff_freq_Hz)
 			self.evolve = lambda xPD: xPD
 		else:
 			print('Problem in LF class!')
@@ -768,7 +768,7 @@ class Delayer:
 			print('Time dependent transmission delay set!')
 			time_dep_delay = setup.setup_time_dependent_parameter(dict_net, dict_pll, dict_data, parameter='transmission_delay', afterTsimPercent=0.25, forAllPLLsDifferent=False)
 
-			if len(time_dep_delay[:,0]) == dict_net['Nx']*dict_net['Ny']:		# if there is a matrix, i.e., different time-dependencies for different delay, then use this
+			if len(time_dep_delay[:, 0]) == dict_net['Nx']*dict_net['Ny']:		# if there is a matrix, i.e., different time-dependencies for different delay, then use this
 				print('Test')
 				selfidx_or_ident = self.pll_id
 			else:																# this is the case if all transmission delays have the same time dependence
@@ -776,20 +776,24 @@ class Delayer:
 			dict_pll.update({'transmission_delay': time_dep_delay})
 
 			# TODO make a test of this! externalize to a test lib
-			if pll_id <=1:
+			if pll_id <= 1:
 				plt.figure(1234)
 				plt.plot(np.arange(0, len(dict_pll['transmission_delay'][selfidx_or_ident, :])) * dict_pll['dt'], dict_pll['transmission_delay'][selfidx_or_ident, :])
-				plt.xlabel('time'); plt.ylabel('delay value [s]'); plt.title('time-dependence of transmission delay over simulation time')
-				plt.draw(); plt.show()
+				plt.xlabel('time')
+				plt.ylabel('delay value [s]')
+				plt.title('time-dependence of transmission delay over simulation time at rate r=%0.4f' % dict_net['min_max_rate_timeDepPara'][2])
+				plt.draw()
+				# plt.show()
 
 			self.transmit_delay 		= dict_pll['transmission_delay'][selfidx_or_ident, :]	# each object only knows its own sending delay time dependence
 			self.transmit_delay_steps 	= [int(np.round(delay / self.dt)) for delay in self.transmit_delay] # when initialized, the delay in time-steps is set to delay_steps
 
 			if self.transmit_delay_steps == 0 and self.transmit_delay > 0:
-				print('Transmission delay set nonzero but smaller than the time-step "dt", hence "self.transmit_delay_steps" < 1 !'); sys.exit()
+				print('Transmission delay set nonzero but smaller than the time-step "dt", hence "self.transmit_delay_steps" < 1 !')
+				sys.exit()
 
 			#self.get_delayed_states		= lambda;
-			self.pick_delayed_phases = lambda phi, t, abs_t, tau: phi[(t-tau[abs_t])%self.phi_array_len, self.neighbor_ids]
+			self.pick_delayed_phases = lambda phi, t, abs_t, tau: phi[(t-tau[abs_t]) % self.phi_array_len, self.neighbor_ids]
 
 		if isinstance(dict_pll['feedback_delay'], float) or isinstance(dict_pll['feedback_delay'], int):
 			self.feedback_delay 		= dict_pll['feedback_delay']

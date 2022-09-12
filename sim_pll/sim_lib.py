@@ -91,8 +91,8 @@ def prepare_simulation(dict_net: dict, dict_pll: dict):
 	"""
 	dictData = {}  # setup dictionary that hold all the data
 	space = setup.generate_space(dict_net, dict_pll, dictData)  # generates a space object used to handle pll distributed in a continuous space
-	if not dict_net['phiInitConfig']:  # if no custom phase configuration is provided, generate it
-		print('\nPhase configuration of synchronized state set according to supplied topology and twist state information!')
+	if not dict_net['phiInitConfig']:  							# if no custom phase configuration is provided, generate it
+		print('\nPhase configuration of synchronized state will be set according to supplied topology and twist state information!')
 		setup.generate_phi0(dict_net, dict_pll)  # generate the initial phase configuration for twist, chequerboard, in- and anti-phase states
 	pll_list = setup.generate_plls(dict_pll, dict_net, dictData)  # generate a list that contains all the PLLs of the network
 	all_transmit_delay = [np.max(n.delayer.transmit_delay_steps) for n in pll_list]  # obtain all the transmission delays for all PLLs
@@ -720,7 +720,8 @@ def evolve_system_on_tsim_array_time_dependent_change_of_delay_save_ctrl_signal(
 	if store_ctrl_and_clock:
 		clk_store = np.empty([dict_net['max_delay_steps']+dict_pll['sim_time_steps'], dict_net['Nx']*dict_net['Ny']])
 		ctl_store = np.empty([dict_net['max_delay_steps']+dict_pll['sim_time_steps'], dict_net['Nx']*dict_net['Ny']])
-		ctl_store[0:dict_net['max_delay_steps'],:] = 0; ctl_store[dict_net['max_delay_steps']+1,:] = [pll.low_pass_filter.control_signal for pll in pll_list];
+		ctl_store[0:dict_net['max_delay_steps'], :] = 0
+		ctl_store[dict_net['max_delay_steps']+1, :] = [pll.low_pass_filter.control_signal for pll in pll_list]
 
 	phi_store[0:dict_net['max_delay_steps']+1, :] = phi[0:dict_net['max_delay_steps']+1, :]
 	phi_array_len = dict_net['phi_array_len']
@@ -734,7 +735,7 @@ def evolve_system_on_tsim_array_time_dependent_change_of_delay_save_ctrl_signal(
 			#print('(idx_time+1)%phi_array_len', ((idx_time+1)%phi_array_len)*dict_pll['dt']); #time.sleep(0.5)
 			phi[(idx_time+1) % phi_array_len, :] = [pll.next(idx_time, phi_array_len, phi) for pll in pll_list] 	# now the network is iterated, starting at t=0 with the history as prepared above
 
-			clock_counter[(idx_time+1) % phi_array_len, :] = [pll.clock_halfperiods_count(phi[(idx_time+1) % phi_array_len,pll.pll_id]) for pll in pll_list]
+			clock_counter[(idx_time+1) % phi_array_len, :] = [pll.clock_halfperiods_count(phi[(idx_time+1) % phi_array_len, pll.pll_id]) for pll in pll_list]
 			#print('clock count for all:', clock_counter[-1])
 
 			clk_store[idx_time+1, :] = clock_counter[(idx_time+1) % phi_array_len, :]
@@ -748,7 +749,7 @@ def evolve_system_on_tsim_array_time_dependent_change_of_delay_save_ctrl_signal(
 			phi[(idx_time+1) % phi_array_len, :] = [pll.next(idx_time, phi_array_len, phi) for pll in pll_list] 	# now the network is iterated, starting at t=0 with the history as prepared above
 			phi_store[idx_time+1, :] = phi[(idx_time+1) % phi_array_len, :]
 
-	t = np.arange(0,len(phi_store[0:dict_net['max_delay_steps']+dict_pll['sim_time_steps'], 0]))*dict_pll['dt']
+	t = np.arange(0, len(phi_store[0:dict_net['max_delay_steps']+dict_pll['sim_time_steps'], 0]))*dict_pll['dt']
 	if store_ctrl_and_clock:
 		dictData.update({'t': t, 'phi': phi_store, 'clock_counter': clk_store, 'ctrl': ctl_store})
 	else:

@@ -325,10 +325,21 @@ def setup_time_dependent_parameter(dict_net: dict, dict_pll: dict, dict_data: di
 	"""
 
 	delta_max = np.abs(dict_net['min_max_rate_timeDepPara'][1] - dict_net['min_max_rate_timeDepPara'][0])
-	if dict_net['typeOfTimeDependency'] == 'triangle':
-		dict_net.update({'Tsim': (2.0 * delta_max / dict_net['min_max_rate_timeDepPara'][2]) * (1.0+afterTsimPercent)})
-		print('Tsim:', dict_net['Tsim'], 'sim_time_steps:', dict_pll['sim_time_steps'])
-		dict_pll.update({'sim_time_steps': int(dict_net['Tsim']/dict_pll['dt'])})
+
+	if dict_net['typeOfTimeDependency'] == 'triangle' or dict_net['typeOfTimeDependency'] == 'linear':
+		if dict_net['typeOfTimeDependency'] == 'triangle':
+			length_modifier = 2
+		else:
+			length_modifier = 1
+		dict_net.update({'Tsim': (length_modifier * delta_max / dict_net['min_max_rate_timeDepPara'][2]) * (1.0 + afterTsimPercent)})
+	elif dict_net['typeOfTimeDependency'] == 'exponential':
+		dict_net.update({'Tsim': (1 / dict_net['min_max_rate_timeDepPara'][2]) * np.log(dict_net['min_max_rate_timeDepPara'][1]/dict_net['min_max_rate_timeDepPara'][0]) * (1.0 + afterTsimPercent)})
+	else:
+		print('Unknown functional form for time-dependent parameter generation. Introduce! °)°')
+		sys.exit()
+
+	dict_pll.update({'sim_time_steps': int(dict_net['Tsim'] / dict_pll['dt'])})
+	print('Tsim:', dict_net['Tsim'], 'sim_time_steps:', dict_pll['sim_time_steps'])
 
 	if forAllPLLsDifferent:
 		time_series = np.zeros([ dict_net['Nx']*dict_net['Ny'], dict_net['max_delay_steps']+dict_pll['sim_time_steps'] ])
@@ -344,51 +355,52 @@ def setup_time_dependent_parameter(dict_net: dict, dict_pll: dict, dict_data: di
 		if (dict_net['special_case'] == 'timeDepInjectLockCoupStr'):
 			print('NOTE: coupStr_2ndHarm overridden by min_max_rate_timeDepPara!')
 		for i in range(len(time_series[:, 0])):
-			sign = sign * (-1)
-			time_series[i,0:tstep_annealing_start] = dict_net['min_max_rate_timeDepPara'][0]
+			sign *= -1
+			time_series[i, 0:tstep_annealing_start] = dict_net['min_max_rate_timeDepPara'][0]
 			for j in range(dict_net['max_delay_steps'] + int(afterTsimPercent * dict_pll['sim_time_steps'])-1, dict_net['max_delay_steps']+dict_pll['sim_time_steps']-1):
-				if np.abs( time_series[i,j] - dict_net['min_max_rate_timeDepPara'][0] ) <= delta_max:
-					time_series[i,j+1] = time_series[i,j] + sign * dict_pll['dt'] * dict_net['min_max_rate_timeDepPara'][2]
+				if np.abs( time_series[i, j] - dict_net['min_max_rate_timeDepPara'][0] ) <= delta_max:
+					time_series[i, j+1] = time_series[i, j] + sign * dict_pll['dt'] * dict_net['min_max_rate_timeDepPara'][2]
 					#print('time_series', time_series)
 				else:
-					time_series[i,j+1] = time_series[i,j]
+					time_series[i, j+1] = time_series[i, j]
 
 	elif dict_net['typeOfTimeDependency'] == 'exponential':
 		if (dict_net['special_case'] == 'timeDepInjectLockCoupStr'):
 			print('NOTE: coupStr_2ndHarm overridden by min_max_rate_timeDepPara!')
-		for i in range(len(time_series[:,0])):
+		for i in range(len(time_series[:, 0])):
 			print('Annealing starts after: ', tstep_annealing_start, ' steps.')
-			time_series[i,0:tstep_annealing_start] = dict_net['min_max_rate_timeDepPara'][0];
+			time_series[i, 0:tstep_annealing_start] = dict_net['min_max_rate_timeDepPara'][0]
 			for j in range(tstep_annealing_start-1, dict_net['max_delay_steps']+dict_pll['sim_time_steps']-1):
-				if np.abs( time_series[i,j] - dict_net['min_max_rate_timeDepPara'][0] ) <= delta_max:
+				if np.abs(time_series[i, j] - dict_net['min_max_rate_timeDepPara'][0]) <= delta_max:
 					#print('j:', j, '\ttime = (j-j0)*dt=', (j-tstep_annealing_start+1)*dict_pll['dt'])
-					time_series[i,j+1] = time_series[i,j] + dict_pll['dt'] * dict_net['min_max_rate_timeDepPara'][1] * np.exp( -(j-tstep_annealing_start+1)*dict_pll['dt'] / dict_net['min_max_rate_timeDepPara'][2] ) / dict_net['min_max_rate_timeDepPara'][2]
-					#print('time_series[%i,%i+1]'%(i,j), time_series[i,j+1], '\tincrement:', dict_pll['dt'] * dict_net['min_max_rate_timeDepPara'][1] * np.exp( -(j-tstep_annealing_start+1)*dict_pll['dt'] / ( dict_net['min_max_rate_timeDepPara'][2]/1 ) ) / dict_net['min_max_rate_timeDepPara'][2])
-					#time.sleep(0.2)
+					time_series[i, j+1] = time_series[i, j] + dict_pll['dt'] * dict_net['min_max_rate_timeDepPara'][0] * np.exp((j-tstep_annealing_start+1)*dict_pll['dt'] * dict_net['min_max_rate_timeDepPara'][2]) * dict_net['min_max_rate_timeDepPara'][2]
+					# print('time_series[%i,%i+1]' % (i, j), time_series[i, j+1], '\tincrement:', dict_pll['dt'] * dict_net['min_max_rate_timeDepPara'][0] * np.exp((j-tstep_annealing_start+1)*dict_pll['dt'] * ( dict_net['min_max_rate_timeDepPara'][2]/1)) * dict_net['min_max_rate_timeDepPara'][2])
+					# time.sleep(0.2)
 				else:
-					time_series[i,j+1] = time_series[i,j]
+					time_series[i, j+1] = time_series[i, j]
 
 	elif dict_net['typeOfTimeDependency'] == 'triangle':
 		if (dict_net['special_case'] == 'timeDepInjectLockCoupStr'):
 			print('NOTE: coupStr_2ndHarm overridden by min_max_rate_timeDepPara!')
-		for i in range(len(time_series[:,0])):
-			sign = sign * (-1)
-			time_series[i,0:tstep_annealing_start] = dict_net['min_max_rate_timeDepPara'][0]
+		for i in range(len(time_series[:, 0])):
+			sign *= -1
+			time_series[i, 0:tstep_annealing_start] = dict_net['min_max_rate_timeDepPara'][0]
 			start_t_steps = dict_net['max_delay_steps']+int(afterTsimPercent*dict_pll['sim_time_steps'])-1
 			final_growth_t_steps = start_t_steps + np.int(np.floor((1-afterTsimPercent)*dict_pll['sim_time_steps']))
 			if final_growth_t_steps <= start_t_steps:
-				print('In setup_time_dependent_parameter(), the final time step value is smaller or equal w.r.t its initial! Change either afterTsimPercent or Tsim!'); sys.exit()
+				print('In setup_time_dependent_parameter(), the final time step value is smaller or equal w.r.t its initial! Change either afterTsimPercent or Tsim!')
+				sys.exit()
 			#print( 'Set rising interval! Starting at t=%0.5f'%(start_t_steps*dict_pll['dt']) )
 			#print( 'Start raising value if %0.5f <= %0.5f'%(np.abs( time_series[i,start_t_steps] - dict_net['min_max_rate_timeDepPara'][0] ), delta_max) )
 
 			for j in range(start_t_steps, final_growth_t_steps):
 				time_series[i, j+1] = time_series[i, j] + sign * dict_pll['dt'] * dict_net['min_max_rate_timeDepPara'][2]
 
-				if np.abs( time_series[i, j+1] - dict_net['min_max_rate_timeDepPara'][0] ) >= delta_max:
-					sign = sign * (-1)
+				if np.abs(time_series[i, j+1] - dict_net['min_max_rate_timeDepPara'][0]) >= delta_max:
+					sign *= -1
 			#print( 'Finished raising value at t=%0.5f and current value %0.5f'%( final_growth_t_steps*dict_pll['dt'], time_series[i,final_growth_t_steps] ) )
 	else:
-		print('Unknown functional form. Introduce! °)°')
+		print('Unknown functional form for time-dependent parameter generation. Introduce! °)°')
 		sys.exit()
 
 	dict_data.update({'timeDependentParameter': time_series})
@@ -542,7 +554,7 @@ def setup_topology(dict_net: dict):
 	if dict_net['Nx']*dict_net['Ny'] < 36 and not (dict_net['special_case'] == 'timeDepChangeOfCoupStr' or dict_net['special_case'] == 'timeDepInjectLockCoupStr'):
 		plt.figure(99999)
 		nx.draw(G)
-		F=nx.adjacency_matrix(G)
+		F = nx.adjacency_matrix(G)
 		print('nx.adjacency_matrix(G)', F.todense())
 		print('nx.adjacency_spectrum(G)/max(nx.adjacency_spectrum(G))', nx.adjacency_spectrum(G)/max(nx.adjacency_spectrum(G)))
 

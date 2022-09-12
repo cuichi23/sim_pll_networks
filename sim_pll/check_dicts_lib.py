@@ -83,9 +83,9 @@ def check_dicts_consistency(dict_pll, dict_net, dict_algo):
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-	if not ( isinstance(dict_pll['transmission_delay'], np.ndarray) or isinstance(dict_pll['transmission_delay'], list) ):
-		if np.abs( dict_pll['dt']*np.int( np.round( dict_pll['transmission_delay']/dict_pll['dt'] ) ) - dict_pll['transmission_delay'] ) > 0.01*dict_pll['transmission_delay']:
-			print('NOTE: time step dt not small enough to resolve the time delay.\ntranmission time delay contineous time: %0.3f\ntransmission time delay after time discretization: %0.3f'%(dict_pll['transmission_delay'], dict_pll['dt']*np.int( np.round( dict_pll['transmission_delay']/dict_pll['dt'] ) ) ))
+	if not (isinstance(dict_pll['transmission_delay'], np.ndarray) or isinstance(dict_pll['transmission_delay'], list)):
+		if np.abs(dict_pll['dt']*np.int(np.round(dict_pll['transmission_delay']/dict_pll['dt'])) - dict_pll['transmission_delay']) > 0.01*dict_pll['transmission_delay']:
+			print('NOTE: time step dt not small enough to resolve the time delay.\ntranmission time delay contineous time: %0.3f\ntransmission time delay after time discretization: %0.3f' % (dict_pll['transmission_delay'], dict_pll['dt']*np.int( np.round( dict_pll['transmission_delay']/dict_pll['dt'] ) ) ))
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

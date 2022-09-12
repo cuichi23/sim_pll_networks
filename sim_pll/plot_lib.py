@@ -1577,9 +1577,7 @@ def plotFinalPhaseConfigParamVsParameterSpace(pool_data: dict, average_time_phas
 	colormap = matplotlib.colors.LinearSegmentedColormap('my_colormap', cdict, 1024)
 
 	# extract the results from the data dictionary for plotting '''
-	results = []
-	betaR1 = []
-	beta12 = []
+	j0 = 0
 	for i in range(dict_algo['paramDiscretization'][0] * dict_algo['paramDiscretization'][1]):
 		if 'entrain' in dict_net['topology'] and (isinstance(pool_data[0][i]['dict_pll']['intrF'], list) or isinstance(pool_data[0][i]['dict_pll']['intrF'], np.ndarray)):
 			averaging_time_as_index = np.int(average_time_phase_difference_in_periods * np.mean(pool_data[0][i]['dict_pll']['intrF'][1:]) / pool_data[0][i]['dict_pll']['dt'])
@@ -1588,7 +1586,6 @@ def plotFinalPhaseConfigParamVsParameterSpace(pool_data: dict, average_time_phas
 
 		beta_kl = np.zeros([len(pool_data[0][i]['dictData']['phi'][-1, 1:]), dict_algo['paramDiscretization'][0] * dict_algo['paramDiscretization'][1]])
 		std_beta_kl = np.zeros([len(pool_data[0][i]['dictData']['phi'][-1, 1:]), dict_algo['paramDiscretization'][0] * dict_algo['paramDiscretization'][1]])
-		j0 = 0
 		if phase_diff_wrt_osci_k_0:
 			j0 = 1
 			for j in range(j0, len(pool_data[0][i]['dictData']['phi'][-1, 1:])):
@@ -1729,7 +1726,7 @@ def plotFinalPhaseConfigParamVsParameterSpace(pool_data: dict, average_time_phas
 # ################################################################################################################################################################################
 
 
-def plotInitPhaseConfigVsOrderParam(pool_data: dict, average_time_order_parameter_in_periods: np.float, axis_normalization=True):
+def plotOrderParamVsInitPhaseConfig(pool_data: dict, average_time_order_parameter_in_periods: np.float, axis_normalization=True):
 	"""Function that plots the last value and an average of the order parameter as a function of the initial phase-configuration  in two individual plots.
 		The initial phase configuration is expressed as the phase differences for 2d and 3d phase spaces. Each plot comes as a scatterplot and an imshow.
 
@@ -1763,25 +1760,27 @@ def plotInitPhaseConfigVsOrderParam(pool_data: dict, average_time_order_paramete
 	# else:
 	colormap = matplotlib.colors.LinearSegmentedColormap('my_colormap', cdict, 1024)
 
+
+
 	# we want to plot all the m-twist locations in rotated phase space: calculate phases, rotate and then plot into the results
-	twist_points = np.zeros((N, N), dtype=np.float)  # twist points in physical phase space
-	twist_pointsR = np.zeros((N, N), dtype=np.float)  # twist points in rotated phase space
+	twist_points = np.zeros((dict_net['Nx']*dict_net['Ny'], dict_net['Nx']*dict_net['Ny']), dtype=np.float)  # twist points in physical phase space
+	twist_pointsR = np.zeros((dict_net['Nx']*dict_net['Ny'], dict_net['Nx']*dict_net['Ny']), dtype=np.float)  # twist points in rotated phase space
 	alltwistP = []
 
-	if F_Omeg > 0:  # for f=0, there would otherwies be a float division by zero
+	if F_Omeg > 0:  		# for f=0, there would otherwise be a float division by zero
 		F1 = F_Omeg
 	else:
 		F1 = 1.1
 
-	if N == 2:  # this part is for calculating the points of m-twist solutions in the rotated space, they are plotted later
+	if N == 2:  			# this part is for calculating the points of m-twist solutions in the rotated space, they are plotted later
 		d1 = 0
 		d2 = 1
 		pass
 	if N == 3:
 		d1 = 1
 		d2 = 2
-		for i in range(N):
-			twistdelta = (2.0 * np.pi * i / (1.0 * N))
+		for i in range(dict_net['Nx']*dict_net['Ny']):
+			twistdelta = (2.0 * np.pi * i / (1.0 * dict_net['Nx']*dict_net['Ny']))
 			twist_points[i, :] = np.array([0.0, twistdelta, 2.0 * twistdelta])  # write m-twist phase configuation in phase space of phases
 			# print(i,'-twist points:\n', twist_points[i,:], '\n')
 			for m in range(-2, 3):
@@ -1790,10 +1789,10 @@ def plotInitPhaseConfigVsOrderParam(pool_data: dict, average_time_order_paramete
 					alltwistP.append(vtemp)
 		# print('vtemp:', vtemp, '\n')
 
-		if (topology == 'entrainOne' or topology == 'entrainAll'):
+		if 'entrain' in dict_net['topology']:
 			alltwistP = phiConfig  # phase-configuration of entrained synced state
 			if not len(phiConfig) == 0:
-				R_config = eva.calcKuramotoOrderParameter(phiConfig);
+				R_config = eva.calcKuramotoOrderParameter(dict_net['phiInitConfig'])
 				absR_conf = np.abs(R_config)
 			alltwistPR = np.transpose(eva.rotate_phases(np.transpose(alltwistP), isInverse=True))  # express the points in rotated phase space
 			print('value of unadjusted order parameter of the expected phase-configuration:', absR_conf)
@@ -1801,7 +1800,7 @@ def plotInitPhaseConfigVsOrderParam(pool_data: dict, average_time_order_paramete
 		# r = eva.calcKuramotoOrderParEntrainSelfOrgState(phi[-int(numb_av_T*1.0/(F1*dt)):, :], phi_constant_expected);
 		# orderparam = eva.calcKuramotoOrderParEntrainSelfOrgState(phi[:, :], phi_constant_expected);
 		else:
-			alltwistP = np.array(alltwistP);
+			alltwistP = np.array(alltwistP)
 			# print('alltwistP:\n', alltwistP, '\n')
 			alltwistPR = np.transpose(eva.rotate_phases(np.transpose(alltwistP), isInverse=True))  # express the points in rotated phase space
 	# print('alltwistP rotated (alltwistPR):\n', alltwistPR, '\n')
@@ -1811,7 +1810,7 @@ def plotInitPhaseConfigVsOrderParam(pool_data: dict, average_time_order_paramete
 	fig1.set_size_inches(plot_size_inches_x, plot_size_inches_y)
 
 	ax.set_aspect('equal')
-	plt.scatter(allPoints[:, 0] + phiMr[d1], allPoints[:, 1] + phiMr[d2], c=results[:, 0], alpha=0.5, edgecolor='', cmap=colormap, vmin=0, vmax=1)
+	plt.scatter(allPoints[:, 0] + phiMr[d1], allPoints[:, 1] + phiMr[d2], c=results[:, 0], alpha=0.5, cmap=colormap, vmin=0, vmax=1)
 	plt.title(r'mean $R(t,m=%d)$, constant dim: $\phi_0^{\prime}=%.2f$' % (int(k), initPhiPrime0))
 	if N == 3:
 		plt.xlabel(r'$\phi_1^{\prime}$')
@@ -1850,7 +1849,7 @@ def plotInitPhaseConfigVsOrderParam(pool_data: dict, average_time_order_paramete
 	plt.clf()
 	ax = plt.subplot(1, 1, 1)
 	ax.set_aspect('equal')
-	plt.scatter(allPoints[:, 0] + phiMr[d1], allPoints[:, 1] + phiMr[d2], c=results[:, 0], alpha=0.5, edgecolor='', cmap=colormap, vmin=0, vmax=1)
+	plt.scatter(allPoints[:, 0] + phiMr[d1], allPoints[:, 1] + phiMr[d2], c=results[:, 0], alpha=0.5, cmap=colormap, vmin=0, vmax=1)
 	plt.title(r'mean $R(t,m=%d )$, constant dim: $\phi_0^{\prime}=%.2f$' % (int(k), initPhiPrime0))
 	if N == 3:
 		plt.xlabel(r'$\phi_1^{\prime}$')
@@ -1872,7 +1871,7 @@ def plotInitPhaseConfigVsOrderParam(pool_data: dict, average_time_order_paramete
 	plt.clf()
 	ax = plt.subplot(1, 1, 1)
 	ax.set_aspect('equal')
-	plt.scatter(allPoints[:, 0] + phiMr[d1], allPoints[:, 1] + phiMr[d2], c=results[:, 1], alpha=0.5, edgecolor='', cmap=colormap, vmin=0.0, vmax=1.0)
+	plt.scatter(allPoints[:, 0] + phiMr[d1], allPoints[:, 1] + phiMr[d2], c=results[:, 1], alpha=0.5, cmap=colormap, vmin=0.0, vmax=1.0)
 	plt.title(r'last $R(t,m=%d )$, constant dim: $\phi_0^{\prime}=%.2f$' % (int(k), initPhiPrime0))
 	if N == 3:
 		plt.xlabel(r'$\phi_1^{\prime}$')
@@ -1949,7 +1948,7 @@ def plotInitPhaseConfigVsOrderParam(pool_data: dict, average_time_order_paramete
 	# plt.clf()
 	# ax = plt.subplot(1, 1, 1)
 	# ax.set_aspect('equal')
-	# plt.scatter(allPoints[:,0]+phiMr[d1], allPoints[:,1]+phiMr[d2], c=results[:,0], alpha=0.5, edgecolor='', cmap='jet')#, vmin=0, vmax=1)
+	# plt.scatter(allPoints[:,0]+phiMr[d1], allPoints[:,1]+phiMr[d2], c=results[:,0], alpha=0.5, cmap='jet')#, vmin=0, vmax=1)
 	# plt.title(r'mean $R(t,m=%d )$, constant dim: $\phi_0^{\prime}=%.2f$' %(int(k) ,initPhiPrime0) )
 	# if N==3:
 	# 	plt.xlabel(r'$\phi_1^{\prime}$')
@@ -1971,7 +1970,7 @@ def plotInitPhaseConfigVsOrderParam(pool_data: dict, average_time_order_paramete
 	my_cmap.set_under('w')
 	ax = plt.subplot(1, 1, 1)
 	ax.set_aspect('equal')
-	plt.scatter(allPoints[:, 0] + phiMr[d1], allPoints[:, 1] + phiMr[d2], c=results[:, 0], s=10, alpha=0.5, edgecolor='', cmap=my_cmap, vmin=0.0, vmax=1.0)  # , vmin=0, vmax=1)
+	plt.scatter(allPoints[:, 0] + phiMr[d1], allPoints[:, 1] + phiMr[d2], c=results[:, 0], s=10, alpha=0.5, cmap=my_cmap, vmin=0.0, vmax=1.0)  # , vmin=0, vmax=1)
 	plt.title(r'mean $R(t,m=%d )$, constant dim: $\phi_0^{\prime}=%.2f$' % (int(k), initPhiPrime0))
 	if N == 3:
 		plt.xlabel(r'$\phi_1^{\prime}$')
@@ -1995,7 +1994,7 @@ def plotInitPhaseConfigVsOrderParam(pool_data: dict, average_time_order_paramete
 	my_cmap.set_under('w')
 	ax = plt.subplot(1, 1, 1)
 	ax.set_aspect('equal')
-	plt.scatter(allPoints[:, 0] + phiMr[d1], allPoints[:, 1] + phiMr[d2], c=results[:, 0], s=5, alpha=0.5, edgecolor='', cmap=my_cmap, vmin=0.0, vmax=1.0)  # , vmin=0, vmax=1)
+	plt.scatter(allPoints[:, 0] + phiMr[d1], allPoints[:, 1] + phiMr[d2], c=results[:, 0], s=5, alpha=0.5, cmap=my_cmap, vmin=0.0, vmax=1.0)  # , vmin=0, vmax=1)
 	plt.title(r'mean $R(t,m=%d )$, constant dim: $\phi_0^{\prime}=%.2f$' % (int(k), initPhiPrime0))
 	if N == 3:
 		plt.xlabel(r'$\phi_1^{\prime}$')
@@ -2017,7 +2016,6 @@ def plotInitPhaseConfigVsOrderParam(pool_data: dict, average_time_order_paramete
 	if show_plot:
 		plt.show()
 	plt.show()
-	return 0.0
 
 	return None
 

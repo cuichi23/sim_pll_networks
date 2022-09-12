@@ -30,7 +30,7 @@ gc.enable()
 
 def getDicts(Fsim=55):
 
-	dict_net={
+	dict_net = {
 		'Nx': 3,																# oscillators in x-direction
 		'Ny': 1,																# oscillators in y-direction
 		'mx': 0,																# twist/chequerboard in x-direction (depends on closed or open boundary conditions)
@@ -46,8 +46,8 @@ def getDicts(Fsim=55):
 		'phiInitConfig': [0 for i in range(3)],									# phase-configuration of sync state,  []: automatic, else provide list
 		'freq_beacons': 0.25,													# frequency of external sender beacons, either a float or a list
 		'special_case': 'timeDepTransmissionDelay', #'False'					# 'False', or 'test_case', 'timeDepInjectLockCoupStr', 'timeDepTransmissionDelay', 'timeDepChangeOfCoupStr'
-		'typeOfTimeDependency': 'triangle', #'linear',							# adiabatic-{'exponential', 'linear', 'quadratic', 'triangle', 'cosine'} vs freerun-{'exponential', 'linear', 'quadratic', 'triangle', 'cosine'}
-		'min_max_rate_timeDepPara': [2.85, 3.15, 0.000075/100]					# provide a list with min, max and rate of the time-dependent parameter
+		'typeOfTimeDependency': 'linear', #'triangle',							# adiabatic-{'exponential', 'linear', 'quadratic', 'triangle', 'cosine'} vs freerun-{'exponential', 'linear', 'quadratic', 'triangle', 'cosine'}
+		'min_max_rate_timeDepPara': [0.01, 5, 0.01/100]							# provide a list with min, max and rate of the time-dependent parameter
 	}
 
 	dict_pll={

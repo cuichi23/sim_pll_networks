@@ -97,7 +97,7 @@ def getDicts(Fsim=125):
 
 	dict_algo = {
 		'parameter_space_sweeps': 'two_parameter_sweep',						# pick method for setting realizations 'single', 'classicBruteForceMethodRotatedSpace', 'listOfInitialPhaseConfigurations', 'two_parameter_sweep'
-		'paramDiscretization': [10, 10],										# parameter discretization for brute force initial phases and parameter space scans, e.g., for 'listOfInitialPhaseConfigurations' it specifies the number of initial phase differences and the discretization points for 'min_max_range_parameter_0'
+		'paramDiscretization': [3, 3],										# parameter discretization for brute force initial phases and parameter space scans, e.g., for 'listOfInitialPhaseConfigurations' it specifies the number of initial phase differences and the discretization points for 'min_max_range_parameter_0'
 		'param_id_0': 'intrF',													# parameter to be changed between different realizations, according to the min_max_range_parameter: 'None' or string of any other parameter
 		'min_max_range_parameter_0': [0.55, 1.45],								# specifies within which min and max value to linspace the, e.g., initial frequency difference (w.r.t. HF Frequency, not divided) in the case of 'listOfInitialPhaseConfigurations', or any other parameter as in, e.g., 'two_parameter_sweep'
 		'param_id_1': 'transmission_delay',  									# parameter to be changed between different realizations, according to the min_max_range_parameter: 'None' or string of any other parameter

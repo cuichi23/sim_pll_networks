@@ -202,6 +202,16 @@ def evaluate_pool_data(dict_net, dict_algo, pool_data):
 		average_time_order_parameter_in_periods = 1.5
 		plot.plotOrderParamVsParameterSpace(pool_data, average_time_order_parameter_in_periods)
 		plot.plotFinalPhaseConfigParamVsParameterSpace(pool_data, average_time_order_parameter_in_periods)
+		if dict_net['paramDiscretization'][0] * dict_net['paramDiscretization'][1] < 10:
+			for i in range(dict_net['paramDiscretization'][0] * dict_net['paramDiscretization'][1]):
+				plot.plotPhasesInf(pool_data[0][i]['dict_pll'], pool_data[0][i]['dict_net'], pool_data[0][i]['dictData'])
+				plot.plotPhases2pi(pool_data[0][i]['dict_pll'], pool_data[0][i]['dict_net'], pool_data[0][i]['dictData'])
+				plot.plotFrequency(pool_data[0][i]['dict_pll'], pool_data[0][i]['dict_net'], pool_data[0][i]['dictData'])
+				plot.plotOrderPara(pool_data[0][i]['dict_pll'], pool_data[0][i]['dict_net'], pool_data[0][i]['dictData'])
+				plot.plotPhaseRela(pool_data[0][i]['dict_pll'], pool_data[0][i]['dict_net'], pool_data[0][i]['dictData'])
+				plot.plotPhaseDiff(pool_data[0][i]['dict_pll'], pool_data[0][i]['dict_net'], pool_data[0][i]['dictData'])
+				plot.plotOscSignal(pool_data[0][i]['dict_pll'], pool_data[0][i]['dict_net'], pool_data[0][i]['dictData'])
+				plot.plotFreqAndPhaseDiff(pool_data[0][i]['dict_pll'], pool_data[0][i]['dict_net'], pool_data[0][i]['dictData'])
 		plt.draw()
 		plt.show()
 

@@ -75,7 +75,7 @@ def output_pll_specs(pll_list: list, dict_data: dict, dict_pll: dict) -> dict:
 	dict_data.update({'list_of_intrinsic_frequencies_Hz': [pll.signal_controlled_oscillator.intr_freq_rad / (2 * np.pi) for pll in pll_list]})
 	dict_data.update({'list_of_coupling_strengths_Hz': [pll.signal_controlled_oscillator.K_rad / (2 * np.pi) for pll in pll_list]})
 	dict_data.update({'list_of_cutoff_frequencies_Hz': [pll.low_pass_filter.cutoff_freq_Hz for pll in pll_list]})
-	dict_data.update({'list_of_time_delays': [pll.delayer.transmit_delay_steps * dict_pll['dt'] for pll in pll_list]})
+	dict_data.update({'list_of_time_delays': [np.array(pll.delayer.transmit_delay_steps) * dict_pll['dt'] for pll in pll_list]})
 
 	return dict_data
 
@@ -139,8 +139,9 @@ def generate_phi0(dict_net: dict, dict_pll: dict) -> None:
 			elif len(dict_net['phiPerturb']) == 0:
 				dict_net.update({'phiPerturb': eva.rotate_phases(np.array(dict_net['phiPerturbRot']).flatten(), isInverse=False)})
 
-		print('entrainOne or entrainAll topology, {tau, f_R}=', dict_pll['transmission_delay'], dict_pll['intrF'][0], ': assumed initial phase-configuration of entrained synced state (physical coordinates):', dict_net['phiInitConfig'],
-				' and on top a perturbation of (original coordinates):', dict_net['phiPerturb'], ' and in, (rotated coordinates):', dict_net['phiPerturbRot'], '\n')
+		print('entrainOne or entrainAll topology, {tau, f_R}={', dict_pll['transmission_delay'], ', ', dict_pll['intrF'][0],
+			  '}: assumed initial phase-configuration of entrained synced state (physical coordinates):', dict_net['phiInitConfig'],
+			  ' and on top a perturbation of (original coordinates):', dict_net['phiPerturb'], ' and in, (rotated coordinates):', dict_net['phiPerturbRot'], '\n')
 
 	elif dict_net['topology'] == 'compareEntrVsMutual':
 		print('REWORK THIS!')
@@ -551,7 +552,7 @@ def setup_topology(dict_net: dict):
 		plt.figure(99999)
 		nx.draw(G)
 		F = nx.adjacency_matrix(G)
-		print('nx.adjacency_matrix(G)', F.todense())
+		print('nx.adjacency_matrix(G)\n', F.todense())
 		print('nx.adjacency_spectrum(G)/max(nx.adjacency_spectrum(G))', nx.adjacency_spectrum(G)/max(nx.adjacency_spectrum(G)))
 
 	return G

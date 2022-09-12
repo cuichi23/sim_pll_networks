@@ -100,7 +100,7 @@ def getDicts(Fsim=55):
 		'paramDiscretization': [7, 1],  										# parameter discretization for brute force parameter space scans, e.g., [15, 10], [15, 1]
 		'param_id_0': 'None',													# parameter to be changed between different realizations, according to the min_max_range_parameter: 'None' or string of any other parameter
 		'min_max_range_parameter_0': [1-5E-9, 1+5E-9],							# specifies within which min and max value to linspace the, e.g., initial frequency difference (w.r.t. HF Frequency, not divided) in the case of 'listOfInitialPhaseConfigurations', or any other parameter as in, e.g., 'two_parameter_sweep'
-		'param_id_1': 'transmission_delay',  									# parameter to be changed between different realizations, according to the min_max_range_parameter: 'None' or string of any other parameter
+		'param_id_1': 'None',				  									# parameter to be changed between different realizations, according to the min_max_range_parameter: 'None' or string of any other parameter
 		'min_max_range_parameter_1': [0.1, 2.6],  								# specifies within which min and max value to linspace the, e.g., initial frequency difference (w.r.t. HF Frequency, not divided) in the case of 'listOfInitialPhaseConfigurations', or any other parameter as in, e.g., 'two_parameter_sweep'
 		'store_ctrl_and_clock': False,											# whether the control signals and clock signal is being computed (time and memory usage)
 		'store_phases_tau_array': True  										# whether the phases are saved when simulation on tau-array

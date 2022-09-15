@@ -306,7 +306,8 @@ class PFD(CouplingFunction):
 		return self.amp * (np.sign(x)*(1+sawtooth(1*x*np.sign(x), width=1)))
 
 	def get_derivative(self):
-		print('Not yet imlemented! Do it!'); sys.exit()
+		print('Not yet imlemented! Do it!')
+		sys.exit()
 		amp = 2.0 * (2 * self.freq)
 		return Square(self.freq, amp)
 

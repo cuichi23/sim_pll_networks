@@ -36,7 +36,7 @@ from sim_pll import plot_lib
 now = datetime.datetime.now()
 
 ''' Enable automatic carbage collector '''
-gc.enable();
+gc.enable()
 
 ''' All plots in latex mode '''
 from matplotlib import rc
@@ -70,11 +70,11 @@ annotationfont = {
 def plotTest(params):
 
 	# plot parameter
-	axisLabel = 50;
-	titleLabel= 10;
-	dpi_val   = 150;
-	figwidth  = 6;
-	figheight = 3;
+	axisLabel = 50
+	titleLabel= 10
+	dpi_val   = 150
+	figwidth  = 6
+	figheight = 3
 
 	labeldict 	= {'wc': r'$\frac{\omega_\textrm{c}}{\omega}$', 'tau': r'$\frac{\Omega\tau}{2\pi}$', 'K': r'$K$',
 					'a': r'$\alpha$', 'Omeg': r'$\Omega$', 'zeta': r'$\zeta$', 'beta': r'$\beta$'}
@@ -179,7 +179,9 @@ def calculateEigenvalues(dict_net, dict_pll):
 ''' CALCULATE SPECTRUM '''
 def calcSpectrum( phi, dict_pll, dict_net, psd_id=0, percentOfTsim=0.5 ): #phi,Fsample,couplingfct,waveform=None,expectedFreq=-999,evalAllRealizations=False,decayTimeSlowestMode=None
 
-	Pxx_dBm=[]; Pxx_dBV=[]; f=[];
+	Pxx_dBm=[]
+	Pxx_dBV=[];
+	f=[];
 	try:
 		windowset='boxcar' # here we choose boxcar since a modification of the ends of the time-series is not necessary for an integer number of periods
 		print('Trying to cut integer number of periods! Inside calcSpectrum.')

@@ -46,12 +46,12 @@ def generate_plls(dict_pll: dict, dict_net: dict, dict_data: dict) -> list:
 	dict_pll.update({'G': setup_topology(dict_net)})
 
 	pll_list = [ pll.PhaseLockedLoop(idx_pll,											# setup PLLs and store in a list as PLL class objects
-					pll.Delayer(idx_pll, dict_pll, dict_net, dict_data),				# setup delayer object of PLL k; it organizes the delayed communications
-					pll.PhaseDetectorCombiner(idx_pll, dict_pll, dict_net),				# setup PDadder object of PLL k;
-					pll.LowPassFilter(idx_pll, dict_pll, dict_net),						# setup LF(1st) object of PLL k;
-					pll.SignalControlledOscillator(idx_pll, dict_pll, dict_net),		# setup VCO object of PLL k;
-					pll.InjectionLockingSignal(idx_pll, dict_pll, dict_net),			# setup an injection locking signal generator object for each oscillator k;
-					pll.Counter()														# setup Counter object of PLL k;
+					pll.Delayer(idx_pll, dict_pll, dict_net, dict_data),				# setup delayer object of PLL k it organizes the delayed communications
+					pll.PhaseDetectorCombiner(idx_pll, dict_pll, dict_net),				# setup PDadder object of PLL k
+					pll.LowPassFilter(idx_pll, dict_pll, dict_net),						# setup LF(1st) object of PLL k
+					pll.SignalControlledOscillator(idx_pll, dict_pll, dict_net),		# setup VCO object of PLL k
+					pll.InjectionLockingSignal(idx_pll, dict_pll, dict_net),			# setup an injection locking signal generator object for each oscillator k
+					pll.Counter()														# setup Counter object of PLL k
 					) for idx_pll in range(dict_net['Nx']*dict_net['Ny']) ]
 
 	if isinstance(dict_pll['intrF'], list) or isinstance(dict_pll['coupK'], list) or isinstance(dict_pll['transmission_delay'], list) or isinstance(dict_pll['cutFc'], list):
@@ -113,7 +113,7 @@ def generate_phi0(dict_net: dict, dict_pll: dict) -> None:
 
 	if 'entrainOne' in dict_net['topology'] or 'entrainAll' in dict_net['topology']:
 		print('Provide phase-configuration for these cases in physical coordinates!')
-		#phiM  = eva.rotate_phases(phiSr.flatten(), isInverse=False);
+		#phiM  = eva.rotate_phases(phiSr.flatten(), isInverse=False)
 		# use phase_configuration_ref_to_one_for_chain_topology function from entrain_mutual_lib.py to calculate the phase configuration from the analytic expressions
 		if dict_net['topology'] == 'entrainOne-chain':
 			ent_mut.phase_configuration_ref_to_one_for_chain_topology(dict_net, dict_pll)
@@ -146,7 +146,7 @@ def generate_phi0(dict_net: dict, dict_pll: dict) -> None:
 	elif dict_net['topology'] == 'compareEntrVsMutual':
 		print('REWORK THIS!')
 		sys.exit()
-		phiM = dict_net['phiConfig'];
+		phiM = dict_net['phiConfig']
 		if len(dict_net['phiPerturbRot']) == 0:
 			phiS = np.zeros(dict_net['Nx']*dict_net['Ny'])
 		dict_net.update({'phiPerturb': eva.rotate_phases(phiSr.flatten(), isInverse=False)})
@@ -191,7 +191,8 @@ def generate_phi0(dict_net: dict, dict_pll: dict) -> None:
 				dict_net.update({'phiPerturb': np.zeros(dict_net['Nx']*dict_net['Ny'])})
 				dict_net.update({'phiPerturbRot': eva.rotate_phases(dict_net['phiPerturb'], isInverse=True)})
 				dict_net['phiPerturbRot'][0] = initPhiPrime0
-				print('No perturbations defined, work it out! So far no perturbations are set, i.e., all zero!'); #sys.exit()
+				print('No perturbations defined, work it out! So far no perturbations are set, i.e., all zero!')
+				# sys.exit()
 
 			# elif len(dict_net['phiPerturb'].shape)==2:
 			# 	if len(dict_net['phiPerturb'][0,:])==dict_net['Nx']*dict_net['Ny']:
@@ -442,7 +443,7 @@ def setup_topology(dict_net: dict):
 			G.add_edge(i+1 ,i)														# add unidirectional edge from osci 0 to 1, 1 to 2, and so on until level_hierarch is reached
 
 		for i in range(dict_net['hierarchy_level']+1, dict_net['Nx']*dict_net['Ny']):
-			G.add_edge(i, dict_net['hierarchy_level']); 								# add unidirectional edge from highest hierarchy level to all remaining PLLS
+			G.add_edge(i, dict_net['hierarchy_level']) 								# add unidirectional edge from highest hierarchy level to all remaining PLLS
 
 	elif dict_net['topology'] == 'ring' or dict_net['topology'] == 'entrainAll-ring' or dict_net['topology'] == 'entrainOne-ring' or dict_net['topology'] == 'entrainAll':
 		G = nx.cycle_graph(dict_net['Nx']*dict_net['Ny'])
@@ -584,7 +585,7 @@ def all_initial_phase_combinations(dict_pll: dict, dict_net: dict, dict_algo: di
 
 	if dict_net['Nx']*dict_net['Ny'] == 2:
 		if dict_algo['parameter_space_sweeps'] == 'listOfInitialPhaseConfigurations' and ( isinstance(dict_algo['min_max_range_parameter_0'], list) or isinstance(dict_algo['min_max_range_parameter_0'], np.ndarray) ):
-			tempDetune = ( dict_algo['min_max_range_parameter_0'][1] - dict_algo['min_max_range_parameter_0'][0] ) / dict_pll['div'];
+			tempDetune = ( dict_algo['min_max_range_parameter_0'][1] - dict_algo['min_max_range_parameter_0'][0] ) / dict_pll['div']
 			scanValueslist1 = list( np.linspace(-dict_pll['div']*(np.pi), +dict_pll['div']*(np.pi), paramDiscr[0]) ) 		# all entries are in rotated, and reduced phase space NOTE: adjust unit cell accordingly!
 			scanValueslist2 = list( np.linspace(-tempDetune/2.0, tempDetune/2.0, paramDiscr[1]) )	# all entries are in rotated, and reduced phase space NOTE: adjust unit cell accordingly!
 			#print('scanValueslist2', scanValueslist2)
@@ -648,7 +649,8 @@ def all_initial_phase_combinations(dict_pll: dict, dict_net: dict, dict_algo: di
 		_allPoints 			= itertools.product(*scanValues)
 		allPoints 			= list(_allPoints)									# scanValues is a list of lists: create a new list that gives all the possible combinations of items between the lists
 		allPoints 			= np.array(allPoints) 								# convert the list to an array
-	#print('scanValues:', scanValues, '\tallPoints:', allPoints); sys.exit()
+	#print('scanValues:', scanValues, '\tallPoints:', allPoints)
+	# sys.exit()
 
 	return scanValues, allPoints
 

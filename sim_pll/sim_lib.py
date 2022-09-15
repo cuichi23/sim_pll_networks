@@ -103,7 +103,8 @@ def prepare_simulation(dict_net: dict, dict_pll: dict):
 	max_delay_steps = np.max([max_transmit_delay, max_feedback_delay])  # pick largest time delay to setup container for phases
 	# prepare container for the phases
 	if max_delay_steps == 0:
-		print('No delay case, not yet tested, see sim_lib.py! Setting container length to that of Tsim/dt!');  # sys.exit()
+		print('No delay case, not yet tested, see sim_lib.py! Setting container length to that of Tsim/dt!')
+		# sys.exit()
 		phi_array_len = dict_pll['sim_time_steps']  # length of phi contrainer in case the delay is zero; the +int(dict_pll['orderLF']) is necessary to cover filter up to order dict_pll['orderLF']
 	else:
 		phi_array_len = 1 + int(dict_net['phi_array_mult_tau']) * max_delay_steps  # length of phi contrainer, must be at least 1 delay length if delay > 0
@@ -127,7 +128,7 @@ def prepare_simulation(dict_net: dict, dict_pll: dict):
 		phi[dict_net['max_delay_steps'], :] = list(map(add, dict_net['phiInitConfig'], dict_net['phiPerturb']))  # set phase-configuration phiInitConfig at t=0 + the perturbation phiPerturb
 	else:
 		print('len(phi[0,:])', len(phi[0, :]), '\t len(dict_net[*phiInitConfig*])', len(dict_net['phiInitConfig']))
-		print('Provide initial phase-configuration of length %i to setup simulation!' % len(phi[dict_net['max_delay_steps'], :]));
+		print('Provide initial phase-configuration of length %i to setup simulation!' % len(phi[dict_net['max_delay_steps'], :]))
 		sys.exit()
 	## TESTS!
 	# plt.plot(phi[:,0], 'o'); plt.plot(phi[:,1], 'd'); plt.draw(); plt.show();
@@ -154,7 +155,7 @@ def prepare_simulation(dict_net: dict, dict_pll: dict):
 		for i in range(len(pll_list)):
 			pll_list[i].signal_controlled_oscillator.phi = phi[max_delay_steps, i]
 	else:
-		print('Specify the type of history, syncState or freeRunning supported!');
+		print('Specify the type of history, syncState or freeRunning supported!')
 		sys.exit()
 	## TESTS!
 	# plt.plot(phi[:,0], 'o'); plt.plot(phi[:,1], 'd'); plt.draw(); plt.show();
@@ -308,6 +309,14 @@ def plot_results_simulation(dict_net: dict, dict_pll: dict, dictData: dict) -> N
 		plot.plotFreqAndOrderPar(dict_pll, dict_net, dictData)
 		plot.plotPSD(dict_pll, dict_net, dictData, [0, 1], saveData=False)
 		plot.plot_allan_variance(dict_pll, dict_net, dictData, 0.4 * dict_net['Tsim'], [0, 1], 'overlapping_adev', 'frequency', 0.5 * dict_net['Tsim'])
+	elif dict_net['Nx']*dict_net['Ny'] == 3:
+		plot.plotFreqAndPhaseDiff(dict_pll, dict_net, dictData)
+		plot.plotFreqAndOrderPar(dict_pll, dict_net, dictData)
+		plot.plotPSD(dict_pll, dict_net, dictData, [0, 1, 2], saveData=False)
+		try:
+			plot.plot_allan_variance(dict_pll, dict_net, dictData, 0.4 * dict_net['Tsim'], [0, 1, 2], 'overlapping_adev', 'frequency', 0.5 * dict_net['Tsim'])
+		except:
+			print('Failed to caluclate Allan variance!')
 	elif dict_net['Nx']*dict_net['Ny'] == 64:
 		plot.plotFreqAndPhaseDiff(dict_pll, dict_net, dictData)
 		plot.plotFreqAndOrderPar(dict_pll, dict_net, dictData)

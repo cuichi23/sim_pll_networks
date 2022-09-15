@@ -63,16 +63,16 @@ annotationfont = {
 		}
 
 # plot parameter
-axisLabel 			= 60;
-tickSize  			= 25;
-titleLabel			= 10;
-dpi_val	  			= 150;
-figwidth  			= 10;#8;
-figheight 			= 5;
-plot_size_inches_x 	= 10;
-plot_size_inches_y 	= 5;
-labelpadxaxis       = 10;
-labelpadyaxis       = 20;
+axisLabel 			= 60
+tickSize  			= 25
+titleLabel			= 10
+dpi_val	  			= 150
+figwidth  			= 10#8
+figheight 			= 5
+plot_size_inches_x 	= 10
+plot_size_inches_y 	= 5
+labelpadxaxis       = 10
+labelpadyaxis       = 20
 #colormapSyncStab 	= colormap_diver.PuOr_7.mpl_colormap
 
 
@@ -129,7 +129,7 @@ if 'poolData' in filenameData:
 	elif poolData[0][0]['dict_algo']['parameter_space_sweeps'] == 'listOfInitialPhaseConfigurations':
 		eva.evaluateSimulationsChrisHoyer(poolData)
 	elif poolData[0][0]['dict_algo']['parameter_space_sweeps'] == 'classicBruteForceMethodRotatedSpace':
-		print('Implement evaluation as in the old version! Copy plots, etc...'); sys.exit()
+		print('Implement evaluation as in the old version! Copy plots, etc...') sys.exit()
 else:
 	# run evaluations
 	r, orderParam, F1 	= eva.obtainOrderParam(dict_pll, dict_net, dictData)

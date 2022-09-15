@@ -58,10 +58,18 @@ def distributeProcesses(dict_net: dict, dict_pll: dict, dict_algo=None) -> objec
 	print('time needed for execution of simulations in multiproc mode: ', (time.time()-t0), ' seconds')
 	#sys.exit()
 
-	eva.saveDictionaries(pool_data, 'pool_data', dict_pll['coupK'], dict_pll['transmission_delay'], dict_pll['cutFc'], dict_net['Nx'], dict_net['Ny'], dict_net['mx'], dict_net['my'], dict_net['topology'])	   # save the dicts
-	eva.saveDictionaries(dict_pll, 'dict_pll',   dict_pll['coupK'], dict_pll['transmission_delay'], dict_pll['cutFc'], dict_net['Nx'], dict_net['Ny'], dict_net['mx'], dict_net['my'], dict_net['topology'])	   # save the dicts
-	eva.saveDictionaries(dict_net, 'dict_net',   dict_pll['coupK'], dict_pll['transmission_delay'], dict_pll['cutFc'], dict_net['Nx'], dict_net['Ny'], dict_net['mx'], dict_net['my'], dict_net['topology'])	   # save the dicts
-	eva.saveDictionaries(dict_algo, 'dict_algo', dict_pll['coupK'], dict_pll['transmission_delay'], dict_pll['cutFc'], dict_net['Nx'], dict_net['Ny'], dict_net['mx'], dict_net['my'], dict_net['topology'])	   # save the dicts
+	eva.saveDictionaries(dict_pll, 'dict_pll', dict_pll['coupK'], dict_pll['transmission_delay'], dict_pll['cutFc'], dict_net['Nx'], dict_net['Ny'], dict_net['mx'], dict_net['my'],
+						 dict_net['topology'])  # save the dicts
+	eva.saveDictionaries(dict_net, 'dict_net', dict_pll['coupK'], dict_pll['transmission_delay'], dict_pll['cutFc'], dict_net['Nx'], dict_net['Ny'], dict_net['mx'], dict_net['my'],
+						 dict_net['topology'])  # save the dicts
+	eva.saveDictionaries(dict_algo, 'dict_algo', dict_pll['coupK'], dict_pll['transmission_delay'], dict_pll['cutFc'], dict_net['Nx'], dict_net['Ny'], dict_net['mx'], dict_net['my'],
+						 dict_net['topology'])  # save the dicts
+	try:
+		eva.saveDictionaries(pool_data, 'pool_data', dict_pll['coupK'], dict_pll['transmission_delay'], dict_pll['cutFc'], dict_net['Nx'], dict_net['Ny'], dict_net['mx'], dict_net['my'],
+							 dict_net['topology'])  # save the dicts
+	except:
+		print('Could not save the data, check memory and whether target directory exists.')
+
 
 	# evaluate results of all simulations and parameter sweeps
 	evaluate_pool_data(dict_net, dict_algo, pool_data)
@@ -202,8 +210,8 @@ def evaluate_pool_data(dict_net, dict_algo, pool_data):
 		average_time_order_parameter_in_periods = 1.5
 		plot.plotOrderParamVsParameterSpace(pool_data, average_time_order_parameter_in_periods)
 		plot.plotFinalPhaseConfigParamVsParameterSpace(pool_data, average_time_order_parameter_in_periods)
-		if dict_net['paramDiscretization'][0] * dict_net['paramDiscretization'][1] < 10:
-			for i in range(dict_net['paramDiscretization'][0] * dict_net['paramDiscretization'][1]):
+		if dict_algo['paramDiscretization'][0] * dict_algo['paramDiscretization'][1] < 10:
+			for i in range(dict_algo['paramDiscretization'][0] * dict_algo['paramDiscretization'][1]):
 				plot.plotPhasesInf(pool_data[0][i]['dict_pll'], pool_data[0][i]['dict_net'], pool_data[0][i]['dictData'])
 				plot.plotPhases2pi(pool_data[0][i]['dict_pll'], pool_data[0][i]['dict_net'], pool_data[0][i]['dictData'])
 				plot.plotFrequency(pool_data[0][i]['dict_pll'], pool_data[0][i]['dict_net'], pool_data[0][i]['dictData'])

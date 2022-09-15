@@ -34,7 +34,7 @@ import datetime
 now = datetime.datetime.now()
 
 ''' Enable automatic carbage collector '''
-gc.enable();
+gc.enable()
 
 ''' All plots in latex mode '''
 from matplotlib import rc
@@ -127,8 +127,8 @@ def plotPSD(dict_pll, dict_net, dictData, plotlist=[], saveData=False):
 	fig1.canvas.manager.set_window_title('spectral density of synchronized state')  # plot spectrum
 	fig1.set_size_inches(plot_size_inches_x, plot_size_inches_y)
 
-	plt.xlabel('frequencies [Hz]', fontdict=labelfont, labelpad=labelpadxaxis);
-	plt.ylabel('P [dBm]', fontdict=labelfont, labelpad=labelpadyaxis);
+	plt.xlabel('frequencies [Hz]', fontdict=labelfont, labelpad=labelpadxaxis)
+	plt.ylabel('P [dBm]', fontdict=labelfont, labelpad=labelpadyaxis)
 	plt.tick_params(axis='both', which='major', labelsize=tickSize)
 
 	for i in range(len(f)):
@@ -144,10 +144,10 @@ def plotPSD(dict_pll, dict_net, dictData, plotlist=[], saveData=False):
 	plt.grid()
 
 	try:
-		plt.ylim([np.min(Pxx_db[0][index_of_highest_peak[0]:]), np.max(peak_power_val) + 5]);
+		plt.ylim([np.min(Pxx_db[0][index_of_highest_peak[0]:]), np.max(peak_power_val) + 5])
 	except:
 		print('Could not set ylim accordingly!')
-	plt.xlim(0, 12.5 * np.min(dict_pll['intrF']));
+	plt.xlim(0, 12.5 * np.min(dict_pll['intrF']))
 	plt.savefig('results/powerdensity_dB_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.svg' % (
 	np.mean(dict_pll['coupK']), np.mean(dict_pll['cutFc']), np.mean(dict_pll['syncF']), np.mean(dict_pll['transmission_delay']), np.mean(dict_pll['noiseVarVCO']), now.year, now.month, now.day),
 				dpi=dpi_val, bbox_inches="tight")
@@ -155,7 +155,7 @@ def plotPSD(dict_pll, dict_net, dictData, plotlist=[], saveData=False):
 	np.mean(dict_pll['coupK']), np.mean(dict_pll['cutFc']), np.mean(dict_pll['syncF']), np.mean(dict_pll['transmission_delay']), np.mean(dict_pll['noiseVarVCO']), now.year, now.month, now.day),
 				dpi=dpi_val, bbox_inches="tight")
 
-	plt.xlim(0, 3.8 * np.min(dict_pll['intrF']));
+	plt.xlim(0, 3.8 * np.min(dict_pll['intrF']))
 	plt.savefig('results/powerdensityLessFreq_dB_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.svg' % (
 	np.mean(dict_pll['coupK']), np.mean(dict_pll['cutFc']), np.mean(dict_pll['syncF']), np.mean(dict_pll['transmission_delay']), np.mean(dict_pll['noiseVarVCO']), now.year, now.month, now.day),
 				dpi=dpi_val)
@@ -180,10 +180,10 @@ def plotPSD(dict_pll, dict_net, dictData, plotlist=[], saveData=False):
 		for i in range(len(f)):
 			minima_of_all_psd_in_zoom_range.append(np.min(Pxx_db[i][(index_of_highest_peak[i] - freq_res_bins_both_peak_sides):(index_of_highest_peak[i] + freq_res_bins_both_peak_sides)]))
 			print('minimum in plot range of PLL%i = %0.2f' % (i, minima_of_all_psd_in_zoom_range[i]))
-		plt.ylim([np.min(minima_of_all_psd_in_zoom_range) - 3, np.max(peak_power_val) + 3]);
+		plt.ylim([np.min(minima_of_all_psd_in_zoom_range) - 3, np.max(peak_power_val) + 3])
 	except:
 		print('Could not set ylim accordingly!')
-	plt.xlim(frequency_of_max_peak[i] - freq_res_bins_both_peak_sides * (f[0][2] - f[0][1]), frequency_of_max_peak[i] + freq_res_bins_both_peak_sides * (f[0][2] - f[0][1]));
+	plt.xlim(frequency_of_max_peak[i] - freq_res_bins_both_peak_sides * (f[0][2] - f[0][1]), frequency_of_max_peak[i] + freq_res_bins_both_peak_sides * (f[0][2] - f[0][1]))
 	plt.savefig('results/powerdensity1stHarmCloseZoom_dBm_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.svg' % (
 	np.mean(dict_pll['coupK']), np.mean(dict_pll['cutFc']), np.mean(dict_pll['syncF']), np.mean(dict_pll['transmission_delay']), np.mean(dict_pll['noiseVarVCO']), now.year, now.month, now.day),
 				dpi=dpi_val, bbox_inches="tight")
@@ -193,32 +193,31 @@ def plotPSD(dict_pll, dict_net, dictData, plotlist=[], saveData=False):
 
 	try:
 		print('np.min(Pxx_db[i][:])=%02f, peak_power_val[0]=%02f' % (np.min(Pxx_db[i][5:]), peak_power_val[0]))
-		plt.ylim([np.min(Pxx_db[i][5:]), peak_power_val[0] + 5]);
+		plt.ylim([np.min(Pxx_db[i][5:]), peak_power_val[0] + 5])
 	except:
 		print('np.min(Pxx_db[i][:]), peak_power_val[0] either Inf or NAN.')
-	plt.xlim(0, 8.5 * np.min(dict_pll['intrF']));
+	plt.xlim(0, 8.5 * np.min(dict_pll['intrF']))
 
 	fig2 = plt.figure(num=2, figsize=(figwidth, figheight), dpi=dpi_val, facecolor='w', edgecolor='k')  # plot spectrum
 	fig2.canvas.manager.set_window_title('one-sided spectral density')
-	fig2.set_size_inches(plot_size_inches_x, plot_size_inches_y);
+	fig2.set_size_inches(plot_size_inches_x, plot_size_inches_y)
 
-	xHz = 0.001;
-	onsidedPSD_params = [];
-	oneSidPSDwidthsm3dB = [];
-	quality_factors = [];  # distance from the principle peak to measure damping
-	Freqres = f[0][3] - f[0][2];
-	linestyle = ['-', '--', '-', '--', '-', '--'];
+	xHz = 0.001
+	onsidedPSD_params = []
+	oneSidPSDwidthsm3dB = []
+	quality_factors = []  # distance from the principle peak to measure damping
+	Freqres = f[0][3] - f[0][2]
+	linestyle = ['-', '--', '-', '--', '-', '--']
 	for i in range(len(f)):
-		frequency_of_max_peak[i] = 0;
-		coup1_delt_3dB = 0;
+		frequency_of_max_peak[i] = 0
+		coup1_delt_3dB = 0
 		# mutually coupled SLL1
-		index_of_highest_peak[i] = np.argmax(Pxx_db[i]);  # find the index of the principle peak (max dB) of the free-running SLL
-		frequency_of_max_peak[i] = f[i][index_of_highest_peak[i]];  # use the above index to identify the frequency of the peaks location
-		coup1_times_X = np.argmax(f[i] >= 2.25 * frequency_of_max_peak[i]);  # find the index for the frequency being 2.25 times that of the peak
-		m3dB_freqcind1 = index_of_highest_peak[i] + np.where(Pxx_db[i][index_of_highest_peak[i]:] <= (Pxx_db[i][index_of_highest_peak[i]] - 3.0))[0][
-			0];  # find the index associated to a power drop of -3dB w.r.t. the peak's value
+		index_of_highest_peak[i] = np.argmax(Pxx_db[i])  # find the index of the principle peak (max dB) of the free-running SLL
+		frequency_of_max_peak[i] = f[i][index_of_highest_peak[i]]  # use the above index to identify the frequency of the peaks location
+		coup1_times_X = np.argmax(f[i] >= 2.25 * frequency_of_max_peak[i])  # find the index for the frequency being 2.25 times that of the peak
+		m3dB_freqcind1 = index_of_highest_peak[i] + np.where(Pxx_db[i][index_of_highest_peak[i]:] <= (Pxx_db[i][index_of_highest_peak[i]] - 3.0))[0][0]  # find the index associated to a power drop of -3dB w.r.t. the peak's value
 		print('\n\nm3dB_freqcind1:', m3dB_freqcind1, '\n\n')
-		m3dB_freqc_val = f[i][m3dB_freqcind1];  # extract the frequency at -3dB
+		m3dB_freqc_val = f[i][m3dB_freqcind1]  # extract the frequency at -3dB
 
 		coup1_delt_3dB = np.abs(m3dB_freqc_val - frequency_of_max_peak[i] - Freqres)
 
@@ -272,11 +271,11 @@ def plotPSD(dict_pll, dict_net, dictData, plotlist=[], saveData=False):
 		onsidedPSD_params.append([0, 0])  # necessary, otherwise error on write-out to csv file
 	# plt.plot(10.0*np.log10(powerspecPLL1['f'][0][index_of_highest_peak[i]:coup1_times_X].copy()-frequency_of_max_peak[i]), !!!!! , 'y-', label=r'$1/f^2$')
 	plt.legend(loc='upper right')
-	# plt.xlim([0,f01+20*max(Kvco1,Kvco2)]);	#plt.ylim(-100,0);
-	plt.xlabel(r'$10\log_{10}\left(f-f_{\rm peak}\right)$ [Hz]', fontdict=labelfont, labelpad=labelpadxaxis);
+	# plt.xlim([0,f01+20*max(Kvco1,Kvco2)])	#plt.ylim(-100,0)
+	plt.xlabel(r'$10\log_{10}\left(f-f_{\rm peak}\right)$ [Hz]', fontdict=labelfont, labelpad=labelpadxaxis)
 	plt.ylabel(r'$P$ [dBm]', fontdict=labelfont, labelpad=labelpadyaxis)
-	plt.tick_params(axis='both', which='major', labelsize=35);
-	plt.grid();
+	plt.tick_params(axis='both', which='major', labelsize=35)
+	plt.grid()
 	plt.savefig('results/onsidedPSD_dBm_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.svg' % (
 	np.mean(dict_pll['coupK']), np.mean(dict_pll['cutFc']), np.mean(dict_pll['syncF']), np.mean(dict_pll['transmission_delay']), np.mean(dict_pll['noiseVarVCO']), now.year, now.month, now.day),
 				dpi=dpi_val, bbox_inches="tight")
@@ -387,7 +386,7 @@ def plotFrequency(dict_pll, dict_net, dictData):
 	fig5.canvas.manager.set_window_title('frequency')  # plot the phase
 	fig5.set_size_inches(plot_size_inches_x, plot_size_inches_y)
 
-	phidot = np.diff(dictData['phi'], axis=0) / dict_pll['dt'];
+	phidot = np.diff(dictData['phi'], axis=0) / dict_pll['dt']
 	plt.plot(dictData['t'][0:-1], phidot, linewidth=1, linestyle=linet[0])
 	plt.plot(dictData['t'][dict_net['max_delay_steps'] - 1], phidot[int(dict_net['max_delay_steps']) - 1, 0] + 0.001, 'go')
 
@@ -404,16 +403,16 @@ def plotFrequency(dict_pll, dict_net, dictData):
 	plt.savefig('results/freq-t_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.png' % (
 	np.mean(dict_pll['coupK']), np.mean(dict_pll['cutFc']), np.mean(dict_pll['syncF']), np.mean(dict_pll['transmission_delay']), np.mean(dict_pll['noiseVarVCO']), now.year, now.month, now.day),
 				dpi=dpi_val, bbox_inches="tight")
-	plt.xlim([np.mean(dict_pll['transmission_delay']) - 25 * 1.0 / (np.min(dict_pll['intrF'])), np.mean(dict_pll['transmission_delay']) + 35 * 1.0 / (np.min(dict_pll['intrF']))]);
+	plt.xlim([np.mean(dict_pll['transmission_delay']) - 25 * 1.0 / (np.min(dict_pll['intrF'])), np.mean(dict_pll['transmission_delay']) + 35 * 1.0 / (np.min(dict_pll['intrF']))])
 	plt.ylim([0.99 * np.min(phidot[0:int(np.round(np.mean(dict_pll['transmission_delay']) / dict_pll['dt']) + 25 * 1.0 / (np.min(dict_pll['intrF']) * dict_pll['dt'])) - 1, :]),
-			  1.01 * np.max(phidot[0:int(np.round(np.mean(dict_pll['transmission_delay']) / dict_pll['dt']) + 25 * 1.0 / (np.min(dict_pll['intrF']) * dict_pll['dt'])) - 1, :])]);
+			  1.01 * np.max(phidot[0:int(np.round(np.mean(dict_pll['transmission_delay']) / dict_pll['dt']) + 25 * 1.0 / (np.min(dict_pll['intrF']) * dict_pll['dt'])) - 1, :])])
 	plt.savefig('results/freqInit-t_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.svg' % (
 	np.mean(dict_pll['coupK']), np.mean(dict_pll['cutFc']), np.mean(dict_pll['syncF']), np.mean(dict_pll['transmission_delay']), np.mean(dict_pll['noiseVarVCO']), now.year, now.month, now.day),
 				dpi=dpi_val, bbox_inches="tight")
 	plt.savefig('results/freqInit-t_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.png' % (
 	np.mean(dict_pll['coupK']), np.mean(dict_pll['cutFc']), np.mean(dict_pll['syncF']), np.mean(dict_pll['transmission_delay']), np.mean(dict_pll['noiseVarVCO']), now.year, now.month, now.day),
 				dpi=dpi_val, bbox_inches="tight")
-	plt.xlim([np.mean(dict_pll['transmission_delay']) - 25 * 1.0 / (np.min(dict_pll['intrF'])), np.mean(dict_pll['transmission_delay']) + 400 * 1.0 / (np.min(dict_pll['intrF']))]);
+	plt.xlim([np.mean(dict_pll['transmission_delay']) - 25 * 1.0 / (np.min(dict_pll['intrF'])), np.mean(dict_pll['transmission_delay']) + 400 * 1.0 / (np.min(dict_pll['intrF']))])
 	plt.ylim([np.min(phidot[int(np.mean(dict_pll['transmission_delay']) / dict_pll['dt'] - 25 * 1.0 / (dict_pll['sampleF'] / np.min(dict_pll['intrF']))):int(
 		np.round(np.mean(dict_pll['transmission_delay']) / dict_pll['dt']) + 400 * 1.0 / (np.min(dict_pll['intrF']) * dict_pll['dt'])) - 1, :]) - 0.05, np.max(phidot[int(np.mean(
 		dict_pll['transmission_delay']) / dict_pll['dt'] - 25 * 1.0 / (dict_pll['sampleF'] / np.min(dict_pll['intrF']))):int(
@@ -1067,7 +1066,7 @@ def plotFreqAndOrderPar(dict_pll, dict_net, dictData, plotlist=[]):
 	plt.ylabel(ylabelname, fontdict=labelfont, labelpad=labelpadyaxis)
 	ax011.tick_params(axis='both', which='major', labelsize=tickSize, pad=1)
 	ax011.set_xlim([dictData['t'][int(0.75 * np.round(np.mean(dict_pll['transmission_delay']) / dict_pll['dt']))], dictData['t'][-1]])
-	plt.grid();
+	plt.grid()
 
 	ax012 = fig20.add_subplot(212)
 

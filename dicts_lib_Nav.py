@@ -21,7 +21,7 @@ from sim_pll import check_dicts_lib as chk_dicts
 from sim_pll import coupling_fct_lib as coupfct
 
 ''' Enable automatic carbage collector '''
-gc.enable();
+gc.enable()
 
 #%%cython --annotate -c=-O3 -c=-march=native
 

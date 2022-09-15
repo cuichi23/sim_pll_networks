@@ -21,7 +21,7 @@ from sim_pll import check_dicts_lib as chk_dicts
 from sim_pll import coupling_fct_lib as coupfct
 
 ''' Enable automatic carbage collector '''
-gc.enable();
+gc.enable()
 
 #%%cython --annotate -c=-O3 -c=-march=native
 
@@ -46,7 +46,7 @@ def getDicts(Fsim=55):
 		'freq_beacons': 0.1,													# frequency of external sender beacons, either a float or a list
 		'special_case': 'timeDepTransmissionDelay',								# 'False', or 'test_case', 'timeDepInjectLockCoupStr', 'timeDepTransmissionDelay', 'timeDepChangeOfCoupStr', 'distanceDepTransmissionDelay'
 		'typeOfTimeDependency': 'linear',										# 'exponential', 'linear', 'quadratic', 'triangle', 'cosine'
-		'min_max_rate_timeDepPara': [0.01, 4, 0.001/100]						# provide a list with min, max and rate of the time-dependent parameter
+		'min_max_rate_timeDepPara': [0.01, 2.5, 0.0005/100]						# provide a list with min, max and rate of the time-dependent parameter
 	}
 
 	dict_pll = {

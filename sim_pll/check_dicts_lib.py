@@ -105,7 +105,8 @@ def check_dicts_consistency(dict_pll, dict_net, dict_algo):
 	dict_pll.update({'timeSeriesAverTime': int(dict_pll['percentPeriodsAverage']*dict_net['Tsim']*dict_pll['syncF'])})
 
 	#if dict_pll['typeVCOsig'] == 'analogHF' and inspect.getsourcelines(dict_pll['coup_fct_sig'])[0][0] == "dict_pll={'coup_fct_sig': lambda x: sawtooth(x,width=0.5)\n}"
-	#	print('Recheck paramater combinations in dict_pll: set to analogHF while coupling function of digital PLL choosen.'); sys.exit()
+	#	print('Recheck paramater combinations in dict_pll: set to analogHF while coupling function of digital PLL choosen.')
+	#	sys.exit()
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

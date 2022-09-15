@@ -66,7 +66,7 @@ annotationfont = {
 		}
 
 
-def evaluateSimulationIsing(pool_data: dict, phase_wrap=0, number_of_histogram_bins=25, prob_density=False, order_param_solution=0.0, number_of_expected_oscis_in_one_group=10) -> None:
+def evaluateSimulationIsing(pool_data: dict, phase_wrap: np.int = 0, number_of_histogram_bins: np.int = 25, prob_density: bool = False, order_param_solution: np.float = 0.0, number_of_expected_oscis_in_one_group: np.int = 10) -> None:
 	"""
 		Evaluates the simulations with SHIL, solving the MAX-cut problem in this case
 

@@ -311,7 +311,8 @@ class SignalControlledOscillator:
 			print('I am the VCO of PLL%i with intrinsic frequency f=%0.2f Hz and K=%0.2f Hz, initially in free running.' % (self.pll_id, self.intr_freq_rad / (2.0 * np.pi), self.K_rad / (2.0 * np.pi)))
 			self.init_freq = self.intr_freq_rad
 		else:
-			print('\nSet typeOfHist dict entry correctly!'); sys.exit()
+			print('\nSet typeOfHist dict entry correctly!')
+			sys.exit()
 
 		if self.c > 0:															# create noisy VCO output
 			print('VCO output noise with variance=%0.5E and std=%0.5E is enabled!' % (self.c, np.sqrt(self.c)))
@@ -343,7 +344,8 @@ class SignalControlledOscillator:
 
 		test = self.evolve_phi(self.intr_freq_rad, self.K_rad, 0.01, self.c, self.dt)
 		if not (isinstance(test, float) or isinstance(test, int)):
-			print('Specified VCO response function unknown, check VCO initialization in pll_lib!'); sys.exit()
+			print('Specified VCO response function unknown, check VCO initialization in pll_lib!')
+			sys.exit()
 
 	def evolve_coupling_strength(self, new_coupling_strength_value_or_list, dict_net: dict) -> None:
 		"""
@@ -739,7 +741,8 @@ class Delayer:
 			self.transmit_delay 		= dict_pll['transmission_delay']
 			self.transmit_delay_steps 	= int(np.round( self.transmit_delay / self.dt ))	# when initialized, the delay in time-steps is set to delay_steps
 			if ( self.transmit_delay_steps == 0 and self.transmit_delay > 0 ):
-				print('Transmission delay set nonzero but smaller than the time-step "dt", hence "self.transmit_delay_steps" < 1 !'); sys.exit()
+				print('Transmission delay set nonzero but smaller than the time-step "dt", hence "self.transmit_delay_steps" < 1 !')
+				sys.exit()
 			elif ( self.transmit_delay_steps == 0 and self.transmit_delay == 0 ):
 				print('Transmission delay set to zero!')
 			#self.get_delayed_states		= lambda;
@@ -766,7 +769,7 @@ class Delayer:
 		elif (dict_net['special_case'] == 'timeDepTransmissionDelay'):
 
 			print('Time dependent transmission delay set!')
-			time_dep_delay = setup.setup_time_dependent_parameter(dict_net, dict_pll, dict_data, parameter='transmission_delay', afterTsimPercent=0.25, forAllPLLsDifferent=False)
+			time_dep_delay = setup.setup_time_dependent_parameter(dict_net, dict_pll, dict_data, parameter='transmission_delay', afterTsimPercent=0.125, forAllPLLsDifferent=False)
 
 			if len(time_dep_delay[:, 0]) == dict_net['Nx']*dict_net['Ny']:		# if there is a matrix, i.e., different time-dependencies for different delay, then use this
 				print('Test')
@@ -799,7 +802,8 @@ class Delayer:
 			self.feedback_delay 		= dict_pll['feedback_delay']
 			self.feedback_delay_steps 	= int(np.round( self.feedback_delay / self.dt ))	# when initialized, the delay in time-steps is set to delay_steps
 			if self.feedback_delay_steps == 0 and self.feedback_delay > 0:
-				print('Feedback set to nonzero but is smaller than the time-step "dt", hence "self.feedback_delay_steps" < 1 !'); sys.exit()
+				print('Feedback set to nonzero but is smaller than the time-step "dt", hence "self.feedback_delay_steps" < 1 !')
+				sys.exit()
 
 	def set_list_of_current_neighbors(self, list_of_neighbors: list) -> None:
 		"""Set the internal list of neighbors of the Delayer.

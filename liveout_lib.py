@@ -26,7 +26,7 @@ import datetime
 now = datetime.datetime.now()
 
 ''' Enable automatic carbage collector '''
-gc.enable();
+gc.enable()
 
 ''' All plots in latex mode '''
 from matplotlib import rc

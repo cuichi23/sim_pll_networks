@@ -177,22 +177,22 @@ def evaluateSimulationIsing(pool_data: dict, phase_wrap: np.int = 0, number_of_h
 	sol_time = []
 	success_count = 0
 	success_count_test1 = 0
-	group_oscillators_maxcut = np.zeros([len(pool_data[0][:]), len(pool_data[0][0]['dictData']['phi'][0, :])])
+	group_oscillators_maxcut = np.zeros([len(pool_data[0][:]), len(pool_data[0][0]['dict_data']['phi'][0, :])])
 
 	# loop over the realizations
 	for i in range(len(pool_data[0][:])):
-		deltaTheta = np.zeros([len(pool_data[0][i]['dictData']['phi'][0, :]), len(pool_data[0][i]['dictData']['phi'][:, 0])])
-		signalOut  = np.zeros([len(pool_data[0][i]['dictData']['phi'][0, :]), len(pool_data[0][i]['dictData']['phi'][:, 0])])
+		deltaTheta = np.zeros([len(pool_data[0][i]['dict_data']['phi'][0, :]), len(pool_data[0][i]['dict_data']['phi'][:, 0])])
+		signalOut  = np.zeros([len(pool_data[0][i]['dict_data']['phi'][0, :]), len(pool_data[0][i]['dict_data']['phi'][:, 0])])
 
-		thetaDot = np.diff( pool_data[0][i]['dictData']['phi'][:, :], axis=0 ) / pool_data[0][i]['dict_pll']['dt']				# compute frequencies and order parameter
-		r, orderparam, F1 = eva.obtainOrderParam(pool_data[0][i]['dict_pll'], pool_data[0][i]['dict_net'], pool_data[0][i]['dictData'])
+		thetaDot = np.diff( pool_data[0][i]['dict_data']['phi'][:, :], axis=0 ) / pool_data[0][i]['dict_pll']['dt']				# compute frequencies and order parameter
+		order_parameter, F1 = eva.compute_order_parameter(pool_data[0][i]['dict_pll'], pool_data[0][i]['dict_net'], pool_data[0][i]['dict_data'])
 
-		ax18[i].plot( pool_data[0][i]['dictData']['t'][::plotEveryDt], orderparam[::plotEveryDt], label=r'$R_\textrm{final}=%0.2f$'%(orderparam[-1]), linewidth=linewidth )
+		ax18[i].plot( pool_data[0][i]['dict_data']['t'][::plotEveryDt], order_parameter[::plotEveryDt], label=r'$R_\textrm{final}=%0.2f$'%(order_parameter[-1]), linewidth=linewidth )
 
 		# HOWTO 1) to determine whether the correct solution has be found, we test for the asymptotic value of the order parameter
 		order_param_diff_expected_value_threshold = 0.01
 		correct_solution_test0 = False
-		if np.abs(np.mean(orderparam[-int(number_of_intrinsic_periods_smoothing * np.mean(pool_data[0][i]['dict_pll']['intrF']) / pool_data[0][i]['dict_pll']['dt']):]) - order_param_solution) < order_param_diff_expected_value_threshold:
+		if np.abs(np.mean(order_parameter[-int(number_of_intrinsic_periods_smoothing * np.mean(pool_data[0][i]['dict_pll']['intrF']) / pool_data[0][i]['dict_pll']['dt']):]) - order_param_solution) < order_param_diff_expected_value_threshold:
 			print('Order parameter predicted for solution=%0.2f has been reached. Averaged over last %i periods of the intrinsic frequency for realization %i.' % (order_param_solution, number_of_intrinsic_periods_smoothing, i))
 			success_count += 1					# to calculate the probability of finding the correct solutions
 			correct_solution_test0 = True		# this is needed to decide for which realizations we need to measure the time to solution
@@ -202,10 +202,10 @@ def evaluateSimulationIsing(pool_data: dict, phase_wrap: np.int = 0, number_of_h
 		group2 = 0
 		correct_solution_test1 = False
 		final_phase_oscillator = []
-		for j in range(len(pool_data[0][i]['dictData']['phi'][0, :])):
+		for j in range(len(pool_data[0][i]['dict_data']['phi'][0, :])):
 			# calculate mean phase difference over an interval of 'number_of_intrinsic_periods_smoothing' periods at the end of all oscillators with respect to oscillator zero
 			# interval_index = -int(number_of_intrinsic_periods_smoothing * np.mean(pool_data[0][i]['dict_pll']['intrF']) / pool_data[0][i]['dict_pll']['dt'])
-			temp_phase_diff = np.mean(pool_data[0][i]['dictData']['phi'][-int(number_of_intrinsic_periods_smoothing * np.mean(pool_data[0][i]['dict_pll']['intrF']) / pool_data[0][i]['dict_pll']['dt']):, 0] - pool_data[0][i]['dictData']['phi'][-int(number_of_intrinsic_periods_smoothing * np.mean(pool_data[0][i]['dict_pll']['intrF']) / pool_data[0][i]['dict_pll']['dt']):, j])
+			temp_phase_diff = np.mean(pool_data[0][i]['dict_data']['phi'][-int(number_of_intrinsic_periods_smoothing * np.mean(pool_data[0][i]['dict_pll']['intrF']) / pool_data[0][i]['dict_pll']['dt']):, 0] - pool_data[0][i]['dict_data']['phi'][-int(number_of_intrinsic_periods_smoothing * np.mean(pool_data[0][i]['dict_pll']['intrF']) / pool_data[0][i]['dict_pll']['dt']):, j])
 			print('Realization %i, mean phase difference {mod 2pi into [-pi, pi)} between k=0 and k=%i is deltaPhi=%0.2f'%(i, j, ((temp_phase_diff+np.pi) % (2*np.pi))-np.pi))
 			if np.abs(((temp_phase_diff+np.pi) % (2*np.pi))-np.pi) < np.pi / 2:
 				group1 += 1
@@ -219,7 +219,7 @@ def evaluateSimulationIsing(pool_data: dict, phase_wrap: np.int = 0, number_of_h
 			# 	group_oscillators_maxcut[i, j] = 0
 			# 	final_phase_oscillator.append('diff')
 
-		if not group1+group2 == len(pool_data[0][i]['dictData']['phi'][0, :]):
+		if not group1+group2 == len(pool_data[0][i]['dict_data']['phi'][0, :]):
 			print('ERROR: check!')
 			sys.exit()
 		if group1 == number_of_expected_oscis_in_one_group or group2 == number_of_expected_oscis_in_one_group:
@@ -233,25 +233,25 @@ def evaluateSimulationIsing(pool_data: dict, phase_wrap: np.int = 0, number_of_h
 			if correct_solution_test1:
 				# when the derivative of the order parameter is close to zero, we expect that the asymptotic state has been reached
 				# here we look for the cases where this is NOT the case yet, then the last entry of the resulting vector will be the transition time from transient to asymptotic dynamics
-				# note that in pool_data[0][i]['dictData']['tstep_annealing_start'] the delay steps are ALREADY included!
-				derivative_order_param_smoothed = (np.diff( uniform_filter1d( orderparam[pool_data[0][i]['dict_net']['max_delay_steps']:],
+				# note that in pool_data[0][i]['dict_data']['tstep_annealing_start'] the delay steps are ALREADY included!
+				derivative_order_param_smoothed = (np.diff( uniform_filter1d( order_parameter[pool_data[0][i]['dict_net']['max_delay_steps']:],
 					size=int(15 * number_of_intrinsic_periods_smoothing * np.mean(pool_data[0][i]['dict_pll']['intrF']) / pool_data[0][i]['dict_pll']['dt']), mode='reflect') ) / pool_data[0][i]['dict_pll']['dt'])
 
 				rolling_std_derivative_order_param_smoothed = pd.Series(derivative_order_param_smoothed).rolling(int(15 * number_of_intrinsic_periods_smoothing * np.mean(pool_data[0][i]['dict_pll']['intrF']) / pool_data[0][i]['dict_pll']['dt'])).std()
 
-				#temp = np.where( (np.diff( uniform_filter1d( orderparam[(pool_data[0][i]['dictData']['tstep_annealing_start'] + pool_data[0][i]['dict_net']['max_delay_steps']):],
+				#temp = np.where( (np.diff( uniform_filter1d( order_parameter[(pool_data[0][i]['dict_data']['tstep_annealing_start'] + pool_data[0][i]['dict_net']['max_delay_steps']):],
 				#	size=int(15 * number_of_intrinsic_periods_smoothing * np.mean(pool_data[0][i]['dict_pll']['intrF']) / pool_data[0][i]['dict_pll']['dt']), mode='reflect') ) / pool_data[0][i]['dict_pll']['dt']) > order_param_change_threshold )
 				min_std = np.min(rolling_std_derivative_order_param_smoothed)
 				print('min_std:', min_std)
 				max_std = np.max(rolling_std_derivative_order_param_smoothed)
 				order_param_std_threshold = 0.075 * (max_std - min_std) + min_std
 				print('Realization %i, order_param_std_threshold to %0.05f, for {min_std, max_std} = {%0.4f,%0.4f} '%(i, order_param_std_threshold, min_std, max_std))
-				temp = np.where(rolling_std_derivative_order_param_smoothed[(pool_data[0][i]['dictData']['tstep_annealing_start']-pool_data[0][i]['dict_net']['max_delay_steps']):] > order_param_std_threshold)
+				temp = np.where(rolling_std_derivative_order_param_smoothed[(pool_data[0][i]['dict_data']['tstep_annealing_start']-pool_data[0][i]['dict_net']['max_delay_steps']):] > order_param_std_threshold)
 
 				# plt.plot(derivative_order_param_smoothed, 'b')
 				# plt.plot(rolling_std_derivative_order_param_smoothed, 'r--')
 				# plt.plot(temp[0][-1], rolling_std_derivative_order_param_smoothed[temp[0][-1]], 'cd')
-				# plt.plot((pool_data[0][i]['dictData']['tstep_annealing_start']-pool_data[0][i]['dict_net']['max_delay_steps']) * pool_data[0][i]['dict_pll']['dt'], 0, 'yd')
+				# plt.plot((pool_data[0][i]['dict_data']['tstep_annealing_start']-pool_data[0][i]['dict_net']['max_delay_steps']) * pool_data[0][i]['dict_pll']['dt'], 0, 'yd')
 
 				# print('temp=', temp[0])
 				if not len(temp[0]) == 0:
@@ -267,47 +267,47 @@ def evaluateSimulationIsing(pool_data: dict, phase_wrap: np.int = 0, number_of_h
 				sol_time.append(np.inf)
 		else:
 			if correct_solution_test1:
-				derivative_order_param_smoothed = (np.diff(orderparam[pool_data[0][i]['dict_net']['max_delay_steps']:] / pool_data[0][i]['dict_pll']['dt']))
+				derivative_order_param_smoothed = (np.diff(order_parameter[pool_data[0][i]['dict_net']['max_delay_steps']:] / pool_data[0][i]['dict_pll']['dt']))
 				rolling_std_derivative_order_param_smoothed = pd.Series(derivative_order_param_smoothed).rolling(int(15 * number_of_intrinsic_periods_smoothing * np.mean(pool_data[0][i]['dict_pll']['intrF']) / pool_data[0][i]['dict_pll']['dt'])).std()
-				temp = np.where(rolling_std_derivative_order_param_smoothed[(pool_data[0][i]['dictData']['tstep_annealing_start'] - pool_data[0][i]['dict_net']['max_delay_steps']):] > order_param_std_threshold)
+				temp = np.where(rolling_std_derivative_order_param_smoothed[(pool_data[0][i]['dict_data']['tstep_annealing_start'] - pool_data[0][i]['dict_net']['max_delay_steps']):] > order_param_std_threshold)
 				sol_time.append(temp[0][-1] * pool_data[0][i]['dict_pll']['dt'])
 			else:
 				sol_time.append(np.inf)
 
 		if correct_solution_test1:
-			ax18[i].plot(pool_data[0][i]['dictData']['t'][pool_data[0][i]['dictData']['tstep_annealing_start']], 0, 'cd', markersize=1.5)
-			ax18[i].plot(pool_data[0][i]['dictData']['t'][pool_data[0][i]['dict_net']['max_delay_steps']:-1:plotEveryDt], derivative_order_param_smoothed[::plotEveryDt], 'r', linewidth=0.5, alpha=0.35)
-			ax18[i].plot(pool_data[0][i]['dictData']['t'][pool_data[0][i]['dict_net']['max_delay_steps']:-1:plotEveryDt], rolling_std_derivative_order_param_smoothed[::plotEveryDt], 'k', linewidth=0.5, alpha=0.35)
+			ax18[i].plot(pool_data[0][i]['dict_data']['t'][pool_data[0][i]['dict_data']['tstep_annealing_start']], 0, 'cd', markersize=1.5)
+			ax18[i].plot(pool_data[0][i]['dict_data']['t'][pool_data[0][i]['dict_net']['max_delay_steps']:-1:plotEveryDt], derivative_order_param_smoothed[::plotEveryDt], 'r', linewidth=0.5, alpha=0.35)
+			ax18[i].plot(pool_data[0][i]['dict_data']['t'][pool_data[0][i]['dict_net']['max_delay_steps']:-1:plotEveryDt], rolling_std_derivative_order_param_smoothed[::plotEveryDt], 'k', linewidth=0.5, alpha=0.35)
 
 		if correct_solution_test0 and sol_time[i] != np.inf:
-			ax18[i].plot(sol_time[i] + pool_data[0][i]['dictData']['t'][pool_data[0][i]['dictData']['tstep_annealing_start']], rolling_std_derivative_order_param_smoothed[int(sol_time[i] / pool_data[0][i]['dict_pll']['dt'])], 'c*', markersize=2.5)
+			ax18[i].plot(sol_time[i] + pool_data[0][i]['dict_data']['t'][pool_data[0][i]['dict_data']['tstep_annealing_start']], rolling_std_derivative_order_param_smoothed[int(sol_time[i] / pool_data[0][i]['dict_pll']['dt'])], 'c*', markersize=2.5)
 
 		if len(pool_data[0][:]) > threshold_realizations_plot:
-			ax21.plot(pool_data[0][i]['dictData']['t'][(pool_data[0][i]['dictData']['tstep_annealing_start'] + pool_data[0][i]['dict_net']['max_delay_steps'])], -0.05, 'cd', markersize=1)
+			ax21.plot(pool_data[0][i]['dict_data']['t'][(pool_data[0][i]['dict_data']['tstep_annealing_start'] + pool_data[0][i]['dict_net']['max_delay_steps'])], -0.05, 'cd', markersize=1)
 			if correct_solution_test1:
-				ax21.plot(pool_data[0][i]['dictData']['t'][::plotEveryDt], orderparam[::plotEveryDt], '-', label=r'$R_\textrm{final}=%0.2f$' % (orderparam[-1]), linewidth=linewidth)
-				ax211.plot(pool_data[0][i]['dictData']['t'][::plotEveryDt], uniform_filter1d(orderparam[::plotEveryDt],
-							size=int(number_of_intrinsic_periods_smoothing * np.mean(pool_data[0][i]['dict_pll']['intrF']) / pool_data[0][i]['dict_pll']['dt']), mode='reflect'), '-', label=r'$R_\textrm{final}=%0.2f$' % (orderparam[-1]), linewidth=linewidth)
+				ax21.plot(pool_data[0][i]['dict_data']['t'][::plotEveryDt], order_parameter[::plotEveryDt], '-', label=r'$R_\textrm{final}=%0.2f$' % (order_parameter[-1]), linewidth=linewidth)
+				ax211.plot(pool_data[0][i]['dict_data']['t'][::plotEveryDt], uniform_filter1d(order_parameter[::plotEveryDt],
+							size=int(number_of_intrinsic_periods_smoothing * np.mean(pool_data[0][i]['dict_pll']['intrF']) / pool_data[0][i]['dict_pll']['dt']), mode='reflect'), '-', label=r'$R_\textrm{final}=%0.2f$' % (order_parameter[-1]), linewidth=linewidth)
 				if sol_time[i] != np.inf:
 					ax21.plot(sol_time[i] + pool_data[0][i]['dict_net']['max_delay_steps'], -0.05, 'c*', markersize=1)
 			else:
-				ax21.plot(pool_data[0][i]['dictData']['t'][::plotEveryDt], orderparam[::plotEveryDt], '--', label=r'$R_\textrm{final}=%0.2f$' % (orderparam[-1]), linewidth=linewidth)
-				ax211.plot(pool_data[0][i]['dictData']['t'][::plotEveryDt], uniform_filter1d(orderparam[::plotEveryDt],
-							size=int(number_of_intrinsic_periods_smoothing * np.mean(pool_data[0][i]['dict_pll']['intrF']) / pool_data[0][i]['dict_pll']['dt']), mode='reflect'), '--', label=r'$R_\textrm{final}=%0.2f$' % (orderparam[-1]), linewidth=linewidth)
+				ax21.plot(pool_data[0][i]['dict_data']['t'][::plotEveryDt], order_parameter[::plotEveryDt], '--', label=r'$R_\textrm{final}=%0.2f$' % (order_parameter[-1]), linewidth=linewidth)
+				ax211.plot(pool_data[0][i]['dict_data']['t'][::plotEveryDt], uniform_filter1d(order_parameter[::plotEveryDt],
+							size=int(number_of_intrinsic_periods_smoothing * np.mean(pool_data[0][i]['dict_pll']['intrF']) / pool_data[0][i]['dict_pll']['dt']), mode='reflect'), '--', label=r'$R_\textrm{final}=%0.2f$' % (order_parameter[-1]), linewidth=linewidth)
 
 
 		if phase_wrap == 0:  # plot phase differences in [-inf, inf), i.e., we use the unwrapped phases that have counted the cycles/periods
-			ax20[i].hist(pool_data[0][i]['dictData']['phi'][-3, :] - pool_data[0][i]['dictData']['phi'][-2, 0], bins=number_of_histogram_bins, rwidth=0.9, density=prob_density)
+			ax20[i].hist(pool_data[0][i]['dict_data']['phi'][-3, :] - pool_data[0][i]['dict_data']['phi'][-2, 0], bins=number_of_histogram_bins, rwidth=0.9, density=prob_density)
 		elif phase_wrap != 0:
-			# print('histogram_data (wrapping if phase):', ((dictData['phi'][at_index, plotlist] + shift2piWin) % (2 * np.pi)) - shift2piWin)
-			ax20[i].hist((((pool_data[0][i]['dictData']['phi'][-3, :] - pool_data[0][i]['dictData']['phi'][-2, 0] + shift2piWin) % (2.0 * np.pi)) - shift2piWin), bins=number_of_histogram_bins, rwidth=0.9, density=prob_density)
+			# print('histogram_data (wrapping if phase):', ((dict_data['phi'][at_index, plotlist] + shift2piWin) % (2 * np.pi)) - shift2piWin)
+			ax20[i].hist((((pool_data[0][i]['dict_data']['phi'][-3, :] - pool_data[0][i]['dict_data']['phi'][-2, 0] + shift2piWin) % (2.0 * np.pi)) - shift2piWin), bins=number_of_histogram_bins, rwidth=0.9, density=prob_density)
 
-		for j in range(len(pool_data[0][i]['dictData']['phi'][0, :])):
+		for j in range(len(pool_data[0][i]['dict_data']['phi'][0, :])):
 			if shift2piWin != 0:
-				deltaTheta[j] = (((pool_data[0][i]['dictData']['phi'][:, 0] - pool_data[0][i]['dictData']['phi'][:, j]) + shift2piWin) % (2.0 * np.pi)) - shift2piWin 		# calculate phase-differnce w.r.t. osci k=0
+				deltaTheta[j] = (((pool_data[0][i]['dict_data']['phi'][:, 0] - pool_data[0][i]['dict_data']['phi'][:, j]) + shift2piWin) % (2.0 * np.pi)) - shift2piWin 		# calculate phase-differnce w.r.t. osci k=0
 			else:
-				deltaTheta[j] = pool_data[0][i]['dictData']['phi'][:, 0] - pool_data[0][i]['dictData']['phi'][:, j]
-			signalOut[j] = pool_data[0][i]['dict_pll']['vco_out_sig'](pool_data[0][i]['dictData']['phi'][:, j])				# generate signals for all phase histories
+				deltaTheta[j] = pool_data[0][i]['dict_data']['phi'][:, 0] - pool_data[0][i]['dict_data']['phi'][:, j]
+			signalOut[j] = pool_data[0][i]['dict_pll']['vco_out_sig'](pool_data[0][i]['dict_data']['phi'][:, j])				# generate signals for all phase histories
 
 			# # save in which binarized state the oscillator was at the end of the realization, averaged over
 			# if np.mean(deltaTheta[j][-int(number_of_intrinsic_periods_smoothing * np.mean(pool_data[0][i]['dict_pll']['intrF']) / pool_data[0][i]['dict_pll']['dt']):-1]) - 0 < 0.2:
@@ -325,12 +325,12 @@ def evaluateSimulationIsing(pool_data: dict, phase_wrap: np.int = 0, number_of_h
 			else:
 				linestyle = '-'
 
-			ax16[i].plot( pool_data[0][i]['dictData']['t'][::plotEveryDt], deltaTheta[j, ::plotEveryDt], linestyle, linewidth=linewidth, label='sig PLL%i' %(j))
-			ax161[i].plot(pool_data[0][i]['dictData']['t'], uniform_filter1d(deltaTheta[j, :], size=int(number_of_intrinsic_periods_smoothing * np.mean(pool_data[0][i]['dict_pll']['intrF']) / pool_data[0][i]['dict_pll']['dt']), mode='reflect'), linestyle, linewidth=linewidth, label='sig PLL%i' % (j))
-			ax19[i].plot( pool_data[0][i]['dictData']['t'][::plotEveryDt], pool_data[0][i]['dict_pll']['vco_out_sig'](pool_data[0][i]['dictData']['phi'][::plotEveryDt, j]), linewidth=linewidth, label='sig PLL%i' %(j))
-			ax17[i].plot( pool_data[0][i]['dictData']['t'][1::plotEveryDt], thetaDot[::plotEveryDt, j], linewidth=linewidth, label='sig PLL%i' %(j))
+			ax16[i].plot( pool_data[0][i]['dict_data']['t'][::plotEveryDt], deltaTheta[j, ::plotEveryDt], linestyle, linewidth=linewidth, label='sig PLL%i' %(j))
+			ax161[i].plot(pool_data[0][i]['dict_data']['t'], uniform_filter1d(deltaTheta[j, :], size=int(number_of_intrinsic_periods_smoothing * np.mean(pool_data[0][i]['dict_pll']['intrF']) / pool_data[0][i]['dict_pll']['dt']), mode='reflect'), linestyle, linewidth=linewidth, label='sig PLL%i' % (j))
+			ax19[i].plot( pool_data[0][i]['dict_data']['t'][::plotEveryDt], pool_data[0][i]['dict_pll']['vco_out_sig'](pool_data[0][i]['dict_data']['phi'][::plotEveryDt, j]), linewidth=linewidth, label='sig PLL%i' %(j))
+			ax17[i].plot( pool_data[0][i]['dict_data']['t'][1::plotEveryDt], thetaDot[::plotEveryDt, j], linewidth=linewidth, label='sig PLL%i' %(j))
 
-		print('working on realization %i results from sim:'%i, pool_data[0][i]['dict_net'], '\n', pool_data[0][i]['dict_pll'], '\n', pool_data[0][i]['dictData'], '\n\n')
+		print('working on realization %i results from sim:'%i, pool_data[0][i]['dict_net'], '\n', pool_data[0][i]['dict_pll'], '\n', pool_data[0][i]['dict_data'], '\n\n')
 
 		if i == int( len(pool_data[0][:]) / 2 ):
 			ax16[i].set_ylabel(r'$\Delta\theta(t)$', fontsize=axisLabel)
@@ -403,8 +403,8 @@ def evaluateSimulationIsing(pool_data: dict, phase_wrap: np.int = 0, number_of_h
 		np.max(sol_time)/np.mean(pool_data[0][i]['dict_pll']['intrF']))
 	if len(pool_data[0][:]) > threshold_realizations_plot:
 		props = dict(boxstyle='round', facecolor='wheat', alpha=0.5)
-		#ax21.text(0.25*pool_data[0][0]['dictData']['t'][-1], 0.2, results_string, horizontalalignment='left', verticalalignment='bottom', bbox=props, fontsize=9)
-		ax211.text(0.25 * pool_data[0][0]['dictData']['t'][-1], 0.2, results_string, horizontalalignment='left', verticalalignment='bottom', bbox=props, fontsize=9)
+		#ax21.text(0.25*pool_data[0][0]['dict_data']['t'][-1], 0.2, results_string, horizontalalignment='left', verticalalignment='bottom', bbox=props, fontsize=9)
+		ax211.text(0.25 * pool_data[0][0]['dict_data']['t'][-1], 0.2, results_string, horizontalalignment='left', verticalalignment='bottom', bbox=props, fontsize=9)
 
 	print(results_string)
 

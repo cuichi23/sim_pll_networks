@@ -185,20 +185,20 @@ def evaluate_pool_data(dict_net, dict_algo, pool_data):
 	elif dict_algo['parameter_space_sweeps'] == 'single':
 		if dict_net['special_case'] != 'False':
 			print('Plotting frequency vs time-dependent parameter!')
-			plot.plot_instfreq_vs_timedependent_parameter(pool_data[0][0]['dict_pll'], pool_data[0][0]['dict_net'], pool_data[0][0]['dictData'])
-		if 'ctrl' in pool_data[0][0]['dictData']:
-			plot.plotCtrlSigDny(pool_data[0][0]['dict_pll'], pool_data[0][0]['dict_net'], pool_data[0][0]['dictData'])
-		if 'clock_counter' in pool_data[0][0]['dictData']:
-			plot.plotClockTime(pool_data[0][0]['dict_pll'], pool_data[0][0]['dict_net'], pool_data[0][0]['dictData'])
-		plot.plotPhasesInf(pool_data[0][0]['dict_pll'], pool_data[0][0]['dict_net'], pool_data[0][0]['dictData'])
-		plot.plotPhases2pi(pool_data[0][0]['dict_pll'], pool_data[0][0]['dict_net'], pool_data[0][0]['dictData'])
-		plot.plotFrequency(pool_data[0][0]['dict_pll'], pool_data[0][0]['dict_net'], pool_data[0][0]['dictData'])
-		plot.plotOrderPara(pool_data[0][0]['dict_pll'], pool_data[0][0]['dict_net'], pool_data[0][0]['dictData'])
-		plot.plotPhaseRela(pool_data[0][0]['dict_pll'], pool_data[0][0]['dict_net'], pool_data[0][0]['dictData'])
-		plot.plotPhaseDiff(pool_data[0][0]['dict_pll'], pool_data[0][0]['dict_net'], pool_data[0][0]['dictData'])
-		plot.plotOscSignal(pool_data[0][0]['dict_pll'], pool_data[0][0]['dict_net'], pool_data[0][0]['dictData'])
-		plot.plotFreqAndPhaseDiff(pool_data[0][0]['dict_pll'], pool_data[0][0]['dict_net'], pool_data[0][0]['dictData'])
-		plot.plotPSD(pool_data[0][0]['dict_pll'], pool_data[0][0]['dict_net'], pool_data[0][0]['dictData'], [], saveData=False)
+			plot.plot_instfreq_vs_timedependent_parameter(pool_data[0][0]['dict_pll'], pool_data[0][0]['dict_net'], pool_data[0][0]['dict_data'])
+		if 'ctrl' in pool_data[0][0]['dict_data']:
+			plot.plotCtrlSigDny(pool_data[0][0]['dict_pll'], pool_data[0][0]['dict_net'], pool_data[0][0]['dict_data'])
+		if 'clock_counter' in pool_data[0][0]['dict_data']:
+			plot.plot_clock_time_in_period_fractions(pool_data[0][0]['dict_pll'], pool_data[0][0]['dict_net'], pool_data[0][0]['dict_data'])
+		plot.plot_phases_unwrapped(pool_data[0][0]['dict_pll'], pool_data[0][0]['dict_net'], pool_data[0][0]['dict_data'])
+		plot.plot_phases_two_pi_periodic(pool_data[0][0]['dict_pll'], pool_data[0][0]['dict_net'], pool_data[0][0]['dict_data'])
+		plot.plot_inst_frequency(pool_data[0][0]['dict_pll'], pool_data[0][0]['dict_net'], pool_data[0][0]['dict_data'])
+		plot.plot_order_parameter(pool_data[0][0]['dict_pll'], pool_data[0][0]['dict_net'], pool_data[0][0]['dict_data'])
+		plot.plot_phase_difference_wrt_to_osci_kzero(pool_data[0][0]['dict_pll'], pool_data[0][0]['dict_net'], pool_data[0][0]['dict_data'])
+		plot.plot_phase_difference(pool_data[0][0]['dict_pll'], pool_data[0][0]['dict_net'], pool_data[0][0]['dict_data'])
+		plot.plot_periodic_output_signal_from_phase(pool_data[0][0]['dict_pll'], pool_data[0][0]['dict_net'], pool_data[0][0]['dict_data'])
+		plot.plot_inst_frequency_and_phase_difference(pool_data[0][0]['dict_pll'], pool_data[0][0]['dict_net'], pool_data[0][0]['dict_data'])
+		plot.plot_power_spectral_density(pool_data[0][0]['dict_pll'], pool_data[0][0]['dict_net'], pool_data[0][0]['dict_data'], [], saveData=False)
 		plt.draw()
 		plt.show()
 
@@ -212,14 +212,14 @@ def evaluate_pool_data(dict_net, dict_algo, pool_data):
 		plot.plotFinalPhaseConfigParamVsParameterSpace(pool_data, average_time_order_parameter_in_periods)
 		if dict_algo['paramDiscretization'][0] * dict_algo['paramDiscretization'][1] < 10:
 			for i in range(dict_algo['paramDiscretization'][0] * dict_algo['paramDiscretization'][1]):
-				plot.plotPhasesInf(pool_data[0][i]['dict_pll'], pool_data[0][i]['dict_net'], pool_data[0][i]['dictData'])
-				plot.plotPhases2pi(pool_data[0][i]['dict_pll'], pool_data[0][i]['dict_net'], pool_data[0][i]['dictData'])
-				plot.plotFrequency(pool_data[0][i]['dict_pll'], pool_data[0][i]['dict_net'], pool_data[0][i]['dictData'])
-				plot.plotOrderPara(pool_data[0][i]['dict_pll'], pool_data[0][i]['dict_net'], pool_data[0][i]['dictData'])
-				plot.plotPhaseRela(pool_data[0][i]['dict_pll'], pool_data[0][i]['dict_net'], pool_data[0][i]['dictData'])
-				plot.plotPhaseDiff(pool_data[0][i]['dict_pll'], pool_data[0][i]['dict_net'], pool_data[0][i]['dictData'])
-				plot.plotOscSignal(pool_data[0][i]['dict_pll'], pool_data[0][i]['dict_net'], pool_data[0][i]['dictData'])
-				plot.plotFreqAndPhaseDiff(pool_data[0][i]['dict_pll'], pool_data[0][i]['dict_net'], pool_data[0][i]['dictData'])
+				plot.plot_phases_unwrapped(pool_data[0][i]['dict_pll'], pool_data[0][i]['dict_net'], pool_data[0][i]['dict_data'])
+				plot.plot_phases_two_pi_periodic(pool_data[0][i]['dict_pll'], pool_data[0][i]['dict_net'], pool_data[0][i]['dict_data'])
+				plot.plot_inst_frequency(pool_data[0][i]['dict_pll'], pool_data[0][i]['dict_net'], pool_data[0][i]['dict_data'])
+				plot.plot_order_parameter(pool_data[0][i]['dict_pll'], pool_data[0][i]['dict_net'], pool_data[0][i]['dict_data'])
+				plot.plot_phase_difference_wrt_to_osci_kzero(pool_data[0][i]['dict_pll'], pool_data[0][i]['dict_net'], pool_data[0][i]['dict_data'])
+				plot.plot_phase_difference(pool_data[0][i]['dict_pll'], pool_data[0][i]['dict_net'], pool_data[0][i]['dict_data'])
+				plot.plot_periodic_output_signal_from_phase(pool_data[0][i]['dict_pll'], pool_data[0][i]['dict_net'], pool_data[0][i]['dict_data'])
+				plot.plot_inst_frequency_and_phase_difference(pool_data[0][i]['dict_pll'], pool_data[0][i]['dict_net'], pool_data[0][i]['dict_data'])
 		plt.draw()
 		plt.show()
 
@@ -263,9 +263,9 @@ def multihelper(iterConfig, initPhiPrime0, dict_net, dict_pll, dict_algo, param_
 		#print('Check whether perturbation is inside unit-cell! phiS:', dict_netRea['phiPerturb'], '\tInside? True/False:', unit_cell.is_inside((dict_netRea['phiPerturb']), isRotated=False)); time.sleep(2)
 		if not unit_cell.is_inside((dict_netRea['phiPerturb']), isRotated=False):	# NOTE this case is for scanValues set only in -pi to pi
 			print('Set dummy solution! Detected case outside of unit-cell.')
-			dictData = {'mean_order': -1., 'last_orderP': -1., 'stdev_orderP': np.zeros(1), 'phases': dict_net['phiInitConfig'],
+			dict_data = {'mean_order': -1., 'last_orderP': -1., 'stdev_orderP': np.zeros(1), 'phases': dict_net['phiInitConfig'],
 					 		'intrinfreq': np.zeros(1), 'coupling_strength': np.zeros(1), 'transdelays': dict_pll['transmission_delay'], 'orderP_t': np.zeros(int(number_period_dyn/(dict_pll['intrF']*dict_pll['dt'])))-1.0}
-			realizationDict = {'dict_net': dict_netRea, 'dict_pll': dict_pll, 'dictData': dictData}
+			realizationDict = {'dict_net': dict_netRea, 'dict_pll': dict_pll, 'dict_data': dict_data}
 			return realizationDict
 		else:
 			return simulateSystem(dict_netRea, dict_pllRea, dict_algoRea, multi_sim=True)

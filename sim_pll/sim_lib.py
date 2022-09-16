@@ -31,7 +31,7 @@ gc.enable()
 
 ''' SIMULATE NETWORK '''
 def simulateSystem(dict_net: dict, dict_pll: dict, dict_algo, multi_sim=False):
-	"""Function that organizes the simulation. a) sets up a list of PLLs and a container for the results (dictData). Writes the initial histories as specified. b) carries out the
+	"""Function that organizes the simulation. a) sets up a list of PLLs and a container for the results (dict_data). Writes the initial histories as specified. b) carries out the
 		evolution of the PLL's phases. c) save results and returns results or plots them.
 
 		Args:
@@ -43,7 +43,7 @@ def simulateSystem(dict_net: dict, dict_pll: dict, dict_algo, multi_sim=False):
 			dict_net
 			dict_pll
 			dict_algo
-			dictData
+			dict_data
 	"""
 	#mode,div,Nplls,F,F_Omeg,K,Fc,delay,feedback_delay,dt,c,Nsteps,topology,couplingfct,histtype,phiS,phiM,domega,diffconstK,diffconstSendDelay,cPD,Nx=0,Ny=0,Trelax=0,Kadiab_value_r=0):
 
@@ -52,27 +52,27 @@ def simulateSystem(dict_net: dict, dict_pll: dict, dict_algo, multi_sim=False):
 	np.random.seed()
 
 	# prepare simulation, write histories of phases, set initial conditions, etc.
-	dictData, pll_list = prepare_simulation(dict_net, dict_pll)
+	dict_data, pll_list = prepare_simulation(dict_net, dict_pll)
 
 	# now simulate the system after history is set
-	perform_simulation_case(dict_net, dict_pll, dict_algo, dictData, pll_list)
+	perform_simulation_case(dict_net, dict_pll, dict_algo, dict_data, pll_list)
 
 	# save the data before performing any additional evaluation or plotting
 	if not multi_sim:
 		print('Time needed for execution of simulation: ', (time.time()-t0), ' seconds, now save result dicts.')
-		save_results_simulation(dict_net, dict_pll, dict_algo, dictData)
+		save_results_simulation(dict_net, dict_pll, dict_algo, dict_data)
 
 	# run evaluations
-	perform_evaluation(dict_net, dict_pll, dictData)
+	perform_evaluation(dict_net, dict_pll, dict_data)
 
 	# if this simulation is one of many, the results are returned to the container that hold the results of all simulations, otherwise the results are plotted
 	if multi_sim:
-		return {'dict_net': dict_net, 'dict_pll': dict_pll, 'dict_algo': dict_algo, 'dictData': dictData}
+		return {'dict_net': dict_net, 'dict_pll': dict_pll, 'dict_algo': dict_algo, 'dict_data': dict_data}
 	else:
-		plot_results_simulation(dict_net, dict_pll, dictData)
+		plot_results_simulation(dict_net, dict_pll, dict_data)
 		print('Time needed for simulation, evaluation and plotting: ', (time.time() - t0), ' seconds')
 		plt.show()
-		return dict_net, dict_pll, dict_algo, dictData
+		return dict_net, dict_pll, dict_algo, dict_data
 
 ###########################################################################################################################################
 ###########################################################################################################################################
@@ -87,14 +87,14 @@ def prepare_simulation(dict_net: dict, dict_pll: dict):
 
 		Returns:
 			pll_list
-			dictData: contains the results of the simulation, i.e., the phases of all oscillators, time dependent parameters, etc.
+			dict_data: contains the results of the simulation, i.e., the phases of all oscillators, time dependent parameters, etc.
 	"""
-	dictData = {}  # setup dictionary that hold all the data
-	space = setup.generate_space(dict_net, dict_pll, dictData)  # generates a space object used to handle pll distributed in a continuous space
+	dict_data = {}  # setup dictionary that hold all the data
+	space = setup.generate_space(dict_net, dict_pll, dict_data)  # generates a space object used to handle pll distributed in a continuous space
 	if not dict_net['phiInitConfig']:  							# if no custom phase configuration is provided, generate it
 		print('\nPhase configuration of synchronized state will be set according to supplied topology and twist state information!')
 		setup.generate_phi0(dict_net, dict_pll)  # generate the initial phase configuration for twist, chequerboard, in- and anti-phase states
-	pll_list = setup.generate_plls(dict_pll, dict_net, dictData)  # generate a list that contains all the PLLs of the network
+	pll_list = setup.generate_plls(dict_pll, dict_net, dict_data)  # generate a list that contains all the PLLs of the network
 	all_transmit_delay = [np.max(n.delayer.transmit_delay_steps) for n in pll_list]  # obtain all the transmission delays for all PLLs
 	all_feedback_delay = [n.delayer.feedback_delay_steps for n in pll_list]  # obtain all the feedback delays for all PLLs
 	max_feedback_delay = np.max(all_feedback_delay)
@@ -198,19 +198,19 @@ def prepare_simulation(dict_net: dict, dict_pll: dict):
 	# plt.plot(phi[:,0], 'o'); plt.plot(phi[:,1], 'd'); plt.draw(); plt.show();
 	# sys.exit()
 	# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	dictData.update({'clock_counter': clock_counter, 'phi': phi, 'all_transmit_delay': all_transmit_delay,
+	dict_data.update({'clock_counter': clock_counter, 'phi': phi, 'all_transmit_delay': all_transmit_delay,
 					 'all_feedback_delay': all_feedback_delay})
-	return dictData, pll_list
+	return dict_data, pll_list
 
 
-def perform_simulation_case(dict_net: dict, dict_pll: dict, dict_algo: dict, dictData: dict, pll_list: list) -> None:
+def perform_simulation_case(dict_net: dict, dict_pll: dict, dict_algo: dict, dict_data: dict, pll_list: list) -> None:
 	"""Function that initiates the simulation of the network of oscillators.
 
 		Args:
 			dict_net:  contains as parameters the information about properties of the network to be simulated, the initial conditions and the synchronized states under investigation
 			dict_pll:  contains as parameters the information about properties of the PLLs, its components, the time delays, the types of signals exchanged
 			dict_algo: contains as parameters the information how the simulation has to be carried out and what type is run: e.g., 'single', 'classicBruteForceMethodRotatedSpace', 'listOfInitialPhaseConfigurations', 'single', 'statistics'
-			dictData: contains the results of the simulation, i.e., the phases of all oscillators, time dependent parameters, etc.
+			dict_data: contains the results of the simulation, i.e., the phases of all oscillators, time dependent parameters, etc.
 			pll_list
 
 		Returns:
@@ -219,144 +219,150 @@ def perform_simulation_case(dict_net: dict, dict_pll: dict, dict_algo: dict, dic
 
 	treshold_operate_on_tau_array = 1.5E6
 	if dict_pll['sim_time_steps'] * dict_pll['dt'] <= treshold_operate_on_tau_array and dict_net['phi_array_mult_tau'] == 1 and dict_net['special_case'] == 'False':  # container to flush data
-		evolve_system_on_tsim_array(dict_net, dict_pll, pll_list, dictData, dict_algo)
+		evolve_system_on_tsim_array(dict_net, dict_pll, pll_list, dict_data, dict_algo)
 	elif dict_pll['sim_time_steps'] * dict_pll['dt'] > treshold_operate_on_tau_array and dict_net['phi_array_mult_tau'] == 1 and dict_net['special_case'] == 'False':
 		#print('Simulation on tau-array.')
-		evolve_system_on_tau_array(dict_net, dict_pll, pll_list, dictData, dict_algo)
+		evolve_system_on_tau_array(dict_net, dict_pll, pll_list, dict_data, dict_algo)
 	elif dict_net['special_case'] == 'test_case':
 		print('Simulating testcase scenario!')
-		evolve_system_test_cases(dict_net, dict_pll, pll_list, dictData, dict_algo)
+		evolve_system_test_cases(dict_net, dict_pll, pll_list, dict_data, dict_algo)
 	elif dict_net['special_case'] == 'timeDepTransmissionDelay':
 		if dict_algo['store_ctrl_and_clock'] == False:
 			dict_algo.update({'store_ctrl_and_clock': True})
-		evolve_system_on_tsim_array_time_dependent_change_of_delay_save_ctrl_signal(dict_net, dict_pll, pll_list, dictData, dict_algo)
-		plot.plotCtrlSigDny(dict_pll, dict_net, dictData)
+		evolve_system_on_tsim_array_time_dependent_change_of_delay_save_ctrl_signal(dict_net, dict_pll, pll_list, dict_data, dict_algo)
+		plot.plotCtrlSigDny(dict_pll, dict_net, dict_data)
 	elif dict_net['special_case'] == 'timeDepInjectLockCoupStr':
-		evolve_system_on_tsim_array_time_dependent_change_of_inject_locking_coupling_strength_shil(dict_net, dict_pll, pll_list, dictData, dict_algo)
+		evolve_system_on_tsim_array_time_dependent_change_of_inject_locking_coupling_strength_shil(dict_net, dict_pll, pll_list, dict_data, dict_algo)
 	elif dict_net['special_case'] == 'timeDepChangeOfCoupStr':
 		if dict_algo['parameter_space_sweeps'] == 'testNetworkMotifIsing':
 			if dict_pll['shil_generation_through_filter'] is False:
-				evolve_system_on_tsim_array_time_dependent_change_of_coupling_strength_shil(dict_net, dict_pll, pll_list, dictData, dict_algo)
+				evolve_system_on_tsim_array_time_dependent_change_of_coupling_strength_shil(dict_net, dict_pll, pll_list, dict_data, dict_algo)
 			else:
-				evolve_system_on_tsim_array_time_dependent_change_of_coupling_strength_shil_explicit_shil_filtering(dict_net, dict_pll, pll_list, dictData, dict_algo)
+				evolve_system_on_tsim_array_time_dependent_change_of_coupling_strength_shil_explicit_shil_filtering(dict_net, dict_pll, pll_list, dict_data, dict_algo)
 		else:
-			evolve_system_on_tsim_array_time_dependent_change_of_coupling_strength(dict_net, dict_pll, pll_list, dictData, dict_algo)
+			evolve_system_on_tsim_array_time_dependent_change_of_coupling_strength(dict_net, dict_pll, pll_list, dict_data, dict_algo)
 	# run evaluations
-	perform_evaluation(dict_net, dict_pll, dictData)
+	perform_evaluation(dict_net, dict_pll, dict_data)
 	if dict_algo['parameter_space_sweeps'] is None:
-		plot.plotOrderPvsTimeDepPara(dict_pll, dict_net, dictData, dict_algo)
+		plot.plotOrderPvsTimeDepPara(dict_pll, dict_net, dict_data, dict_algo)
 
 
-def perform_evaluation(dict_net: dict, dict_pll: dict, dictData: dict) -> None:
+def perform_evaluation(dict_net: dict, dict_pll: dict, dict_data: dict) -> None:
 	"""Function that
 
 		Args:
 			dict_net:  contains as parameters the information about properties of the network to be simulated, the initial conditions and the synchronized states under investigation
 			dict_pll:  contains as parameters the information about properties of the PLLs, its components, the time delays, the types of signals exchanged
-			dictData  contains the results of the simulation, i.e., the phases of all oscillators, time dependent parameters, etc.
+			dict_data  contains the results of the simulation, i.e., the phases of all oscillators, time dependent parameters, etc.
 
 		Returns:
 			nothing, operates on existing dicts
 	"""
-	r, orderParam, F1 = eva.obtainOrderParam(dict_pll, dict_net, dictData)
-	dictData.update({'orderParam': orderParam, 'R': r, 'F1': F1})
-	# dynFreq, phaseDiff        = calculateFreqPhaseDiff(dictData)
-	# dictData.update({'dynFreq': dynFreq, 'phaseDiff': phaseDiff})
+	order_parameter, F1 = eva.compute_order_parameter(dict_pll, dict_net, dict_data)
+	dict_data.update({'order_parameter': order_parameter, 'F1': F1})
+
+	# print('\n\ntype(order_parameter[0])', type(order_parameter[0]))
+	# print('\n\ntype(order_parameter)', type(order_parameter))
+	# print('\n\norder_parameter[0]', order_parameter[0])
+	# sys.exit()
+	# dynFreq, phaseDiff        = calculateFreqPhaseDiff(dict_data)
+	# dict_data.update({'dynFreq': dynFreq, 'phaseDiff': phaseDiff})
 
 
-def save_results_simulation(dict_net: dict, dict_pll: dict, dict_algo: dict, dictData: dict) -> None:
+def save_results_simulation(dict_net: dict, dict_pll: dict, dict_algo: dict, dict_data: dict) -> None:
 	"""Function that saves the data contained in the dictionaries to a file.
 
 		Args:
 			dict_net:  contains as parameters the information about properties of the network to be simulated, the initial conditions and the synchronized states under investigation
 			dict_pll:  contains as parameters the information about properties of the PLLs, its components, the time delays, the types of signals exchanged
 			dict_algo: contains as parameters the information how the simulation has to be carried out and what type is run: e.g., 'single', 'classicBruteForceMethodRotatedSpace', 'listOfInitialPhaseConfigurations', 'single', 'statistics'
-			dictData: contains the results of the simulation, i.e., the phases of all oscillators, time dependent parameters, etc.
+			dict_data: contains the results of the simulation, i.e., the phases of all oscillators, time dependent parameters, etc.
 
 		Returns:
 			nothing, operates on existing dicts
 	"""
 	eva.saveDictionaries(dict_pll, 'dict_pll', dict_pll['coupK'], dict_pll['transmission_delay'], dict_pll['cutFc'], dict_net['Nx'], dict_net['Ny'], dict_net['mx'], dict_net['my'], dict_net['topology'])
 	eva.saveDictionaries(dict_net, 'dict_net', dict_pll['coupK'], dict_pll['transmission_delay'], dict_pll['cutFc'], dict_net['Nx'], dict_net['Ny'], dict_net['mx'], dict_net['my'], dict_net['topology'])
-	eva.saveDictionaries(dictData, 'dictData', dict_pll['coupK'], dict_pll['transmission_delay'], dict_pll['cutFc'], dict_net['Nx'], dict_net['Ny'], dict_net['mx'], dict_net['my'], dict_net['topology'])
+	eva.saveDictionaries(dict_data, 'dict_data', dict_pll['coupK'], dict_pll['transmission_delay'], dict_pll['cutFc'], dict_net['Nx'], dict_net['Ny'], dict_net['mx'], dict_net['my'], dict_net['topology'])
 	eva.saveDictionaries(dict_algo, 'dict_algo', dict_pll['coupK'], dict_pll['transmission_delay'], dict_pll['cutFc'], dict_net['Nx'], dict_net['Ny'], dict_net['mx'], dict_net['my'], dict_net['topology'])
 
 
-def plot_results_simulation(dict_net: dict, dict_pll: dict, dictData: dict) -> None:
+def plot_results_simulation(dict_net: dict, dict_pll: dict, dict_data: dict) -> None:
 	"""Function that plots the results of the simulation.
 
 		Args:
 			dict_net:  contains as parameters the information about properties of the network to be simulated, the initial conditions and the synchronized states under investigation
 			dict_pll:  contains as parameters the information about properties of the PLLs, its components, the time delays, the types of signals exchanged
-			dictData: contains the results of the simulation, i.e., the phases of all oscillators, time dependent parameters, etc.
+			dict_data: contains the results of the simulation, i.e., the phases of all oscillators, time dependent parameters, etc.
 
 		Returns:
 			nothing, operates on existing dicts
 	"""
 	if dict_net['special_case'] != 'False':
 		print('Plotting frequency vs time-dependent parameter!')
-		plot.plot_instfreq_vs_timedependent_parameter(dict_pll, dict_net, dictData)
-	# plot.plotPhasesInf(dict_pll, dict_net, dictData)
-	# plot.plotPhases2pi(dict_pll, dict_net, dictData)
-	# plot.plotFrequency(dict_pll, dict_net, dictData)
-	# plot.plotOrderPara(dict_pll, dict_net, dictData)
-	# plot.plotPhaseRela(dict_pll, dict_net, dictData)
-	# plot.plotPhaseDiff(dict_pll, dict_net, dictData)
-	# plot.plotClockTime(dict_pll, dict_net, dictData)
-	# plot.plotOscSignal(dict_pll, dict_net, dictData)
+		plot.plot_instfreq_vs_timedependent_parameter(dict_pll, dict_net, dict_data)
+	# plot.plot_phases_unwrapped(dict_pll, dict_net, dict_data)
+	# plot.plot_phases_two_pi_periodic(dict_pll, dict_net, dict_data)
+	# plot.plot_inst_frequency(dict_pll, dict_net, dict_data)
+	# plot.plot_order_parameter(dict_pll, dict_net, dict_data)
+	# plot.plot_phase_difference_wrt_to_osci_kzero(dict_pll, dict_net, dict_data)
+	# plot.plot_phase_difference(dict_pll, dict_net, dict_data)
+	# plot.plot_clock_time_in_period_fractions(dict_pll, dict_net, dict_data)
+	# plot.plot_periodic_output_signal_from_phase(dict_pll, dict_net, dict_data)
 	if dict_net['Nx']*dict_net['Ny'] == 2:
-		plot.plotFreqAndPhaseDiff(dict_pll, dict_net, dictData)
-		plot.plotFreqAndOrderPar(dict_pll, dict_net, dictData)
-		plot.plotPSD(dict_pll, dict_net, dictData, [0, 1], saveData=False)
-		plot.plot_allan_variance(dict_pll, dict_net, dictData, 0.4 * dict_net['Tsim'], [0, 1], 'overlapping_adev', 'frequency', 0.5 * dict_net['Tsim'])
+		plot.plot_inst_frequency_and_phase_difference(dict_pll, dict_net, dict_data)
+		plot.plot_inst_frequency_and_order_parameter(dict_pll, dict_net, dict_data)
+		plot.plot_power_spectral_density(dict_pll, dict_net, dict_data, [0, 1], saveData=False)
+		plot.plot_allan_variance(dict_pll, dict_net, dict_data, 0.4 * dict_net['Tsim'], [0, 1], 'overlapping_adev', 'frequency', 0.5 * dict_net['Tsim'])
 	elif dict_net['Nx']*dict_net['Ny'] == 3:
-		plot.plotFreqAndPhaseDiff(dict_pll, dict_net, dictData)
-		plot.plotFreqAndOrderPar(dict_pll, dict_net, dictData)
-		plot.plotPSD(dict_pll, dict_net, dictData, [0, 1, 2], saveData=False)
-		try:
-			plot.plot_allan_variance(dict_pll, dict_net, dictData, 0.4 * dict_net['Tsim'], [0, 1, 2], 'overlapping_adev', 'frequency', 0.5 * dict_net['Tsim'])
-		except:
-			print('Failed to caluclate Allan variance!')
+		plot.plot_order_parameter(dict_pll, dict_net, dict_data)
+		plot.plot_inst_frequency_and_phase_difference(dict_pll, dict_net, dict_data)
+		plot.plot_inst_frequency_and_order_parameter(dict_pll, dict_net, dict_data)
+		plot.plot_power_spectral_density(dict_pll, dict_net, dict_data, [0, 1, 2], saveData=False)
+		# try:
+		# 	plot.plot_allan_variance(dict_pll, dict_net, dict_data, 0.4 * dict_net['Tsim'], [0, 1, 2], 'overlapping_adev', 'frequency', 0.5 * dict_net['Tsim'])
+		# except:
+		# 	print('Failed to caluclate Allan variance!')
 	elif dict_net['Nx']*dict_net['Ny'] == 64:
-		plot.plotFreqAndPhaseDiff(dict_pll, dict_net, dictData)
-		plot.plotFreqAndOrderPar(dict_pll, dict_net, dictData)
-		plot.plotPSD(dict_pll, dict_net, dictData, [0, 1, 7, 28, 29, 35, 36, 56, 63], saveData=False)			# [0, 1]
-		plot.plot_allan_variance(dict_pll, dict_net, dictData, 0.4 * dict_net['Tsim'], [0, 1, 7, 28, 29, 35, 36, 56, 63], 'overlapping_adev', 'frequency', 0.5 * dict_net['Tsim'])
+		plot.plot_inst_frequency_and_phase_difference(dict_pll, dict_net, dict_data)
+		plot.plot_inst_frequency_and_order_parameter(dict_pll, dict_net, dict_data)
+		plot.plot_power_spectral_density(dict_pll, dict_net, dict_data, [0, 1, 7, 28, 29, 35, 36, 56, 63], saveData=False)			# [0, 1]
+		plot.plot_allan_variance(dict_pll, dict_net, dict_data, 0.4 * dict_net['Tsim'], [0, 1, 7, 28, 29, 35, 36, 56, 63], 'overlapping_adev', 'frequency', 0.5 * dict_net['Tsim'])
 	elif 256 <= dict_net['Nx']*dict_net['Ny'] <= 1024:
-		plot.plotFreqAndPhaseDiff(dict_pll, dict_net, dictData, [i for i in range(0, dict_net['Nx']*dict_net['Ny'], int(dict_net['Nx']*dict_net['Ny']/33))])
-		plot.plotFreqAndOrderPar(dict_pll, dict_net, dictData, [i for i in range(0, dict_net['Nx']*dict_net['Ny'], int(dict_net['Nx']*dict_net['Ny']/33))])
+		plot.plot_inst_frequency_and_phase_difference(dict_pll, dict_net, dict_data, [i for i in range(0, dict_net['Nx']*dict_net['Ny'], int(dict_net['Nx']*dict_net['Ny']/33))])
+		plot.plot_inst_frequency_and_order_parameter(dict_pll, dict_net, dict_data, [i for i in range(0, dict_net['Nx']*dict_net['Ny'], int(dict_net['Nx']*dict_net['Ny']/33))])
 		psd_list = [0, int(dict_net['Nx']*dict_net['Ny']/4), int(dict_net['Nx']*dict_net['Ny']/2), int(2*dict_net['Nx']*dict_net['Ny']/3), int(3*dict_net['Nx']*dict_net['Ny']/4), int(dict_net['Nx']*dict_net['Ny'])-1]
-		plot.plotPSD(dict_pll, dict_net, dictData, psd_list, saveData=False)
-		plot.plot_histogram(dict_pll, dict_net, dictData, -1, 'phase-difference', 2, [], True, 15, 0.9)
-		plot.plot_histogram(dict_pll, dict_net, dictData, -1, 'phase', 2, [], True, 15, 0.9)
-		plot.plot_histogram(dict_pll, dict_net, dictData, int(dict_pll['transmission_delay'] / dict_pll['dt']), 'phase-difference', 2, [], True, 15, 0.9)
-		plot.plot_histogram(dict_pll, dict_net, dictData, int(dict_pll['transmission_delay'] / dict_pll['dt']), 'phase', 2, [], True, 15, 0.9)
-		plot.plot_histogram(dict_pll, dict_net, dictData, 0, 'phase-difference', 2, [], True, 15, 0.9)
-		plot.plot_histogram(dict_pll, dict_net, dictData, 0, 'phase', 2, [], True, 15, 0.9)
-		plot.plot_histogram(dict_pll, dict_net, dictData, -1, 'frequency', 0, [], True, 15, 0.9)
-		plot.plot_histogram(dict_pll, dict_net, dictData, int(dict_pll['transmission_delay'] / dict_pll['dt']), 'frequency', 0, [], True, 15, 0.9)
-		plot.plot_histogram(dict_pll, dict_net, dictData, 0, 'frequency', 0, [], True, 15, 0.9)
+		plot.plot_power_spectral_density(dict_pll, dict_net, dict_data, psd_list, saveData=False)
+		plot.plot_histogram(dict_pll, dict_net, dict_data, -1, 'phase-difference', 2, [], True, 15, 0.9)
+		plot.plot_histogram(dict_pll, dict_net, dict_data, -1, 'phase', 2, [], True, 15, 0.9)
+		plot.plot_histogram(dict_pll, dict_net, dict_data, int(dict_pll['transmission_delay'] / dict_pll['dt']), 'phase-difference', 2, [], True, 15, 0.9)
+		plot.plot_histogram(dict_pll, dict_net, dict_data, int(dict_pll['transmission_delay'] / dict_pll['dt']), 'phase', 2, [], True, 15, 0.9)
+		plot.plot_histogram(dict_pll, dict_net, dict_data, 0, 'phase-difference', 2, [], True, 15, 0.9)
+		plot.plot_histogram(dict_pll, dict_net, dict_data, 0, 'phase', 2, [], True, 15, 0.9)
+		plot.plot_histogram(dict_pll, dict_net, dict_data, -1, 'frequency', 0, [], True, 15, 0.9)
+		plot.plot_histogram(dict_pll, dict_net, dict_data, int(dict_pll['transmission_delay'] / dict_pll['dt']), 'frequency', 0, [], True, 15, 0.9)
+		plot.plot_histogram(dict_pll, dict_net, dict_data, 0, 'frequency', 0, [], True, 15, 0.9)
 		if dict_net['special_case'] == 'False':
-			plot.plot_allan_variance(dict_pll, dict_net, dictData, 0.4 * dict_net['Tsim'], [0, 1, 7, 28, 29, 35, 36, 56, 63, int(dict_net['Nx']*dict_net['Ny']/2), dict_net['Nx']*dict_net['Ny']-1], 'overlapping_adev', 'frequency', 0.5 * dict_net['Tsim'])
+			plot.plot_allan_variance(dict_pll, dict_net, dict_data, 0.4 * dict_net['Tsim'], [0, 1, 7, 28, 29, 35, 36, 56, 63, int(dict_net['Nx']*dict_net['Ny']/2), dict_net['Nx']*dict_net['Ny']-1], 'overlapping_adev', 'frequency', 0.5 * dict_net['Tsim'])
 	elif dict_net['Nx']*dict_net['Ny'] <= 36:
-		plot.plotFreqAndPhaseDiff(dict_pll, dict_net, dictData)
-		plot.plotFreqAndOrderPar(dict_pll, dict_net, dictData)
+		plot.plot_inst_frequency_and_phase_difference(dict_pll, dict_net, dict_data)
+		plot.plot_inst_frequency_and_order_parameter(dict_pll, dict_net, dict_data)
 		if dict_net['special_case'] == 'False':
-			plot.plot_allan_variance(dict_pll, dict_net, dictData, 0.4 * dict_net['Tsim'], [0, 16, 35], 'overlapping_adev', 'frequency', 0.5 * dict_net['Tsim'])
-		#plot.plotPSD(dict_pll, dict_net, dictData, [i for i in range(dict_net['Nx']*dict_net['Ny'])], saveData=False)
+			plot.plot_allan_variance(dict_pll, dict_net, dict_data, 0.4 * dict_net['Tsim'], [0, 16, 35], 'overlapping_adev', 'frequency', 0.5 * dict_net['Tsim'])
+		#plot.plot_power_spectral_density(dict_pll, dict_net, dict_data, [i for i in range(dict_net['Nx']*dict_net['Ny'])], saveData=False)
 		if dict_pll['extra_coup_sig'] == 'injection2ndHarm':
-			plot.plot_histogram(dict_pll, dict_net, dictData, -1, 'phase-difference', 2, [], True, 15, 0.9)
-			plot.plot_histogram(dict_pll, dict_net, dictData, 0, 'phase-difference', 2, [], True, 15, 0.9)
+			plot.plot_histogram(dict_pll, dict_net, dict_data, -1, 'phase-difference', 2, [], True, 15, 0.9)
+			plot.plot_histogram(dict_pll, dict_net, dict_data, 0, 'phase-difference', 2, [], True, 15, 0.9)
 	else:
-		plot.plotFreqAndPhaseDiff(dict_pll, dict_net, dictData, [0, 1])
-		plot.plotFreqAndOrderPar(dict_pll, dict_net, dictData, [0, 1])
-		plot.plotPSD(dict_pll, dict_net, dictData, [0, 1], saveData=False)
-		plot.plot_allan_variance(dict_pll, dict_net, dictData, 0.4 * dict_net['Tsim'], [0, int(dict_net['Nx']*dict_net['Ny']/2), dict_net['Nx']*dict_net['Ny']-1], 'overlapping_adev', 'frequency', 0.5 * dict_net['Tsim'])
+		plot.plot_inst_frequency_and_phase_difference(dict_pll, dict_net, dict_data, [0, 1])
+		plot.plot_inst_frequency_and_order_parameter(dict_pll, dict_net, dict_data, [0, 1])
+		plot.plot_power_spectral_density(dict_pll, dict_net, dict_data, [0, 1], saveData=False)
+		plot.plot_allan_variance(dict_pll, dict_net, dict_data, 0.4 * dict_net['Tsim'], [0, int(dict_net['Nx']*dict_net['Ny']/2), dict_net['Nx']*dict_net['Ny']-1], 'overlapping_adev', 'frequency', 0.5 * dict_net['Tsim'])
 	plt.draw()
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-def evolve_system_on_tau_array(dict_net: dict, dict_pll: dict, pll_list: list, dictData: dict, dict_algo: dict):
+def evolve_system_on_tau_array(dict_net: dict, dict_pll: dict, pll_list: list, dict_data: dict, dict_algo: dict):
 	"""Function that evolves the dynamics of a systems of oscillators in time. This implementation is the most memory efficient for the simulation of delay systems
 		as only the history of each oscillator is kept. It has the option to write out the data of the entire time-series during the simulation.
 
@@ -364,7 +370,7 @@ def evolve_system_on_tau_array(dict_net: dict, dict_pll: dict, pll_list: list, d
 			dict_net:  contains as parameters the information about properties of the network to be simulated, the initial conditions and the synchronized states under investigation
 			dict_pll:  contains as parameters the information about properties of the PLLs, its components, the time delays, the types of signals exchanged
 			dict_algo: contains as parameters the information how the simulation has to be carried out and what type is run: e.g., 'single', 'classicBruteForceMethodRotatedSpace', 'listOfInitialPhaseConfigurations', 'single', 'statistics'
-			dictData: contains the results of the simulation, i.e., the phases of all oscillators, time dependent parameters, etc.
+			dict_data: contains the results of the simulation, i.e., the phases of all oscillators, time dependent parameters, etc.
 			pll_list: list of PLL objects according to dict_net and dict_pll
 
 		Returns:
@@ -374,7 +380,7 @@ def evolve_system_on_tau_array(dict_net: dict, dict_pll: dict, pll_list: list, d
 	store_phases_tau_array = dict_algo['store_phases_tau_array']
 
 	print('Phi container only of length tau or multiple, no write-out of phases so far.')
-	phi = dictData['phi']
+	phi = dict_data['phi']
 	phi_array_len = dict_net['phi_array_len']
 	sample_every_dt = dict_pll['sampleFplot']
 
@@ -385,7 +391,7 @@ def evolve_system_on_tau_array(dict_net: dict, dict_pll: dict, pll_list: list, d
 			pass
 		with open("results/phases_clock_ctrlsig", "a") as file:
 
-			clock_counter = dictData['clock_counter']
+			clock_counter = dict_data['clock_counter']
 			for idx_time in range(dict_net['max_delay_steps'], dict_net['max_delay_steps']+dict_pll['sim_time_steps']-1, 1):
 				if idx_time % sample_every_dt == 0:
 					file.write(str(phi[idx_time % phi_array_len, :])+'\t'+str(clock_counter[idx_time % phi_array_len, :])+'\t'+str([pll.low_pass_filter.get_control_signal() for pll in pll_list])+'\n')
@@ -417,22 +423,22 @@ def evolve_system_on_tau_array(dict_net: dict, dict_pll: dict, pll_list: list, d
 
 	t = np.arange(0, len(phi[0:dict_net['max_delay_steps']+dict_pll['sim_time_steps'], 0]))*dict_pll['dt']
 	if store_ctrl_and_clock:
-		dictData.update({'t': t, 'phi': phi})
+		dict_data.update({'t': t, 'phi': phi})
 		print('Full time-series of phases, clock and control-signal results saved in file phase_clock_ctrlsig in results folder!')
 	else:
-		dictData.pop('clock_counter', None)
-		dictData.update({'t': t, 'phi': phi})
+		dict_data.pop('clock_counter', None)
+		dict_data.update({'t': t, 'phi': phi})
 
 
 #############################################################################################################################################################################
-def evolve_system_on_tsim_array(dict_net: dict, dict_pll: dict, pll_list: list, dictData: dict, dict_algo: dict):
+def evolve_system_on_tsim_array(dict_net: dict, dict_pll: dict, pll_list: list, dict_data: dict, dict_algo: dict):
 	"""Function that evolves the dynamics of a systems of oscillators in time. This implementation stores the phases of all oscillators for the entire simulation time Tsim.
 
 		Args:
 			dict_net:  contains as parameters the information about properties of the network to be simulated, the initial conditions and the synchronized states under investigation
 			dict_pll:  contains as parameters the information about properties of the PLLs, its components, the time delays, the types of signals exchanged
 			dict_algo: contains as parameters the information how the simulation has to be carried out and what type is run: e.g., 'single', 'classicBruteForceMethodRotatedSpace', 'listOfInitialPhaseConfigurations', 'single', 'statistics'
-			dictData: contains the results of the simulation, i.e., the phases of all oscillators, time dependent parameters, etc.
+			dict_data: contains the results of the simulation, i.e., the phases of all oscillators, time dependent parameters, etc.
 			pll_list: list of PLL objects according to dict_net and dict_pll
 
 		Returns:
@@ -441,8 +447,8 @@ def evolve_system_on_tsim_array(dict_net: dict, dict_pll: dict, pll_list: list, 
 	store_ctrl_and_clock = dict_algo['store_ctrl_and_clock']
 
 	print('Phi container has length of Tsim.')
-	clock_counter = dictData['clock_counter']
-	phi = dictData['phi']
+	clock_counter = dict_data['clock_counter']
+	phi = dict_data['phi']
 
 	phi_store = np.empty([dict_net['max_delay_steps']+dict_pll['sim_time_steps'], dict_net['Nx']*dict_net['Ny']])
 	phi_store[0:dict_net['max_delay_steps']+1, :] = phi[0:dict_net['max_delay_steps']+1, :]
@@ -477,21 +483,21 @@ def evolve_system_on_tsim_array(dict_net: dict, dict_pll: dict, pll_list: list, 
 
 	t = np.arange(0, len(phi_store[0:dict_net['max_delay_steps']+dict_pll['sim_time_steps'], 0]))*dict_pll['dt']
 	if store_ctrl_and_clock:
-		dictData.update({'t': t, 'phi': phi_store, 'clock_counter': clk_store, 'ctrl': ctl_store})
+		dict_data.update({'t': t, 'phi': phi_store, 'clock_counter': clk_store, 'ctrl': ctl_store})
 	else:
-		dictData.pop('clock_counter', None)
-		dictData.update({'t': t, 'phi': phi_store})
+		dict_data.pop('clock_counter', None)
+		dict_data.update({'t': t, 'phi': phi_store})
 
 
 #############################################################################################################################################################################
-def evolve_system_on_tsim_array_time_dependent_change_of_coupling_strength(dict_net: dict, dict_pll: dict, pll_list: list, dictData: dict, dict_algo: dict):
+def evolve_system_on_tsim_array_time_dependent_change_of_coupling_strength(dict_net: dict, dict_pll: dict, pll_list: list, dict_data: dict, dict_algo: dict):
 	"""Function that evolves the dynamics of a systems of oscillators in time. The coupling strength is time-dependent.
 
 		Args:
 			dict_net:  contains as parameters the information about properties of the network to be simulated, the initial conditions and the synchronized states under investigation
 			dict_pll:  contains as parameters the information about properties of the PLLs, its components, the time delays, the types of signals exchanged
 			dict_algo: contains as parameters the information how the simulation has to be carried out and what type is run: e.g., 'single', 'classicBruteForceMethodRotatedSpace', 'listOfInitialPhaseConfigurations', 'single', 'statistics'
-			dictData: contains the results of the simulation, i.e., the phases of all oscillators, time dependent parameters, etc.
+			dict_data: contains the results of the simulation, i.e., the phases of all oscillators, time dependent parameters, etc.
 			pll_list
 
 		Returns:
@@ -499,13 +505,13 @@ def evolve_system_on_tsim_array_time_dependent_change_of_coupling_strength(dict_
 	"""
 	store_ctrl_and_clock = dict_algo['store_ctrl_and_clock']
 
-	clock_counter = dictData['clock_counter']
-	phi = dictData['phi']
+	clock_counter = dict_data['clock_counter']
+	phi = dict_data['phi']
 
-	couplingStrVal_vs_time = setup.setup_time_dependent_parameter(dict_net, dict_pll, dictData, parameter='coupK', afterTsimPercent=0.1, forAllPLLsDifferent=False)[0]
+	couplingStrVal_vs_time = setup.setup_time_dependent_parameter(dict_net, dict_pll, dict_data, parameter='coupK', afterTsimPercent=0.1, forAllPLLsDifferent=False)[0]
 
 	# if not dict_algo['parameter_space_sweeps'] == 'testNetworkMotifIsing':
-	plot.plot_time_dependent_parameter(dict_pll, dict_net, dictData, couplingStrVal_vs_time, 'K')
+	plot.plot_time_dependent_parameter(dict_pll, dict_net, dict_data, couplingStrVal_vs_time, 'K')
 
 	t_first_pert = 450
 	phi_array_len = dict_net['phi_array_len']
@@ -532,18 +538,18 @@ def evolve_system_on_tsim_array_time_dependent_change_of_coupling_strength(dict_
 		# line = livplt.live_plotter(tlive, phidot, line)
 
 	t = np.arange(0, len(phi_store[0:dict_net['max_delay_steps']+dict_pll['sim_time_steps'], 0]))*dict_pll['dt']
-	dictData.update({'t': t, 'phi': phi_store, 'clock_counter': clk_store, 'timeDepPara': couplingStrVal_vs_time})
+	dict_data.update({'t': t, 'phi': phi_store, 'clock_counter': clk_store, 'timeDepPara': couplingStrVal_vs_time})
 
 
 #############################################################################################################################################################################
-def evolve_system_on_tsim_array_time_dependent_change_of_inject_locking_coupling_strength_shil(dict_net: dict, dict_pll: dict, pll_list: list, dictData: dict, dict_algo: dict):
+def evolve_system_on_tsim_array_time_dependent_change_of_inject_locking_coupling_strength_shil(dict_net: dict, dict_pll: dict, pll_list: list, dict_data: dict, dict_algo: dict):
 	"""Function that
 
 		Args:
 			dict_net:  contains as parameters the information about properties of the network to be simulated, the initial conditions and the synchronized states under investigation
 			dict_pll:  contains as parameters the information about properties of the PLLs, its components, the time delays, the types of signals exchanged
 			dict_algo: contains as parameters the information how the simulation has to be carried out and what type is run: e.g., 'single', 'classicBruteForceMethodRotatedSpace', 'listOfInitialPhaseConfigurations', 'single', 'statistics'
-			dictData: contains the results of the simulation, i.e., the phases of all oscillators, time dependent parameters, etc.
+			dict_data: contains the results of the simulation, i.e., the phases of all oscillators, time dependent parameters, etc.
 			pll_list
 
 		Returns:
@@ -551,14 +557,14 @@ def evolve_system_on_tsim_array_time_dependent_change_of_inject_locking_coupling
 	"""
 	store_ctrl_and_clock = dict_algo['store_ctrl_and_clock']
 
-	clock_counter = dictData['clock_counter']
-	phi = dictData['phi']
+	clock_counter = dict_data['clock_counter']
+	phi = dict_data['phi']
 
-	injectLockCoupStrVal_vs_time = setup.setup_time_dependent_parameter(dict_net, dict_pll, dictData, parameter='coupStr_2ndHarm', afterTsimPercent=0.1, forAllPLLsDifferent=False)[0]
+	injectLockCoupStrVal_vs_time = setup.setup_time_dependent_parameter(dict_net, dict_pll, dict_data, parameter='coupStr_2ndHarm', afterTsimPercent=0.1, forAllPLLsDifferent=False)[0]
 
 	t = np.arange( 0, dict_net['max_delay_steps']+dict_pll['sim_time_steps'] ) * dict_pll['dt']
 	# if not dict_algo['parameter_space_sweeps'] == 'testNetworkMotifIsing':
-	plot.plot_time_dependent_parameter(dict_pll, dict_net, dictData, injectLockCoupStrVal_vs_time, 'K2ndHarm')
+	plot.plot_time_dependent_parameter(dict_pll, dict_net, dict_data, injectLockCoupStrVal_vs_time, 'K2ndHarm')
 
 	# t_first_pert = 150
 	phi_array_len = dict_net['phi_array_len']
@@ -590,11 +596,11 @@ def evolve_system_on_tsim_array_time_dependent_change_of_inject_locking_coupling
 		#line = livplt.live_plotter(tlive, phidot, line)
 
 	t = np.arange(0,len(phi_store[0:dict_net['max_delay_steps']+dict_pll['sim_time_steps'],0]))*pll_dt
-	dictData.update({'t': t, 'phi': phi_store, 'clock_counter': clk_store, 'timeDepPara': injectLockCoupStrVal_vs_time})
+	dict_data.update({'t': t, 'phi': phi_store, 'clock_counter': clk_store, 'timeDepPara': injectLockCoupStrVal_vs_time})
 
 
 #############################################################################################################################################################################
-def evolve_system_on_tsim_array_time_dependent_change_of_coupling_strength_shil(dict_net: dict, dict_pll: dict, pll_list: list, dictData: dict, dict_algo: dict):
+def evolve_system_on_tsim_array_time_dependent_change_of_coupling_strength_shil(dict_net: dict, dict_pll: dict, pll_list: list, dict_data: dict, dict_algo: dict):
 	"""Function that evolves the dynamics of a systems of oscillators in time. The coupling strength is time-dependent and there is a second harmonic injection locking
 		signal injected to each oscillator (shil). This is used when simulating Ising Machines.
 
@@ -602,7 +608,7 @@ def evolve_system_on_tsim_array_time_dependent_change_of_coupling_strength_shil(
 			dict_net:  contains as parameters the information about properties of the network to be simulated, the initial conditions and the synchronized states under investigation
 			dict_pll:  contains as parameters the information about properties of the PLLs, its components, the time delays, the types of signals exchanged
 			dict_algo: contains as parameters the information how the simulation has to be carried out and what type is run: e.g., 'single', 'classicBruteForceMethodRotatedSpace', 'listOfInitialPhaseConfigurations', 'single', 'statistics'
-			dictData: contains the results of the simulation, i.e., the phases of all oscillators, time dependent parameters, etc.
+			dict_data: contains the results of the simulation, i.e., the phases of all oscillators, time dependent parameters, etc.
 			pll_list
 
 		Returns:
@@ -610,14 +616,14 @@ def evolve_system_on_tsim_array_time_dependent_change_of_coupling_strength_shil(
 	"""
 	store_ctrl_and_clock = dict_algo['store_ctrl_and_clock']
 
-	clock_counter = dictData['clock_counter']
-	phi = dictData['phi']
+	clock_counter = dict_data['clock_counter']
+	phi = dict_data['phi']
 
-	couplingStrVal_vs_time = setup.setup_time_dependent_parameter(dict_net, dict_pll, dictData, parameter='coupK', afterTsimPercent=0.1, forAllPLLsDifferent=False)[0]
+	couplingStrVal_vs_time = setup.setup_time_dependent_parameter(dict_net, dict_pll, dict_data, parameter='coupK', afterTsimPercent=0.1, forAllPLLsDifferent=False)[0]
 
 	# if not dict_algo['parameter_space_sweeps'] == 'testNetworkMotifIsing':
 	try:
-		plot.plot_time_dependent_parameter(dict_pll, dict_net, dictData, couplingStrVal_vs_time, 'K')
+		plot.plot_time_dependent_parameter(dict_pll, dict_net, dict_data, couplingStrVal_vs_time, 'K')
 	except:
 		print('Could not print time-dependent parameter!')
 
@@ -646,11 +652,11 @@ def evolve_system_on_tsim_array_time_dependent_change_of_coupling_strength_shil(
 		# line = livplt.live_plotter(tlive, phidot, line)
 
 	t = np.arange(0, len(phi_store[0:dict_net['max_delay_steps']+dict_pll['sim_time_steps'], 0]))*dict_pll['dt']
-	dictData.update({'t': t, 'phi': phi_store, 'clock_counter': clk_store, 'timeDepPara': couplingStrVal_vs_time})
+	dict_data.update({'t': t, 'phi': phi_store, 'clock_counter': clk_store, 'timeDepPara': couplingStrVal_vs_time})
 
 
 #############################################################################################################################################################################
-def evolve_system_on_tsim_array_time_dependent_change_of_coupling_strength_shil_explicit_shil_filtering(dict_net: dict, dict_pll: dict, pll_list: list, dictData: dict, dict_algo: dict):
+def evolve_system_on_tsim_array_time_dependent_change_of_coupling_strength_shil_explicit_shil_filtering(dict_net: dict, dict_pll: dict, pll_list: list, dict_data: dict, dict_algo: dict):
 	"""Function that evolves the dynamics of a systems of oscillators in time. The coupling strength is time-dependent and there is a second harmonic injection locking
 		signal injected to each oscillator (shil=SHIL). This is used when simulating Ising Machines.
 		Here, the SHIL signal is generated by filtering a mixed signal with a bandpass filter.
@@ -659,7 +665,7 @@ def evolve_system_on_tsim_array_time_dependent_change_of_coupling_strength_shil_
 			dict_net:  contains as parameters the information about properties of the network to be simulated, the initial conditions and the synchronized states under investigation
 			dict_pll:  contains as parameters the information about properties of the PLLs, its components, the time delays, the types of signals exchanged
 			dict_algo: contains as parameters the information how the simulation has to be carried out and what type is run: e.g., 'single', 'classicBruteForceMethodRotatedSpace', 'listOfInitialPhaseConfigurations', 'single', 'statistics'
-			dictData: contains the results of the simulation, i.e., the phases of all oscillators, time dependent parameters, etc.
+			dict_data: contains the results of the simulation, i.e., the phases of all oscillators, time dependent parameters, etc.
 			pll_list
 
 		Returns:
@@ -670,13 +676,13 @@ def evolve_system_on_tsim_array_time_dependent_change_of_coupling_strength_shil_
 
 	store_ctrl_and_clock = dict_algo['store_ctrl_and_clock']
 
-	clock_counter = dictData['clock_counter']
-	phi = dictData['phi']
+	clock_counter = dict_data['clock_counter']
+	phi = dict_data['phi']
 
-	couplingStrVal_vs_time = setup.setup_time_dependent_parameter(dict_net, dict_pll, dictData, parameter='coupK', afterTsimPercent=0.1, forAllPLLsDifferent=False)[0]
+	couplingStrVal_vs_time = setup.setup_time_dependent_parameter(dict_net, dict_pll, dict_data, parameter='coupK', afterTsimPercent=0.1, forAllPLLsDifferent=False)[0]
 
 	# if not dict_algo['parameter_space_sweeps'] == 'testNetworkMotifIsing':
-	plot.plot_time_dependent_parameter(dict_pll, dict_net, dictData, couplingStrVal_vs_time, 'K')
+	plot.plot_time_dependent_parameter(dict_pll, dict_net, dict_data, couplingStrVal_vs_time, 'K')
 
 	t_first_pert = 450
 	phi_array_len = dict_net['phi_array_len']
@@ -703,18 +709,18 @@ def evolve_system_on_tsim_array_time_dependent_change_of_coupling_strength_shil_
 		# line = livplt.live_plotter(tlive, phidot, line)
 
 	t = np.arange(0,len(phi_store[0:dict_net['max_delay_steps']+dict_pll['sim_time_steps'],0]))*dict_pll['dt']
-	dictData.update({'t': t, 'phi': phi_store, 'clock_counter': clk_store, 'timeDepPara': couplingStrVal_vs_time})
+	dict_data.update({'t': t, 'phi': phi_store, 'clock_counter': clk_store, 'timeDepPara': couplingStrVal_vs_time})
 
 
 #############################################################################################################################################################################
-def evolve_system_on_tsim_array_time_dependent_change_of_delay_save_ctrl_signal(dict_net: dict, dict_pll: dict, pll_list: list, dictData: dict, dict_algo: dict):
+def evolve_system_on_tsim_array_time_dependent_change_of_delay_save_ctrl_signal(dict_net: dict, dict_pll: dict, pll_list: list, dict_data: dict, dict_algo: dict):
 	"""Function that evolves the dynamics of a systems of oscillators in time. The time delay is time-dependent and the time evolution of the control signal is saved.
 
 		Args:
 			dict_net:  contains as parameters the information about properties of the network to be simulated, the initial conditions and the synchronized states under investigation
 			dict_pll:  contains as parameters the information about properties of the PLLs, its components, the time delays, the types of signals exchanged
 			dict_algo: contains as parameters the information how the simulation has to be carried out and what type is run: e.g., 'single', 'classicBruteForceMethodRotatedSpace', 'listOfInitialPhaseConfigurations', 'single', 'statistics'
-			dictData: contains the results of the simulation, i.e., the phases of all oscillators, time dependent parameters, etc.
+			dict_data: contains the results of the simulation, i.e., the phases of all oscillators, time dependent parameters, etc.
 			pll_list
 
 		Returns:
@@ -722,8 +728,8 @@ def evolve_system_on_tsim_array_time_dependent_change_of_delay_save_ctrl_signal(
 	"""
 	store_ctrl_and_clock = dict_algo['store_ctrl_and_clock']
 
-	clock_counter = dictData['clock_counter']
-	phi = dictData['phi']
+	clock_counter = dict_data['clock_counter']
+	phi = dict_data['phi']
 
 	phi_store = np.empty([dict_net['max_delay_steps']+dict_pll['sim_time_steps'], dict_net['Nx']*dict_net['Ny']])
 	if store_ctrl_and_clock:
@@ -760,14 +766,14 @@ def evolve_system_on_tsim_array_time_dependent_change_of_delay_save_ctrl_signal(
 
 	t = np.arange(0, len(phi_store[0:dict_net['max_delay_steps']+dict_pll['sim_time_steps'], 0]))*dict_pll['dt']
 	if store_ctrl_and_clock:
-		dictData.update({'t': t, 'phi': phi_store, 'clock_counter': clk_store, 'ctrl': ctl_store})
+		dict_data.update({'t': t, 'phi': phi_store, 'clock_counter': clk_store, 'ctrl': ctl_store})
 	else:
-		dictData.pop('clock_counter', None)
-		dictData.update({'t': t, 'phi': phi_store})
+		dict_data.pop('clock_counter', None)
+		dict_data.update({'t': t, 'phi': phi_store})
 
 
 #############################################################################################################################################################################
-def distributed_pll_in_3d_mobile(dict_net, dict_pll, phi, pos, coup_matrix, clock_counter, pll_list, dictData, dict_algo):
+def distributed_pll_in_3d_mobile(dict_net, dict_pll, phi, pos, coup_matrix, clock_counter, pll_list, dict_data, dict_algo):
 	"""Function that evolves the dynamics of a systems of oscillators in time. The oscillators can move in a 3d space and interact with each other according to their interaction radii.
 	Pairs of oscillators that may interact will constantly have to check their past positions and relative distance to determine the time delay with which they receive the other oscillators signal.
 
@@ -775,7 +781,7 @@ def distributed_pll_in_3d_mobile(dict_net, dict_pll, phi, pos, coup_matrix, cloc
 			dict_net:  contains as parameters the information about properties of the network to be simulated, the initial conditions and the synchronized states under investigation
 			dict_pll:  contains as parameters the information about properties of the PLLs, its components, the time delays, the types of signals exchanged
 			dict_algo: contains as parameters the information how the simulation has to be carried out and what type is run: e.g., 'single', 'classicBruteForceMethodRotatedSpace', 'listOfInitialPhaseConfigurations', 'single', 'statistics'
-			dictData: contains the results of the simulation, i.e., the phases of all oscillators, time dependent parameters, etc.
+			dict_data: contains the results of the simulation, i.e., the phases of all oscillators, time dependent parameters, etc.
 			pll_list
 
 		Returns:
@@ -831,11 +837,11 @@ def distributed_pll_in_3d_mobile(dict_net, dict_pll, phi, pos, coup_matrix, cloc
 
 
 	t = np.arange(0,len(phi_store[0:dict_net['max_delay_steps']+dict_pll['sim_time_steps'],0]))*dict_pll['dt']
-	dictData.update({'t': t, 'phi': phases_store, 'clock_counter': clock_signal_store, 'positions': position_3d_store, 'adjacency_matrix_store': adjacency_matrix_store})
+	dict_data.update({'t': t, 'phi': phases_store, 'clock_counter': clock_signal_store, 'positions': position_3d_store, 'adjacency_matrix_store': adjacency_matrix_store})
 
 
 #############################################################################################################################################################################
-def evolve_system_interface_live_ctrl(dict_net, dict_pll, phi, clock_counter, pll_list, dictData, dict_algo):
+def evolve_system_interface_live_ctrl(dict_net, dict_pll, phi, clock_counter, pll_list, dict_data, dict_algo):
 	"""Function that evolves the dynamics of a systems of oscillators in time. This implements an interface for real-time/in-simulation modification of parameters via a graphical input layer.
 
 	NEEDS to be implemented!
@@ -844,7 +850,7 @@ def evolve_system_interface_live_ctrl(dict_net, dict_pll, phi, clock_counter, pl
 			dict_net:  contains as parameters the information about properties of the network to be simulated, the initial conditions and the synchronized states under investigation
 			dict_pll:  contains as parameters the information about properties of the PLLs, its components, the time delays, the types of signals exchanged
 			dict_algo: contains as parameters the information how the simulation has to be carried out and what type is run: e.g., 'single', 'classicBruteForceMethodRotatedSpace', 'listOfInitialPhaseConfigurations', 'single', 'statistics'
-			dictData: contains the results of the simulation, i.e., the phases of all oscillators, time dependent parameters, etc.
+			dict_data: contains the results of the simulation, i.e., the phases of all oscillators, time dependent parameters, etc.
 			pll_list
 
 		Returns:
@@ -860,18 +866,18 @@ def evolve_system_interface_live_ctrl(dict_net, dict_pll, phi, clock_counter, pl
 		clock_counter[(idx_time+1) % phi_array_len, :] = [pll.clock_halfperiods_count(phi[(idx_time+1) % phi_array_len, pll.pll_id]) for pll in pll_list]
 
 	t = np.arange(0, len(phi_store[0:dict_net['max_delay_steps']+dict_pll['sim_time_steps'], 0]))*dict_pll['dt']
-	dictData.update({'t': t, 'phi': phi_store, 'clock_counter': clock_counter})
+	dict_data.update({'t': t, 'phi': phi_store, 'clock_counter': clock_counter})
 
 
 #############################################################################################################################################################################
-def evolve_system_test_cases(dict_net: dict, dict_pll: dict, pll_list: list, dictData: dict, dict_algo: dict):
+def evolve_system_test_cases(dict_net: dict, dict_pll: dict, pll_list: list, dict_data: dict, dict_algo: dict):
 	"""Function that evolves the dynamics of a systems of oscillators in time. This case implements test cases to experiment and extend the code.
 
 		Args:
 			dict_net:  contains as parameters the information about properties of the network to be simulated, the initial conditions and the synchronized states under investigation
 			dict_pll:  contains as parameters the information about properties of the PLLs, its components, the time delays, the types of signals exchanged
 			dict_algo: contains as parameters the information how the simulation has to be carried out and what type is run: e.g., 'single', 'classicBruteForceMethodRotatedSpace', 'listOfInitialPhaseConfigurations', 'single', 'statistics'
-			dictData: contains the results of the simulation, i.e., the phases of all oscillators, time dependent parameters, etc.
+			dict_data: contains the results of the simulation, i.e., the phases of all oscillators, time dependent parameters, etc.
 			pll_list
 
 		Returns:
@@ -880,8 +886,8 @@ def evolve_system_test_cases(dict_net: dict, dict_pll: dict, pll_list: list, dic
 	store_ctrl_and_clock = dict_algo['store_ctrl_and_clock']
 
 	clock_sync_scheduled = 75
-	clock_counter = dictData['clock_counter']
-	phi = dictData['phi']
+	clock_counter = dict_data['clock_counter']
+	phi = dict_data['phi']
 	clk_store = np.empty([dict_net['max_delay_steps']+dict_pll['sim_time_steps'], dict_net['Nx']*dict_net['Ny']])
 	phi_store = np.empty([dict_net['max_delay_steps']+dict_pll['sim_time_steps'], dict_net['Nx']*dict_net['Ny']])
 	phi_store[0:dict_net['max_delay_steps']+1, :] = phi[0:dict_net['max_delay_steps']+1, :]
@@ -909,18 +915,18 @@ def evolve_system_test_cases(dict_net: dict, dict_pll: dict, pll_list: list, dic
 		#line = livplt.live_plotter(tlive, phidot, line)
 
 	t = np.arange(0, len(phi_store[0:dict_net['max_delay_steps']+dict_pll['sim_time_steps'], 0]))*dict_pll['dt']
-	dictData.update({'t': t, 'phi': phi_store, 'clock_counter': clk_store})
+	dict_data.update({'t': t, 'phi': phi_store, 'clock_counter': clk_store})
 
 
 #############################################################################################################################################################################
-def evolve_system_test_perturbations(dict_net, dict_pll, phi, clock_counter, pll_list, dictData, dict_algo):
+def evolve_system_test_perturbations(dict_net, dict_pll, phi, clock_counter, pll_list, dict_data, dict_algo):
 	"""Function that evolves the dynamics of a systems of oscillators in time. In this case, the system is perturbed at specific times.
 
 		Args:
 			dict_net:  contains as parameters the information about properties of the network to be simulated, the initial conditions and the synchronized states under investigation
 			dict_pll:  contains as parameters the information about properties of the PLLs, its components, the time delays, the types of signals exchanged
 			dict_algo: contains as parameters the information how the simulation has to be carried out and what type is run: e.g., 'single', 'classicBruteForceMethodRotatedSpace', 'listOfInitialPhaseConfigurations', 'single', 'statistics'
-			dictData: contains the results of the simulation, i.e., the phases of all oscillators, time dependent parameters, etc.
+			dict_data: contains the results of the simulation, i.e., the phases of all oscillators, time dependent parameters, etc.
 			pll_list
 
 		Returns:
@@ -962,4 +968,4 @@ def evolve_system_test_perturbations(dict_net, dict_pll, phi, clock_counter, pll
 		#line = livplt.live_plotter(tlive, phidot, line)
 
 	t = np.arange(0, len(phi_store[0:dict_net['max_delay_steps']+dict_pll['sim_time_steps'], 0]))*dict_pll['dt']
-	dictData.update({'t': t, 'phi': phi_store, 'clock_counter': clk_store})
+	dict_data.update({'t': t, 'phi': phi_store, 'clock_counter': clk_store})

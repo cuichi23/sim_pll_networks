@@ -414,7 +414,7 @@ def fitModelDemir(f_model,d_model,fitrange=0):
 ################################################################################
 ################################################################################
 
-def obtainOrderParam(dict_pll, dict_net, dictData):
+def compute_order_parameter(dict_pll, dict_net, dict_data):
 	''' MODIFIED KURAMOTO ORDER PARAMETERS '''
 	numb_av_T = 2.5																			   	# number of periods of free-running frequencies to average over
 	if np.min(dict_pll['intrF']) > 0:														 	# for f=0, there would otherwise be a float division by zero
@@ -423,8 +423,8 @@ def obtainOrderParam(dict_pll, dict_net, dictData):
 		F1 = np.min(dict_pll['intrF'])+1E-3
 
 	if dict_net['topology'] == "square-periodic" or dict_net['topology'] == "hexagon-periodic" or dict_net['topology'] == "octagon-periodic":
-		r = oracle_mTwistOrderParameter2d(dictData['phi'][-int(numb_av_T*1.0/(F1*dict_pll['dt'])):, :], dict_net['Nx'], dict_net['Ny'], dict_net['mx'], dict_net['my'])
-		orderparam = oracle_mTwistOrderParameter2d(dictData['phi'][:, :], dict_net['Nx'], dict_net['Ny'], dict_net['mx'], dict_net['my'])
+		r = oracle_mTwistOrderParameter2d(dict_data['phi'][-int(numb_av_T*1.0/(F1*dict_pll['dt'])):, :], dict_net['Nx'], dict_net['Ny'], dict_net['mx'], dict_net['my'])
+		order_parameter = oracle_mTwistOrderParameter2d(dict_data['phi'][:, :], dict_net['Nx'], dict_net['Ny'], dict_net['mx'], dict_net['my'])
 	elif dict_net['topology'] == "square-open" or dict_net['topology'] == "hexagon" or dict_net['topology'] == "octagon":
 		if dict_net['mx'] == 1 and dict_net['my'] == 1:
 			ktemp=2
@@ -442,53 +442,55 @@ def obtainOrderParam(dict_pll, dict_net, dictData):
 				ktemp == 2 : xy checkerboard state
 				ktemp == 3 : in-phase synchronized
 			"""
-		r = oracle_CheckerboardOrderParameter2d(dictData['phi'][-int(numb_av_T*1.0/(F1*dict_pll['dt'])):, :], dict_net['Nx'], dict_net['Ny'], ktemp)
+		r = oracle_CheckerboardOrderParameter2d(dict_data['phi'][-int(numb_av_T*1.0/(F1*dict_pll['dt'])):, :], dict_net['Nx'], dict_net['Ny'], ktemp)
 		# ry = np.nonzero(rmat > 0.995)[0]
 		# rx = np.nonzero(rmat > 0.995)[1]
-		orderparam = oracle_CheckerboardOrderParameter2d(dictData['phi'][:, :], dict_net['Nx'], dict_net['Ny'], ktemp)
+		order_parameter = oracle_CheckerboardOrderParameter2d(dict_data['phi'][:, :], dict_net['Nx'], dict_net['Ny'], ktemp)
 	elif dict_net['topology'] == "compareEntrVsMutual":
-		rMut 	 = oracle_mTwistOrderParameter(dictData['phi'][-int(numb_av_T*1.0/(F1*dict_pll['dt'])):, 0:2], dict_net['mx']);
-		orderMut = oracle_mTwistOrderParameter(dictData['phi'][:, 0:2], dict_net['mx']);
-		rEnt 	 = oracle_mTwistOrderParameter(dictData['phi'][-int(numb_av_T*1.0/(F1*dict_pll['dt'])):, 2:4], dict_net['mx']);
-		orderEnt = oracle_mTwistOrderParameter(dictData['phi'][:, 2:4], dict_net['mx']);
+		rMut 	 = oracle_mTwistOrderParameter(dict_data['phi'][-int(numb_av_T*1.0/(F1*dict_pll['dt'])):, 0:2], dict_net['mx']);
+		orderMut = oracle_mTwistOrderParameter(dict_data['phi'][:, 0:2], dict_net['mx']);
+		rEnt 	 = oracle_mTwistOrderParameter(dict_data['phi'][-int(numb_av_T*1.0/(F1*dict_pll['dt'])):, 2:4], dict_net['mx']);
+		orderEnt = oracle_mTwistOrderParameter(dict_data['phi'][:, 2:4], dict_net['mx']);
 		if isPlottingTimeSeries:
-			figwidth  = 6; figheight = 5; t = np.arange(dictData['phi'].shape[0]); now = datetime.datetime.now();
+			figwidth = 6; figheight = 5; t = np.arange(dict_data['phi'].shape[0]); now = datetime.datetime.now();
 			fig0 = plt.figure(num=0, figsize=(figwidth, figheight), dpi=150, facecolor='w', edgecolor='k')
 			fig0.canvas.manager.set_window_title('order parameters mutual and entrained')			   # plot orderparameter
 			plt.clf()
-			plt.plot((dictData['t']*dict_pll['dt']), orderMut,'b-',  label='2 mutual coupled PLLs' )
-			plt.plot((dictData['t']*dict_pll['dt']), orderEnt,'r--', label='one entrained PLL')
+			plt.plot((dict_data['t']*dict_pll['dt']), orderMut, 'b-',  label='2 mutual coupled PLLs')
+			plt.plot((dict_data['t']*dict_pll['dt']), orderEnt, 'r--', label='one entrained PLL')
 			plt.plot(dict_pll['transmission_delay'], orderMut[int(round(dict_pll['transmission_delay']/dict_pll['dt']))], 'yo', ms=5)						   # mark where the simulation starts
-			plt.axvspan(dictData['t'][-int(2*1.0/(F1*dict_pll['dt']))]*dict_pll['dt'], dictData['t'][-1]*dict_pll['dt'], color='b', alpha=0.3)
-			plt.xlabel(r'$t$ $[s]$'); plt.legend();
+			plt.axvspan(dict_data['t'][-int(2*1.0/(F1*dict_pll['dt']))]*dict_pll['dt'], dict_data['t'][-1]*dict_pll['dt'], color='b', alpha=0.3)
+			plt.xlabel(r'$t$ $[s]$')
 			plt.ylabel(r'$R( t,m = %d )$' % dict_net['mx'])
+			plt.legend()
 			plt.savefig('results/orderparam_mutual_entrained_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.pdf' %(np.mean(dict_pll['coupK']), np.mean(dict_pll['cutFc']), np.mean(dict_pll['syncF']), np.mean(dict_pll['transmission_delay']), np.mean(dict_pll['noiseVarVCO']), now.year, now.month, now.day))
 			plt.savefig('results/orderparam_mutual_entrained_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.png' %(np.mean(dict_pll['coupK']), np.mean(dict_pll['cutFc']), np.mean(dict_pll['syncF']), np.mean(dict_pll['transmission_delay']), np.mean(dict_pll['noiseVarVCO']), now.year, now.month, now.day), dpi=300)
-			r = np.zeros(len(dictData['phi'][-int(numb_av_T*1.0/(F1*dict_pll['dt'])):,0]))
-			orderparam = np.zeros(len(dictData['phi'][:, 0]))
+			r = np.zeros(len(dict_data['phi'][-int(numb_av_T*1.0/(F1*dict_pll['dt'])):,0]))
+			order_parameter = np.zeros(len(dict_data['phi'][:, 0]))
 	elif dict_net['topology'] == "chain":
 		"""
 				dict_net['mx']  > 0 : x  checkerboard state
 				dict_net['mx'] == 0 : in-phase synchronized
 			"""
-		r = oracle_CheckerboardOrderParameter1d(dictData['phi'][-int(numb_av_T*1.0/(F1*dict_pll['dt'])):, :], dict_net['mx'])
-		orderparam = oracle_CheckerboardOrderParameter1d(dictData['phi'][:, :])							# calculate the order parameter for all times
+		print('Computing order parameter for a 1d chain of coupled oscillators with open boundary conditions.')
+		r = oracle_chequerboard_order_parameter_one_dimension(dict_data['phi'][-int(numb_av_T*1.0/(F1*dict_pll['dt'])):, :], dict_net['mx'])
+		order_parameter = oracle_chequerboard_order_parameter_one_dimension(dict_data['phi'][:, :], dict_net['mx'])							# calculate the order parameter for all times
 	elif dict_net['topology'] == "ring" or dict_net['topology'] == 'global':
-		# print('Calculate order parameter for ring or global topology. For phases: ', dictData['phi'])
+		# print('Calculate order parameter for ring or global topology. For phases: ', dict_data['phi'])
 		time.sleep(5)
-		r = oracle_mTwistOrderParameter(dictData['phi'][-int(numb_av_T*1.0/(F1*dict_pll['dt'])):, :], dict_net['mx'])# calculate the m-twist order parameter for a time interval of 2 times the eigenperiod, ry is imaginary part
-		orderparam = oracle_mTwistOrderParameter(dictData['phi'][:, :], dict_net['mx'])					# calculate the m-twist order parameter for all times
+		r = oracle_mTwistOrderParameter(dict_data['phi'][-int(numb_av_T*1.0/(F1*dict_pll['dt'])):, :], dict_net['mx'])# calculate the m-twist order parameter for a time interval of 2 times the eigenperiod, ry is imaginary part
+		order_parameter = oracle_mTwistOrderParameter(dict_data['phi'][:, :], dict_net['mx'])					# calculate the m-twist order parameter for all times
 	elif "entrain" in dict_net['topology']:
 		# ( dict_net['topology'] == "entrainOne" or dict_net['topology'] == "entrainAll" or dict_net['topology'] == "entrainPLLsHierarch"):
 		phi_constant_expected = dict_net['phiInitConfig']
-		r = calcKuramotoOrderParEntrainSelfOrgState(dictData['phi'][-int(numb_av_T*1.0/(F1*dict_pll['dt'])):, :], phi_constant_expected)
-		orderparam = calcKuramotoOrderParEntrainSelfOrgState(dictData['phi'][:, :], phi_constant_expected)
-	# r = oracle_mTwistOrderParameter(dictData['phi'][-int(2*1.0/(F1*dict_pll['dt'])):, :], dict_net['mx'])			# calculate the m-twist order parameter for a time interval of 2 times the eigenperiod, ry is imaginary part
-	# orderparam = oracle_mTwistOrderParameter(dictData['phi'][:, :], dict_net['mx'])					# calculate the m-twist order parameter for all times
+		r = calcKuramotoOrderParEntrainSelfOrgState(dict_data['phi'][-int(numb_av_T*1.0/(F1*dict_pll['dt'])):, :], phi_constant_expected)
+		order_parameter = calcKuramotoOrderParEntrainSelfOrgState(dict_data['phi'][:, :], phi_constant_expected)
+	# r = oracle_mTwistOrderParameter(dict_data['phi'][-int(2*1.0/(F1*dict_pll['dt'])):, :], dict_net['mx'])			# calculate the m-twist order parameter for a time interval of 2 times the eigenperiod, ry is imaginary part
+	# order_parameter = oracle_mTwistOrderParameter(dict_data['phi'][:, :], dict_net['mx'])					# calculate the m-twist order parameter for all times
 	# print('mean of modulus of the order parameter, R, over 2T:', np.mean(r), ' last value of R', r[-1])
 	print('mean of modulus of the order parameter, R, over 2T:', np.mean(r), ' last value of R', r[-1])
 
-	return r, orderparam, F1
+	return order_parameter, F1
 
 ################################################################################
 
@@ -536,26 +538,26 @@ def evaluateSimulationsChrisHoyer(pool_data):
 
 	delay_steps	= int( np.floor( pool_data[0][0]['dict_pll']['transmission_delay'] / pool_data[0][0]['dict_pll']['dt'] ) )
 	stats_init_phase_conf_final_state = np.empty([len(pool_data[0][:]), 5])
-	deltaThetaDivSave		= np.empty( [len(pool_data[0][:]), len(pool_data[0][0]['dictData']['phi'][delay_steps+1::pool_data[0][0]['dict_pll']['sampleFplot'],0])-0] )
-	deltaThetaDivDotSave	= np.empty( [len(pool_data[0][:]), len(pool_data[0][0]['dictData']['phi'][delay_steps+1::pool_data[0][0]['dict_pll']['sampleFplot'],0])-0] )
+	deltaThetaDivSave		= np.empty( [len(pool_data[0][:]), len(pool_data[0][0]['dict_data']['phi'][delay_steps+1::pool_data[0][0]['dict_pll']['sampleFplot'],0])-0] )
+	deltaThetaDivDotSave	= np.empty( [len(pool_data[0][:]), len(pool_data[0][0]['dict_data']['phi'][delay_steps+1::pool_data[0][0]['dict_pll']['sampleFplot'],0])-0] )
 
 	for i in range(len(pool_data[0][:])):
-		#print('working on realization %i results from sim:'%i, pool_data[0][i]['dict_net'], '\n', pool_data[0][i]['dict_pll'], '\n', pool_data[0][i]['dictData'],'\n\n')
+		#print('working on realization %i results from sim:'%i, pool_data[0][i]['dict_net'], '\n', pool_data[0][i]['dict_pll'], '\n', pool_data[0][i]['dict_data'],'\n\n')
 
 		#print('Check whether perturbation is inside unit-cell (evaluation.py)! phiS:', pool_data[0][i]['dict_net']['phiPerturb'], '\tInside? True/False:', unit_cell.is_inside((pool_data[0][i]['dict_net']['phiPerturb']), isRotated=False)); time.sleep(2)
-		#print('How about phi, is it a key to dictData?', 'phi' in pool_data[0][i]['dictData'])
+		#print('How about phi, is it a key to dict_data?', 'phi' in pool_data[0][i]['dict_data'])
 		if unit_cell.is_inside((pool_data[0][i]['dict_net']['phiPerturb']), isRotated=False):	# NOTE this case is for scanValues set only in -pi to pi, we so not plot outside the unit cell
 
 			# test whether frequency is larger or smaller than mean intrinsic frequency as a first distinction between multistable synced states with the same phase relations but
 			# different frequency -- for more than 3 multistable in- or anti-phase synched states that needs to be reworked
-			if ( pool_data[0][i]['dictData']['phi'][-1,0] - pool_data[0][i]['dictData']['phi'][-2,0] ) / pool_data[0][i]['dict_pll']['dt'] > np.mean( pool_data[0][i]['dict_pll']['intrF'] ):
+			if ( pool_data[0][i]['dict_data']['phi'][-1,0] - pool_data[0][i]['dict_data']['phi'][-2,0] ) / pool_data[0][i]['dict_pll']['dt'] > np.mean( pool_data[0][i]['dict_pll']['intrF'] ):
 				initmarker = 'd'
 			else:
 				initmarker = 'o'
 
-			deltaTheta 			= pool_data[0][i]['dictData']['phi'][:,0] - pool_data[0][i]['dictData']['phi'][:,1]
+			deltaTheta 			= pool_data[0][i]['dict_data']['phi'][:,0] - pool_data[0][i]['dict_data']['phi'][:,1]
 			deltaThetaDot		= np.diff( deltaTheta, axis=0 ) / pool_data[0][i]['dict_pll']['dt']
-			deltaThetaDiv 		= pool_data[0][i]['dictData']['phi'][:,0]/pool_data[0][i]['dict_pll']['div'] - pool_data[0][i]['dictData']['phi'][:,1]/pool_data[0][i]['dict_pll']['div']
+			deltaThetaDiv 		= pool_data[0][i]['dict_data']['phi'][:,0]/pool_data[0][i]['dict_pll']['div'] - pool_data[0][i]['dict_data']['phi'][:,1]/pool_data[0][i]['dict_pll']['div']
 			deltaThetaDivDot	= np.diff( deltaThetaDiv, axis=0 ) / pool_data[0][i]['dict_pll']['dt']
 
 			if np.abs( np.abs( (deltaTheta[-1]+np.pi)%(2.*np.pi)-np.pi ) - np.pi ) < threshold_statState:
@@ -672,14 +674,14 @@ def calcPairwiseKurmOrder(phi):
 		r = np.abs(np.mean(z, axis=1))
 		psi	= np.arctan(np.imag(z, axis=1)/np.real(z, axis=1))
 	else:
-		print( 'Error: phi with wrong dimensions' )
+		print('Error: phi with wrong dimensions')
 		r = None
 
 	return r, psi
 
 ################################################################################
 
-def calcKuramotoOrderParameter(phi):
+def real_part_kuramoto_order_parameter(phi):
 	'''Computes the Kuramoto order parameter r for in-phase synchronized states
 
 	   Parameters
@@ -691,11 +693,12 @@ def calcKuramotoOrderParameter(phi):
 	   Returns
 	   -------
 	   r  :  np.array
-			real value or real-valued 1d vetor of the Kuramotot order parameter
+			real value or real-valued 1d vetor of the Kuramoto order parameter
 
 	   Authors
 	   -------
 	   Lucas Wetzel, Daniel Platz'''
+
 	# Complex phasor representation
 	z = np.exp(1j * phi)
 
@@ -705,7 +708,7 @@ def calcKuramotoOrderParameter(phi):
 	elif len(phi.shape) == 2:
 		r = np.abs(np.mean(z, axis=1))
 	else:
-		print( 'Error: phi with wrong dimensions' )
+		print('Error: phi with wrong dimensions')
 		r = None
 
 	return r
@@ -779,7 +782,7 @@ def mTwistOrderParameter(phi):
 
 ################################################################################
 
-def _CheckerboardOrderParameter(phi):
+def _calculate_kuramoto_order_parameter_for_one_dim_chequerboard_patterns(phi):
 	'''Computes the 1d checkerboard order parameters for 1d states. Phi is supposed
 	   to be 1d vector of phases without time evolution.
 	'''
@@ -791,40 +794,43 @@ def _CheckerboardOrderParameter(phi):
 
 ################################################################################
 
-def CheckerboardOrderParameter(phi):
+def calculate_kuramoto_order_parameter_for_one_dim_chequerboard_patterns(phi):
 	'''Computes the 1d checkerboard order parameters for 1d states. Phi can be a 1d or 2d vector whose first index
 	   corresponds to different times.
-	   :rtype: np.ndarray
+	   r: type: np.ndarray
 	'''
 	if len(phi.shape) == 1:
-		return _CheckerboardOrderParameter(phi)
+		return _calculate_kuramoto_order_parameter_for_one_dim_chequerboard_patterns(phi)
 	else:
 		r = np.zeros(phi.shape[0])
 		for it in range(phi.shape[0]):
-			r[it] = _CheckerboardOrderParameter(phi[it, :])
+			r[it] = _calculate_kuramoto_order_parameter_for_one_dim_chequerboard_patterns(phi[it, :])
 		return r
 
 ################################################################################
 
-def _mTwistOrderParameter2d(phi, nx, ny):
+def _mTwistOrderParameter2d(phi, kx, ky):
 	'''Computes the 2d twist order parameters for 2d states. Phi is supposed
 	   to be 1d vector of phases. The result is returned as an array of shape (ny, nx)
 	'''
-	phi_2d = np.reshape(phi, (ny, nx))
+	phi_2d = np.reshape(phi, (ky, kx))
 	r = np.fft.fft2(np.exp(1j * phi_2d))
+
 	return np.abs(r) / float(len(phi))
 
 
-def mTwistOrderParameter2d(phi, nx, ny):
+def mTwistOrderParameter2d(phi, kx, ky):
 	'''Computes the 1d checkerboard order parameters for 1d states. Phi can be a 1d or 2d vector whose first index
 	   corresponds to different times.
 	'''
 	if len(phi.shape) == 1:
-		return _mTwistOrderParameter2d(phi, nx, ny)
+
+		return _mTwistOrderParameter2d(phi, kx, ky)
 	else:
 		r = []
 		for it in range(phi.shape[0]):
-			r.append(_mTwistOrderParameter2d(phi[it, :], nx ,ny))
+			r.append(_mTwistOrderParameter2d(phi[it, :], kx, ky))
+
 		return np.array(r)
 
 ################################################################################
@@ -891,17 +897,17 @@ def oracle_mTwistOrderParameter(phi, k):  # , kx, ky
 
 ################################################################################
 
-def oracle_CheckerboardOrderParameter1d(phi, k=1):
+def oracle_chequerboard_order_parameter_one_dimension(phi, k=0):
 	"""
 		k == 0 : global sync state
 		k == 1 : checkerboard state
 	"""
 	if k == 0:
-		return calcKuramotoOrderParameter(phi)
+		return real_part_kuramoto_order_parameter(phi)
 	elif k == 1:
-		return CheckerboardOrderParameter(phi)
+		return calculate_kuramoto_order_parameter_for_one_dim_chequerboard_patterns(phi)
 	else:
-		raise Exception('Non-valid value for k')
+		raise Exception('Non-valid value for k.')
 
 ################################################################################
 
@@ -919,7 +925,7 @@ def oracle_CheckerboardOrderParameter2d(phi, nx, ny, k):
 	if k == 0 or k == 1 or k == 2:
 		return CheckerboardOrderParameter2d(phi, nx, ny)[:, k]
 	elif k == 3:
-		return calcKuramotoOrderParameter(phi)
+		return real_part_kuramoto_order_parameter(phi)
 	else:
 		raise Exception('Non-valid value for k')
 
@@ -1071,22 +1077,22 @@ def shiftedColorMap(cmap, start=0, midpoint=0.5, stop=1.0, name='shiftedcmap'):
 # 	sol_time = []
 # 	success_count = 0
 # 	success_count_test1 = 0
-# 	group_oscillators_maxcut = np.zeros([len(pool_data[0][:]), len(pool_data[0][0]['dictData']['phi'][0, :])])
+# 	group_oscillators_maxcut = np.zeros([len(pool_data[0][:]), len(pool_data[0][0]['dict_data']['phi'][0, :])])
 #
 # 	# loop over the realizations
 # 	for i in range(len(pool_data[0][:])):
-# 		deltaTheta = np.zeros([len(pool_data[0][i]['dictData']['phi'][0, :]), len(pool_data[0][i]['dictData']['phi'][:, 0])])
-# 		signalOut  = np.zeros([len(pool_data[0][i]['dictData']['phi'][0, :]), len(pool_data[0][i]['dictData']['phi'][:, 0])])
+# 		deltaTheta = np.zeros([len(pool_data[0][i]['dict_data']['phi'][0, :]), len(pool_data[0][i]['dict_data']['phi'][:, 0])])
+# 		signalOut  = np.zeros([len(pool_data[0][i]['dict_data']['phi'][0, :]), len(pool_data[0][i]['dict_data']['phi'][:, 0])])
 #
-# 		thetaDot = np.diff( pool_data[0][i]['dictData']['phi'][:, :], axis=0 ) / pool_data[0][i]['dict_pll']['dt']				# compute frequencies and order parameter
-# 		r, orderparam, F1 = obtainOrderParam(pool_data[0][i]['dict_pll'], pool_data[0][i]['dict_net'], pool_data[0][i]['dictData'])
+# 		thetaDot = np.diff( pool_data[0][i]['dict_data']['phi'][:, :], axis=0 ) / pool_data[0][i]['dict_pll']['dt']				# compute frequencies and order parameter
+# 		order_parameter, F1 = compute_order_parameter(pool_data[0][i]['dict_pll'], pool_data[0][i]['dict_net'], pool_data[0][i]['dict_data'])
 #
-# 		ax18[i].plot( pool_data[0][i]['dictData']['t'][::plotEveryDt], orderparam[::plotEveryDt], label=r'$R_\textrm{final}=%0.2f$'%(orderparam[-1]), linewidth=linewidth )
+# 		ax18[i].plot( pool_data[0][i]['dict_data']['t'][::plotEveryDt], order_parameter[::plotEveryDt], label=r'$R_\textrm{final}=%0.2f$'%(order_parameter[-1]), linewidth=linewidth )
 #
 # 		# HOWTO 1) to determine whether the correct solution has be found, we test for the asymptotic value of the order parameter
 # 		order_param_diff_expected_value_threshold = 0.01
 # 		correct_solution_test0 = False
-# 		if np.abs(np.mean(orderparam[-int(number_of_intrinsic_periods_smoothing * np.mean(pool_data[0][i]['dict_pll']['intrF']) / pool_data[0][i]['dict_pll']['dt']):]) - order_param_solution) < order_param_diff_expected_value_threshold:
+# 		if np.abs(np.mean(order_parameter[-int(number_of_intrinsic_periods_smoothing * np.mean(pool_data[0][i]['dict_pll']['intrF']) / pool_data[0][i]['dict_pll']['dt']):]) - order_param_solution) < order_param_diff_expected_value_threshold:
 # 			print('Order parameter predicted for solution=%0.2f has been reached. Averaged over last %i periods of the intrinsic frequency for realization %i.'%(order_param_solution, number_of_intrinsic_periods_smoothing, i))
 # 			success_count += 1					# to calculate the probability of finding the correct solutions
 # 			correct_solution_test0 = True		# this is needed to decide for which realizations we need to measure the time to solution
@@ -1095,16 +1101,16 @@ def shiftedColorMap(cmap, start=0, midpoint=0.5, stop=1.0, name='shiftedcmap'):
 # 		group1 = 0
 # 		group2 = 0
 # 		correct_solution_test1 = False
-# 		for j in range(len(pool_data[0][i]['dictData']['phi'][0, :])):
+# 		for j in range(len(pool_data[0][i]['dict_data']['phi'][0, :])):
 # 			# calculate mean phase difference over an interval of 'number_of_intrinsic_periods_smoothing' periods at the end of all oscillators with respect to oscillator zero
 # 			# interval_index = -int(number_of_intrinsic_periods_smoothing * np.mean(pool_data[0][i]['dict_pll']['intrF']) / pool_data[0][i]['dict_pll']['dt'])
-# 			temp_phase_diff = np.mean(pool_data[0][i]['dictData']['phi'][-int(number_of_intrinsic_periods_smoothing * np.mean(pool_data[0][i]['dict_pll']['intrF']) / pool_data[0][i]['dict_pll']['dt']):, 0] - pool_data[0][i]['dictData']['phi'][-int(number_of_intrinsic_periods_smoothing * np.mean(pool_data[0][i]['dict_pll']['intrF']) / pool_data[0][i]['dict_pll']['dt']):, j])
+# 			temp_phase_diff = np.mean(pool_data[0][i]['dict_data']['phi'][-int(number_of_intrinsic_periods_smoothing * np.mean(pool_data[0][i]['dict_pll']['intrF']) / pool_data[0][i]['dict_pll']['dt']):, 0] - pool_data[0][i]['dict_data']['phi'][-int(number_of_intrinsic_periods_smoothing * np.mean(pool_data[0][i]['dict_pll']['intrF']) / pool_data[0][i]['dict_pll']['dt']):, j])
 # 			print('Realization %i, mean phase difference {mod 2pi into [-pi, pi)} between k=0 and k=%i is deltaPhi=%0.2f'%(i, j, ((temp_phase_diff+np.pi) % (2*np.pi))-np.pi))
 # 			if np.abs(((temp_phase_diff+np.pi) % (2*np.pi))-np.pi) < np.pi/2:
 # 				group1 += 1
 # 			else:
 # 				group2 += 1
-# 		if not group1+group2 == len(pool_data[0][i]['dictData']['phi'][0, :]):
+# 		if not group1+group2 == len(pool_data[0][i]['dict_data']['phi'][0, :]):
 # 			print('ERROR: check!')
 # 			sys.exit()
 # 		if group1 == number_of_expected_oscis_in_one_group or group2 == number_of_expected_oscis_in_one_group:
@@ -1118,23 +1124,23 @@ def shiftedColorMap(cmap, start=0, midpoint=0.5, stop=1.0, name='shiftedcmap'):
 # 			if correct_solution_test1:
 # 				# when the derivative of the order parameter is close to zero, we expect that the asymptotic state has been reached
 # 				# here we look for the cases where this is NOT the case yet, then the last entry of the resulting vector will be the transition time from transient to asymptotic dynamics
-# 				derivative_order_param_smoothed = (np.diff( uniform_filter1d( orderparam[pool_data[0][i]['dict_net']['max_delay_steps']:],
+# 				derivative_order_param_smoothed = (np.diff( uniform_filter1d( order_parameter[pool_data[0][i]['dict_net']['max_delay_steps']:],
 # 					size=int(15 * number_of_intrinsic_periods_smoothing * np.mean(pool_data[0][i]['dict_pll']['intrF']) / pool_data[0][i]['dict_pll']['dt']), mode='reflect') ) / pool_data[0][i]['dict_pll']['dt'])
 #
 # 				rolling_std_derivative_order_param_smoothed = pd.Series(derivative_order_param_smoothed).rolling(int(15 * number_of_intrinsic_periods_smoothing * np.mean(pool_data[0][i]['dict_pll']['intrF']) / pool_data[0][i]['dict_pll']['dt'])).std()
 #
-# 				#temp = np.where( (np.diff( uniform_filter1d( orderparam[(pool_data[0][i]['dictData']['tstep_annealing_start'] + pool_data[0][i]['dict_net']['max_delay_steps']):],
+# 				#temp = np.where( (np.diff( uniform_filter1d( order_parameter[(pool_data[0][i]['dict_data']['tstep_annealing_start'] + pool_data[0][i]['dict_net']['max_delay_steps']):],
 # 				#	size=int(15 * number_of_intrinsic_periods_smoothing * np.mean(pool_data[0][i]['dict_pll']['intrF']) / pool_data[0][i]['dict_pll']['dt']), mode='reflect') ) / pool_data[0][i]['dict_pll']['dt']) > order_param_change_threshold )
 # 				min_std = np.min(rolling_std_derivative_order_param_smoothed)
 # 				print('min_std:', min_std)
 # 				max_std = np.max(rolling_std_derivative_order_param_smoothed)
 # 				order_param_std_threshold = 0.1 * (max_std - min_std) + min_std
 # 				print('Realization %i, order_param_std_threshold to %0.02f, for {min_std, max_std} = {%0.2f,%0.2f} '%(i, order_param_std_threshold, min_std, max_std))
-# 				temp = np.where(rolling_std_derivative_order_param_smoothed[pool_data[0][i]['dictData']['tstep_annealing_start']:] > order_param_std_threshold)
+# 				temp = np.where(rolling_std_derivative_order_param_smoothed[pool_data[0][i]['dict_data']['tstep_annealing_start']:] > order_param_std_threshold)
 #
 # 				plt.plot(derivative_order_param_smoothed, 'b')
 # 				plt.plot(rolling_std_derivative_order_param_smoothed, 'r--')
-# 				plt.plot(temp[0][-1]-pool_data[0][i]['dictData']['tstep_annealing_start'], 0, 'cd')
+# 				plt.plot(temp[0][-1]-pool_data[0][i]['dict_data']['tstep_annealing_start'], 0, 'cd')
 #
 # 				# print('temp=', temp[0])
 # 				if not len(temp[0]) == 0:
@@ -1149,50 +1155,50 @@ def shiftedColorMap(cmap, start=0, midpoint=0.5, stop=1.0, name='shiftedcmap'):
 # 			else:
 # 				sol_time.append(np.inf)
 #
-# 			ax18[i].plot( pool_data[0][i]['dictData']['t'][(pool_data[0][i]['dictData']['tstep_annealing_start'] + pool_data[0][i]['dict_net']['max_delay_steps']):-1:plotEveryDt], uniform_filter1d((np.diff(
-# 										orderparam[(pool_data[0][i]['dictData']['tstep_annealing_start'] + pool_data[0][i]['dict_net']['max_delay_steps']):]) / pool_data[0][i]['dict_pll']['dt']),
+# 			ax18[i].plot( pool_data[0][i]['dict_data']['t'][(pool_data[0][i]['dict_data']['tstep_annealing_start'] + pool_data[0][i]['dict_net']['max_delay_steps']):-1:plotEveryDt], uniform_filter1d((np.diff(
+# 										order_parameter[(pool_data[0][i]['dict_data']['tstep_annealing_start'] + pool_data[0][i]['dict_net']['max_delay_steps']):]) / pool_data[0][i]['dict_pll']['dt']),
 # 										size=int(0.5 * np.mean(pool_data[0][i]['dict_pll']['intrF']) / pool_data[0][i]['dict_pll']['dt']), mode='reflect')[::plotEveryDt], 'r', linewidth=0.5, alpha=0.35 )
 # 		else:
 # 			if correct_solution_test1:
-# 				temp = np.where( np.diff(orderparam[(pool_data[0][i]['dictData']['tstep_annealing_start'] + pool_data[0][i]['dict_net']['max_delay_steps']):]) / pool_data[0][i]['dict_pll']['dt'] > order_param_change_threshold )
+# 				temp = np.where( np.diff(order_parameter[(pool_data[0][i]['dict_data']['tstep_annealing_start'] + pool_data[0][i]['dict_net']['max_delay_steps']):]) / pool_data[0][i]['dict_pll']['dt'] > order_param_change_threshold )
 # 				sol_time.append(temp[0][-1] * pool_data[0][i]['dict_pll']['dt'])
 # 			else:
 # 				sol_time.append(np.inf)
 #
-# 			ax18[i].plot( pool_data[0][i]['dictData']['t'][(pool_data[0][i]['dictData']['tstep_annealing_start'] + pool_data[0][i]['dict_net']['max_delay_steps']):-1:plotEveryDt], (np.diff(
-# 								orderparam[(pool_data[0][i]['dictData']['tstep_annealing_start'] + pool_data[0][i]['dict_net']['max_delay_steps']):]) / pool_data[0][i]['dict_pll']['dt'])[::plotEveryDt], 'r', linewidth=0.5, alpha=0.35 )
+# 			ax18[i].plot( pool_data[0][i]['dict_data']['t'][(pool_data[0][i]['dict_data']['tstep_annealing_start'] + pool_data[0][i]['dict_net']['max_delay_steps']):-1:plotEveryDt], (np.diff(
+# 								order_parameter[(pool_data[0][i]['dict_data']['tstep_annealing_start'] + pool_data[0][i]['dict_net']['max_delay_steps']):]) / pool_data[0][i]['dict_pll']['dt'])[::plotEveryDt], 'r', linewidth=0.5, alpha=0.35 )
 #
-# 		ax18[i].plot(pool_data[0][i]['dictData']['t'][(pool_data[0][i]['dictData']['tstep_annealing_start'] + pool_data[0][i]['dict_net']['max_delay_steps'])], 0, 'cd', markersize=1)
+# 		ax18[i].plot(pool_data[0][i]['dict_data']['t'][(pool_data[0][i]['dict_data']['tstep_annealing_start'] + pool_data[0][i]['dict_net']['max_delay_steps'])], 0, 'cd', markersize=1)
 # 		if correct_solution_test0 and sol_time[i] != np.inf:
-# 			ax18[i].plot(sol_time[i] + pool_data[0][i]['dictData']['t'][(pool_data[0][i]['dictData']['tstep_annealing_start'] + pool_data[0][i]['dict_net']['max_delay_steps'])], 0, 'c*', markersize=1)
+# 			ax18[i].plot(sol_time[i] + pool_data[0][i]['dict_data']['t'][(pool_data[0][i]['dict_data']['tstep_annealing_start'] + pool_data[0][i]['dict_net']['max_delay_steps'])], 0, 'c*', markersize=1)
 #
 # 		if len(pool_data[0][:]) > threshold_realizations_plot:
-# 			ax21.plot(pool_data[0][i]['dictData']['t'][(pool_data[0][i]['dictData']['tstep_annealing_start'] + pool_data[0][i]['dict_net']['max_delay_steps'])], -0.05, 'cd', markersize=1)
+# 			ax21.plot(pool_data[0][i]['dict_data']['t'][(pool_data[0][i]['dict_data']['tstep_annealing_start'] + pool_data[0][i]['dict_net']['max_delay_steps'])], -0.05, 'cd', markersize=1)
 # 			if correct_solution_test0:
-# 				ax21.plot(pool_data[0][i]['dictData']['t'][::plotEveryDt], orderparam[::plotEveryDt], '-', label=r'$R_\textrm{final}=%0.2f$' % (orderparam[-1]), linewidth=linewidth)
-# 				ax211.plot(pool_data[0][i]['dictData']['t'][::plotEveryDt], uniform_filter1d(orderparam[::plotEveryDt],
-# 							size=int(number_of_intrinsic_periods_smoothing * np.mean(pool_data[0][i]['dict_pll']['intrF']) / pool_data[0][i]['dict_pll']['dt']), mode='reflect'), '-', label=r'$R_\textrm{final}=%0.2f$' % (orderparam[-1]), linewidth=linewidth)
+# 				ax21.plot(pool_data[0][i]['dict_data']['t'][::plotEveryDt], order_parameter[::plotEveryDt], '-', label=r'$R_\textrm{final}=%0.2f$' % (order_parameter[-1]), linewidth=linewidth)
+# 				ax211.plot(pool_data[0][i]['dict_data']['t'][::plotEveryDt], uniform_filter1d(order_parameter[::plotEveryDt],
+# 							size=int(number_of_intrinsic_periods_smoothing * np.mean(pool_data[0][i]['dict_pll']['intrF']) / pool_data[0][i]['dict_pll']['dt']), mode='reflect'), '-', label=r'$R_\textrm{final}=%0.2f$' % (order_parameter[-1]), linewidth=linewidth)
 # 				if sol_time[i] != np.inf:
-# 					ax21.plot(sol_time[i] + pool_data[0][i]['dictData']['t'][(pool_data[0][i]['dictData']['tstep_annealing_start'] + pool_data[0][i]['dict_net']['max_delay_steps'])], -0.05, 'c*', markersize=1)
+# 					ax21.plot(sol_time[i] + pool_data[0][i]['dict_data']['t'][(pool_data[0][i]['dict_data']['tstep_annealing_start'] + pool_data[0][i]['dict_net']['max_delay_steps'])], -0.05, 'c*', markersize=1)
 # 			else:
-# 				ax21.plot(pool_data[0][i]['dictData']['t'][::plotEveryDt], orderparam[::plotEveryDt], '--', label=r'$R_\textrm{final}=%0.2f$' % (orderparam[-1]), linewidth=linewidth)
-# 				ax211.plot(pool_data[0][i]['dictData']['t'][::plotEveryDt], uniform_filter1d(orderparam[::plotEveryDt],
-# 							size=int(number_of_intrinsic_periods_smoothing * np.mean(pool_data[0][i]['dict_pll']['intrF']) / pool_data[0][i]['dict_pll']['dt']), mode='reflect'), '--', label=r'$R_\textrm{final}=%0.2f$' % (orderparam[-1]), linewidth=linewidth)
+# 				ax21.plot(pool_data[0][i]['dict_data']['t'][::plotEveryDt], order_parameter[::plotEveryDt], '--', label=r'$R_\textrm{final}=%0.2f$' % (order_parameter[-1]), linewidth=linewidth)
+# 				ax211.plot(pool_data[0][i]['dict_data']['t'][::plotEveryDt], uniform_filter1d(order_parameter[::plotEveryDt],
+# 							size=int(number_of_intrinsic_periods_smoothing * np.mean(pool_data[0][i]['dict_pll']['intrF']) / pool_data[0][i]['dict_pll']['dt']), mode='reflect'), '--', label=r'$R_\textrm{final}=%0.2f$' % (order_parameter[-1]), linewidth=linewidth)
 #
 #
 # 		if phase_wrap == 0:  # plot phase differences in [-inf, inf), i.e., we use the unwrapped phases that have counted the cycles/periods
-# 			ax20[i].hist(pool_data[0][i]['dictData']['phi'][-3, :] - pool_data[0][i]['dictData']['phi'][-2, 0], bins=number_of_bins, rwidth=0.9, density=prob_density)
+# 			ax20[i].hist(pool_data[0][i]['dict_data']['phi'][-3, :] - pool_data[0][i]['dict_data']['phi'][-2, 0], bins=number_of_bins, rwidth=0.9, density=prob_density)
 # 		elif phase_wrap != 0:
-# 			# print('histogram_data (wrapping if phase):', ((dictData['phi'][at_index, plotlist] + shift2piWin) % (2 * np.pi)) - shift2piWin)
-# 			ax20[i].hist((((pool_data[0][i]['dictData']['phi'][-3, :] - pool_data[0][i]['dictData']['phi'][-2, 0] + shift2piWin) % (2.0 * np.pi)) - shift2piWin), bins=number_of_bins, rwidth=0.9, density=prob_density)
+# 			# print('histogram_data (wrapping if phase):', ((dict_data['phi'][at_index, plotlist] + shift2piWin) % (2 * np.pi)) - shift2piWin)
+# 			ax20[i].hist((((pool_data[0][i]['dict_data']['phi'][-3, :] - pool_data[0][i]['dict_data']['phi'][-2, 0] + shift2piWin) % (2.0 * np.pi)) - shift2piWin), bins=number_of_bins, rwidth=0.9, density=prob_density)
 #
 # 		final_phase_oscillator = []
-# 		for j in range(len(pool_data[0][i]['dictData']['phi'][0, :])):
+# 		for j in range(len(pool_data[0][i]['dict_data']['phi'][0, :])):
 # 			if shift2piWin != 0:
-# 				deltaTheta[j] = (((pool_data[0][i]['dictData']['phi'][:, 0] - pool_data[0][i]['dictData']['phi'][:, j]) + shift2piWin) % (2.0 * np.pi)) - shift2piWin 		# calculate phase-differnce w.r.t. osci k=0
+# 				deltaTheta[j] = (((pool_data[0][i]['dict_data']['phi'][:, 0] - pool_data[0][i]['dict_data']['phi'][:, j]) + shift2piWin) % (2.0 * np.pi)) - shift2piWin 		# calculate phase-differnce w.r.t. osci k=0
 # 			else:
-# 				deltaTheta[j] = pool_data[0][i]['dictData']['phi'][:, 0] - pool_data[0][i]['dictData']['phi'][:, j]
-# 			signalOut[j] = pool_data[0][i]['dict_pll']['vco_out_sig'](pool_data[0][i]['dictData']['phi'][:, j])				# generate signals for all phase histories
+# 				deltaTheta[j] = pool_data[0][i]['dict_data']['phi'][:, 0] - pool_data[0][i]['dict_data']['phi'][:, j]
+# 			signalOut[j] = pool_data[0][i]['dict_pll']['vco_out_sig'](pool_data[0][i]['dict_data']['phi'][:, j])				# generate signals for all phase histories
 #
 # 			# save in which binarized state the oscillator was at the end of the realization, averaged over
 # 			if np.mean(deltaTheta[j][-int(number_of_intrinsic_periods_smoothing * np.mean(pool_data[0][i]['dict_pll']['intrF']) / pool_data[0][i]['dict_pll']['dt']):-1]) - 0 < 0.2:
@@ -1210,12 +1216,12 @@ def shiftedColorMap(cmap, start=0, midpoint=0.5, stop=1.0, name='shiftedcmap'):
 # 			else:
 # 				linestyle = '-'
 #
-# 			ax16[i].plot( pool_data[0][i]['dictData']['t'][::plotEveryDt], deltaTheta[j, ::plotEveryDt], linestyle, linewidth=linewidth, label='sig PLL%i' %(j))
-# 			ax161[i].plot(pool_data[0][i]['dictData']['t'], uniform_filter1d(deltaTheta[j, :], size=int(number_of_intrinsic_periods_smoothing * np.mean(pool_data[0][i]['dict_pll']['intrF']) / pool_data[0][i]['dict_pll']['dt']), mode='reflect'), linestyle, linewidth=linewidth, label='sig PLL%i' % (j))
-# 			ax19[i].plot( pool_data[0][i]['dictData']['t'][::plotEveryDt], pool_data[0][i]['dict_pll']['vco_out_sig'](pool_data[0][i]['dictData']['phi'][::plotEveryDt, j]), linewidth=linewidth, label='sig PLL%i' %(j))
-# 			ax17[i].plot( pool_data[0][i]['dictData']['t'][1::plotEveryDt], thetaDot[::plotEveryDt, j], linewidth=linewidth, label='sig PLL%i' %(j))
+# 			ax16[i].plot( pool_data[0][i]['dict_data']['t'][::plotEveryDt], deltaTheta[j, ::plotEveryDt], linestyle, linewidth=linewidth, label='sig PLL%i' %(j))
+# 			ax161[i].plot(pool_data[0][i]['dict_data']['t'], uniform_filter1d(deltaTheta[j, :], size=int(number_of_intrinsic_periods_smoothing * np.mean(pool_data[0][i]['dict_pll']['intrF']) / pool_data[0][i]['dict_pll']['dt']), mode='reflect'), linestyle, linewidth=linewidth, label='sig PLL%i' % (j))
+# 			ax19[i].plot( pool_data[0][i]['dict_data']['t'][::plotEveryDt], pool_data[0][i]['dict_pll']['vco_out_sig'](pool_data[0][i]['dict_data']['phi'][::plotEveryDt, j]), linewidth=linewidth, label='sig PLL%i' %(j))
+# 			ax17[i].plot( pool_data[0][i]['dict_data']['t'][1::plotEveryDt], thetaDot[::plotEveryDt, j], linewidth=linewidth, label='sig PLL%i' %(j))
 #
-# 		print('working on realization %i results from sim:'%i, pool_data[0][i]['dict_net'], '\n', pool_data[0][i]['dict_pll'], '\n', pool_data[0][i]['dictData'], '\n\n')
+# 		print('working on realization %i results from sim:'%i, pool_data[0][i]['dict_net'], '\n', pool_data[0][i]['dict_pll'], '\n', pool_data[0][i]['dict_data'], '\n\n')
 #
 # 		if i == int( len(pool_data[0][:]) / 2 ):
 # 			ax16[i].set_ylabel(r'$\Delta\theta(t)$', fontsize=axisLabel)
@@ -1288,8 +1294,8 @@ def shiftedColorMap(cmap, start=0, midpoint=0.5, stop=1.0, name='shiftedcmap'):
 # 		np.max(sol_time)/np.mean(pool_data[0][i]['dict_pll']['intrF']))
 # 	if len(pool_data[0][:]) > threshold_realizations_plot:
 # 		props = dict(boxstyle='round', facecolor='wheat', alpha=0.5)
-# 		#ax21.text(0.25*pool_data[0][0]['dictData']['t'][-1], 0.2, results_string, horizontalalignment='left', verticalalignment='bottom', bbox=props, fontsize=9)
-# 		ax211.text(0.25 * pool_data[0][0]['dictData']['t'][-1], 0.2, results_string, horizontalalignment='left', verticalalignment='bottom', bbox=props, fontsize=9)
+# 		#ax21.text(0.25*pool_data[0][0]['dict_data']['t'][-1], 0.2, results_string, horizontalalignment='left', verticalalignment='bottom', bbox=props, fontsize=9)
+# 		ax211.text(0.25 * pool_data[0][0]['dict_data']['t'][-1], 0.2, results_string, horizontalalignment='left', verticalalignment='bottom', bbox=props, fontsize=9)
 #
 # 	print(results_string)
 #

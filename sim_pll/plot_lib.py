@@ -865,7 +865,7 @@ def plot_phase_differences_vs_time_dependent_parameter_divided_or_undivided(dict
 	plt.xlabel(dyn_x_label, fontdict=labelfont, labelpad=-5)
 	plt.ylabel(r'$\frac{\Delta\theta_{k0}(t)}{v}$', rotation=90, fontdict=labelfont, labelpad=40)
 	plt.tick_params(axis='both', which='major', labelsize=tickSize, pad=1)
-	plt.xlim([dict_data['t'][int(0.75 * np.round(np.mean(dict_pll['transmission_delay']) / dict_pll['dt']))], dict_data['t'][-1]])
+	plt.xlim([dict_data['timeDependentParameter'][0, 0] * x_axis_scaling, dict_data['timeDependentParameter'][0, -1] * x_axis_scaling])
 	# ax012.set_ylim([-np.pi, np.pi])
 	plt.legend(loc='upper right')
 	plt.grid()
@@ -982,8 +982,8 @@ def deltaThetaDot_vs_deltaTheta(dict_pll, dict_net, deltaTheta, deltaThetaDot, c
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
-def plot_inst_frequency_and_phase_difference(dict_pll, dict_net, dict_data, plotlist=[], ylim_percent_of_min_val=0.995, ylim_percent_of_max_val=1.005):
-	phase_diff_zero_2pi = 2  # set to 1 if plotting in [-pi, +pi) and to 2 if plotting in [-pi/2, 3pi/2] or to 3 if phase differences to be plotted in [0, 2pi)
+def plot_inst_frequency_and_phase_difference(dict_pll, dict_net, dict_data, phases_of_divided_signals=False, plotlist=[], phase_diff_zero_2pi=1, ylim_percent_of_min_val=0.995, ylim_percent_of_max_val=1.005):
+	# set to 1 if plotting in [-pi, +pi) and to 2 if plotting in [-pi/2, 3pi/2] or to 3 if phase differences to be plotted in [0, 2pi)
 
 	dict_pll, dict_net = prepareDictsForPlotting(dict_pll, dict_net)
 
@@ -992,10 +992,15 @@ def plot_inst_frequency_and_phase_difference(dict_pll, dict_net, dict_data, plot
 	color = ['blue', 'red', 'purple', 'cyan', 'green', 'yellow']  # 'magenta'
 	linet = ['-', '-.', '--', ':', 'densily dashdotdotted', 'densely dashed']
 
-	dict_pll, dict_net = prepareDictsForPlotting(dict_pll, dict_net)
-
 	fig19 = plt.figure(num=19, figsize=(figwidth, figheight), dpi=dpi_val, facecolor='w', edgecolor='k')
-	fig19.canvas.manager.set_window_title('time-series frequency and phase difference')  # frequency and order parameter
+	if phases_of_divided_signals:
+		fig19.canvas.manager.set_window_title('time-series frequency and phase-differences (divided)')  # frequency and order parameter
+		y_label_name_1 = r'$\frac{\Delta\theta_{k0}(t)}{v}$'
+		division = dict_pll['div']
+	else:
+		fig19.canvas.manager.set_window_title('time-series frequency and phase-differences (undivided)')  # frequency and order parameter
+		y_label_name_1 = r'$\Delta\theta_{k0}(t)$'
+		division = 1
 	fig19.set_size_inches(plot_size_inches_x, plot_size_inches_y)
 
 	ax011 = fig19.add_subplot(211)
@@ -1033,7 +1038,7 @@ def plot_inst_frequency_and_phase_difference(dict_pll, dict_net, dict_data, plot
 	min_freq_ts = np.min(phidot[int(0.75 * np.round(np.mean(dict_pll['transmission_delay']) / dict_pll['dt']))::dict_pll['sampleFplot']])
 
 	ax011.set_ylim([ylim_percent_of_min_val * min_freq_ts, ylim_percent_of_max_val * max_freq_ts])
-	plt.grid();
+	plt.grid()
 
 	ax012 = fig19.add_subplot(212)
 
@@ -1050,27 +1055,27 @@ def plot_inst_frequency_and_phase_difference(dict_pll, dict_net, dict_data, plot
 				for i in range(len(dict_data['phi'][0, :])):
 					labelname = r'$\phi_{%i}$-$\phi_{0}$' % (i)
 					plt.plot((dict_data['t'][int(0.75 * np.round(np.mean(dict_pll['transmission_delay']) / dict_pll['dt']))::dict_pll['sampleFplot']]),
-							 ((dict_data['phi'][int(0.75 * np.round(np.mean(dict_pll['transmission_delay']) / dict_pll['dt']))::dict_pll['sampleFplot'], i] - dict_data['phi'][int(0.75 * np.round(
-								 np.mean(dict_pll['transmission_delay']) / dict_pll['dt']))::dict_pll['sampleFplot'], 0] + shift2piWin) % (2 * np.pi)) - shift2piWin, label=labelname)
+							 ((dict_data['phi'][int(0.75 * np.round(np.mean(dict_pll['transmission_delay']) / dict_pll['dt']))::dict_pll['sampleFplot'], i]/division - dict_data['phi'][int(0.75 * np.round(
+								 np.mean(dict_pll['transmission_delay']) / dict_pll['dt']))::dict_pll['sampleFplot'], 0]/division + shift2piWin) % (2 * np.pi)) - shift2piWin, label=labelname)
 			else:
 				for i in plotlist:
 					labelname = r'$\phi_{%i}$-$\phi_{0}$' % (i)
 					plt.plot((dict_data['t'][int(0.75 * np.round(np.mean(dict_pll['transmission_delay']) / dict_pll['dt']))::dict_pll['sampleFplot']]),
-							 ((dict_data['phi'][int(0.75 * np.round(np.mean(dict_pll['transmission_delay']) / dict_pll['dt']))::dict_pll['sampleFplot'], i] - dict_data['phi'][int(0.75 * np.round(
-								 np.mean(dict_pll['transmission_delay']) / dict_pll['dt']))::dict_pll['sampleFplot'], 0] + shift2piWin) % (2 * np.pi)) - shift2piWin, label=labelname)
+							 ((dict_data['phi'][int(0.75 * np.round(np.mean(dict_pll['transmission_delay']) / dict_pll['dt']))::dict_pll['sampleFplot'], i]/division - dict_data['phi'][int(0.75 * np.round(
+								 np.mean(dict_pll['transmission_delay']) / dict_pll['dt']))::dict_pll['sampleFplot'], 0]/division + shift2piWin) % (2 * np.pi)) - shift2piWin, label=labelname)
 		else:
 			labelname = r'$\phi_{1}$-$\phi_{0}$'
 			plt.plot((dict_data['t'][int(0.75 * np.round(np.mean(dict_pll['transmission_delay']) / dict_pll['dt']))::dict_pll['sampleFplot']]),
-					 ((dict_data['phi'][int(0.75 * np.round(np.mean(dict_pll['transmission_delay']) / dict_pll['dt']))::dict_pll['sampleFplot'], 1] - dict_data['phi'][int(0.75 * np.round(
-						 np.mean(dict_pll['transmission_delay']) / dict_pll['dt']))::dict_pll['sampleFplot'], 0] + shift2piWin) % (2 * np.pi)) - shift2piWin, label=labelname)
+					 ((dict_data['phi'][int(0.75 * np.round(np.mean(dict_pll['transmission_delay']) / dict_pll['dt']))::dict_pll['sampleFplot'], 1]/division - dict_data['phi'][int(0.75 * np.round(
+						 np.mean(dict_pll['transmission_delay']) / dict_pll['dt']))::dict_pll['sampleFplot'], 0]/division + shift2piWin) % (2 * np.pi)) - shift2piWin, label=labelname)
 	else:
 		plt.plot(dict_data['t'][int(0.75 * np.round(np.mean(dict_pll['transmission_delay']) / dict_pll['dt'])):-1:dict_pll['sampleFplot']],
-				 ((dict_data['phi'][int(0.75 * np.round(np.mean(dict_pll['transmission_delay']) / dict_pll['dt'])):-1:dict_pll['sampleFplot'], 0] - dict_data['phi'][int(0.75 * np.round(
-					 np.mean(dict_pll['transmission_delay']) / dict_pll['dt'])):-1:dict_pll['sampleFplot'], 1] + shift2piWin) % (2. * np.pi)) - shift2piWin, '-', linewidth=2,
+				 ((dict_data['phi'][int(0.75 * np.round(np.mean(dict_pll['transmission_delay']) / dict_pll['dt'])):-1:dict_pll['sampleFplot'], 0]/division - dict_data['phi'][int(0.75 * np.round(
+					 np.mean(dict_pll['transmission_delay']) / dict_pll['dt'])):-1:dict_pll['sampleFplot'], 1]/division + shift2piWin) % (2. * np.pi)) - shift2piWin, '-', linewidth=2,
 				 label=r'$\phi_{0}-\phi_{1}$ mutual')
 		plt.plot(dict_data['t'][int(0.75 * np.round(np.mean(dict_pll['transmission_delay']) / dict_pll['dt'])):-1:dict_pll['sampleFplot']],
-				 ((dict_data['phi'][int(0.75 * np.round(np.mean(dict_pll['transmission_delay']) / dict_pll['dt'])):-1:dict_pll['sampleFplot'], 3] - dict_data['phi'][int(0.75 * np.round(
-					 np.mean(dict_pll['transmission_delay']) / dict_pll['dt'])):-1:dict_pll['sampleFplot'], 2] + shift2piWin) % (2. * np.pi)) - shift2piWin, '--', linewidth=2,
+				 ((dict_data['phi'][int(0.75 * np.round(np.mean(dict_pll['transmission_delay']) / dict_pll['dt'])):-1:dict_pll['sampleFplot'], 3]/division - dict_data['phi'][int(0.75 * np.round(
+					 np.mean(dict_pll['transmission_delay']) / dict_pll['dt'])):-1:dict_pll['sampleFplot'], 2]/division + shift2piWin) % (2. * np.pi)) - shift2piWin, '--', linewidth=2,
 				 label=r'$\phi_{3}-\phi_{2}$ entrain')
 	# plt.plot((t[int(0.75*np.round(np.mean(dict_pll['transmission_delay'])/dict_pll['dt'])):-1:dict_pll['sampleFplot']]*dict_pll['dt']),((dict_data['phi'][int(0.75*np.round(np.mean(dict_pll['transmission_delay'])/dict_pll['dt'])):-1:dict_pll['sampleFplot'],0]-dict_data['phi'][int(0.75*np.round(np.mean(dict_pll['transmission_delay'])/dict_pll['dt'])):-1:dict_pll['sampleFplot'],5]+np.pi)%(2.*np.pi))-np.pi,'-',linewidth=2,label=r'$\phi_{0}-\phi_{5}$ mutual  vs freeRef')
 	# plt.plot((t[int(0.75*np.round(np.mean(dict_pll['transmission_delay'])/dict_pll['dt'])):-1:dict_pll['sampleFplot']]*dict_pll['dt']),((dict_data['phi'][int(0.75*np.round(np.mean(dict_pll['transmission_delay'])/dict_pll['dt'])):-1:dict_pll['sampleFplot'],3]-dict_data['phi'][int(0.75*np.round(np.mean(dict_pll['transmission_delay'])/dict_pll['dt'])):-1:dict_pll['sampleFplot'],5]+np.pi)%(2.*np.pi))-np.pi,'--',linewidth=2,label=r'$\phi_{3}-\phi_{5}$ entrain vs freeRef')
@@ -1080,7 +1085,7 @@ def plot_inst_frequency_and_phase_difference(dict_pll, dict_net, dict_data, plot
 	# plt.axvspan(dict_data['t'][-int(5.5*1.0/(dict_pll['intrF']*dict_pll['dt']))], dict_data['t'][-1], color='b', alpha=0.3)
 
 	plt.xlabel(r'$\omega t/2\pi$', fontdict=labelfont, labelpad=-5)
-	plt.ylabel(r'$\Delta\theta_{k0}(t)$', rotation=90, fontdict=labelfont, labelpad=40)
+	plt.ylabel(y_label_name_1, rotation=90, fontdict=labelfont, labelpad=40)
 	ax012.tick_params(axis='both', which='major', labelsize=tickSize, pad=1)
 	ax012.set_xlim([dict_data['t'][int(0.75 * np.round(np.mean(dict_pll['transmission_delay']) / dict_pll['dt']))], dict_data['t'][-1]])
 	# ax012.set_ylim([-np.pi, np.pi])

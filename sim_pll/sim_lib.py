@@ -318,7 +318,7 @@ def plot_results_simulation(dict_net: dict, dict_pll: dict, dict_data: dict) -> 
 		plot.plot_allan_variance(dict_pll, dict_net, dict_data, 0.4 * dict_net['Tsim'], [0, 1], 'overlapping_adev', 'frequency', 0.5 * dict_net['Tsim'])
 	elif dict_net['Nx']*dict_net['Ny'] == 3:
 		plot.plot_order_parameter(dict_pll, dict_net, dict_data)
-		plot.plot_inst_frequency_and_phase_difference(dict_pll, dict_net, dict_data)
+		plot.plot_inst_frequency_and_phase_difference(dict_pll, dict_net, dict_data, True, [], 2)
 		plot.plot_inst_frequency_and_order_parameter(dict_pll, dict_net, dict_data)
 		plot.plot_phase_relations_of_divided_signal(dict_pll, dict_net, dict_data, [], 2)
 		plot.plot_power_spectral_density(dict_pll, dict_net, dict_data, [0, 1, 2], saveData=False)

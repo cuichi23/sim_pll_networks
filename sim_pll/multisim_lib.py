@@ -185,7 +185,7 @@ def evaluate_pool_data(dict_net, dict_algo, pool_data):
 	elif dict_algo['parameter_space_sweeps'] == 'single':
 		if dict_net['special_case'] != 'False':
 			print('Plotting frequency vs time-dependent parameter!')
-			plot.plot_instfreq_vs_timedependent_parameter(pool_data[0][0]['dict_pll'], pool_data[0][0]['dict_net'], pool_data[0][0]['dict_data'])
+			plot.plot_instfreq_vs_time_dependent_parameter(pool_data[0][0]['dict_pll'], pool_data[0][0]['dict_net'], pool_data[0][0]['dict_data'])
 		if 'ctrl' in pool_data[0][0]['dict_data']:
 			plot.plotCtrlSigDny(pool_data[0][0]['dict_pll'], pool_data[0][0]['dict_net'], pool_data[0][0]['dict_data'])
 		if 'clock_counter' in pool_data[0][0]['dict_data']:

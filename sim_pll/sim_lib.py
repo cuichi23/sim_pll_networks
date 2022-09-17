@@ -244,7 +244,7 @@ def perform_simulation_case(dict_net: dict, dict_pll: dict, dict_algo: dict, dic
 	# run evaluations
 	perform_evaluation(dict_net, dict_pll, dict_data)
 	if dict_algo['parameter_space_sweeps'] is None:
-		plot.plotOrderPvsTimeDepPara(dict_pll, dict_net, dict_data, dict_algo)
+		plot.plot_order_parameter_vs_time_dependent_parameter(dict_pll, dict_net, dict_data, dict_algo)
 
 
 def perform_evaluation(dict_net: dict, dict_pll: dict, dict_data: dict) -> None:
@@ -300,7 +300,9 @@ def plot_results_simulation(dict_net: dict, dict_pll: dict, dict_data: dict) -> 
 	"""
 	if dict_net['special_case'] != 'False':
 		print('Plotting frequency vs time-dependent parameter!')
-		plot.plot_instfreq_vs_timedependent_parameter(dict_pll, dict_net, dict_data)
+		plot.plot_instfreq_vs_time_dependent_parameter(dict_pll, dict_net, dict_data)
+		plot.plot_order_parameter_vs_time_dependent_parameter(dict_pll, dict_net, dict_data)
+		plot.plot_phase_differences_vs_time_dependent_parameter_divided_or_undivided(dict_pll, dict_net, dict_data, [], 2)
 	# plot.plot_phases_unwrapped(dict_pll, dict_net, dict_data)
 	# plot.plot_phases_two_pi_periodic(dict_pll, dict_net, dict_data)
 	# plot.plot_inst_frequency(dict_pll, dict_net, dict_data)
@@ -318,6 +320,7 @@ def plot_results_simulation(dict_net: dict, dict_pll: dict, dict_data: dict) -> 
 		plot.plot_order_parameter(dict_pll, dict_net, dict_data)
 		plot.plot_inst_frequency_and_phase_difference(dict_pll, dict_net, dict_data)
 		plot.plot_inst_frequency_and_order_parameter(dict_pll, dict_net, dict_data)
+		plot.plot_phase_relations_of_divided_signal(dict_pll, dict_net, dict_data, [], 2)
 		plot.plot_power_spectral_density(dict_pll, dict_net, dict_data, [0, 1, 2], saveData=False)
 		# try:
 		# 	plot.plot_allan_variance(dict_pll, dict_net, dict_data, 0.4 * dict_net['Tsim'], [0, 1, 2], 'overlapping_adev', 'frequency', 0.5 * dict_net['Tsim'])

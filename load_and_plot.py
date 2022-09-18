@@ -80,15 +80,15 @@ labelpadyaxis       = 20
 # load data
 folder		 = '/home/cuichi/Documents/MPI_PKS_Docs/2019_VIP+/Programs/2021_simPLL_pub/results/'#'/home/cuichi/data-z2/simPLL_2/1_CH_success/results/'
 ################################################################################
-filenamePLL  = folder+'dict_pll_K0.050_tau2.969_Fc0.000_mx0_my-999_N2_toporing_22:13_2021_11_23'
-filenameNet  = folder+'dict_net_K0.050_tau2.969_Fc0.000_mx0_my-999_N2_toporing_22:13_2021_11_23'
-filenameData = folder+'dictData_K0.050_tau2.969_Fc0.000_mx0_my-999_N2_toporing_22:13_2021_11_23'
-filenameAlgo = folder+'dict_algo_K0.050_tau2.969_Fc0.000_mx0_my-999_N2_toporing_22:13_2021_11_23'
+filenamePLL  = folder+'dict_pll_K0.012_tau1207.203_Fc0.000_mx0_my-999_N3_topochain_16:6_2022_9_17'
+filenameNet  = folder+'dict_net_K0.012_tau1207.203_Fc0.000_mx0_my-999_N3_topochain_16:6_2022_9_17'
+filenameData = folder+'dict_data_K0.012_tau1207.203_Fc0.000_mx0_my-999_N3_topochain_16:6_2022_9_17'
+filenameAlgo = folder+'dict_algo_K0.012_tau1207.203_Fc0.000_mx0_my-999_N3_topochain_16:6_2022_9_17'
 ################################################################################
-if 'poolData' in filenameData:
-	poolData = pickle.load(open(filenameData, 'rb'))
+if 'pool_data' in filenameData:
+	pool_data = pickle.load(open(filenameData, 'rb'))
 else:
-	dictData = pickle.load(open(filenameData, 'rb'))
+	dict_data = pickle.load(open(filenameData, 'rb'))
 	dict_pll  = pickle.load(open(filenamePLL, 'rb'))
 	dict_net  = pickle.load(open(filenameNet, 'rb'))
 	dict_algo = pickle.load(open(filenameAlgo, 'rb'))
@@ -123,21 +123,22 @@ cdict = {
 }
 colormap  	= matplotlib.colors.LinearSegmentedColormap('my_colormap', cdict, 1024)
 
-if 'poolData' in filenameData:
-	if poolData[0][0]['dict_algo']['parameter_space_sweeps']   == 'testNetworkMotifIsing':
-		eva.evaluateSimulationIsing(poolData)
-	elif poolData[0][0]['dict_algo']['parameter_space_sweeps'] == 'listOfInitialPhaseConfigurations':
-		eva.evaluateSimulationsChrisHoyer(poolData)
-	elif poolData[0][0]['dict_algo']['parameter_space_sweeps'] == 'classicBruteForceMethodRotatedSpace':
-		print('Implement evaluation as in the old version! Copy plots, etc...') sys.exit()
+if 'pool_data' in filenameData:
+	if pool_data[0][0]['dict_algo']['parameter_space_sweeps']   == 'testNetworkMotifIsing':
+		eva.evaluateSimulationIsing(pool_data)
+	elif pool_data[0][0]['dict_algo']['parameter_space_sweeps'] == 'listOfInitialPhaseConfigurations':
+		eva.evaluateSimulationsChrisHoyer(pool_data)
+	elif pool_data[0][0]['dict_algo']['parameter_space_sweeps'] == 'classicBruteForceMethodRotatedSpace':
+		print('Implement evaluation as in the old version! Copy plots, etc...')
+		sys.exit()
 else:
 	# run evaluations
-	r, orderParam, F1 	= eva.obtainOrderParam(dict_pll, dict_net, dictData)
-	dictData.update({'orderParam': orderParam, 'R': r, 'F1': F1})
+	order_parameter, order_parameter_divided_phases, F1 = eva.compute_order_parameter(dict_pll, dict_net, dict_data)
+	dict_data.update({'order_parameter': order_parameter, 'order_parameter_divided_phases': order_parameter_divided_phases, 'F1': F1})
 
 	#dict_pll.update({'vco_out_sig': coupfct.sine})
 
-	sim.plot_results_simulation(dict_net, dict_pll, dictData)
+	sim.plot_results_simulation(dict_net, dict_pll, dict_data)
 
 	# dict_pllsyncTool = dict_pll.copy()
 	# dict_pllsyncTool.update({'transmission_delay': 3})
@@ -157,22 +158,22 @@ else:
 	# fig12.canvas.set_window_title('instantaneous frequency as function of time-dependent parameter')
 	# fig12.set_size_inches(plot_size_inches_x, plot_size_inches_y)
 	#
-	# plt.plot(dictData['timeDependentParameter'][0,0:len(dictData['phi'][:,0])-1]*x_axis_scaling, (np.diff(dictData['phi'], axis=0)/dict_pll['dt'])/y_axis_scaling, 'b-')
+	# plt.plot(dict_data['timeDependentParameter'][0,0:len(dict_data['phi'][:,0])-1]*x_axis_scaling, (np.diff(dict_data['phi'], axis=0)/dict_pll['dt'])/y_axis_scaling, 'b-')
 	# plt.plot(tau1, omega1, 'c+', tau2, omega2, 'g*')
 	#
 	# plt.xlabel(dyn_x_label, fontdict = labelfont, labelpad=labelpadxaxis)
 	# plt.ylabel(r'$\frac{\dot{\theta}_k(t)}{\omega}$', fontdict = labelfont, labelpad=labelpadyaxis)
 	# plt.tick_params(axis='both', which='major', labelsize=tickSize)
 
-	# plot_lib.plotOrderPara(dict_pll, dict_net, dictData)
-	# #plot_lib.plotPhaseRela(dict_pll, dict_net, dictData)
-	# #plot_lib.plotPhaseDiff(dict_pll, dict_net, dictData)
-	# #plot_lib.plotClockTime(dict_pll, dict_net, dictData)
-	# #plot_lib.plotOscSignal(dict_pll, dict_net, dictData)
-	# #plot_lib.plotFrequency(dict_pll, dict_net, dictData)
-	# plot_lib.plotFreqAndPhaseDiff(dict_pll, dict_net, dictData)
-	# #plot_lib.plotFreqAndOrderPar(dict_pll, dict_net, dictData)
-	# plot_lib.plotPSD(dict_pll, dict_net, dictData, [], saveData=False)
+	# plot_lib.plotOrderPara(dict_pll, dict_net, dict_data)
+	# #plot_lib.plotPhaseRela(dict_pll, dict_net, dict_data)
+	# #plot_lib.plotPhaseDiff(dict_pll, dict_net, dict_data)
+	# #plot_lib.plotClockTime(dict_pll, dict_net, dict_data)
+	# #plot_lib.plotOscSignal(dict_pll, dict_net, dict_data)
+	# #plot_lib.plotFrequency(dict_pll, dict_net, dict_data)
+	# plot_lib.plotFreqAndPhaseDiff(dict_pll, dict_net, dict_data)
+	# #plot_lib.plotFreqAndOrderPar(dict_pll, dict_net, dict_data)
+	# plot_lib.plotPSD(dict_pll, dict_net, dict_data, [], saveData=False)
 
 plt.draw()
 plt.show()

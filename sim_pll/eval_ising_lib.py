@@ -185,7 +185,7 @@ def evaluateSimulationIsing(pool_data: dict, phase_wrap: np.int = 0, number_of_h
 		signalOut  = np.zeros([len(pool_data[0][i]['dict_data']['phi'][0, :]), len(pool_data[0][i]['dict_data']['phi'][:, 0])])
 
 		thetaDot = np.diff( pool_data[0][i]['dict_data']['phi'][:, :], axis=0 ) / pool_data[0][i]['dict_pll']['dt']				# compute frequencies and order parameter
-		order_parameter, F1 = eva.compute_order_parameter(pool_data[0][i]['dict_pll'], pool_data[0][i]['dict_net'], pool_data[0][i]['dict_data'])
+		order_parameter, order_parameter_divided_phases, F1 = eva.compute_order_parameter(pool_data[0][i]['dict_pll'], pool_data[0][i]['dict_net'], pool_data[0][i]['dict_data'])
 
 		ax18[i].plot( pool_data[0][i]['dict_data']['t'][::plotEveryDt], order_parameter[::plotEveryDt], label=r'$R_\textrm{final}=%0.2f$'%(order_parameter[-1]), linewidth=linewidth )
 

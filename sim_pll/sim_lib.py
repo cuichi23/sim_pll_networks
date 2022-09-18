@@ -258,8 +258,8 @@ def perform_evaluation(dict_net: dict, dict_pll: dict, dict_data: dict) -> None:
 		Returns:
 			nothing, operates on existing dicts
 	"""
-	order_parameter, F1 = eva.compute_order_parameter(dict_pll, dict_net, dict_data)
-	dict_data.update({'order_parameter': order_parameter, 'F1': F1})
+	order_parameter, order_parameter_divided_phases, F1 = eva.compute_order_parameter(dict_pll, dict_net, dict_data)
+	dict_data.update({'order_parameter': order_parameter, 'order_parameter_divided_phases': order_parameter_divided_phases, 'F1': F1})
 
 	# print('\n\ntype(order_parameter[0])', type(order_parameter[0]))
 	# print('\n\ntype(order_parameter)', type(order_parameter))
@@ -300,9 +300,10 @@ def plot_results_simulation(dict_net: dict, dict_pll: dict, dict_data: dict) -> 
 	"""
 	if dict_net['special_case'] != 'False':
 		print('Plotting frequency vs time-dependent parameter!')
-		plot.plot_instfreq_vs_time_dependent_parameter(dict_pll, dict_net, dict_data)
+		plot.plot_instantaneous_freqs_vs_time_dependent_parameter(dict_pll, dict_net, dict_data)
 		plot.plot_order_parameter_vs_time_dependent_parameter(dict_pll, dict_net, dict_data)
 		plot.plot_phase_differences_vs_time_dependent_parameter_divided_or_undivided(dict_pll, dict_net, dict_data, [], 2)
+		plot.plot_inst_frequency_and_phase_difference_vs_time_dependent_parameter(dict_pll, dict_net, dict_data, True, False, [], 2)
 	# plot.plot_phases_unwrapped(dict_pll, dict_net, dict_data)
 	# plot.plot_phases_two_pi_periodic(dict_pll, dict_net, dict_data)
 	# plot.plot_inst_frequency(dict_pll, dict_net, dict_data)

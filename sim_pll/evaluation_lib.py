@@ -422,9 +422,12 @@ def compute_order_parameter(dict_pll, dict_net, dict_data):
 	else:
 		F1 = np.min(dict_pll['intrF'])+1E-3
 
+	division = dict_pll['div']
+
 	if dict_net['topology'] == "square-periodic" or dict_net['topology'] == "hexagon-periodic" or dict_net['topology'] == "octagon-periodic":
 		r = oracle_mTwistOrderParameter2d(dict_data['phi'][-int(numb_av_T*1.0/(F1*dict_pll['dt'])):, :], dict_net['Nx'], dict_net['Ny'], dict_net['mx'], dict_net['my'])
 		order_parameter = oracle_mTwistOrderParameter2d(dict_data['phi'][:, :], dict_net['Nx'], dict_net['Ny'], dict_net['mx'], dict_net['my'])
+		order_parameter_divided_phases = oracle_mTwistOrderParameter2d(dict_data['phi'][:, :]/division, dict_net['Nx'], dict_net['Ny'], dict_net['mx'], dict_net['my'])
 	elif dict_net['topology'] == "square-open" or dict_net['topology'] == "hexagon" or dict_net['topology'] == "octagon":
 		if dict_net['mx'] == 1 and dict_net['my'] == 1:
 			ktemp=2
@@ -446,11 +449,12 @@ def compute_order_parameter(dict_pll, dict_net, dict_data):
 		# ry = np.nonzero(rmat > 0.995)[0]
 		# rx = np.nonzero(rmat > 0.995)[1]
 		order_parameter = oracle_CheckerboardOrderParameter2d(dict_data['phi'][:, :], dict_net['Nx'], dict_net['Ny'], ktemp)
+		order_parameter_divided_phases = oracle_CheckerboardOrderParameter2d(dict_data['phi'][:, :]/division, dict_net['Nx'], dict_net['Ny'], ktemp)
 	elif dict_net['topology'] == "compareEntrVsMutual":
-		rMut 	 = oracle_mTwistOrderParameter(dict_data['phi'][-int(numb_av_T*1.0/(F1*dict_pll['dt'])):, 0:2], dict_net['mx']);
-		orderMut = oracle_mTwistOrderParameter(dict_data['phi'][:, 0:2], dict_net['mx']);
-		rEnt 	 = oracle_mTwistOrderParameter(dict_data['phi'][-int(numb_av_T*1.0/(F1*dict_pll['dt'])):, 2:4], dict_net['mx']);
-		orderEnt = oracle_mTwistOrderParameter(dict_data['phi'][:, 2:4], dict_net['mx']);
+		rMut 	 = oracle_mTwistOrderParameter(dict_data['phi'][-int(numb_av_T*1.0/(F1*dict_pll['dt'])):, 0:2], dict_net['mx'])
+		orderMut = oracle_mTwistOrderParameter(dict_data['phi'][:, 0:2], dict_net['mx'])
+		rEnt 	 = oracle_mTwistOrderParameter(dict_data['phi'][-int(numb_av_T*1.0/(F1*dict_pll['dt'])):, 2:4], dict_net['mx'])
+		orderEnt = oracle_mTwistOrderParameter(dict_data['phi'][:, 2:4], dict_net['mx'])
 		if isPlottingTimeSeries:
 			figwidth = 6; figheight = 5; t = np.arange(dict_data['phi'].shape[0]); now = datetime.datetime.now();
 			fig0 = plt.figure(num=0, figsize=(figwidth, figheight), dpi=150, facecolor='w', edgecolor='k')
@@ -474,23 +478,26 @@ def compute_order_parameter(dict_pll, dict_net, dict_data):
 			"""
 		print('Computing order parameter for a 1d chain of coupled oscillators with open boundary conditions.')
 		r = oracle_chequerboard_order_parameter_one_dimension(dict_data['phi'][-int(numb_av_T*1.0/(F1*dict_pll['dt'])):, :], dict_net['mx'])
-		order_parameter = oracle_chequerboard_order_parameter_one_dimension(dict_data['phi'][:, :], dict_net['mx'])							# calculate the order parameter for all times
+		order_parameter = oracle_chequerboard_order_parameter_one_dimension(dict_data['phi'][:, :], dict_net['mx'])									# calculate the order parameter for all times
+		order_parameter_divided_phases = oracle_chequerboard_order_parameter_one_dimension(dict_data['phi'][:, :]/division, dict_net['mx'])			# calculate the order parameter for all times of divided phases
 	elif dict_net['topology'] == "ring" or dict_net['topology'] == 'global':
 		# print('Calculate order parameter for ring or global topology. For phases: ', dict_data['phi'])
 		time.sleep(5)
-		r = oracle_mTwistOrderParameter(dict_data['phi'][-int(numb_av_T*1.0/(F1*dict_pll['dt'])):, :], dict_net['mx'])# calculate the m-twist order parameter for a time interval of 2 times the eigenperiod, ry is imaginary part
-		order_parameter = oracle_mTwistOrderParameter(dict_data['phi'][:, :], dict_net['mx'])					# calculate the m-twist order parameter for all times
+		r = oracle_mTwistOrderParameter(dict_data['phi'][-int(numb_av_T*1.0/(F1*dict_pll['dt'])):, :], dict_net['mx'])		# calculate the m-twist order parameter for a time interval of 2 times the eigenperiod, ry is imaginary part
+		order_parameter = oracle_mTwistOrderParameter(dict_data['phi'][:, :], dict_net['mx'])								# calculate the m-twist order parameter for all times
+		order_parameter_divided_phases = oracle_mTwistOrderParameter(dict_data['phi'][:, :]/division, dict_net['mx'])		# calculate the m-twist order parameter for all times of divided phases
 	elif "entrain" in dict_net['topology']:
 		# ( dict_net['topology'] == "entrainOne" or dict_net['topology'] == "entrainAll" or dict_net['topology'] == "entrainPLLsHierarch"):
 		phi_constant_expected = dict_net['phiInitConfig']
 		r = calcKuramotoOrderParEntrainSelfOrgState(dict_data['phi'][-int(numb_av_T*1.0/(F1*dict_pll['dt'])):, :], phi_constant_expected)
 		order_parameter = calcKuramotoOrderParEntrainSelfOrgState(dict_data['phi'][:, :], phi_constant_expected)
-	# r = oracle_mTwistOrderParameter(dict_data['phi'][-int(2*1.0/(F1*dict_pll['dt'])):, :], dict_net['mx'])			# calculate the m-twist order parameter for a time interval of 2 times the eigenperiod, ry is imaginary part
-	# order_parameter = oracle_mTwistOrderParameter(dict_data['phi'][:, :], dict_net['mx'])					# calculate the m-twist order parameter for all times
+		order_parameter_divided_phases = calcKuramotoOrderParEntrainSelfOrgState(dict_data['phi'][:, :]/division, phi_constant_expected)
+	# r = oracle_mTwistOrderParameter(dict_data['phi'][-int(2*1.0/(F1*dict_pll['dt'])):, :], dict_net['mx'])							# calculate the m-twist order parameter for a time interval of 2 times the eigenperiod, ry is imaginary part
+	# order_parameter = oracle_mTwistOrderParameter(dict_data['phi'][:, :], dict_net['mx'])												# calculate the m-twist order parameter for all times
 	# print('mean of modulus of the order parameter, R, over 2T:', np.mean(r), ' last value of R', r[-1])
 	print('mean of modulus of the order parameter, R, over 2T:', np.mean(r), ' last value of R', r[-1])
 
-	return order_parameter, F1
+	return order_parameter, order_parameter_divided_phases, F1
 
 ################################################################################
 
@@ -1085,7 +1092,7 @@ def shiftedColorMap(cmap, start=0, midpoint=0.5, stop=1.0, name='shiftedcmap'):
 # 		signalOut  = np.zeros([len(pool_data[0][i]['dict_data']['phi'][0, :]), len(pool_data[0][i]['dict_data']['phi'][:, 0])])
 #
 # 		thetaDot = np.diff( pool_data[0][i]['dict_data']['phi'][:, :], axis=0 ) / pool_data[0][i]['dict_pll']['dt']				# compute frequencies and order parameter
-# 		order_parameter, F1 = compute_order_parameter(pool_data[0][i]['dict_pll'], pool_data[0][i]['dict_net'], pool_data[0][i]['dict_data'])
+# 		order_parameter, order_parameter_divided_phases, F1 = compute_order_parameter(pool_data[0][i]['dict_pll'], pool_data[0][i]['dict_net'], pool_data[0][i]['dict_data'])
 #
 # 		ax18[i].plot( pool_data[0][i]['dict_data']['t'][::plotEveryDt], order_parameter[::plotEveryDt], label=r'$R_\textrm{final}=%0.2f$'%(order_parameter[-1]), linewidth=linewidth )
 #

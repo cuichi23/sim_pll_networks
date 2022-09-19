@@ -74,7 +74,7 @@ def evaluateSimulationIsing(pool_data: dict, phase_wrap: np.int = 0, number_of_h
 			pool_data: [dict] contains all the data of the simulations to be evaluated and the settings
 			phase_wrap: [integer] whether phases are wrapped into the interval 0) [0, 2*pi), 1) [-pi, pi), or 2) [-pi/2, 3*pi/2)
 			number_of_histogram_bins: [integer] the number of bins of the histogram of phases plotted for the final state of the simulation
-			prob_density: [boolean] whether histograms are normalized to become probability densities
+			prob_density: [bool] whether histograms are normalized to become probability densities
 			order_param_solution: [float] expected order parameter of the asymptotic state if the correct benchmark solution has been found
 			number_of_expected_oscis_in_one_group: [integer] number of oscillators in the one of the two groups that form asymptotically
 
@@ -458,7 +458,7 @@ class EvaluateAndPlotIsingMachineSimulation:
 			pool_data: [dict] contains all the data of the simulations to be evaluated and the settings
 			phase_wrap: [integer] whether phases are wrapped into the interval 0) [0, 2*pi), 1) [-pi, pi), or 2) [-pi/2, 3*pi/2)
 			number_of_histogram_bins: [integer] the number of bins of the histogram of phases plotted for the final state of the simulation
-			prob_density: [boolean] whether histograms are normalized to become probability densities
+			prob_density: [bool] whether histograms are normalized to become probability densities
 			order_param_solution: [float] expected order parameter of the asymptotic state if the correct benchmark solution has been found
 			number_of_expected_oscis_in_one_group: [integer] number of oscillators in the one of the two groups that form asymptotically
 		"""

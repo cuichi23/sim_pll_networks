@@ -72,7 +72,7 @@ def distributeProcesses(dict_net: dict, dict_pll: dict, dict_algo=None) -> objec
 
 
 	# evaluate results of all simulations and parameter sweeps
-	evaluate_pool_data(dict_net, dict_algo, pool_data)
+	evaluate_pool_data(dict_net, dict_pll, dict_algo, pool_data)
 
 	return pool_data
 
@@ -137,6 +137,9 @@ def prepare_multiple_simulations(dict_net: dict, dict_pll: dict, dict_algo: dict
 	elif dict_algo['parameter_space_sweeps'] == 'two_parameter_sweep':  # organize after the data has been collected
 		scanValues, allPoints = setup.all_parameter_combinations_2d(dict_pll, dict_net, dict_algo)  # set paramDiscretization for the number of points to be simulated
 		print('scanning 2d parameter regime {', dict_algo['param_id_0'], ',', dict_algo['param_id_1'], '} allPoints:', [allPoints], '\nscanValues', scanValues)
+		# print('\nscanValues[0, 1][0]', scanValues[0, 4][0])
+		# print('\nscanValues[1, 1]', scanValues[1, 1])
+		# sys.exit()
 		Nsim = allPoints.shape[0]
 		dict_algo.update({'scanValues': scanValues, 'allPoints': allPoints})
 		print('multiprocessing', Nsim, 'realizations')
@@ -175,7 +178,7 @@ def perform_multiple_simulations(dict_net, dict_pll, dict_algo, scanValues):
 	return pool_data
 
 
-def evaluate_pool_data(dict_net, dict_algo, pool_data):
+def evaluate_pool_data(dict_net, dict_pll, dict_algo, pool_data):
 	if dict_algo['parameter_space_sweeps'] == 'testNetworkMotifIsing':
 		eva_ising.evaluateSimulationIsing(pool_data, phase_wrap=2)
 
@@ -208,18 +211,21 @@ def evaluate_pool_data(dict_net, dict_algo, pool_data):
 
 	elif dict_algo['parameter_space_sweeps'] == 'two_parameter_sweep':
 		average_time_order_parameter_in_periods = 1.5
-		plot.plotOrderParamVsParameterSpace(pool_data, average_time_order_parameter_in_periods)
-		plot.plotFinalPhaseConfigParamVsParameterSpace(pool_data, average_time_order_parameter_in_periods)
-		if dict_algo['paramDiscretization'][0] * dict_algo['paramDiscretization'][1] < 10:
+		if (dict_algo['paramDiscretization'][0] * dict_algo['paramDiscretization'][1] < 10
+				and dict_pll['intrF'][0] == dict_algo['scanValues'][0, 4][0] and dict_pll['transmission_delay'] == dict_algo['scanValues'][1, 1]):
 			for i in range(dict_algo['paramDiscretization'][0] * dict_algo['paramDiscretization'][1]):
 				plot.plot_phases_unwrapped(pool_data[0][i]['dict_pll'], pool_data[0][i]['dict_net'], pool_data[0][i]['dict_data'])
-				plot.plot_phases_two_pi_periodic(pool_data[0][i]['dict_pll'], pool_data[0][i]['dict_net'], pool_data[0][i]['dict_data'])
-				plot.plot_inst_frequency(pool_data[0][i]['dict_pll'], pool_data[0][i]['dict_net'], pool_data[0][i]['dict_data'])
+				#plot.plot_phases_two_pi_periodic(pool_data[0][i]['dict_pll'], pool_data[0][i]['dict_net'], pool_data[0][i]['dict_data'])
+				#plot.plot_inst_frequency(pool_data[0][i]['dict_pll'], pool_data[0][i]['dict_net'], pool_data[0][i]['dict_data'])
 				plot.plot_order_parameter(pool_data[0][i]['dict_pll'], pool_data[0][i]['dict_net'], pool_data[0][i]['dict_data'])
-				plot.plot_phase_difference_wrt_to_osci_kzero(pool_data[0][i]['dict_pll'], pool_data[0][i]['dict_net'], pool_data[0][i]['dict_data'])
-				plot.plot_phase_difference(pool_data[0][i]['dict_pll'], pool_data[0][i]['dict_net'], pool_data[0][i]['dict_data'])
-				plot.plot_periodic_output_signal_from_phase(pool_data[0][i]['dict_pll'], pool_data[0][i]['dict_net'], pool_data[0][i]['dict_data'])
+				#plot.plot_phase_difference_wrt_to_osci_kzero(pool_data[0][i]['dict_pll'], pool_data[0][i]['dict_net'], pool_data[0][i]['dict_data'])
+				#plot.plot_phase_difference(pool_data[0][i]['dict_pll'], pool_data[0][i]['dict_net'], pool_data[0][i]['dict_data'])
+				#plot.plot_periodic_output_signal_from_phase(pool_data[0][i]['dict_pll'], pool_data[0][i]['dict_net'], pool_data[0][i]['dict_data'])
 				plot.plot_inst_frequency_and_phase_difference(pool_data[0][i]['dict_pll'], pool_data[0][i]['dict_net'], pool_data[0][i]['dict_data'])
+				plt.draw()
+				plt.show()
+		plot.plot_order_param_vs_parameter_space(pool_data, average_time_order_parameter_in_periods)
+		plot.plot_final_phase_configuration_vs_parameter_space(pool_data, average_time_order_parameter_in_periods)
 		plt.draw()
 		plt.show()
 

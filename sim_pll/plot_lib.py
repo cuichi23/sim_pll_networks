@@ -97,7 +97,7 @@ def prepareDictsForPlotting(dict_pll, dict_net):
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-def plot_power_spectral_density(dict_pll, dict_net, dict_data, plotlist=[], saveData=False):
+def plot_power_spectral_density(dict_pll: dict, dict_net: dict, dict_data: dict, plotlist=[], saveData=False):
 	dict_pll, dict_net = prepareDictsForPlotting(dict_pll, dict_net)
 
 	f = []
@@ -304,7 +304,7 @@ def plot_power_spectral_density(dict_pll, dict_net, dict_data, plotlist=[], save
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-def plot_phases_two_pi_periodic(dict_pll, dict_net, dict_data):
+def plot_phases_two_pi_periodic(dict_pll: dict, dict_net: dict, dict_data: dict):
 	dict_pll, dict_net = prepareDictsForPlotting(dict_pll, dict_net)
 
 	labeldict = {'wc': r'$\frac{\omega_\textrm{c}}{\omega}$', 'tau': r'$\frac{\Omega\tau}{2\pi}$', 'K': r'$K$',
@@ -338,7 +338,7 @@ def plot_phases_two_pi_periodic(dict_pll, dict_net, dict_data):
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-def plot_phases_unwrapped(dict_pll, dict_net, dict_data):
+def plot_phases_unwrapped(dict_pll: dict, dict_net: dict, dict_data: dict):
 	dict_pll, dict_net = prepareDictsForPlotting(dict_pll, dict_net)
 
 	labeldict = {'wc': r'$\frac{\omega_\textrm{c}}{\omega}$', 'tau': r'$\frac{\Omega\tau}{2\pi}$', 'K': r'$K$',
@@ -372,7 +372,7 @@ def plot_phases_unwrapped(dict_pll, dict_net, dict_data):
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-def plot_inst_frequency(dict_pll, dict_net, dict_data):
+def plot_inst_frequency(dict_pll: dict, dict_net: dict, dict_data: dict):
 	dict_pll, dict_net = prepareDictsForPlotting(dict_pll, dict_net)
 
 	labeldict = {'wc': r'$\frac{\omega_\textrm{c}}{\omega}$', 'tau': r'$\frac{\Omega\tau}{2\pi}$', 'K': r'$K$',
@@ -432,7 +432,7 @@ def plot_inst_frequency(dict_pll, dict_net, dict_data):
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-def plot_order_parameter(dict_pll, dict_net, dict_data):
+def plot_order_parameter(dict_pll: dict, dict_net: dict, dict_data: dict):
 	dict_pll, dict_net = prepareDictsForPlotting(dict_pll, dict_net)
 
 	fig6 = plt.figure(num=6, figsize=(figwidth, figheight), dpi=dpi_val, facecolor='w', edgecolor='k')
@@ -488,7 +488,7 @@ def plot_order_parameter(dict_pll, dict_net, dict_data):
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-def plot_phase_difference_wrt_to_osci_kzero(dict_pll, dict_net, dict_data):
+def plot_phase_difference_wrt_to_osci_kzero(dict_pll: dict, dict_net: dict, dict_data: dict):
 	dict_pll, dict_net = prepareDictsForPlotting(dict_pll, dict_net)
 
 	fig7 = plt.figure(num=7, figsize=(figwidth, figheight), dpi=dpi_val, facecolor='w', edgecolor='k')
@@ -554,7 +554,7 @@ def plot_phase_difference_wrt_to_osci_kzero(dict_pll, dict_net, dict_data):
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-def plot_phase_difference(dict_pll, dict_net, dict_data):
+def plot_phase_difference(dict_pll: dict, dict_net: dict, dict_data: dict):
 	dict_pll, dict_net = prepareDictsForPlotting(dict_pll, dict_net)
 
 	fig8 = plt.figure(num=8, figsize=(figwidth, figheight), dpi=dpi_val, facecolor='w', edgecolor='k')
@@ -617,7 +617,7 @@ def plot_phase_difference(dict_pll, dict_net, dict_data):
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-def plot_clock_time_in_period_fractions(dict_pll, dict_net, dict_data):
+def plot_clock_time_in_period_fractions(dict_pll: dict, dict_net: dict, dict_data: dict):
 	dict_pll, dict_net = prepareDictsForPlotting(dict_pll, dict_net)
 
 	labeldict = {'wc': r'$\frac{\omega_\textrm{c}}{\omega}$', 'tau': r'$\frac{\Omega\tau}{2\pi}$', 'K': r'$K$',
@@ -650,7 +650,7 @@ def plot_clock_time_in_period_fractions(dict_pll, dict_net, dict_data):
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-def plotCtrlSigDny(dict_pll, dict_net, dict_data):
+def plotCtrlSigDny(dict_pll: dict, dict_net: dict, dict_data: dict):
 	dict_pll, dict_net = prepareDictsForPlotting(dict_pll, dict_net)
 
 	color = ['blue', 'red', 'purple', 'cyan', 'green', 'yellow']  # 'magenta'
@@ -679,7 +679,7 @@ def plotCtrlSigDny(dict_pll, dict_net, dict_data):
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-def plot_periodic_output_signal_from_phase(dict_pll, dict_net, dict_data, plotEveryDt=1):
+def plot_periodic_output_signal_from_phase(dict_pll: dict, dict_net: dict, dict_data: dict, plotEveryDt=1):
 	dict_pll, dict_net = prepareDictsForPlotting(dict_pll, dict_net)
 
 	color = ['blue', 'red', 'purple', 'cyan', 'green', 'yellow']  # 'magenta'
@@ -715,8 +715,11 @@ def plot_periodic_output_signal_from_phase(dict_pll, dict_net, dict_data, plotEv
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-def plot_instantaneous_freqs_vs_time_dependent_parameter(dict_pll, dict_net, dict_data):
+def plot_instantaneous_freqs_vs_time_dependent_parameter(dict_pll: dict, dict_net: dict, dict_data: dict):
 	dict_pll, dict_net = prepareDictsForPlotting(dict_pll, dict_net)
+
+	color = ['blue', 'red', 'purple', 'cyan', 'green', 'yellow']  # 'magenta'
+	linet = ['-', '-.', '--', ':', 'densily dashdotdotted', 'densely dashed']
 
 	param_name = dict_net['special_case']  # 'timeDepInjectLockCoupStr', 'timeDepTransmissionDelay', 'timeDepChangeOfCoupStr', 'distanceDepTransmissionDelay'
 	if param_name == 'timeDepTransmissionDelay':
@@ -735,7 +738,7 @@ def plot_instantaneous_freqs_vs_time_dependent_parameter(dict_pll, dict_net, dic
 	fig12.canvas.manager.set_window_title('instantaneous frequency as function of time-dependent parameter')
 	fig12.set_size_inches(plot_size_inches_x, plot_size_inches_y)
 
-	plt.plot(dict_data['timeDependentParameter'][0, 0:len(dict_data['phi'][:, 0]) - 1] * x_axis_scaling, (np.diff(dict_data['phi'], axis=0) / dict_pll['dt']) / y_axis_scaling, 'b-')
+	plt.plot(dict_data['timeDependentParameter'][0, 0:len(dict_data['phi'][:, 0]) - 1] * x_axis_scaling, (np.diff(dict_data['phi'], axis=0) / dict_pll['dt']) / y_axis_scaling, linewidth=2, linestyle=linet[0])
 
 	plt.xlabel(dyn_x_label, fontdict=labelfont, labelpad=labelpadxaxis)
 	plt.ylabel(r'$\frac{\dot{\theta}_k(t)}{\omega}$', fontdict=labelfont, labelpad=labelpadyaxis)
@@ -774,7 +777,7 @@ def plot_instantaneous_freqs_vs_time_dependent_parameter(dict_pll, dict_net, dic
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
-def plot_order_parameter_vs_time_dependent_parameter(dict_pll, dict_net, dict_data):
+def plot_order_parameter_vs_time_dependent_parameter(dict_pll: dict, dict_net: dict, dict_data: dict):
 	dict_pll, dict_net = prepareDictsForPlotting(dict_pll, dict_net)
 
 	param_name = dict_net['special_case']  # 'timeDepInjectLockCoupStr', 'timeDepTransmissionDelay', 'timeDepChangeOfCoupStr', 'distanceDepTransmissionDelay'
@@ -830,7 +833,8 @@ def plot_order_parameter_vs_time_dependent_parameter(dict_pll, dict_net, dict_da
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
-def plot_phase_differences_vs_time_dependent_parameter_divided_or_undivided(dict_pll, dict_net, dict_data, plotlist=[], phase_diff_zero_2pi=1, phases_of_divided_signals=True):
+def plot_phase_differences_vs_time_dependent_parameter_divided_or_undivided(dict_pll: dict, dict_net: dict, dict_data: dict, plotlist: list = [],
+																			phase_diff_zero_2pi: np.int = 1, phases_of_divided_signals: bool = True):
 	dict_pll, dict_net = prepareDictsForPlotting(dict_pll, dict_net)
 	division = 1
 	x_axis_scaling = 1
@@ -901,7 +905,9 @@ def plot_phase_differences_vs_time_dependent_parameter_divided_or_undivided(dict
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
-def plot_inst_frequency_and_phase_difference_vs_time_dependent_parameter(dict_pll, dict_net, dict_data, phases_of_divided_signals=True, frequency_of_divided_signals=True, plotlist=[], phase_diff_zero_2pi=1, ylim_percent_of_min_val=0.995, ylim_percent_of_max_val=1.005):
+def plot_inst_frequency_and_phase_difference_vs_time_dependent_parameter(dict_pll: dict, dict_net: dict, dict_data: dict, phases_of_divided_signals: bool = True,
+									frequency_of_divided_signals: bool = True, plotlist: list = [], phase_diff_zero_2pi: np.int = 1
+																		 , ylim_percent_of_min_val: np.float = 0.995, ylim_percent_of_max_val: np.float = 1.005):
 	# set to 1 if plotting in [-pi, +pi) and to 2 if plotting in [-pi/2, 3pi/2] or to 3 if phase differences to be plotted in [0, 2pi)
 	dict_pll, dict_net = prepareDictsForPlotting(dict_pll, dict_net)
 	division = 1
@@ -1042,7 +1048,7 @@ def plot_inst_frequency_and_phase_difference_vs_time_dependent_parameter(dict_pl
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-def plot_phase_relations_of_divided_signal(dict_pll, dict_net, dict_data, plotlist=[], phase_diff_zero_2pi=1):
+def plot_phase_relations_of_divided_signal(dict_pll: dict, dict_net: dict, dict_data: dict, plotlist=[], phase_diff_zero_2pi=1):
 
 	dict_pll, dict_net = prepareDictsForPlotting(dict_pll, dict_net)
 
@@ -1108,7 +1114,7 @@ def plot_phase_relations_of_divided_signal(dict_pll, dict_net, dict_data, plotli
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
-def plotPhasesAndPhaseRelations_cutAxis(dict_pll, dict_net, dict_data):
+def plotPhasesAndPhaseRelations_cutAxis(dict_pll: dict, dict_net: dict, dict_data: dict):
 	dict_pll, dict_net = prepareDictsForPlotting(dict_pll, dict_net)
 
 	fig16 = plt.figure(num=16, figsize=(figwidth, figheight), dpi=dpi_val, facecolor='w', edgecolor='k')
@@ -1142,7 +1148,7 @@ def deltaThetaDot_vs_deltaTheta(dict_pll, dict_net, deltaTheta, deltaThetaDot, c
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
-def plot_inst_frequency_and_phase_difference(dict_pll, dict_net, dict_data, phases_of_divided_signals=False, plotlist=[], phase_diff_zero_2pi=1, ylim_percent_of_min_val=0.995, ylim_percent_of_max_val=1.005):
+def plot_inst_frequency_and_phase_difference(dict_pll: dict, dict_net: dict, dict_data: dict, phases_of_divided_signals=False, plotlist=[], phase_diff_zero_2pi=1, ylim_percent_of_min_val=0.995, ylim_percent_of_max_val=1.005):
 	# set to 1 if plotting in [-pi, +pi) and to 2 if plotting in [-pi/2, 3pi/2] or to 3 if phase differences to be plotted in [0, 2pi)
 
 	dict_pll, dict_net = prepareDictsForPlotting(dict_pll, dict_net)
@@ -1313,7 +1319,7 @@ def plot_inst_frequency_and_phase_difference(dict_pll, dict_net, dict_data, phas
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
-def plot_inst_frequency_and_order_parameter(dict_pll, dict_net, dict_data, plotlist=[]):
+def plot_inst_frequency_and_order_parameter(dict_pll: dict, dict_net: dict, dict_data: dict, plotlist: list = [], order_param_of_divided_signals: bool = True):
 	dict_pll, dict_net = prepareDictsForPlotting(dict_pll, dict_net)
 
 	labeldict = {'wc': r'$\frac{\omega_\textrm{c}}{\omega}$', 'tau': r'$\frac{\Omega\tau}{2\pi}$', 'K': r'$K$',
@@ -1363,7 +1369,10 @@ def plot_inst_frequency_and_order_parameter(dict_pll, dict_net, dict_data, plotl
 	ax012 = fig20.add_subplot(212)
 
 	plt.plot(dict_data['t'][int(0.75 * np.round(np.mean(dict_pll['transmission_delay']) / dict_pll['dt'])):-1:dict_pll['sampleFplot']],
-			 dict_data['order_parameter'][int(0.75 * np.round(np.mean(dict_pll['transmission_delay']) / dict_pll['dt'])):-1:dict_pll['sampleFplot']], linewidth=1.5)
+			 dict_data['order_parameter'][int(0.75 * np.round(np.mean(dict_pll['transmission_delay']) / dict_pll['dt'])):-1:dict_pll['sampleFplot']], linewidth=1.5, linestyle=linet[0])
+	if order_param_of_divided_signals:
+		plt.plot(dict_data['t'][int(0.75 * np.round(np.mean(dict_pll['transmission_delay']) / dict_pll['dt'])):-1:dict_pll['sampleFplot']],
+				 dict_data['order_parameter_divided_phases'][int(0.75 * np.round(np.mean(dict_pll['transmission_delay']) / dict_pll['dt'])):-1:dict_pll['sampleFplot']], linewidth=1.5, linestyle=linet[2])
 	plt.xlabel(r'$\omega t/2\pi$', fontdict=labelfont, labelpad=-5)
 	plt.ylabel(r'$R(t)$', rotation=90, fontdict=labelfont, labelpad=40)
 	ax012.tick_params(axis='both', which='major', labelsize=tickSize, pad=1)
@@ -1535,13 +1544,11 @@ def plot_time_dependent_parameter(dict_pll: dict, dict_net: dict, dict_data: dic
 	plt.ylabel(y_label)
 
 	plt.savefig('results/time_dependence_%s_start%0.2f_end_%0.2f_ratePerPeriod_%0.5f_%d_%d_%d.png' % (y_label,
-																									  dict_net['min_max_rate_timeDepPara'][0], dict_net['min_max_rate_timeDepPara'][1],
-																									  dict_net['min_max_rate_timeDepPara'][2], now.year, now.month, now.day), dpi=dpi_val,
-				bbox_inches="tight")
+						dict_net['min_max_rate_timeDepPara'][0], dict_net['min_max_rate_timeDepPara'][1],
+							dict_net['min_max_rate_timeDepPara'][2], now.year, now.month, now.day), dpi=dpi_val, bbox_inches="tight")
 	plt.savefig('results/time_dependence_%s_start%0.2f_end_%0.2f_ratePerPeriod_%0.5f_%d_%d_%d.svg' % (y_label,
-																									  dict_net['min_max_rate_timeDepPara'][0], dict_net['min_max_rate_timeDepPara'][1],
-																									  dict_net['min_max_rate_timeDepPara'][2], now.year, now.month, now.day), dpi=dpi_val,
-				bbox_inches="tight")
+						dict_net['min_max_rate_timeDepPara'][0], dict_net['min_max_rate_timeDepPara'][1],
+							dict_net['min_max_rate_timeDepPara'][2], now.year, now.month, now.day), dpi=dpi_val, bbox_inches="tight")
 
 	return None
 
@@ -1666,7 +1673,7 @@ def plot_allan_variance(dict_pll: dict, dict_net: dict, dict_data: dict, t_trans
 
 #################################################################################################################################################################################
 
-def plotOrderParamVsParameterSpace(pool_data: dict, average_time_order_parameter_in_periods: np.float, axis_normalization=True):
+def plot_order_param_vs_parameter_space(pool_data: dict, average_time_order_parameter_in_periods: np.float, axis_normalization=True):
 	""" Function that plots the last value and an average of the order parameter in a 2d parameter space in two individual plots.
 		Each plot comes as a scatterplot and an imshow.
 
@@ -1708,7 +1715,7 @@ def plotOrderParamVsParameterSpace(pool_data: dict, average_time_order_parameter
 		else:
 			averaging_time_as_index = np.int(average_time_order_parameter_in_periods * np.mean(pool_data[0][i]['dict_pll']['intrF']) / pool_data[0][i]['dict_pll']['dt'])
 		results.append(
-			[pool_data[0][i]['dict_data']['R'][-1], np.mean(pool_data[0][i]['dict_data']['R'][-averaging_time_as_index:]), np.std(pool_data[0][i]['dict_data']['R'][-averaging_time_as_index:])])
+			[pool_data[0][i]['dict_data']['order_parameter'][-1], np.mean(pool_data[0][i]['dict_data']['order_parameter'][-averaging_time_as_index:]), np.std(pool_data[0][i]['dict_data']['order_parameter'][-averaging_time_as_index:])])
 	results = np.array(results, dtype=object)
 
 	# set the normalization of the axis
@@ -1725,7 +1732,7 @@ def plotOrderParamVsParameterSpace(pool_data: dict, average_time_order_parameter
 			x_label = r'$f_\textrm{R}/\langle f \rangle$'
 		else:
 			x_label = r'$f$\,[Hz]'
-			print('Introduce normalization in plot_lib.plotOrderParamVsParameterSpace() function!')
+			print('Introduce normalization in plot_lib.plot_order_param_vs_parameter_space() function!')
 		if dict_algo['param_id_1'] == 'transmission_delay':
 			if 'entrain' in dict_net['topology'] and (isinstance(pool_data[0][0]['dict_pll']['intrF'], list) or isinstance(pool_data[0][0]['dict_pll']['intrF'], np.ndarray)):
 				normalization_y = np.mean(pool_data[0][0]['dict_pll']['intrF'][1:])
@@ -1734,7 +1741,7 @@ def plotOrderParamVsParameterSpace(pool_data: dict, average_time_order_parameter
 			y_label = r'$\tau_{kl}/T_{\omega}$'
 		else:
 			y_label = r'$\tau_{kl}$'
-			print('Introduce normalization in plot_lib.plotOrderParamVsParameterSpace() function!')
+			print('Introduce normalization in plot_lib.plot_order_param_vs_parameter_space() function!')
 
 	# start plotting
 	fig1 = plt.figure(figsize=(figwidth, figheight), dpi=dpi_val, facecolor='w', edgecolor='k')
@@ -1824,7 +1831,8 @@ def plotOrderParamVsParameterSpace(pool_data: dict, average_time_order_parameter
 # ################################################################################################################################################################################
 
 
-def plotFinalPhaseConfigParamVsParameterSpace(pool_data: dict, average_time_phase_difference_in_periods: np.float, phase_wrap=1, axis_normalization=True, phase_diff_wrt_osci_k_0=False):
+def plot_final_phase_configuration_vs_parameter_space(pool_data: dict, average_time_phase_difference_in_periods: np.float, phase_wrap: np.int = 1,
+													  axis_normalization: bool = True, phase_diff_wrt_osci_k_0: bool = False, plot_if_time_dependent: bool = False):
 	""" Function that plots the last value of the phase and the std of the phase over the average time in a 2d parameter space in two individual plots.
 		Each plot comes as a scatterplot and an imshow.
 
@@ -1834,6 +1842,7 @@ def plotFinalPhaseConfigParamVsParameterSpace(pool_data: dict, average_time_phas
 			phase_wrap: determines the representation of the 2pi periodic phase
 			axis_normalization: whether the axis of the plot are normalized or not: default True
 			phase_diff_wrt_osci_k_0: whether the phase difference is calculated with respect to oscillator zero, otherwise w.r.t. nearest neighbor
+			plot_if_time_dependent: if True, also plot results in the parameter space where the phase-differences are still time-dependent
 
 		Returns:
 			saves plotted data to files
@@ -1869,6 +1878,7 @@ def plotFinalPhaseConfigParamVsParameterSpace(pool_data: dict, average_time_phas
 
 	# extract the results from the data dictionary for plotting '''
 	j0 = 0
+	std_treshold_asymptotic_constant = 0.1 * np.pi
 	for i in range(dict_algo['paramDiscretization'][0] * dict_algo['paramDiscretization'][1]):
 		if 'entrain' in dict_net['topology'] and (isinstance(pool_data[0][i]['dict_pll']['intrF'], list) or isinstance(pool_data[0][i]['dict_pll']['intrF'], np.ndarray)):
 			averaging_time_as_index = np.int(average_time_phase_difference_in_periods * np.mean(pool_data[0][i]['dict_pll']['intrF'][1:]) / pool_data[0][i]['dict_pll']['dt'])
@@ -1881,14 +1891,26 @@ def plotFinalPhaseConfigParamVsParameterSpace(pool_data: dict, average_time_phas
 			j0 = 1
 			for j in range(j0, len(pool_data[0][i]['dict_data']['phi'][-1, 1:])):
 				print('Calculate beta_%i0=beta_%i-beta_0' % (j, j))
-				beta_kl[j, i] = ((pool_data[0][i]['dict_data']['phi'][-1, j] - pool_data[0][i]['dict_data']['phi'][-1, 0] + shift2piWin) % (2.0 * np.pi)) - shift2piWin
-				std_beta_kl[j, i] = np.std(pool_data[0][i]['dict_data']['phi'][-averaging_time_as_index:, j] - pool_data[0][0]['dict_data']['phi'][-averaging_time_as_index:, 0])
+				std_beta_kl[j, i] = np.std(pool_data[0][i]['dict_data']['phi'][-averaging_time_as_index:, j]
+											- pool_data[0][i]['dict_data']['phi'][-averaging_time_as_index:, 0])
+				if plot_if_time_dependent and std_beta_kl[j, i] > std_treshold_asymptotic_constant:
+					beta_kl[j, i] = np.nan
+					print('Set beta_kl[%i,%i] to zero since std_beta_kl[%i,%i]=%0.2f' % (j, i, j, i, std_beta_kl[j, i]))
+				else:
+					beta_kl[j, i] = ((pool_data[0][i]['dict_data']['phi'][-1, j] - pool_data[0][i]['dict_data']['phi'][-1, 0] + shift2piWin) % (2.0 * np.pi)) - shift2piWin
 		else:
-			j0 = 1
-			for j in range(j0, len(pool_data[0][i]['dict_data']['phi'][-1, 1:])):
+			j0 = 0
+			for j in range(j0, len(pool_data[0][i]['dict_data']['phi'][-1, 1:])-1):
 				print('Calculate beta_%i%i=beta_%i-beta_%i' % (j, j+1, j, j+1))
-				beta_kl[j, i] = ((pool_data[0][i]['dict_data']['phi'][-1, j] - pool_data[0][i]['dict_data']['phi'][-1, j+1] + shift2piWin) % (2.0 * np.pi)) - shift2piWin
-				std_beta_kl[j, i] = np.std(pool_data[0][i]['dict_data']['phi'][-averaging_time_as_index:, j] - pool_data[0][0]['dict_data']['phi'][-averaging_time_as_index:, j+1])
+				std_beta_kl[j, i] = np.std(pool_data[0][i]['dict_data']['phi'][-averaging_time_as_index:, j]
+											- pool_data[0][i]['dict_data']['phi'][-averaging_time_as_index:, j+1])
+				if plot_if_time_dependent and std_beta_kl[j, i] > std_treshold_asymptotic_constant:
+					beta_kl[j, i] = np.nan
+					print('Set beta_kl[%i,%i] to zero since std_beta_kl[%i,%i]=%0.2f' % (j, i, j ,i, std_beta_kl[j, i]))
+					time.sleep(5)
+				else:
+					beta_kl[j, i] = ((pool_data[0][i]['dict_data']['phi'][-1, j] - pool_data[0][i]['dict_data']['phi'][-1, j+1] + shift2piWin) % (2.0 * np.pi)) - shift2piWin
+
 
 	# set the normalization of the axis
 	normalization_x = 1
@@ -1904,7 +1926,7 @@ def plotFinalPhaseConfigParamVsParameterSpace(pool_data: dict, average_time_phas
 			x_label = r'$f_\textrm{R}/\langle f \rangle$'
 		else:
 			x_label = r'$f$\,[Hz]'
-			print('Introduce normalization in plot_lib.plotOrderParamVsParameterSpace() function!')
+			print('Introduce normalization in plot_lib.plot_order_param_vs_parameter_space() function!')
 		if dict_algo['param_id_1'] == 'transmission_delay':
 			if 'entrain' in dict_net['topology'] and (isinstance(pool_data[0][0]['dict_pll']['intrF'], list) or isinstance(pool_data[0][0]['dict_pll']['intrF'], np.ndarray)):
 				normalization_y = np.mean(pool_data[0][0]['dict_pll']['intrF'][1:])
@@ -1913,7 +1935,7 @@ def plotFinalPhaseConfigParamVsParameterSpace(pool_data: dict, average_time_phas
 			y_label = r'$\tau_{kl}/T_{\omega}$'
 		else:
 			y_label = r'$\tau_{kl}$'
-			print('Introduce normalization in plot_lib.plotOrderParamVsParameterSpace() function!')
+			print('Introduce normalization in plot_lib.plot_order_param_vs_parameter_space() function!')
 
 	figs = []
 	for j in range(j0, len(pool_data[0][0]['dict_data']['phi'][-1, 1:])):
@@ -1935,10 +1957,10 @@ def plotFinalPhaseConfigParamVsParameterSpace(pool_data: dict, average_time_phas
 		tempresults = beta_kl[j, :].reshape(dict_algo['paramDiscretization'][0], dict_algo['paramDiscretization'][1])
 		tempresults = np.transpose(tempresults)
 		# print('tempresults:', tempresults)
-		#tempresults_ma = ma.masked_where(tempresults < 0, tempresults)  # Create masked array
+		tempresults_ma = ma.masked_where(tempresults == np.nan, tempresults)  # Create masked array
 		# print('tempresult_ma:', tempresults_ma)
-		# print('initPhiPrime0:', initPhiPrime0)
-		plt.imshow(tempresults.astype(float), interpolation='nearest', cmap=cm.coolwarm, aspect='auto', origin='lower',
+
+		plt.imshow(tempresults_ma.astype(float), interpolation='nearest', cmap=cm.coolwarm, aspect='auto', origin='lower',
 				   extent=(dict_algo['min_max_range_parameter_0'][0], dict_algo['min_max_range_parameter_0'][1], dict_algo['min_max_range_parameter_1'][0], dict_algo['min_max_range_parameter_1'][1]),
 				   vmin=0, vmax=1)
 		plt.title(r'last $\Delta$'+phi_string)
@@ -2017,7 +2039,7 @@ def plotFinalPhaseConfigParamVsParameterSpace(pool_data: dict, average_time_phas
 # ################################################################################################################################################################################
 
 
-def plotOrderParamVsInitPhaseConfig(pool_data: dict, average_time_order_parameter_in_periods: np.float, axis_normalization=True):
+def plot_order_parameter_vs_initial_phase_configuration_space(pool_data: dict, average_time_order_parameter_in_periods: np.float, axis_normalization=True):
 	"""Function that plots the last value and an average of the order parameter as a function of the initial phase-configuration  in two individual plots.
 		The initial phase configuration is expressed as the phase differences for 2d and 3d phase spaces. Each plot comes as a scatterplot and an imshow.
 

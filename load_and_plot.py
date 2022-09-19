@@ -80,10 +80,10 @@ labelpadyaxis       = 20
 # load data
 folder		 = '/home/cuichi/Documents/MPI_PKS_Docs/2019_VIP+/Programs/2021_simPLL_pub/results/'#'/home/cuichi/data-z2/simPLL_2/1_CH_success/results/'
 ################################################################################
-filenamePLL  = folder+'dict_pll_K0.012_tau1207.203_Fc0.000_mx0_my-999_N3_topochain_16:6_2022_9_17'
-filenameNet  = folder+'dict_net_K0.012_tau1207.203_Fc0.000_mx0_my-999_N3_topochain_16:6_2022_9_17'
-filenameData = folder+'dict_data_K0.012_tau1207.203_Fc0.000_mx0_my-999_N3_topochain_16:6_2022_9_17'
-filenameAlgo = folder+'dict_algo_K0.012_tau1207.203_Fc0.000_mx0_my-999_N3_topochain_16:6_2022_9_17'
+filenamePLL  = folder+'dict_pll_K0.012_tau1207.203_Fc0.000_mx0_my-999_N3_topochain_0:54_2022_9_19'
+filenameNet  = folder+'dict_net_K0.012_tau1207.203_Fc0.000_mx0_my-999_N3_topochain_0:54_2022_9_19'
+filenameData = folder+'dict_data_K0.012_tau1207.203_Fc0.000_mx0_my-999_N3_topochain_0:54_2022_9_19'
+filenameAlgo = folder+'dict_algo_K0.012_tau1207.203_Fc0.000_mx0_my-999_N3_topochain_0:54_2022_9_19'
 ################################################################################
 if 'pool_data' in filenameData:
 	pool_data = pickle.load(open(filenameData, 'rb'))

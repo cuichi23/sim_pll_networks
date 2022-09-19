@@ -334,12 +334,12 @@ class PhaseDifferenceCell(object):
 		----------
 		x  :  np.array
 				coordinate vector of length n which is the number of non-reduced dimensions
-		isRotated  :  boolean
+		isRotated  :  bool
 						True if x is given in rotated coordinates
 
 		Returns
 		-------
-		is_inside  :  boolean
+		is_inside  :  bool
 						True if point is inside unit cell
 		'''
 		# Check if vector has the correct length
@@ -414,7 +414,7 @@ def fitModelDemir(f_model,d_model,fitrange=0):
 ################################################################################
 ################################################################################
 
-def compute_order_parameter(dict_pll, dict_net, dict_data):
+def compute_order_parameter(dict_pll: dict, dict_net: dict, dict_data: dict):
 	''' MODIFIED KURAMOTO ORDER PARAMETERS '''
 	numb_av_T = 2.5																			   	# number of periods of free-running frequencies to average over
 	if np.min(dict_pll['intrF']) > 0:														 	# for f=0, there would otherwise be a float division by zero

@@ -200,7 +200,7 @@ def evaluate_pool_data(dict_net, dict_pll, dict_algo, pool_data):
 		plot.plot_phase_difference_wrt_to_osci_kzero(pool_data[0][0]['dict_pll'], pool_data[0][0]['dict_net'], pool_data[0][0]['dict_data'])
 		plot.plot_phase_difference(pool_data[0][0]['dict_pll'], pool_data[0][0]['dict_net'], pool_data[0][0]['dict_data'])
 		plot.plot_periodic_output_signal_from_phase(pool_data[0][0]['dict_pll'], pool_data[0][0]['dict_net'], pool_data[0][0]['dict_data'])
-		plot.plot_inst_frequency_and_phase_difference(pool_data[0][0]['dict_pll'], pool_data[0][0]['dict_net'], pool_data[0][0]['dict_data'])
+		plot.plot_inst_frequency_and_phase_difference(pool_data[0][0]['dict_pll'], pool_data[0][0]['dict_net'], pool_data[0][0]['dict_algo'], pool_data[0][0]['dict_data'])
 		plot.plot_power_spectral_density(pool_data[0][0]['dict_pll'], pool_data[0][0]['dict_net'], pool_data[0][0]['dict_data'], [], saveData=False)
 		plt.draw()
 		plt.show()
@@ -211,8 +211,10 @@ def evaluate_pool_data(dict_net, dict_pll, dict_algo, pool_data):
 
 	elif dict_algo['parameter_space_sweeps'] == 'two_parameter_sweep':
 		average_time_order_parameter_in_periods = 1.5
+		#if (dict_algo['paramDiscretization'][0] * dict_algo['paramDiscretization'][1] < 10
+		#		and dict_pll['intrF'][0] == dict_algo['scanValues'][0, 4][0] and dict_pll['transmission_delay'] == dict_algo['scanValues'][1, 1]):
 		if (dict_algo['paramDiscretization'][0] * dict_algo['paramDiscretization'][1] < 10
-				and dict_pll['intrF'][0] == dict_algo['scanValues'][0, 4][0] and dict_pll['transmission_delay'] == dict_algo['scanValues'][1, 1]):
+				and dict_pll['intrF'][0] == dict_algo['scanValues'][0, 1][0] and dict_pll['transmission_delay'] == dict_algo['scanValues'][1, 1]):
 			for i in range(dict_algo['paramDiscretization'][0] * dict_algo['paramDiscretization'][1]):
 				plot.plot_phases_unwrapped(pool_data[0][i]['dict_pll'], pool_data[0][i]['dict_net'], pool_data[0][i]['dict_data'])
 				#plot.plot_phases_two_pi_periodic(pool_data[0][i]['dict_pll'], pool_data[0][i]['dict_net'], pool_data[0][i]['dict_data'])
@@ -221,7 +223,7 @@ def evaluate_pool_data(dict_net, dict_pll, dict_algo, pool_data):
 				#plot.plot_phase_difference_wrt_to_osci_kzero(pool_data[0][i]['dict_pll'], pool_data[0][i]['dict_net'], pool_data[0][i]['dict_data'])
 				#plot.plot_phase_difference(pool_data[0][i]['dict_pll'], pool_data[0][i]['dict_net'], pool_data[0][i]['dict_data'])
 				#plot.plot_periodic_output_signal_from_phase(pool_data[0][i]['dict_pll'], pool_data[0][i]['dict_net'], pool_data[0][i]['dict_data'])
-				plot.plot_inst_frequency_and_phase_difference(pool_data[0][i]['dict_pll'], pool_data[0][i]['dict_net'], pool_data[0][i]['dict_data'])
+				plot.plot_inst_frequency_and_phase_difference(pool_data[0][i]['dict_pll'], pool_data[0][i]['dict_net'], pool_data[0][i]['dict_algo'], pool_data[0][i]['dict_data'])
 				plt.draw()
 				plt.show()
 		plot.plot_order_param_vs_parameter_space(pool_data, average_time_order_parameter_in_periods)

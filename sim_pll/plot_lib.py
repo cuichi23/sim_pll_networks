@@ -1837,7 +1837,7 @@ def plot_order_param_vs_parameter_space(pool_data: dict, average_time_order_para
 # ################################################################################################################################################################################
 
 
-def plot_final_phase_configuration_vs_parameter_space(pool_data: dict, average_time_phase_difference_in_periods: np.float, phase_wrap: np.int = 1,
+def plot_final_phase_configuration_vs_parameter_space(pool_data: dict, average_time_phase_difference_in_periods: np.float, phase_wrap: np.int = 1, std_treshold_determine_time_dependency: np.float = 0.1*np.pi,
 													  axis_normalization: bool = True, phase_diff_wrt_osci_k_0: bool = False, plot_if_time_dependent: bool = False, add_scatter_plots: bool = False):
 	""" Function that plots the last value of the phase and the std of the phase over the average time in a 2d parameter space in two individual plots.
 		Each plot comes as a scatterplot and an imshow.
@@ -1857,10 +1857,16 @@ def plot_final_phase_configuration_vs_parameter_space(pool_data: dict, average_t
 
 	if phase_wrap == 1:  # plot phase-differences in [-pi, pi) interval
 		shift2piWin = np.pi
+		imshow_min_val = -np.pi
+		imshow_max_val = np.pi-0.000001
 	elif phase_wrap == 2:  # plot phase-differences in [-pi/2, 3*pi/2) interval
 		shift2piWin = 0.5 * np.pi
+		imshow_min_val = -np.pi/2
+		imshow_max_val = 3*np.pi/2 - 0.000001
 	elif phase_wrap == 3:  # plot phase-differences in [0, 2*pi) interval
 		shift2piWin = 0
+		imshow_min_val = 0
+		imshow_max_val = 2*np.pi - 0.000001
 
 	dict_net = pool_data[0][0]['dict_net']
 	dict_algo = pool_data[0][0]['dict_algo']
@@ -1885,10 +1891,11 @@ def plot_final_phase_configuration_vs_parameter_space(pool_data: dict, average_t
 
 	# extract the results from the data dictionary for plotting '''
 	j0 = 0
-	std_treshold_asymptotic_constant = 0.1 * np.pi
 	# loop over all parameter pairs of the parameter space, indexed by "i", loops over index "j" represent the mutual phase differences
 	beta_kl = 999 + np.zeros([len(pool_data[0][0]['dict_data']['phi'][-1, 1:]), dict_algo['paramDiscretization'][0] * dict_algo['paramDiscretization'][1]])
 	std_beta_kl = 999 + np.zeros([len(pool_data[0][0]['dict_data']['phi'][-1, 1:]), dict_algo['paramDiscretization'][0] * dict_algo['paramDiscretization'][1]])
+	mean_beta_kl = 999 + np.zeros([len(pool_data[0][0]['dict_data']['phi'][-1, 1:]), dict_algo['paramDiscretization'][0] * dict_algo['paramDiscretization'][1]])
+	predicted_beta_kl = 999 + np.zeros([len(pool_data[0][0]['dict_data']['phi'][-1, 1:]), dict_algo['paramDiscretization'][0] * dict_algo['paramDiscretization'][1]])
 	print('\nbeta_kl:', beta_kl, '\nstd_beta_kl', std_beta_kl)
 	for i in range(dict_algo['paramDiscretization'][0] * dict_algo['paramDiscretization'][1]):
 		print('\n\ni=', i)
@@ -1899,22 +1906,29 @@ def plot_final_phase_configuration_vs_parameter_space(pool_data: dict, average_t
 		if phase_diff_wrt_osci_k_0:
 			j0 = 1
 			for j in range(j0, len(pool_data[0][i]['dict_data']['phi'][-1, 1:])):
+				predicted_beta_kl[j, i] = (pool_data[0][i]['dict_net']['phiInitConfig'][j] - pool_data[0][i]['dict_net']['phiInitConfig'][0] + shift2piWin) % (2.0 * np.pi) - shift2piWin
 				std_beta_kl[j, i] = np.std(((pool_data[0][i]['dict_data']['phi'][-averaging_time_as_index:, j]
 													- pool_data[0][i]['dict_data']['phi'][-averaging_time_as_index:, 0] + shift2piWin) % (2.0 * np.pi)) - shift2piWin)
-				if not plot_if_time_dependent and std_beta_kl[j, i] > std_treshold_asymptotic_constant:
+				if not plot_if_time_dependent and std_beta_kl[j, i] > std_treshold_determine_time_dependency:
 					beta_kl[j, i] = np.nan
+					mean_beta_kl[j, i] = np.nan
 					print('Set beta_%i%i[%i,%i] to np.nan since std_beta_%i%i[%i,%i]=%0.2f' % (j, 0, j, i, j, 0, j, i, std_beta_kl[j, i]))
 				else:
 					beta_kl[j, i] = ((pool_data[0][i]['dict_data']['phi'][-1, j] - pool_data[0][i]['dict_data']['phi'][-1, 0] + shift2piWin) % (2.0 * np.pi)) - shift2piWin
+					mean_beta_kl[j, i] = np.mean(((pool_data[0][i]['dict_data']['phi'][-averaging_time_as_index:, j]
+												   - pool_data[0][i]['dict_data']['phi'][-averaging_time_as_index:, 0] + shift2piWin) % (2.0 * np.pi)) - shift2piWin)
 				print('Calculated beta_%i0=beta_%i-beta_0.' % (j, j), ' Hence, beta_%i0=' % j, beta_kl[j, i], ', and std(beta_%i0)=' % j, std_beta_kl[j, i])
 		else:
 			j0 = 0
 			for j in range(j0, len(pool_data[0][i]['dict_data']['phi'][-1, 1:])):
 				print('j=', j)
+				# print('pool_data[0][i][*dict_net*][*phiInitConfig*]:', pool_data[0][i]['dict_net']['phiInitConfig'])
+				predicted_beta_kl[j, i] = (pool_data[0][i]['dict_net']['phiInitConfig'][j] - pool_data[0][i]['dict_net']['phiInitConfig'][j+1] + shift2piWin) % (2.0 * np.pi) - shift2piWin
 				std_beta_kl[j, i] = np.std(((pool_data[0][i]['dict_data']['phi'][-averaging_time_as_index:, j]
 													- pool_data[0][i]['dict_data']['phi'][-averaging_time_as_index:, j+1] + shift2piWin) % (2.0 * np.pi)) - shift2piWin)
-				if not plot_if_time_dependent and std_beta_kl[j, i] > std_treshold_asymptotic_constant:
+				if not plot_if_time_dependent and std_beta_kl[j, i] > std_treshold_determine_time_dependency:
 					beta_kl[j, i] = np.nan
+					mean_beta_kl[j, i] = np.nan
 					print('Set beta_%i%i[%i,%i] to np.nan since std_beta_%i%i[%i,%i]=%0.2f' % (j, j+1, j, i, j, j+1, j, i, std_beta_kl[j, i]))
 					if (dict_algo['paramDiscretization'][0] * dict_algo['paramDiscretization'][1] < 10
 							and pool_data[0][i]['dict_pll']['intrF'][0] == dict_algo['scanValues'][0, 1][0] and pool_data[0][i]['dict_pll']['transmission_delay'] == dict_algo['scanValues'][1, 1]):
@@ -1923,6 +1937,8 @@ def plot_final_phase_configuration_vs_parameter_space(pool_data: dict, average_t
 						# plt.show()
 				else:
 					beta_kl[j, i] = ((pool_data[0][i]['dict_data']['phi'][-1, j] - pool_data[0][i]['dict_data']['phi'][-1, j+1] + shift2piWin) % (2.0 * np.pi)) - shift2piWin
+					mean_beta_kl[j, i] = np.mean(((pool_data[0][i]['dict_data']['phi'][-averaging_time_as_index:, j]
+												   - pool_data[0][i]['dict_data']['phi'][-averaging_time_as_index:, j + 1] + shift2piWin) % (2.0 * np.pi)) - shift2piWin)
 					if (dict_algo['paramDiscretization'][0] * dict_algo['paramDiscretization'][1] < 10
 							and pool_data[0][i]['dict_pll']['intrF'][0] == dict_algo['scanValues'][0, 1][0] and pool_data[0][i]['dict_pll']['transmission_delay'] == dict_algo['scanValues'][1, 1]):
 						plot_inst_frequency_and_phase_difference(pool_data[0][i]['dict_pll'], pool_data[0][i]['dict_net'], pool_data[0][i]['dict_algo'], pool_data[0][i]['dict_data'], True, [], 2)
@@ -1968,13 +1984,12 @@ def plot_final_phase_configuration_vs_parameter_space(pool_data: dict, average_t
 			jj = j+1
 			phi_string = r'$\phi_{%i%i}$' % (j, j+1)
 
-
 		print('\nbeta_%i%i[%i,:]=' % (j, jj, j), beta_kl[j, :])
 		print('\nstd_beta_%i%i[%i,:]=' % (j, jj, j), std_beta_kl[j, :])
 
 		# start plotting
 		fig1 = plt.figure(figsize=(figwidth, figheight), dpi=dpi_val, facecolor='w', edgecolor='k')
-		fig1.canvas.manager.set_window_title('parameter space %s vs %s' % (dict_algo['param_id_0'], dict_algo['param_id_1']))
+		fig1.canvas.manager.set_window_title('final phase differences in parameter space %s vs %s' % (dict_algo['param_id_0'].replace('_', ' '), dict_algo['param_id_1'].replace('_', ' ')))
 		fig1.set_size_inches(plot_size_inches_x, plot_size_inches_y)
 
 		tempresults = beta_kl[j, :].reshape(dict_algo['paramDiscretization'][0], dict_algo['paramDiscretization'][1])
@@ -1985,7 +2000,7 @@ def plot_final_phase_configuration_vs_parameter_space(pool_data: dict, average_t
 
 		plt.imshow(tempresults_ma.astype(float), interpolation='nearest', cmap=cm.coolwarm, aspect='auto', origin='lower',
 				   extent=(dict_algo['min_max_range_parameter_0'][0], dict_algo['min_max_range_parameter_0'][1], dict_algo['min_max_range_parameter_1'][0], dict_algo['min_max_range_parameter_1'][1]),
-				   vmin=0, vmax=1)
+				   vmin=imshow_min_val, vmax=imshow_max_val)
 		plt.title(r'last $\Delta$'+phi_string)
 		plt.xlabel(x_label)
 		plt.ylabel(y_label)
@@ -1996,28 +2011,81 @@ def plot_final_phase_configuration_vs_parameter_space(pool_data: dict, average_t
 		plt.savefig('results/param_space_%s_vs_%s_beta_%i%i_imshow_%d_%d_%d.png' % (dict_algo['param_id_0'], dict_algo['param_id_1'], j, jj, now.year, now.month, now.day), dpi=dpi_val, bbox_inches="tight")
 		plt.savefig('results/param_space_%s_vs_%s_beta_%i%i_imshow_%d_%d_%d.svg' % (dict_algo['param_id_0'], dict_algo['param_id_1'], j, jj, now.year, now.month, now.day), dpi=dpi_val, bbox_inches="tight")
 
-		fig2 = plt.figure(figsize=(figwidth, figheight), dpi=dpi_val, facecolor='w', edgecolor='k')
-		fig2.canvas.manager.set_window_title('parameter space %s vs %s' % (dict_algo['param_id_0'], dict_algo['param_id_1']))
-		fig2.set_size_inches(plot_size_inches_x, plot_size_inches_y)
+		fig21 = plt.figure(figsize=(figwidth, figheight), dpi=dpi_val, facecolor='w', edgecolor='k')
+		fig21.canvas.manager.set_window_title('mean of phase differences of %0.2fT parameter space %s vs %s' % (average_time_phase_difference_in_periods,
+																															  dict_algo['param_id_0'].replace('_', ' '),
+																															  dict_algo['param_id_1'].replace('_', ' ')))
+		fig21.set_size_inches(plot_size_inches_x, plot_size_inches_y)
 
-		tempresults = std_beta_kl[j, :].reshape(dict_algo['paramDiscretization'][0], dict_algo['paramDiscretization'][1])
+		tempresults = mean_beta_kl[j, :].reshape(dict_algo['paramDiscretization'][0], dict_algo['paramDiscretization'][1])
 		tempresults = np.transpose(tempresults)
 		# print('tempresults:', tempresults)
-		tempresults_ma = ma.masked_where(tempresults < 0.25 * np.pi, tempresults)  # Create masked array
+		tempresults_ma = ma.masked_where(tempresults == np.nan, tempresults)  # Create masked array
 		# print('tempresult_ma:', tempresults_ma)
-		# print('initPhiPrime0:', initPhiPrime0)
+
 		plt.imshow(tempresults_ma.astype(float), interpolation='nearest', cmap=cm.coolwarm, aspect='auto', origin='lower',
 				   extent=(dict_algo['min_max_range_parameter_0'][0], dict_algo['min_max_range_parameter_0'][1], dict_algo['min_max_range_parameter_1'][0], dict_algo['min_max_range_parameter_1'][1]),
-				   vmin=0, vmax=1)
-		plt.title(r'std($\Delta$'+phi_string+')')
+				   vmin=imshow_min_val, vmax=imshow_max_val)
+		plt.title(r'$\bar{\Delta}$' + phi_string)
 		plt.xlabel(x_label)
 		plt.ylabel(y_label)
 		plt.xlim([1.05 * dict_algo['min_max_range_parameter_0'][0], 1.05 * dict_algo['min_max_range_parameter_0'][1]])
 		plt.ylim([1.05 * dict_algo['min_max_range_parameter_1'][0], 1.05 * dict_algo['min_max_range_parameter_1'][1]])
 		plt.colorbar()
 
-		plt.savefig('results/param_space_%s_vs_%s_std_beta_%i%i_imshow_%d_%d_%d.png' % (dict_algo['param_id_0'], dict_algo['param_id_1'], j, jj, now.year, now.month, now.day), dpi=dpi_val, bbox_inches="tight")
-		plt.savefig('results/param_space_%s_vs_%s_std_beta_%i%i_imshow_%d_%d_%d.svg' % (dict_algo['param_id_0'], dict_algo['param_id_1'], j, jj, now.year, now.month, now.day), dpi=dpi_val, bbox_inches="tight")
+		plt.savefig('results/param_space_%s_vs_%s_mean_beta_%i%i_imshow_%d_%d_%d.png' % (dict_algo['param_id_0'], dict_algo['param_id_1'], j, jj, now.year, now.month, now.day), dpi=dpi_val,
+					bbox_inches="tight")
+		plt.savefig('results/param_space_%s_vs_%s_mean_beta_%i%i_imshow_%d_%d_%d.svg' % (dict_algo['param_id_0'], dict_algo['param_id_1'], j, jj, now.year, now.month, now.day), dpi=dpi_val,
+					bbox_inches="tight")
+
+		fig22 = plt.figure(figsize=(figwidth, figheight), dpi=dpi_val, facecolor='w', edgecolor='k')
+		fig22.canvas.manager.set_window_title('predicted phase differences in parameter space %s vs %s' % (dict_algo['param_id_0'].replace('_', ' '), dict_algo['param_id_1'].replace('_', ' ')))
+		fig22.set_size_inches(plot_size_inches_x, plot_size_inches_y)
+
+		tempresults = predicted_beta_kl[j, :].reshape(dict_algo['paramDiscretization'][0], dict_algo['paramDiscretization'][1])
+		tempresults = np.transpose(tempresults)
+
+		plt.imshow(tempresults.astype(float), interpolation='nearest', cmap=cm.coolwarm, aspect='auto', origin='lower',
+				   extent=(dict_algo['min_max_range_parameter_0'][0], dict_algo['min_max_range_parameter_0'][1], dict_algo['min_max_range_parameter_1'][0], dict_algo['min_max_range_parameter_1'][1]),
+				   vmin=std_treshold_determine_time_dependency, vmax=2 * np.pi)
+		plt.title(r'std($\Delta$' + phi_string + ')')
+		plt.xlabel(x_label)
+		plt.ylabel(y_label)
+		plt.xlim([1.05 * dict_algo['min_max_range_parameter_0'][0], 1.05 * dict_algo['min_max_range_parameter_0'][1]])
+		plt.ylim([1.05 * dict_algo['min_max_range_parameter_1'][0], 1.05 * dict_algo['min_max_range_parameter_1'][1]])
+		plt.colorbar()
+
+		plt.savefig('results/param_space_%s_vs_%s_std_beta_%i%i_imshow_%d_%d_%d.png' % (dict_algo['param_id_0'], dict_algo['param_id_1'], j, jj, now.year, now.month, now.day), dpi=dpi_val,
+					bbox_inches="tight")
+		plt.savefig('results/param_space_%s_vs_%s_std_beta_%i%i_imshow_%d_%d_%d.svg' % (dict_algo['param_id_0'], dict_algo['param_id_1'], j, jj, now.year, now.month, now.day), dpi=dpi_val,
+					bbox_inches="tight")
+
+		fig23 = plt.figure(figsize=(figwidth, figheight), dpi=dpi_val, facecolor='w', edgecolor='k')
+		fig23.canvas.manager.set_window_title('standard deviation of phase differences of %0.2fT parameter space %s vs %s' % (average_time_phase_difference_in_periods,
+																															  dict_algo['param_id_0'].replace('_', ' '),
+																															  dict_algo['param_id_1'].replace('_', ' ')))
+		fig23.set_size_inches(plot_size_inches_x, plot_size_inches_y)
+
+		tempresults = std_beta_kl[j, :].reshape(dict_algo['paramDiscretization'][0], dict_algo['paramDiscretization'][1])
+		tempresults = np.transpose(tempresults)
+		# print('tempresults:', tempresults)
+		tempresults_ma = ma.masked_where(tempresults < std_treshold_determine_time_dependency, tempresults)  # Create masked array
+		# print('tempresult_ma:', tempresults_ma)
+
+		plt.imshow(tempresults_ma.astype(float), interpolation='nearest', cmap=cm.coolwarm, aspect='auto', origin='lower',
+				   extent=(dict_algo['min_max_range_parameter_0'][0], dict_algo['min_max_range_parameter_0'][1], dict_algo['min_max_range_parameter_1'][0], dict_algo['min_max_range_parameter_1'][1]),
+				   vmin=std_treshold_determine_time_dependency, vmax=2 * np.pi)
+		plt.title(r'std($\Delta$' + phi_string + ')')
+		plt.xlabel(x_label)
+		plt.ylabel(y_label)
+		plt.xlim([1.05 * dict_algo['min_max_range_parameter_0'][0], 1.05 * dict_algo['min_max_range_parameter_0'][1]])
+		plt.ylim([1.05 * dict_algo['min_max_range_parameter_1'][0], 1.05 * dict_algo['min_max_range_parameter_1'][1]])
+		plt.colorbar()
+
+		plt.savefig('results/param_space_%s_vs_%s_std_beta_%i%i_imshow_%d_%d_%d.png' % (dict_algo['param_id_0'], dict_algo['param_id_1'], j, jj, now.year, now.month, now.day), dpi=dpi_val,
+					bbox_inches="tight")
+		plt.savefig('results/param_space_%s_vs_%s_std_beta_%i%i_imshow_%d_%d_%d.svg' % (dict_algo['param_id_0'], dict_algo['param_id_1'], j, jj, now.year, now.month, now.day), dpi=dpi_val,
+					bbox_inches="tight")
 
 		if add_scatter_plots:
 			fig3 = plt.figure(figsize=(figwidth, figheight), dpi=dpi_val, facecolor='w', edgecolor='k')
@@ -2055,9 +2123,9 @@ def plot_final_phase_configuration_vs_parameter_space(pool_data: dict, average_t
 			plt.savefig('results/param_space_%s_vs_%s_std_beta_%i%i_scatter_%d_%d_%d.png' % (dict_algo['param_id_0'], dict_algo['param_id_1'], j, jj, now.year, now.month, now.day), dpi=dpi_val, bbox_inches="tight")
 			plt.savefig('results/param_space_%s_vs_%s_std_beta_%i%i_scatter_%d_%d_%d.svg' % (dict_algo['param_id_0'], dict_algo['param_id_1'], j, jj, now.year, now.month, now.day), dpi=dpi_val, bbox_inches="tight")
 
-			figs.append([fig1, fig2, fig3, fig4])
+			figs.append([fig1, fig21, fig22, fig23, fig3, fig4])
 
-		figs.append([fig1, fig2])
+		figs.append([fig1, fig21, fig22, fig23])
 
 	return None
 

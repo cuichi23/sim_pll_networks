@@ -138,7 +138,6 @@ def phase_configuration_ref_to_one_for_chain_topology(dict_net: dict, dict_pll: 
 				2 * (dict_pll['inverse_fct_vco_response'](dict_pll['intrF'][i]) - frequency_or_voltage[i]) - dict_pll['coup_fct_sig'](
 					-dict_pll['intrF'][i] * dict_pll['transmission_delay'] - asymptotic_phase_configuration_entrained_sync_state[i+1]))
 
-
 	dict_net.update({'phiInitConfig': asymptotic_phase_configuration_entrained_sync_state})
 
 	return None

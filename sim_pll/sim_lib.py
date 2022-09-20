@@ -30,7 +30,7 @@ gc.enable()
 
 
 ''' SIMULATE NETWORK '''
-def simulateSystem(dict_net: dict, dict_pll: dict, dict_algo, multi_sim=False):
+def simulateSystem(dict_net: dict, dict_pll: dict, dict_algo: dict, multi_sim=False):
 	"""Function that organizes the simulation. a) sets up a list of PLLs and a container for the results (dict_data). Writes the initial histories as specified. b) carries out the
 		evolution of the PLL's phases. c) save results and returns results or plots them.
 
@@ -52,7 +52,7 @@ def simulateSystem(dict_net: dict, dict_pll: dict, dict_algo, multi_sim=False):
 	np.random.seed()
 
 	# prepare simulation, write histories of phases, set initial conditions, etc.
-	dict_data, pll_list = prepare_simulation(dict_net, dict_pll)
+	dict_data, pll_list = prepare_simulation(dict_net, dict_pll, dict_algo)
 
 	# now simulate the system after history is set
 	perform_simulation_case(dict_net, dict_pll, dict_algo, dict_data, pll_list)
@@ -77,7 +77,7 @@ def simulateSystem(dict_net: dict, dict_pll: dict, dict_algo, multi_sim=False):
 ###########################################################################################################################################
 ###########################################################################################################################################
 
-def prepare_simulation(dict_net: dict, dict_pll: dict):
+def prepare_simulation(dict_net: dict, dict_pll: dict, dict_algo: dict):
 	"""Function that prepares an individual simulation. It sets up the network of oscillators with their properties, including the neighbor relations as specified by the topology.
 		Creates the data structures to store the histories depending on the time delay (memory). It sets the initial histories of all oscillators and stores the result.
 
@@ -93,7 +93,7 @@ def prepare_simulation(dict_net: dict, dict_pll: dict):
 	space = setup.generate_space(dict_net, dict_pll, dict_data)  # generates a space object used to handle pll distributed in a continuous space
 	if not dict_net['phiInitConfig']:  							# if no custom phase configuration is provided, generate it
 		print('\nPhase configuration of synchronized state will be set according to supplied topology and twist state information!')
-		setup.generate_phi0(dict_net, dict_pll)  # generate the initial phase configuration for twist, chequerboard, in- and anti-phase states
+		setup.generate_phi0(dict_net, dict_pll, dict_algo)  # generate the initial phase configuration for twist, chequerboard, in- and anti-phase states
 	pll_list = setup.generate_plls(dict_pll, dict_net, dict_data)  # generate a list that contains all the PLLs of the network
 	all_transmit_delay = [np.max(n.delayer.transmit_delay_steps) for n in pll_list]  # obtain all the transmission delays for all PLLs
 	all_feedback_delay = [n.delayer.feedback_delay_steps for n in pll_list]  # obtain all the feedback delays for all PLLs

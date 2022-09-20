@@ -99,7 +99,7 @@ def generate_space(dict_net: dict, dict_pll: dict, dict_data: dict):
 
 ################################################################################
 
-def generate_phi0(dict_net: dict, dict_pll: dict) -> None:
+def generate_phi0(dict_net: dict, dict_pll: dict, dict_algo: dict) -> None:
 	"""
 	Set the initial phase perturbation of each oscillator in the network depending on the type of solution to be investigated.
 
@@ -116,7 +116,7 @@ def generate_phi0(dict_net: dict, dict_pll: dict) -> None:
 		#phiM  = eva.rotate_phases(phiSr.flatten(), isInverse=False)
 		# use phase_configuration_ref_to_one_for_chain_topology function from entrain_mutual_lib.py to calculate the phase configuration from the analytic expressions
 		if dict_net['topology'] == 'entrainOne-chain':
-			ent_mut.phase_configuration_ref_to_one_for_chain_topology(dict_net, dict_pll)
+			ent_mut.obtain_phase_config_entrainment_of_mutual_sync(dict_net, dict_pll, dict_algo)
 		elif not dict_net['topology'] == 'entrainOne-chain':
 			dict_net.update({'phiInitConfig': [0 for i in range(dict_net['Nx']*dict_net['Ny'])]})
 			print('Initial phase configuration of entrained state WAS NOT calculated automatically: tbi!')

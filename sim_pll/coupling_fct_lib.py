@@ -136,10 +136,13 @@ def inverse_triangular(y: np.float, branch='positive') -> np.float:
 		Returns:
 			result of either of the two branches
 		"""
-	if branch == 'positive':
+
+	if branch == 'positive' and np.abs(y) <= 1:
 		return (np.pi/2)*(y+1)
-	elif branch == 'negative':
+	elif branch == 'negative' and np.abs(y) <= 1:
 		return -(np.pi/2)*(y+1)
+	else:
+		return np.nan
 
 
 def square_wave(x: np.float, duty=0.5) -> np.float:

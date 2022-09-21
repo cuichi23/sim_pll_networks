@@ -246,14 +246,14 @@ def multihelper(iterConfig, initPhiPrime0, dict_net, dict_pll, dict_algo, param_
 	"""
 
 	# make also copies of all other dictionaries so that later changes to not interfere with other realizations
-	dict_pllRea = dict_pll.copy()
-	dict_algoRea = dict_algo.copy()
-	dict_netRea = dict_net.copy()
+	dict_pll_rea = dict_pll.copy()
+	dict_algo_rea = dict_algo.copy()
+	dict_net_rea = dict_net.copy()
+	global number_period_dyn
+	number_period_dyn = 20.5
 
 	if dict_algo['parameter_space_sweeps'] == 'classicBruteForceMethodRotatedSpace':				# classic approach with LP-adaptation developed with J. Asmus, D. Platz
 		phiSr = list(iterConfig)
-		global number_period_dyn
-		number_period_dyn = 20.5
 		if dict_net['Nx']*dict_net['Ny'] > 2:
 			phiSr = np.insert(phiSr, 0, initPhiPrime0)								# insert the first variable in the rotated space, constant initPhiPrime0
 		phiS = eva.rotate_phases(phiSr, isInverse=False)							# rotate back into physical phase space
@@ -265,18 +265,18 @@ def multihelper(iterConfig, initPhiPrime0, dict_net, dict_pll, dict_algo, param_
 		# if not unit_cell.is_inside(( phiS ), isRotated=False):   ???
 		# if not unit_cell.is_inside((phiS-phiM), isRotated=False):					# and not N == 2:	# +phiM
 
-		dict_netRea.update({'phiPerturb': phiS}) 			# 'phiPerturbRot': phiSr})
+		dict_net_rea.update({'phiPerturb': phiS}) 			# 'phiPerturbRot': phiSr})
 		#print('dict_net[*phiPerturb*]', dict_net['phiPerturb'])
 
-		#print('Check whether perturbation is inside unit-cell! phiS:', dict_netRea['phiPerturb'], '\tInside? True/False:', unit_cell.is_inside((dict_netRea['phiPerturb']), isRotated=False)); time.sleep(2)
-		if not unit_cell.is_inside((dict_netRea['phiPerturb']), isRotated=False):	# NOTE this case is for scanValues set only in -pi to pi
+		#print('Check whether perturbation is inside unit-cell! phiS:', dict_net_rea['phiPerturb'], '\tInside? True/False:', unit_cell.is_inside((dict_net_rea['phiPerturb']), isRotated=False)); time.sleep(2)
+		if not unit_cell.is_inside((dict_net_rea['phiPerturb']), isRotated=False):				# NOTE this case is for scanValues set only in -pi to pi
 			print('Set dummy solution! Detected case outside of unit-cell.')
 			dict_data = {'mean_order': -1., 'last_orderP': -1., 'stdev_orderP': np.zeros(1), 'phases': dict_net['phiInitConfig'],
 					 		'intrinfreq': np.zeros(1), 'coupling_strength': np.zeros(1), 'transdelays': dict_pll['transmission_delay'], 'orderP_t': np.zeros(int(number_period_dyn/(dict_pll['intrF']*dict_pll['dt'])))-1.0}
-			realizationDict = {'dict_net': dict_netRea, 'dict_pll': dict_pll, 'dict_data': dict_data}
+			realizationDict = {'dict_net': dict_net_rea, 'dict_pll': dict_pll_rea, 'dict_algo': dict_algo_rea, 'dict_data': dict_data}
 			return realizationDict
 		else:
-			return simulateSystem(dict_netRea, dict_pllRea, dict_algoRea, multi_sim=True)
+			return simulateSystem(dict_net_rea, dict_pll_rea, dict_algo_rea, multi_sim=True)
 
 	elif dict_algo['parameter_space_sweeps'] == 'listOfInitialPhaseConfigurations':		# so far for N=2, work it out for N>2
 		initFreqDetune_vs_intrFreqDetune_equal = False
@@ -285,20 +285,20 @@ def multihelper(iterConfig, initPhiPrime0, dict_net, dict_pll, dict_algo, param_
 		if initFreqDetune_vs_intrFreqDetune_equal:
 			if isinstance(dict_pll['intrF'], list):								# change_param[1] represents half the frequency difference to be achieved in the uncoupled state
 				meanIntF = np.mean(dict_pll['intrF'])
-				dict_pllRea.update({'intrF': [meanIntF-change_param[1], meanIntF+change_param[1]]})
-				#print('Intrinsic frequencies:', dict_pllRea['intrF'], '\tfor detuning', 2*change_param[1]); time.sleep(2)
+				dict_pll_rea.update({'intrF': [meanIntF-change_param[1], meanIntF+change_param[1]]})
+				#print('Intrinsic frequencies:', dict_pll_rea['intrF'], '\tfor detuning', 2*change_param[1]); time.sleep(2)
 			else:
-				dict_pllRea.update({'intrF': [dict_pll['intrF']-change_param[1], dict_pll['intrF']+change_param[1]]})
+				dict_pll_rea.update({'intrF': [dict_pll['intrF']-change_param[1], dict_pll['intrF']+change_param[1]]})
 		else:																	# here: oscillators have intrinsic frequencies as given in dict_pll['intrF'], however initially they evolve
 																				# with different frequencies given by syncF +/- half_the_freq_difference given by change_param[1]
-			dict_pllRea.update({'syncF': [dict_pll['syncF']-change_param[1], dict_pll['syncF']+change_param[1]]})
-			dict_pllRea.update({'typeOfHist': 'syncState'})						# makes sure this mode is active
+			dict_pll_rea.update({'syncF': [dict_pll['syncF']-change_param[1], dict_pll['syncF']+change_param[1]]})
+			dict_pll_rea.update({'typeOfHist': 'syncState'})						# makes sure this mode is active
 			print('WATCH OUT: dirty trick to achieve different frequency differences at the end of the history!!! Discuss with Chris Hoyer and address issue.')
 
 		config = [0, change_param[0]]
-		dict_netRea.update({'phiInitConfig': config, 'phiPerturb': np.zeros(dict_net['Nx']*dict_net['Ny']), 'phiPerturbRot': np.zeros(dict_net['Nx']*dict_net['Ny'])})
+		dict_net_rea.update({'phiInitConfig': config, 'phiPerturb': np.zeros(dict_net['Nx']*dict_net['Ny']), 'phiPerturbRot': np.zeros(dict_net['Nx']*dict_net['Ny'])})
 
-		return simulateSystem(dict_netRea, dict_pllRea, dict_algoRea, multi_sim=True)
+		return simulateSystem(dict_net_rea, dict_pll_rea, dict_algo_rea, multi_sim=True)
 
 	elif dict_algo['parameter_space_sweeps'] == 'testNetworkMotifIsing':
 		change_param = list(iterConfig)
@@ -307,19 +307,19 @@ def multihelper(iterConfig, initPhiPrime0, dict_net, dict_pll, dict_algo, param_
 		# if dict_net['Nx']*dict_net['Ny']
 		config = []
 		[config.append(entry) for entry in change_param[0]]
-		dict_netRea.update({'phiInitConfig': config, 'phiPerturb': np.zeros(dict_net['Nx']*dict_net['Ny']), 'phiPerturbRot': np.zeros(dict_net['Nx']*dict_net['Ny'])})
-		#print('NEW REALIZATION WITH INITIAL PHASES: dict_netRea[*phiInitConfig*]:', dict_netRea['phiInitConfig'])
+		dict_net_rea.update({'phiInitConfig': config, 'phiPerturb': np.zeros(dict_net['Nx']*dict_net['Ny']), 'phiPerturbRot': np.zeros(dict_net['Nx']*dict_net['Ny'])})
+		#print('NEW REALIZATION WITH INITIAL PHASES: dict_net_rea[*phiInitConfig*]:', dict_net_rea['phiInitConfig'])
 
-		return simulateSystem(dict_netRea, dict_pllRea, dict_algoRea, multi_sim=True)
+		return simulateSystem(dict_net_rea, dict_pll_rea, dict_algo_rea, multi_sim=True)
 
 	elif dict_algo['parameter_space_sweeps'] == 'single':
 		change_param = list(iterConfig)
 		if not dict_algo['param_id_0'] == 'None':
-			dict_pllRea.update({param_id: change_param})							# update the parameter chosen in change_param with a value of all scanvalues
+			dict_pll_rea.update({param_id: change_param})							# update the parameter chosen in change_param with a value of all scanvalues
 		else:
 			print('No parameters for sweep specified -- hence simulating the same parameter set for all realizations!')
 
-		return simulateSystem(dict_netRea, dict_pllRea, dict_algoRea, multi_sim=True)
+		return simulateSystem(dict_net_rea, dict_pll_rea, dict_algo_rea, multi_sim=True)
 
 	elif dict_algo['parameter_space_sweeps'] == 'two_parameter_sweep':
 		change_param = list(iterConfig)
@@ -327,21 +327,34 @@ def multihelper(iterConfig, initPhiPrime0, dict_net, dict_pll, dict_algo, param_
 		# print('######### realization: {delay, intrinsic freqs.} #########\n', change_param[0], change_param[1])
 
 		if not dict_algo['param_id_0'] == 'None' and not dict_algo['param_id_1'] == 'None':
-			dict_pllRea.update({dict_algo['param_id_0']: change_param[0]})
-			dict_pllRea.update({dict_algo['param_id_1']: change_param[1]})
+			dict_pll_rea.update({dict_algo['param_id_0']: change_param[0]})
+			dict_pll_rea.update({dict_algo['param_id_1']: change_param[1]})
 			# print('dict_net[*phiPerturb*]', dict_net['phiPerturb'])
-			# print('\n\nCHANGED dict for realization: ', dict_pllRea[dict_algo['param_id_0']], dict_pllRea[dict_algo['param_id_1']])
+			# print('\n\nCHANGED dict for realization: ', dict_pll_rea[dict_algo['param_id_0']], dict_pll_rea[dict_algo['param_id_1']])
 		else:
 			print('No parameters for sweep specified -- hence simulating the same parameter set for all realizations!')
 
-		return simulateSystem(dict_netRea, dict_pllRea, dict_algoRea, multi_sim=True)
+		if not dict_net['phiInitConfig']:  # needs to be done here to catch this case below if there are np.nans!
+			print('\nPhase configuration of synchronized state will be set according to supplied topology and twist state information!')
+			setup.generate_phi0(dict_net_rea, dict_pll_rea, dict_algo_rea)
+		if np.isnan(dict_net_rea['phiInitConfig']).any() and 'entrain' in dict_net_rea['topology']:
+			print('Set dummy solution! Detected case has no valid solution to the inverse coupling function, hence no solution exists.')
+			# dict_data = {'mean_order': -1., 'last_orderP': -1., 'stdev_orderP': np.zeros(1), 'phases': dict_net['phiInitConfig'],
+			# 			 'intrinfreq': np.zeros(1), 'coupling_strength': np.zeros(1), 'transdelays': dict_pll['transmission_delay'],
+			# 			 'orderP_t': }
+			dict_data = {'order_parameter': np.zeros(int(number_period_dyn / (dict_pll['syncF'] * dict_pll['dt']))) - dict_pll_rea['div'], 'phi': np.zeros([1, int(dict_net_rea['Nx'] * dict_net_rea['Ny'])]),
+							  'order_parameter_divided_phases': np.zeros(int(number_period_dyn / (dict_pll['syncF'] * dict_pll['dt']))) - 1, 'F1': 1}
+			realizationDict = {'dict_net': dict_net_rea, 'dict_pll': dict_pll_rea, 'dict_algo': dict_algo_rea, 'dict_data': dict_data}
+			return realizationDict
+		else:
+			return simulateSystem(dict_net_rea, dict_pll_rea, dict_algo_rea, multi_sim=True)
 
 	elif dict_algo['parameter_space_sweeps'] == 'statistics':
 		change_param = list(iterConfig)
 		if not dict_algo['param_id_0'] == 'None':
-			dict_pllRea.update({param_id: change_param})							# update the parameter chosen in change_param with a value of all scanvalues
+			dict_pll_rea.update({param_id: change_param})							# update the parameter chosen in change_param with a value of all scanvalues
 
-		return simulateSystem(dict_netRea, dict_pllRea, dict_algoRea, multi_sim=True)
+		return simulateSystem(dict_net_rea, dict_pll_rea, dict_algo_rea, multi_sim=True)
 
 	else:
 		print('No case fulfilled in multihelper in multisim_lib!')

@@ -91,7 +91,7 @@ def prepare_simulation(dict_net: dict, dict_pll: dict, dict_algo: dict):
 	"""
 	dict_data = {}  # setup dictionary that hold all the data
 	space = setup.generate_space(dict_net, dict_pll, dict_data)  # generates a space object used to handle pll distributed in a continuous space
-	if not dict_net['phiInitConfig']:  							# if no custom phase configuration is provided, generate it
+	if len(dict_net['phiInitConfig']) == 0:  							# if no custom phase configuration is provided, generate it
 		print('\nPhase configuration of synchronized state will be set according to supplied topology and twist state information!')
 		setup.generate_phi0(dict_net, dict_pll, dict_algo)  # generate the initial phase configuration for twist, chequerboard, in- and anti-phase states
 	pll_list = setup.generate_plls(dict_pll, dict_net, dict_data)  # generate a list that contains all the PLLs of the network
@@ -911,7 +911,7 @@ def evolve_system_test_cases(dict_net: dict, dict_pll: dict, pll_list: list, dic
 		if clock_counter[(idx_time+1) % phi_array_len][0] == clock_sync_scheduled:
 			clock_sync_scheduled = -23
 			print('Assume transient dynamics decayed, reset (synchronize) all clocks!')
-			[pll.clock_reset(phi[(idx_time+1) % phi_array_len,pll.pll_id].copy() - 2.0 * np.pi) for pll in pll_list]
+			[pll.clock_reset(phi[(idx_time+1) % phi_array_len, pll.pll_id].copy() - 2.0 * np.pi) for pll in pll_list]
 
 		clk_store[idx_time+1, :] = clock_counter[(idx_time+1) % phi_array_len, :]
 		phi_store[idx_time+1, :] = phi[(idx_time+1) % phi_array_len, :]

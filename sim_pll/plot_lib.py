@@ -1903,51 +1903,58 @@ def plot_final_phase_configuration_vs_parameter_space(pool_data: dict, average_t
 			averaging_time_as_index = np.int(average_time_phase_difference_in_periods * np.mean(pool_data[0][i]['dict_pll']['intrF'][1:]) / pool_data[0][i]['dict_pll']['dt'])
 		else:
 			averaging_time_as_index = np.int(average_time_phase_difference_in_periods * np.mean(pool_data[0][i]['dict_pll']['intrF']) / pool_data[0][i]['dict_pll']['dt'])
-		if phase_diff_wrt_osci_k_0:
-			j0 = 1
-			for j in range(j0, len(pool_data[0][i]['dict_data']['phi'][-1, 1:])):
-				predicted_beta_kl[j, i] = (pool_data[0][i]['dict_net']['phiInitConfig'][j] - pool_data[0][i]['dict_net']['phiInitConfig'][0] + shift2piWin) % (2.0 * np.pi) - shift2piWin
-				std_beta_kl[j, i] = np.std(((pool_data[0][i]['dict_data']['phi'][-averaging_time_as_index:, j]
-													- pool_data[0][i]['dict_data']['phi'][-averaging_time_as_index:, 0] + shift2piWin) % (2.0 * np.pi)) - shift2piWin)
-				if not plot_if_time_dependent and std_beta_kl[j, i] > std_treshold_determine_time_dependency:
-					beta_kl[j, i] = np.nan
-					mean_beta_kl[j, i] = np.nan
-					print('Set beta_%i%i[%i,%i] to np.nan since std_beta_%i%i[%i,%i]=%0.2f' % (j, 0, j, i, j, 0, j, i, std_beta_kl[j, i]))
-				else:
-					beta_kl[j, i] = ((pool_data[0][i]['dict_data']['phi'][-1, j] - pool_data[0][i]['dict_data']['phi'][-1, 0] + shift2piWin) % (2.0 * np.pi)) - shift2piWin
-					mean_beta_kl[j, i] = np.mean(((pool_data[0][i]['dict_data']['phi'][-averaging_time_as_index:, j]
-												   - pool_data[0][i]['dict_data']['phi'][-averaging_time_as_index:, 0] + shift2piWin) % (2.0 * np.pi)) - shift2piWin)
-				print('Calculated beta_%i0=beta_%i-beta_0.' % (j, j), ' Hence, beta_%i0=' % j, beta_kl[j, i], ', and std(beta_%i0)=' % j, std_beta_kl[j, i])
+		if np.isnan(pool_data[0][i]['dict_net']['phiInitConfig']).any() and 'entrain' in dict_net['topology']:
+			print('Set all betas and std_betas to np.nan since for this parameter set no solution exists given the inverse coupling function to be evaluated.')
+			predicted_beta_kl[:, i] = np.nan
+			beta_kl[:, i] = np.nan
+			std_beta_kl[:, i] = -999
+			mean_beta_kl[:, i] = np.nan
 		else:
-			j0 = 0
-			for j in range(j0, len(pool_data[0][i]['dict_data']['phi'][-1, 1:])):
-				print('j=', j)
-				# print('pool_data[0][i][*dict_net*][*phiInitConfig*]:', pool_data[0][i]['dict_net']['phiInitConfig'])
-				predicted_beta_kl[j, i] = (pool_data[0][i]['dict_net']['phiInitConfig'][j] - pool_data[0][i]['dict_net']['phiInitConfig'][j+1] + shift2piWin) % (2.0 * np.pi) - shift2piWin
-				std_beta_kl[j, i] = np.std(((pool_data[0][i]['dict_data']['phi'][-averaging_time_as_index:, j]
-													- pool_data[0][i]['dict_data']['phi'][-averaging_time_as_index:, j+1] + shift2piWin) % (2.0 * np.pi)) - shift2piWin)
-				if not plot_if_time_dependent and std_beta_kl[j, i] > std_treshold_determine_time_dependency:
-					beta_kl[j, i] = np.nan
-					mean_beta_kl[j, i] = np.nan
-					print('Set beta_%i%i[%i,%i] to np.nan since std_beta_%i%i[%i,%i]=%0.2f' % (j, j+1, j, i, j, j+1, j, i, std_beta_kl[j, i]))
-					if (dict_algo['paramDiscretization'][0] * dict_algo['paramDiscretization'][1] < 10
-							and pool_data[0][i]['dict_pll']['intrF'][0] == dict_algo['scanValues'][0, 1][0] and pool_data[0][i]['dict_pll']['transmission_delay'] == dict_algo['scanValues'][1, 1]):
-						plot_inst_frequency_and_phase_difference(pool_data[0][i]['dict_pll'], pool_data[0][i]['dict_net'], pool_data[0][i]['dict_algo'], pool_data[0][i]['dict_data'], True, [], 2)
-						# plt.draw()
-						# plt.show()
-				else:
-					beta_kl[j, i] = ((pool_data[0][i]['dict_data']['phi'][-1, j] - pool_data[0][i]['dict_data']['phi'][-1, j+1] + shift2piWin) % (2.0 * np.pi)) - shift2piWin
-					mean_beta_kl[j, i] = np.mean(((pool_data[0][i]['dict_data']['phi'][-averaging_time_as_index:, j]
-												   - pool_data[0][i]['dict_data']['phi'][-averaging_time_as_index:, j + 1] + shift2piWin) % (2.0 * np.pi)) - shift2piWin)
-					if (dict_algo['paramDiscretization'][0] * dict_algo['paramDiscretization'][1] < 10
-							and pool_data[0][i]['dict_pll']['intrF'][0] == dict_algo['scanValues'][0, 1][0] and pool_data[0][i]['dict_pll']['transmission_delay'] == dict_algo['scanValues'][1, 1]):
-						plot_inst_frequency_and_phase_difference(pool_data[0][i]['dict_pll'], pool_data[0][i]['dict_net'], pool_data[0][i]['dict_algo'], pool_data[0][i]['dict_data'], True, [], 2)
-						# plt.draw()
-						# plt.show()
+			if phase_diff_wrt_osci_k_0:
+				j0 = 1
+				for j in range(j0, len(pool_data[0][i]['dict_data']['phi'][-1, 1:])):
+					predicted_beta_kl[j, i] = (pool_data[0][i]['dict_net']['phiInitConfig'][j] - pool_data[0][i]['dict_net']['phiInitConfig'][0] + shift2piWin) % (2.0 * np.pi) - shift2piWin
+					std_beta_kl[j, i] = np.std(((pool_data[0][i]['dict_data']['phi'][-averaging_time_as_index:, j]
+														- pool_data[0][i]['dict_data']['phi'][-averaging_time_as_index:, 0] + shift2piWin) % (2.0 * np.pi)) - shift2piWin)
+					if not plot_if_time_dependent and std_beta_kl[j, i] > std_treshold_determine_time_dependency:
+						beta_kl[j, i] = np.nan
+						mean_beta_kl[j, i] = np.nan
+						print('Set beta_%i%i[%i,%i] to np.nan since std_beta_%i%i[%i,%i]=%0.2f' % (j, 0, j, i, j, 0, j, i, std_beta_kl[j, i]))
+					else:
+						beta_kl[j, i] = ((pool_data[0][i]['dict_data']['phi'][-1, j] - pool_data[0][i]['dict_data']['phi'][-1, 0] + shift2piWin) % (2.0 * np.pi)) - shift2piWin
+						mean_beta_kl[j, i] = np.mean(((pool_data[0][i]['dict_data']['phi'][-averaging_time_as_index:, j]
+													   - pool_data[0][i]['dict_data']['phi'][-averaging_time_as_index:, 0] + shift2piWin) % (2.0 * np.pi)) - shift2piWin)
+					print('Calculated beta_%i0=beta_%i-beta_0.' % (j, j), ' Hence, beta_%i0=' % j, beta_kl[j, i], ', and std(beta_%i0)=' % j, std_beta_kl[j, i])
+			else:
+				j0 = 0
+				for j in range(j0, len(pool_data[0][i]['dict_data']['phi'][-1, 1:])):
+					print('j=', j)
+					# print('pool_data[0][i][*dict_net*][*phiInitConfig*]:', pool_data[0][i]['dict_net']['phiInitConfig'])
+					predicted_beta_kl[j, i] = (pool_data[0][i]['dict_net']['phiInitConfig'][j] - pool_data[0][i]['dict_net']['phiInitConfig'][j+1] + shift2piWin) % (2.0 * np.pi) - shift2piWin
+					std_beta_kl[j, i] = np.std(((pool_data[0][i]['dict_data']['phi'][-averaging_time_as_index:, j]
+														- pool_data[0][i]['dict_data']['phi'][-averaging_time_as_index:, j+1] + shift2piWin) % (2.0 * np.pi)) - shift2piWin)
+					if not plot_if_time_dependent and std_beta_kl[j, i] > std_treshold_determine_time_dependency:
+						beta_kl[j, i] = np.nan
+						mean_beta_kl[j, i] = np.nan
+						print('Set beta_%i%i[%i,%i] to np.nan since std_beta_%i%i[%i,%i]=%0.2f' % (j, j+1, j, i, j, j+1, j, i, std_beta_kl[j, i]))
+						if (dict_algo['paramDiscretization'][0] * dict_algo['paramDiscretization'][1] < 10
+								and pool_data[0][i]['dict_pll']['intrF'][0] == dict_algo['scanValues'][0, 1][0] and pool_data[0][i]['dict_pll']['transmission_delay'] == dict_algo['scanValues'][1, 1]):
+							plot_inst_frequency_and_phase_difference(pool_data[0][i]['dict_pll'], pool_data[0][i]['dict_net'], pool_data[0][i]['dict_algo'], pool_data[0][i]['dict_data'], True, [], 2)
+							# plt.draw()
+							# plt.show()
+					else:
+						beta_kl[j, i] = ((pool_data[0][i]['dict_data']['phi'][-1, j] - pool_data[0][i]['dict_data']['phi'][-1, j+1] + shift2piWin) % (2.0 * np.pi)) - shift2piWin
+						mean_beta_kl[j, i] = np.mean(((pool_data[0][i]['dict_data']['phi'][-averaging_time_as_index:, j]
+													   - pool_data[0][i]['dict_data']['phi'][-averaging_time_as_index:, j + 1] + shift2piWin) % (2.0 * np.pi)) - shift2piWin)
+						if (dict_algo['paramDiscretization'][0] * dict_algo['paramDiscretization'][1] < 10
+								and pool_data[0][i]['dict_pll']['intrF'][0] == dict_algo['scanValues'][0, 1][0] and pool_data[0][i]['dict_pll']['transmission_delay'] == dict_algo['scanValues'][1, 1]):
+							plot_inst_frequency_and_phase_difference(pool_data[0][i]['dict_pll'], pool_data[0][i]['dict_net'], pool_data[0][i]['dict_algo'], pool_data[0][i]['dict_data'], True, [], 2)
+							# plt.draw()
+							# plt.show()
 
-				print('Calculated beta_%i%i=beta_%i-beta_%i.' % (j, j + 1, j, j + 1), ' It is beta_%i%i=' % (j, j+1), beta_kl[j, i], ', and std(beta_%i%i)=' % (j, j+1), std_beta_kl[j, i])
-				# print('\nfrom: phi[-average_index:, j], phi[-average_index:, j+1]\n', pool_data[0][i]['dict_data']['phi'][-averaging_time_as_index:, j], '\n',
-				#		pool_data[0][i]['dict_data']['phi'][-averaging_time_as_index:, j + 1])
+					print('Calculated beta_%i%i=beta_%i-beta_%i.' % (j, j + 1, j, j + 1), ' It is beta_%i%i=' % (j, j+1), beta_kl[j, i], ', and std(beta_%i%i)=' % (j, j+1), std_beta_kl[j, i])
+					# print('\nfrom: phi[-average_index:, j], phi[-average_index:, j+1]\n', pool_data[0][i]['dict_data']['phi'][-averaging_time_as_index:, j], '\n',
+					#		pool_data[0][i]['dict_data']['phi'][-averaging_time_as_index:, j + 1])
 
 	# set the normalization of the axis
 	normalization_x = 1
@@ -2064,6 +2071,7 @@ def plot_final_phase_configuration_vs_parameter_space(pool_data: dict, average_t
 		tempresults = std_beta_kl[j, :].reshape(dict_algo['paramDiscretization'][0], dict_algo['paramDiscretization'][1])
 		tempresults = np.transpose(tempresults)
 		# print('tempresults:', tempresults)
+		# tempresults_ma = ma.masked_where(tempresults == np.nan, tempresults)  # Create masked array
 		tempresults_ma = ma.masked_where(tempresults < std_treshold_determine_time_dependency, tempresults)  # Create masked array
 		# print('tempresult_ma:', tempresults_ma)
 

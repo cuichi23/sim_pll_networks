@@ -1987,7 +1987,7 @@ def plot_final_phase_configuration_vs_parameter_space(pool_data: dict, average_t
 		print('\nbeta_%i%i[%i,:]=' % (j, jj, j), beta_kl[j, :])
 		print('\nstd_beta_%i%i[%i,:]=' % (j, jj, j), std_beta_kl[j, :])
 
-		# start plotting
+		# start plotting ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 		fig1 = plt.figure(figsize=(figwidth, figheight), dpi=dpi_val, facecolor='w', edgecolor='k')
 		fig1.canvas.manager.set_window_title('final phase differences in parameter space %s vs %s' % (dict_algo['param_id_0'].replace('_', ' '), dict_algo['param_id_1'].replace('_', ' ')))
 		fig1.set_size_inches(plot_size_inches_x, plot_size_inches_y)
@@ -2008,13 +2008,12 @@ def plot_final_phase_configuration_vs_parameter_space(pool_data: dict, average_t
 		plt.ylim([1.05 * dict_algo['min_max_range_parameter_1'][0], 1.05 * dict_algo['min_max_range_parameter_1'][1]])
 		plt.colorbar()
 
-		plt.savefig('results/param_space_%s_vs_%s_beta_%i%i_imshow_%d_%d_%d.png' % (dict_algo['param_id_0'], dict_algo['param_id_1'], j, jj, now.year, now.month, now.day), dpi=dpi_val, bbox_inches="tight")
-		plt.savefig('results/param_space_%s_vs_%s_beta_%i%i_imshow_%d_%d_%d.svg' % (dict_algo['param_id_0'], dict_algo['param_id_1'], j, jj, now.year, now.month, now.day), dpi=dpi_val, bbox_inches="tight")
-
+		plt.savefig('results/param_space_%s_vs_%s_final_beta_%i%i_%d_%d_%d.png' % (dict_algo['param_id_0'], dict_algo['param_id_1'], j, jj, now.year, now.month, now.day), dpi=dpi_val, bbox_inches="tight")
+		plt.savefig('results/param_space_%s_vs_%s_final_beta_%i%i_%d_%d_%d.svg' % (dict_algo['param_id_0'], dict_algo['param_id_1'], j, jj, now.year, now.month, now.day), dpi=dpi_val, bbox_inches="tight")
+		# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 		fig21 = plt.figure(figsize=(figwidth, figheight), dpi=dpi_val, facecolor='w', edgecolor='k')
-		fig21.canvas.manager.set_window_title('mean of phase differences of %0.2fT parameter space %s vs %s' % (average_time_phase_difference_in_periods,
-																															  dict_algo['param_id_0'].replace('_', ' '),
-																															  dict_algo['param_id_1'].replace('_', ' ')))
+		fig21.canvas.manager.set_window_title('mean of phase differences of %0.2fT parameter space %s vs %s' % (average_time_phase_difference_in_periods, dict_algo['param_id_0'].replace('_', ' '),
+																												dict_algo['param_id_1'].replace('_', ' ')))
 		fig21.set_size_inches(plot_size_inches_x, plot_size_inches_y)
 
 		tempresults = mean_beta_kl[j, :].reshape(dict_algo['paramDiscretization'][0], dict_algo['paramDiscretization'][1])
@@ -2033,11 +2032,9 @@ def plot_final_phase_configuration_vs_parameter_space(pool_data: dict, average_t
 		plt.ylim([1.05 * dict_algo['min_max_range_parameter_1'][0], 1.05 * dict_algo['min_max_range_parameter_1'][1]])
 		plt.colorbar()
 
-		plt.savefig('results/param_space_%s_vs_%s_mean_beta_%i%i_imshow_%d_%d_%d.png' % (dict_algo['param_id_0'], dict_algo['param_id_1'], j, jj, now.year, now.month, now.day), dpi=dpi_val,
-					bbox_inches="tight")
-		plt.savefig('results/param_space_%s_vs_%s_mean_beta_%i%i_imshow_%d_%d_%d.svg' % (dict_algo['param_id_0'], dict_algo['param_id_1'], j, jj, now.year, now.month, now.day), dpi=dpi_val,
-					bbox_inches="tight")
-
+		plt.savefig('results/param_space_%s_vs_%s_mean_beta_%i%i_%d_%d_%d.png' % (dict_algo['param_id_0'], dict_algo['param_id_1'], j, jj, now.year, now.month, now.day), dpi=dpi_val, bbox_inches="tight")
+		plt.savefig('results/param_space_%s_vs_%s_mean_beta_%i%i_%d_%d_%d.svg' % (dict_algo['param_id_0'], dict_algo['param_id_1'], j, jj, now.year, now.month, now.day), dpi=dpi_val, bbox_inches="tight")
+		# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 		fig22 = plt.figure(figsize=(figwidth, figheight), dpi=dpi_val, facecolor='w', edgecolor='k')
 		fig22.canvas.manager.set_window_title('predicted phase differences in parameter space %s vs %s' % (dict_algo['param_id_0'].replace('_', ' '), dict_algo['param_id_1'].replace('_', ' ')))
 		fig22.set_size_inches(plot_size_inches_x, plot_size_inches_y)
@@ -2048,18 +2045,16 @@ def plot_final_phase_configuration_vs_parameter_space(pool_data: dict, average_t
 		plt.imshow(tempresults.astype(float), interpolation='nearest', cmap=cm.coolwarm, aspect='auto', origin='lower',
 				   extent=(dict_algo['min_max_range_parameter_0'][0], dict_algo['min_max_range_parameter_0'][1], dict_algo['min_max_range_parameter_1'][0], dict_algo['min_max_range_parameter_1'][1]),
 				   vmin=std_treshold_determine_time_dependency, vmax=2 * np.pi)
-		plt.title(r'std($\Delta$' + phi_string + ')')
+		plt.title(r'$\Delta_\textrm{theory}$' + phi_string)
 		plt.xlabel(x_label)
 		plt.ylabel(y_label)
 		plt.xlim([1.05 * dict_algo['min_max_range_parameter_0'][0], 1.05 * dict_algo['min_max_range_parameter_0'][1]])
 		plt.ylim([1.05 * dict_algo['min_max_range_parameter_1'][0], 1.05 * dict_algo['min_max_range_parameter_1'][1]])
 		plt.colorbar()
 
-		plt.savefig('results/param_space_%s_vs_%s_std_beta_%i%i_imshow_%d_%d_%d.png' % (dict_algo['param_id_0'], dict_algo['param_id_1'], j, jj, now.year, now.month, now.day), dpi=dpi_val,
-					bbox_inches="tight")
-		plt.savefig('results/param_space_%s_vs_%s_std_beta_%i%i_imshow_%d_%d_%d.svg' % (dict_algo['param_id_0'], dict_algo['param_id_1'], j, jj, now.year, now.month, now.day), dpi=dpi_val,
-					bbox_inches="tight")
-
+		plt.savefig('results/param_space_%s_vs_%s_predicted_beta_%i%i_%d_%d_%d.png' % (dict_algo['param_id_0'], dict_algo['param_id_1'], j, jj, now.year, now.month, now.day), dpi=dpi_val,	bbox_inches="tight")
+		plt.savefig('results/param_space_%s_vs_%s_predicted_beta_%i%i_%d_%d_%d.svg' % (dict_algo['param_id_0'], dict_algo['param_id_1'], j, jj, now.year, now.month, now.day), dpi=dpi_val,	bbox_inches="tight")
+		# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 		fig23 = plt.figure(figsize=(figwidth, figheight), dpi=dpi_val, facecolor='w', edgecolor='k')
 		fig23.canvas.manager.set_window_title('standard deviation of phase differences of %0.2fT parameter space %s vs %s' % (average_time_phase_difference_in_periods,
 																															  dict_algo['param_id_0'].replace('_', ' '),
@@ -2082,14 +2077,12 @@ def plot_final_phase_configuration_vs_parameter_space(pool_data: dict, average_t
 		plt.ylim([1.05 * dict_algo['min_max_range_parameter_1'][0], 1.05 * dict_algo['min_max_range_parameter_1'][1]])
 		plt.colorbar()
 
-		plt.savefig('results/param_space_%s_vs_%s_std_beta_%i%i_imshow_%d_%d_%d.png' % (dict_algo['param_id_0'], dict_algo['param_id_1'], j, jj, now.year, now.month, now.day), dpi=dpi_val,
-					bbox_inches="tight")
-		plt.savefig('results/param_space_%s_vs_%s_std_beta_%i%i_imshow_%d_%d_%d.svg' % (dict_algo['param_id_0'], dict_algo['param_id_1'], j, jj, now.year, now.month, now.day), dpi=dpi_val,
-					bbox_inches="tight")
-
+		plt.savefig('results/param_space_%s_vs_%s_std_beta_%i%i_%d_%d_%d.png' % (dict_algo['param_id_0'], dict_algo['param_id_1'], j, jj, now.year, now.month, now.day), dpi=dpi_val, bbox_inches="tight")
+		plt.savefig('results/param_space_%s_vs_%s_std_beta_%i%i_%d_%d_%d.svg' % (dict_algo['param_id_0'], dict_algo['param_id_1'], j, jj, now.year, now.month, now.day), dpi=dpi_val, bbox_inches="tight")
+		# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 		if add_scatter_plots:
 			fig3 = plt.figure(figsize=(figwidth, figheight), dpi=dpi_val, facecolor='w', edgecolor='k')
-			fig3.canvas.manager.set_window_title('parameter space %s vs %s' % (dict_algo['param_id_0'], dict_algo['param_id_1']))
+			fig3.canvas.manager.set_window_title(r'last $\beta_{kl}$ in parameter space %s vs %s' % (dict_algo['param_id_0'], dict_algo['param_id_1']))
 			fig3.set_size_inches(plot_size_inches_x, plot_size_inches_y)
 
 			plt.clf()
@@ -2103,11 +2096,11 @@ def plot_final_phase_configuration_vs_parameter_space(pool_data: dict, average_t
 			plt.xlim([1.05 * dict_algo['min_max_range_parameter_0'][0], 1.05 * dict_algo['min_max_range_parameter_0'][1]])
 			plt.ylim([1.05 * dict_algo['min_max_range_parameter_1'][0], 1.05 * dict_algo['min_max_range_parameter_1'][1]])
 			plt.colorbar()
-			plt.savefig('results/param_space_%s_vs_%s_beta_%i%i_scatter_%d_%d_%d.png' % (dict_algo['param_id_0'], dict_algo['param_id_1'], j, jj, now.year, now.month, now.day), dpi=dpi_val, bbox_inches="tight")
-			plt.savefig('results/param_space_%s_vs_%s_beta_%i%i_scatter_%d_%d_%d.svg' % (dict_algo['param_id_0'], dict_algo['param_id_1'], j, jj, now.year, now.month, now.day), dpi=dpi_val, bbox_inches="tight")
-
+			plt.savefig('results/param_space_%s_vs_%s_beta_%i%i_%d_%d_%d.png' % (dict_algo['param_id_0'], dict_algo['param_id_1'], j, jj, now.year, now.month, now.day), dpi=dpi_val, bbox_inches="tight")
+			plt.savefig('results/param_space_%s_vs_%s_beta_%i%i_%d_%d_%d.svg' % (dict_algo['param_id_0'], dict_algo['param_id_1'], j, jj, now.year, now.month, now.day), dpi=dpi_val, bbox_inches="tight")
+			# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 			fig4 = plt.figure(figsize=(figwidth, figheight), dpi=dpi_val, facecolor='w', edgecolor='k')
-			fig4.canvas.manager.set_window_title('parameter space %s vs %s' % (dict_algo['param_id_0'], dict_algo['param_id_1']))
+			fig4.canvas.manager.set_window_title(r'std of $\beta_{kl}$ in parameter space %s vs %s' % (dict_algo['param_id_0'], dict_algo['param_id_1']))
 			fig4.set_size_inches(plot_size_inches_x, plot_size_inches_y)
 
 			plt.clf()
@@ -2120,8 +2113,8 @@ def plot_final_phase_configuration_vs_parameter_space(pool_data: dict, average_t
 			plt.xlim([1.05 * dict_algo['min_max_range_parameter_0'][0], 1.05 * dict_algo['min_max_range_parameter_0'][1]])
 			plt.ylim([1.05 * dict_algo['min_max_range_parameter_1'][0], 1.05 * dict_algo['min_max_range_parameter_1'][1]])
 			plt.colorbar()
-			plt.savefig('results/param_space_%s_vs_%s_std_beta_%i%i_scatter_%d_%d_%d.png' % (dict_algo['param_id_0'], dict_algo['param_id_1'], j, jj, now.year, now.month, now.day), dpi=dpi_val, bbox_inches="tight")
-			plt.savefig('results/param_space_%s_vs_%s_std_beta_%i%i_scatter_%d_%d_%d.svg' % (dict_algo['param_id_0'], dict_algo['param_id_1'], j, jj, now.year, now.month, now.day), dpi=dpi_val, bbox_inches="tight")
+			plt.savefig('results/param_space_%s_vs_%s_std_beta_%i%i_%d_%d_%d.png' % (dict_algo['param_id_0'], dict_algo['param_id_1'], j, jj, now.year, now.month, now.day), dpi=dpi_val, bbox_inches="tight")
+			plt.savefig('results/param_space_%s_vs_%s_std_beta_%i%i_%d_%d_%d.svg' % (dict_algo['param_id_0'], dict_algo['param_id_1'], j, jj, now.year, now.month, now.day), dpi=dpi_val, bbox_inches="tight")
 
 			figs.append([fig1, fig21, fig22, fig23, fig3, fig4])
 

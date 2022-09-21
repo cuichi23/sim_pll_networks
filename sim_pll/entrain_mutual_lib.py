@@ -111,8 +111,10 @@ def phase_configuration_ref_to_one_for_chain_topology(dict_net: dict, dict_pll: 
 			None, updates dictionaries directly
 		"""
 
-	# start with the last oscillator in the chain
-	asymptotic_phase_configuration_entrained_sync_state = []
+	if isinstance(dict_pll['transmission_delay'], list) or isinstance(dict_pll['transmission_delay'], np.ndarray):
+		print('Implement the case of heterogeneous transmission delays in entrain_mutual_lib.py!')
+		sys.exit()
+
 	if dict_pll['responseVCO'] == 'linear':
 		if isinstance(dict_pll['intrF'], list) or isinstance(dict_pll['intrF'], np.ndarray):
 			frequency_or_voltage = dict_pll['intrF']
@@ -128,15 +130,23 @@ def phase_configuration_ref_to_one_for_chain_topology(dict_net: dict, dict_pll: 
 		print('Implement this case! So far only "linear" and "nonlinear_3rd_gen" exist.')
 		sys.exit()
 
-	asymptotic_phase_configuration_entrained_sync_state = np.empty(dict_net['Nx'])
+	# start with the last oscillator in the chain
+	asymptotic_phase_differences_entrained_sync_state = np.zeros(dict_net['Nx'])
+	asymptotic_phase_configuration_entrained_sync_state = np.zeros(dict_net['Nx'])
 	for i in range(dict_net['Nx']-1, 0, -1):
+		#print('i=', i)
 		if i == dict_net['Nx']-1:												# since the last oscillator in the chain only has one input, it depends only on one beta which can be calculated
-			asymptotic_phase_configuration_entrained_sync_state[i] = -dict_pll['intrF'][i] * dict_pll['transmission_delay'] - dict_pll['div'] * dict_pll['inverse_coup_fct_sig'](
-				2 * (dict_pll['inverse_fct_vco_response'](dict_pll['intrF'][i]) - frequency_or_voltage[i]))
+			#print('Starting with last osci!')
+			asymptotic_phase_differences_entrained_sync_state[i] = -dict_pll['intrF'][0] * dict_pll['transmission_delay'] - dict_pll['div'] * dict_pll['inverse_coup_fct_sig'](
+				(dict_pll['inverse_fct_vco_response'](dict_pll['intrF'][0]) - frequency_or_voltage[i]) / dict_pll['coupK'][i])
 		else:
-			asymptotic_phase_configuration_entrained_sync_state[i] = -dict_pll['intrF'][i] * dict_pll['transmission_delay'] - dict_pll['div'] * dict_pll['inverse_coup_fct_sig'](
-				2 * (dict_pll['inverse_fct_vco_response'](dict_pll['intrF'][i]) - frequency_or_voltage[i]) - dict_pll['coup_fct_sig'](
-					-dict_pll['intrF'][i] * dict_pll['transmission_delay'] - asymptotic_phase_configuration_entrained_sync_state[i+1]))
+			#print('Now processing the remaining!')
+			asymptotic_phase_differences_entrained_sync_state[i] = -dict_pll['intrF'][0] * dict_pll['transmission_delay'] - dict_pll['div'] * dict_pll['inverse_coup_fct_sig'](
+				(2 * (dict_pll['inverse_fct_vco_response'](dict_pll['intrF'][0]) - frequency_or_voltage[i])) / dict_pll['coupK'][i] - dict_pll['coup_fct_sig'](
+					(-dict_pll['intrF'][0] * dict_pll['transmission_delay'] - asymptotic_phase_configuration_entrained_sync_state[i+1]) / dict_pll['div']))
+
+	for i in range(1, dict_net['Nx']):
+		asymptotic_phase_configuration_entrained_sync_state[i] = asymptotic_phase_differences_entrained_sync_state[i] - asymptotic_phase_configuration_entrained_sync_state[i-1]
 
 	dict_net.update({'phiInitConfig': asymptotic_phase_configuration_entrained_sync_state})
 

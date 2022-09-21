@@ -41,7 +41,7 @@ def getDicts(Fsim=125):
 		'Tsim': 500,															# simulation time in multiples of the period
 		'computeFreqAndStab':  False,											# compute linear stability and global frequency if possible: True or False
 		'phi_array_mult_tau': 1,												# how many multiples of the delay is stored of the phi time series
-		'phiPerturb': [random.uniform(0, 1E-8) for i in range(3)],				# delta-perturbation on initial state -- PROVIDE EITHER ONE OF THEM! if [] set to zero
+		'phiPerturb': [random.uniform(0, 1E-9) for i in range(3)],				# delta-perturbation on initial state -- PROVIDE EITHER ONE OF THEM! if [] set to zero
 		'phiPerturbRot': [],													# delta-perturbation on initial state -- in rotated space
 		'phiInitConfig': [],		   										    # phase-configuration of sync state,  []: automatic, else provide list
 		'freq_beacons': 0.1,													# frequency of external sender beacons, either a float or a list
@@ -84,7 +84,7 @@ def getDicts(Fsim=125):
 		'extra_coup_sig': None,													# choose from: 'injection2ndHarm', None
 		'shil_generation_through_filter': False, 								# whether the SHIL signal is generated artificially or via the filtering through a band-pass filter
 		'coupStr_2ndHarm': 2/(2*np.pi),											# the coupling constant for the injection of the 2nd harmonic: float, will be indepent of 'coupK'
-		'typeOfHist': 'syncState',#'freeRunning',#								# string, choose from: 'freeRunning', 'syncState'
+		'typeOfHist': 'syncState',												# string, choose from: 'freeRunning', 'syncState'
 		'sampleF': Fsim,														# sampling frequency
 		'sampleFplot': 5,														# sampling frequency for reduced plotting (every sampleFplot time step)
 		'treshold_maxT_to_plot': 1E6,											# maximum number of periods to plot for some plots

@@ -39,12 +39,13 @@ def cosine(x: np.float) -> np.float:
 	return np.cos(x)
 
 
-def inverse_cosine(y: np.float) -> np.float:
+def inverse_cosine(y: np.float, branch: str = 'positive') -> np.float:
 	"""
 		Computes the inverse of the cosine of the argument y.
 
 		Args:
 			y: argument
+			branch: HERE: dummy variable to chose negative or positive branch
 
 		Returns:
 			np.float value of function
@@ -82,12 +83,13 @@ def sine(x: np.float):
 	return np.sin(x)
 
 
-def inverse_sine(y: np.float) -> np.float:
+def inverse_sine(y: np.float, branch: str = 'positive') -> np.float:
 	"""
 		Computes the inverse sine of the argument y.
 
 		Args:
 			y: argument
+			branch: HERE: dummy variable to chose negative or positive branch
 
 		Returns:
 			np.float value of function
@@ -125,7 +127,7 @@ def deriv_triangular(x: np.float) -> np.float:
 	return (2.0/np.pi)*square(x, duty=0.5)
 
 
-def inverse_triangular(y: np.float, branch='positive') -> np.float:
+def inverse_triangular(y: np.float, branch: str = 'positive') -> np.float:
 	"""
 		Computes the inverse of the triangular function of the argument y.
 

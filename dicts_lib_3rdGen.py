@@ -70,6 +70,7 @@ def getDicts(Fsim=55):
 		# choose from coupfct.<ID>: sine, cosine, neg_sine, neg_cosine, triangular, deriv_triangular, square_wave, pfd, inverse_cosine, inverse_sine
 		'coup_fct_sig': coupfct.triangular,										# coupling function h(x) for PLLs with ideally filtered PD signals, NOTE if 'includeCompHF': True --> 'vco_out_sig' is used in coupling (multiplier or XOR)
 		'derivative_coup_fct': coupfct.deriv_triangular,						# derivative h'(x) of coupling function h(x)
+		'branch_of_inverse_coupling_fct_if_applies': 'negative',				# choose the branch of the coupling function, e.g., for triangular: 'negative' or 'positive'
 		'includeCompHF': False,													# boolean True/False whether to simulate with HF components
 		'vco_out_sig': coupfct.square_wave_symm_zero,							# for HF case, e.g.: coupfct.sine, coupfct.square_wave, coupfct.square_wave_symm_zero (this is relevant when simulating 3rd Gen PLLs, no offset by closing the loop)
 		'typeVCOsig': 'digitalHF',												# 'analogHF' or 'digitalHF' - determines whether XOR PD or multiplier is used

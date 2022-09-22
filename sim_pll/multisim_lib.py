@@ -227,7 +227,7 @@ def evaluate_pool_data(dict_net, dict_pll, dict_algo, pool_data):
 				plt.draw()
 				plt.show()
 		plot.plot_order_param_vs_parameter_space(pool_data, average_time_order_parameter_in_periods)
-		plot.plot_final_phase_configuration_vs_parameter_space(pool_data, average_time_order_parameter_in_periods)
+		plot.plot_final_phase_configuration_vs_parameter_space(pool_data, average_time_order_parameter_in_periods, 1, 0.15*np.pi)
 		plt.draw()
 		plt.show()
 

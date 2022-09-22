@@ -151,7 +151,7 @@ def prepare_multiple_simulations(dict_net: dict, dict_pll: dict, dict_algo: dict
 
 
 def perform_multiple_simulations(dict_net, dict_pll, dict_algo, scanValues):
-	pool = Pool(processes=6)  # create a Pool object, pick number of processes
+	pool = Pool(processes=dict_algo['number_of_processes_in_multisim'])  # create a Pool object, pick number of processes
 	freeze_support()
 	initPhiPrime0 = 0
 	pool_data = []
@@ -334,14 +334,11 @@ def multihelper(iterConfig, initPhiPrime0, dict_net, dict_pll, dict_algo, param_
 		else:
 			print('No parameters for sweep specified -- hence simulating the same parameter set for all realizations!')
 
-		if not dict_net['phiInitConfig']:  # needs to be done here to catch this case below if there are np.nans!
+		if not dict_net['phiInitConfig'] and 'entrain' in dict_net_rea['topology']:  # needs to be done here to catch this case below if there are np.nans!
 			print('\nPhase configuration of synchronized state will be set according to supplied topology and twist state information!')
 			setup.generate_phi0(dict_net_rea, dict_pll_rea, dict_algo_rea)
 		if np.isnan(dict_net_rea['phiInitConfig']).any() and 'entrain' in dict_net_rea['topology']:
 			print('Set dummy solution! Detected case has no valid solution to the inverse coupling function, hence no solution exists.')
-			# dict_data = {'mean_order': -1., 'last_orderP': -1., 'stdev_orderP': np.zeros(1), 'phases': dict_net['phiInitConfig'],
-			# 			 'intrinfreq': np.zeros(1), 'coupling_strength': np.zeros(1), 'transdelays': dict_pll['transmission_delay'],
-			# 			 'orderP_t': }
 			dict_data = {'order_parameter': np.zeros(int(number_period_dyn / (dict_pll['syncF'] * dict_pll['dt']))) - dict_pll_rea['div'], 'phi': np.zeros([1, int(dict_net_rea['Nx'] * dict_net_rea['Ny'])]),
 							  'order_parameter_divided_phases': np.zeros(int(number_period_dyn / (dict_pll['syncF'] * dict_pll['dt']))) - 1, 'F1': 1}
 			realizationDict = {'dict_net': dict_net_rea, 'dict_pll': dict_pll_rea, 'dict_algo': dict_algo_rea, 'dict_data': dict_data}

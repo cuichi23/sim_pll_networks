@@ -46,8 +46,8 @@ def getDicts(Fsim=55):
 		'phiInitConfig': [0 for i in range(3)],									# phase-configuration of sync state,  []: automatic, else provide list
 		'freq_beacons': 0.25,													# frequency of external sender beacons, either a float or a list
 		'special_case': 'timeDepTransmissionDelay', #'False'					# 'False', or 'test_case', 'timeDepInjectLockCoupStr', 'timeDepTransmissionDelay', 'timeDepChangeOfCoupStr'
-		'typeOfTimeDependency': 'linear', #'triangle',							# adiabatic-{'exponential', 'linear', 'quadratic', 'triangle', 'cosine'} vs freerun-{'exponential', 'linear', 'quadratic', 'triangle', 'cosine'}
-		'min_max_rate_timeDepPara': [760, 1800, 0.1/100]						# provide a list with min, max and rate of the time-dependent parameter
+		'typeOfTimeDependency': 'triangle',										# adiabatic-{'exponential', 'linear', 'quadratic', 'triangle', 'cosine'} vs freerun-{'exponential', 'linear', 'quadratic', 'triangle', 'cosine'}
+		'min_max_rate_timeDepPara': [1.2, 3.4, 0.0005/100] #[760, 1800, 0.5/100]						# provide a list with min, max and rate of the time-dependent parameter
 	}
 
 	dict_pll = {
@@ -56,9 +56,9 @@ def getDicts(Fsim=55):
 		'coupK': 0.01152, 														# [random.uniform(0.3, 0.4) for i in range(dict_net['Nx']*dict_net['Ny'])],# coupling strength (like phase model: K = Kvco/2 * G_all, NOTE: the /2 is for coupling functions that have peak2peal amplitude 2) in Hz float or [random.uniform(minK, maxK) for i in range(dict_net['Nx']*dict_net['Ny'])]
 		'gPDin': 1,																# gains of the different inputs to PD k from input l -- G_kl, see PD, set to 1 and all G_kl=1 (so far only implemented for some cases, check!): np.random.uniform(0.95,1.05,size=[dict_net['Nx']*dict_net['Ny'],dict_net['Nx']*dict_net['Ny']])
 		'gPDin_symmetric': True,												# set to True if G_kl == G_lk, False otherwise
-		'cutFc': 4.045E-5, 														# LF cut-off frequency in Hz, here N=9 with mean 0.015: [0.05,0.015,0.00145,0.001,0.0001,0.001,0.00145,0.015,0.05], [random.uniform(0.001, 0.0015) for i in range(dict_net['Nx']*dict_net['Ny'])]
+		'cutFc': 4.045E-5, #0.0207,											# LF cut-off frequency in Hz, here N=9 with mean 0.015: [0.05,0.015,0.00145,0.001,0.0001,0.001,0.00145,0.015,0.05], [random.uniform(0.001, 0.0015) for i in range(dict_net['Nx']*dict_net['Ny'])]
 		'orderLF': 2,															# order of LF filter, either 1 or 2 at the moment
-		'div': 512,																# divisor of divider (int)
+		'div': 1,																# divisor of divider (int)
 		'friction_coefficient': 1,												# friction coefficient of 2nd order Kuramoto models
 		'fric_coeff_PRE_vs_PRR': 'PRE',											# 'PRR': friction coefficient multiplied to instant. AND intrin. freq, 'PRE': friction coefficient multiplied only to instant. freq
 		'noiseVarVCO': 1E-9,													# variance of VCO GWN

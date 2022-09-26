@@ -833,7 +833,6 @@ def plot_order_parameter_vs_time_dependent_parameter(dict_pll: dict, dict_net: d
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-
 def plot_phase_differences_vs_time_dependent_parameter_divided_or_undivided(dict_pll: dict, dict_net: dict, dict_data: dict, plotlist: list = [],
 																			phase_diff_zero_2pi: np.int = 1, phases_of_divided_signals: bool = True):
 	dict_pll, dict_net = prepareDictsForPlotting(dict_pll, dict_net)
@@ -852,7 +851,7 @@ def plot_phase_differences_vs_time_dependent_parameter_divided_or_undivided(dict
 		x_axis_scaling = np.mean(1.0 / dict_pll['intrF'])
 
 	fig14 = plt.figure(num=14, figsize=(figwidth, figheight), dpi=dpi_val, facecolor='w', edgecolor='k')
-	if phases_of_divided_signals:
+	if phases_of_divided_signals and dict_pll['div'] != 1:
 		fig14.canvas.manager.set_window_title('phase-differences (divided) as function of time-dependent parameter')  # frequency and order parameter
 		division = dict_pll['div']
 	else:
@@ -931,14 +930,14 @@ def plot_inst_frequency_and_phase_difference_vs_time_dependent_parameter(dict_pl
 		x_axis_scaling = np.mean(1.0 / dict_pll['intrF'])
 
 	fig141 = plt.figure(num=141, figsize=(figwidth, figheight), dpi=dpi_val, facecolor='w', edgecolor='k')
-	if phases_of_divided_signals:
+	if phases_of_divided_signals and dict_pll['div'] != 1:
 		fig141.canvas.manager.set_window_title('frequency and phase-differences (divided) vs time-dependent parameter')  # frequency and order parameter
 		y_label_name_1 = r'$\frac{\Delta\theta_{k0}(t)}{v}$'
 		division = dict_pll['div']
 	else:
 		fig141.canvas.manager.set_window_title('frequency and phase-differences (undivided) vs time-dependent parameter')  # frequency and order parameter
 		y_label_name_1 = r'$\Delta\theta_{k0}(t)$'
-		division = 1
+		division = dict_pll['div']
 	fig141.set_size_inches(plot_size_inches_x, plot_size_inches_y)
 
 	ax011 = fig141.add_subplot(211)
@@ -1161,7 +1160,7 @@ def plot_inst_frequency_and_phase_difference(dict_pll: dict, dict_net: dict, dic
 	linet = ['-', '-.', '--', ':', 'densily dashdotdotted', 'densely dashed']
 
 	fig19 = plt.figure(num=19, figsize=(figwidth, figheight), dpi=dpi_val, facecolor='w', edgecolor='k')
-	if phases_of_divided_signals:
+	if phases_of_divided_signals and dict_pll['div'] != 1:
 		fig19.canvas.manager.set_window_title('time-series frequency and phase-differences (divided)')  # frequency and order parameter
 		y_label_name_1 = r'$\frac{\Delta\theta_{k0}(t)}{v}$'
 		division = dict_pll['div']

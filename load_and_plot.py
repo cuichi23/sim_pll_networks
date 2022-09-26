@@ -80,10 +80,10 @@ labelpadyaxis       = 20
 # load data
 folder		 = '/home/cuichi/Documents/MPI_PKS_Docs/2019_VIP+/Programs/2021_simPLL_pub/results/'#'/home/cuichi/data-z2/simPLL_2/1_CH_success/results/'
 ################################################################################
-filenamePLL  = folder+'dict_pll_K0.012_tau1207.203_Fc0.000_mx0_my-999_N3_topochain_0:54_2022_9_19'
-filenameNet  = folder+'dict_net_K0.012_tau1207.203_Fc0.000_mx0_my-999_N3_topochain_0:54_2022_9_19'
-filenameData = folder+'dict_data_K0.012_tau1207.203_Fc0.000_mx0_my-999_N3_topochain_0:54_2022_9_19'
-filenameAlgo = folder+'dict_algo_K0.012_tau1207.203_Fc0.000_mx0_my-999_N3_topochain_0:54_2022_9_19'
+filenamePLL  = folder+'dict_pll_K0.012_tau2.223_Fc0.000_mx0_my-999_N3_topochain_22:37_2022_9_23'
+filenameNet  = folder+'dict_net_K0.012_tau2.223_Fc0.000_mx0_my-999_N3_topochain_22:37_2022_9_23'
+filenameData = folder+'dict_data_K0.012_tau2.223_Fc0.000_mx0_my-999_N3_topochain_22:37_2022_9_23'
+filenameAlgo = folder+'dict_algo_K0.012_tau2.223_Fc0.000_mx0_my-999_N3_topochain_22:37_2022_9_23'
 ################################################################################
 if 'pool_data' in filenameData:
 	pool_data = pickle.load(open(filenameData, 'rb'))
@@ -121,7 +121,7 @@ cdict = {
   'green':  ( (0.0, 0.0, 0.0), (0.02, .45, .45), (1., .97, .97)),
   'blue' :  ( (0.0, 1.0, 1.0), (0.02, .75, .75), (1., 0.45, 0.45))
 }
-colormap  	= matplotlib.colors.LinearSegmentedColormap('my_colormap', cdict, 1024)
+colormap = matplotlib.colors.LinearSegmentedColormap('my_colormap', cdict, 1024)
 
 if 'pool_data' in filenameData:
 	if pool_data[0][0]['dict_algo']['parameter_space_sweeps']   == 'testNetworkMotifIsing':
@@ -138,7 +138,7 @@ else:
 
 	#dict_pll.update({'vco_out_sig': coupfct.sine})
 
-	sim.plot_results_simulation(dict_net, dict_pll, dict_data)
+	sim.plot_results_simulation(dict_net, dict_pll, dict_algo, dict_data)
 
 	# dict_pllsyncTool = dict_pll.copy()
 	# dict_pllsyncTool.update({'transmission_delay': 3})

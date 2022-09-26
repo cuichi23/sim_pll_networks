@@ -507,14 +507,14 @@ def evaluateSimulationsChrisHoyer(pool_data):
 	# pool_data = load(...)														# in principle saved pool data can be loaded and plotted
 
 	# plot parameter
-	axisLabel  = 60;
-	tickSize   = 35;
-	titleLabel = 10;
-	dpi_val	   = 150;
-	figwidth   = 6;
-	figheight  = 5;
-	alpha 	   = 0.5;
-	linewidth  = 0.5;
+	axisLabel  = 60
+	tickSize   = 35
+	titleLabel = 10
+	dpi_val	   = 150
+	figwidth   = 6
+	figheight  = 5
+	alpha 	   = 0.5
+	linewidth  = 0.5
 
 	unit_cell = PhaseDifferenceCell(pool_data[0][0]['dict_net']['Nx']*pool_data[0][0]['dict_net']['Ny'])
 	threshold_statState = np.pi/15

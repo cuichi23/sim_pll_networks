@@ -769,7 +769,7 @@ class Delayer:
 		elif (dict_net['special_case'] == 'timeDepTransmissionDelay'):
 
 			print('Time dependent transmission delay set!')
-			time_dep_delay = setup.setup_time_dependent_parameter(dict_net, dict_pll, dict_data, parameter='transmission_delay', afterTsimPercent=0.125, forAllPLLsDifferent=False)
+			time_dep_delay = setup.setup_time_dependent_parameter(dict_net, dict_pll, dict_data, parameter='transmission_delay', afterTsimPercent=0.075, forAllPLLsDifferent=False)
 
 			if len(time_dep_delay[:, 0]) == dict_net['Nx']*dict_net['Ny']:		# if there is a matrix, i.e., different time-dependencies for different delay, then use this
 				print('Test')

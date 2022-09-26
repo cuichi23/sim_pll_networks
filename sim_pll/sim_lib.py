@@ -302,7 +302,8 @@ def plot_results_simulation(dict_net: dict, dict_pll: dict, dict_algo: dict, dic
 		print('Plotting frequency vs time-dependent parameter!')
 		plot.plot_instantaneous_freqs_vs_time_dependent_parameter(dict_pll, dict_net, dict_data)
 		plot.plot_order_parameter_vs_time_dependent_parameter(dict_pll, dict_net, dict_data)
-		plot.plot_phase_differences_vs_time_dependent_parameter_divided_or_undivided(dict_pll, dict_net, dict_data, [], 2)
+		plot.plot_phase_differences_vs_time_dependent_parameter_divided_or_undivided(dict_pll, dict_net, dict_data, plotlist=[], phase_diff_zero_2pi=2, phases_of_divided_signals=True)
+		plot.plot_phase_differences_vs_time_dependent_parameter_divided_or_undivided(dict_pll, dict_net, dict_data, plotlist=[], phase_diff_zero_2pi=2, phases_of_divided_signals=False)
 		plot.plot_inst_frequency_and_phase_difference_vs_time_dependent_parameter(dict_pll, dict_net, dict_data, True, False, [], 2)
 	# plot.plot_phases_unwrapped(dict_pll, dict_net, dict_data)
 	# plot.plot_phases_two_pi_periodic(dict_pll, dict_net, dict_data)
@@ -322,7 +323,8 @@ def plot_results_simulation(dict_net: dict, dict_pll: dict, dict_algo: dict, dic
 		plot.plot_inst_frequency_and_phase_difference(dict_pll, dict_net, dict_algo, dict_data, True, [], 2)
 		plot.plot_inst_frequency_and_order_parameter(dict_pll, dict_net, dict_data, [], True)
 		plot.plot_phase_relations_of_divided_signal(dict_pll, dict_net, dict_data, [], 2)
-		plot.plot_power_spectral_density(dict_pll, dict_net, dict_data, [0, 1, 2], saveData=False)
+		if dict_net['special_case'] == 'False':
+			plot.plot_power_spectral_density(dict_pll, dict_net, dict_data, [0, 1, 2], saveData=False)
 		# try:
 		# 	plot.plot_allan_variance(dict_pll, dict_net, dict_data, 0.4 * dict_net['Tsim'], [0, 1, 2], 'overlapping_adev', 'frequency', 0.5 * dict_net['Tsim'])
 		# except:

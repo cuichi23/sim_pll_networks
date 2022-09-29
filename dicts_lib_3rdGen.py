@@ -31,21 +31,21 @@ gc.enable()
 def getDicts(Fsim=55):
 
 	dict_net = {
-		'Nx': 4,																# oscillators in x-direction
+		'Nx': 3,																# oscillators in x-direction
 		'Ny': 1,																# oscillators in y-direction
 		'mx': 0,																# twist/chequerboard in x-direction (depends on closed or open boundary conditions)
 		'my': -999,																# twist/chequerboard in y-direction
-		'topology': 'entrainAll-chain',											# 1d) ring, chain, 2d) square-open, square-periodic, hexagonal...
+		'topology': 'chain',													# 1d) ring, chain, 2d) square-open, square-periodic, hexagonal...
 																				# 3) global, entrainOne-[ring,chain,square-open], entrainAll-[ring,chain,square-open], entrainPLLsHierarch, compareEntrVsMutual
 		'normalize_mutual_coupling_by_inputs': True,  							# divide the sum over all inputs to a PLL by the number of inputs YES/NO -> True/False
 		'Tsim': 20000,															# simulation time in multiples of the period
 		'computeFreqAndStab': False,											# compute linear stability and global frequency if possible: True or False
 		'phi_array_mult_tau': 1,												# how many multiples of the delay is stored of the phi time series
-		'phiPerturb': [0 for i in range(4)],									# delta-perturbation on initial state -- PROVIDE EITHER ONE OF THEM! if [] set to zero
+		'phiPerturb': [0 for i in range(3)],									# delta-perturbation on initial state -- PROVIDE EITHER ONE OF THEM! if [] set to zero
 		'phiPerturbRot': [],													# delta-perturbation on initial state -- in rotated space
-		'phiInitConfig': [0 for i in range(4)],									# phase-configuration of sync state,  []: automatic, else provide list
+		'phiInitConfig': [0 for i in range(3)],									# phase-configuration of sync state,  []: automatic, else provide list
 		'freq_beacons': 0.25,													# frequency of external sender beacons, either a float or a list
-		'special_case': 'timeDepChangeOfIntrFreq', #'timeDepTransmissionDelay', #'False'					# 'False', or 'test_case', 'timeDepInjectLockCoupStr', 'timeDepTransmissionDelay', 'timeDepChangeOfCoupStr', 'distanceDepTransmissionDelay', 'timeDepChangeOfIntrFreq'
+		'special_case': 'False',#'timeDepChangeOfIntrFreq', #'timeDepTransmissionDelay', #'False'					# 'False', or 'test_case', 'timeDepInjectLockCoupStr', 'timeDepTransmissionDelay', 'timeDepChangeOfCoupStr', 'distanceDepTransmissionDelay', 'timeDepChangeOfIntrFreq'
 		'typeOfTimeDependency': 'linear', #'triangle',										# adiabatic-{'exponential', 'linear', 'quadratic', 'triangle', 'cosine'} vs freerun-{'exponential', 'linear', 'quadratic', 'triangle', 'cosine'}
 		'min_max_rate_timeDepPara': [0.985, 1.015, 0.00001/100] #[1.2, 3.4, 0.0005/100] 	#[760, 1800, 0.5/100] # provide a list with min, max and rate of the time-dependent parameter
 	}
@@ -64,7 +64,7 @@ def getDicts(Fsim=55):
 		'noiseVarVCO': 1E-12,													# variance of VCO GWN
 		'feedback_delay': 0,													# value of feedback delay in seconds
 		'feedback_delay_var': None, 											# variance of feedback delay
-		'transmission_delay': 1.75,#3.05,#1571.805,								# value of transmission delay in seconds, float (single), list (tau_k) or list of lists (tau_kl): np.random.uniform(min,max,size=[dict_net['Nx']*dict_net['Ny'],dict_net['Nx']*dict_net['Ny']]), OR [np.random.uniform(min,max) for i in range(dict_net['Nx']*dict_net['Ny'])]
+		'transmission_delay': 0.77, #1.285,#1.75,#3.05,#1571.805,								# value of transmission delay in seconds, float (single), list (tau_k) or list of lists (tau_kl): np.random.uniform(min,max,size=[dict_net['Nx']*dict_net['Ny'],dict_net['Nx']*dict_net['Ny']]), OR [np.random.uniform(min,max) for i in range(dict_net['Nx']*dict_net['Ny'])]
 		'transmission_delay_var': None, 										# variance of transmission delays
 		'distribution_for_delays': None,										# from what distribution are random delays drawn?
 		# choose from coupfct.<ID>: sine, cosine, neg_sine, neg_cosine, triangular, deriv_triangular, square_wave, pfd, inverse_cosine, inverse_sine
@@ -81,7 +81,7 @@ def getDicts(Fsim=55):
 		'posZ': 0,
 		'initAntennaState': 0,
 		'antenna_sig': coupfct.sine,											# type of signal received by the antenna
-		'coup_fct_phase_shift': 0,												# phase shift (not divided) in the coupling function in [0, 2pi], so far constant... may later dynamic
+		'coup_fct_phase_shift': np.pi,												# phase shift (not divided) in the coupling function in [0, 2pi], so far constant... may later dynamic
 		'extra_coup_sig': None,													# choose from: 'injection2ndHarm', None
 		'shil_generation_through_filter': False,  								# whether the SHIL signal is generated artificially or via the filtering through a band-pass filter
 		'coupStr_2ndHarm': 0.6,													# the coupling constant for the injection of the 2nd harmonic: float, will be independent of 'coupK'

@@ -44,7 +44,7 @@ def getDicts(Fsim=125):
 		'phiPerturbRot': [], #[0., 0.1],										# delta-perturbation on initial state -- in rotated space
 		'phiInitConfig': [random.uniform(-0.1, 0.1) for i in range(256)],		# phase-configuration of sync state,  []: automatic, else provide list
 		'freq_beacons': 0.1,													# frequency of external sender beacons, either a float or a list
-		'special_case': 'False',#'timeDepTransmissionDelay',								# 'False', or 'test_case', 'timeDepInjectLockCoupStr', 'timeDepTransmissionDelay', 'timeDepChangeOfCoupStr', 'distanceDepTransmissionDelay'
+		'special_case': 'False',#'timeDepTransmissionDelay',								# 'False', or 'test_case', 'timeDepInjectLockCoupStr', 'timeDepTransmissionDelay', 'timeDepChangeOfCoupStr', 'distanceDepTransmissionDelay', 'timeDepChangeOfIntrFreq'
 		'typeOfTimeDependency': 'triangle',										# 'exponential', 'linear', 'quadratic', 'triangle', 'cosine'
 		'min_max_rate_timeDepPara': [0.01, 1.51, 0.0025/100]					# provide a list with min, max and rate of change per unit time of the time-dependent parameter
 	}

@@ -42,7 +42,7 @@ def getDicts(Fsim=125):
 		'phi_array_mult_tau': 1,												# how many multiples of the delay is stored of the phi time series
 		'phiInitConfig': [],#[0, np.pi, np.pi, np.pi],							# phase-configuration of sync state,  []: automatic, else provide list
 		'freq_beacons': 0.25,													# frequency of external sender beacons, either a float or a list
-		'special_case': 'timeDepChangeOfCoupStr',#'timeDepInjectLockCoupStr',#	# 'False', or 'test_case', 'timeDepInjectLockCoupStr', 'timeDepTransmissionDelay', 'timeDepChangeOfCoupStr', 'timeDepChangeOfCoupStr_noSHILfiltering'
+		'special_case': 'timeDepChangeOfCoupStr',#'timeDepInjectLockCoupStr',#	# 'False', or 'test_case', 'timeDepInjectLockCoupStr', 'timeDepTransmissionDelay', 'timeDepChangeOfCoupStr', 'distanceDepTransmissionDelay', 'timeDepChangeOfIntrFreq', 'timeDepChangeOfCoupStr_noSHILfiltering'
 		'typeOfTimeDependency': 'linear',#'exponential'							# 'exponential', 'linear', 'quadratic', 'triangle', 'cosine'
 		'min_max_rate_timeDepPara': [0, -0.15/(1*2*np.pi), -0.00002] 			# provide a list with min, max and rate (per period) of the time-dependent parameter -- check whether this is Hz or radHz
 																				#[0, 0.3/(1*2*np.pi), 0.01/((5*4)/125)] # [0, 5/(1*2*np.pi), 0.01/((5*4)/125)] #[0, 0.5, 0.01/((5*4)/125)]#

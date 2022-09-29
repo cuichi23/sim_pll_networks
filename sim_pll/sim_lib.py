@@ -241,10 +241,12 @@ def perform_simulation_case(dict_net: dict, dict_pll: dict, dict_algo: dict, dic
 				evolve_system_on_tsim_array_time_dependent_change_of_coupling_strength_shil_explicit_shil_filtering(dict_net, dict_pll, pll_list, dict_data, dict_algo)
 		else:
 			evolve_system_on_tsim_array_time_dependent_change_of_coupling_strength(dict_net, dict_pll, pll_list, dict_data, dict_algo)
-	# run evaluations
+	elif dict_net['special_case'] == 'timeDepChangeOfIntrFreq':
+		evolve_system_on_tsim_array_time_dependent_change_of_intrinsic_frequency_save_ctrl_signal(dict_net, dict_pll, pll_list, dict_data, dict_algo)
+	# run evaluations - necessary here?
 	perform_evaluation(dict_net, dict_pll, dict_data)
 	if dict_algo['parameter_space_sweeps'] is None:
-		plot.plot_order_parameter_vs_time_dependent_parameter(dict_pll, dict_net, dict_data, dict_algo)
+		plot.plot_order_parameter_vs_time_dependent_parameter_div_and_undiv(dict_pll, dict_net, dict_data, dict_algo)
 
 
 def perform_evaluation(dict_net: dict, dict_pll: dict, dict_data: dict) -> None:
@@ -301,10 +303,12 @@ def plot_results_simulation(dict_net: dict, dict_pll: dict, dict_algo: dict, dic
 	if dict_net['special_case'] != 'False':
 		print('Plotting frequency vs time-dependent parameter!')
 		plot.plot_instantaneous_freqs_vs_time_dependent_parameter(dict_pll, dict_net, dict_data)
-		plot.plot_order_parameter_vs_time_dependent_parameter(dict_pll, dict_net, dict_data)
-		plot.plot_phase_differences_vs_time_dependent_parameter_divided_or_undivided(dict_pll, dict_net, dict_data, plotlist=[], phase_diff_zero_2pi=2, phases_of_divided_signals=True)
-		plot.plot_phase_differences_vs_time_dependent_parameter_divided_or_undivided(dict_pll, dict_net, dict_data, plotlist=[], phase_diff_zero_2pi=2, phases_of_divided_signals=False)
-		plot.plot_inst_frequency_and_phase_difference_vs_time_dependent_parameter(dict_pll, dict_net, dict_data, True, False, [], 2)
+		plot.plot_order_parameter_vs_time_dependent_parameter_div_and_undiv(dict_pll, dict_net, dict_data)
+		plot.plot_phase_differences_vs_time_dependent_parameter_divided_or_undivided(dict_pll, dict_net, dict_data, plotlist=[], phase_diff_wrap_to_interval=2, phases_of_divided_signals=True)
+		plot.plot_phase_differences_vs_time_dependent_parameter_divided_or_undivided(dict_pll, dict_net, dict_data, plotlist=[], phase_diff_wrap_to_interval=2, phases_of_divided_signals=False)
+		plot.plot_inst_frequency_and_phase_difference_vs_time_dependent_parameter_divided_or_undivided(dict_pll, dict_net, dict_data, phases_of_divided_signals=True,
+																										frequency_of_divided_signals=False, plotlist=[], phase_diff_wrap_to_interval=2)
+
 	# plot.plot_phases_unwrapped(dict_pll, dict_net, dict_data)
 	# plot.plot_phases_two_pi_periodic(dict_pll, dict_net, dict_data)
 	# plot.plot_inst_frequency(dict_pll, dict_net, dict_data)
@@ -514,7 +518,7 @@ def evolve_system_on_tsim_array_time_dependent_change_of_coupling_strength(dict_
 	clock_counter = dict_data['clock_counter']
 	phi = dict_data['phi']
 
-	couplingStrVal_vs_time = setup.setup_time_dependent_parameter(dict_net, dict_pll, dict_data, parameter='coupK', afterTsimPercent=0.1, forAllPLLsDifferent=False)[0]
+	couplingStrVal_vs_time = setup.setup_time_dependent_parameter(dict_net, dict_pll, dict_data, parameter='coupK', zero_initially=False, start_time_dependency_after_percent_of_tsim=0.1, for_all_plls_different_time_dependence=False)[0]
 
 	# if not dict_algo['parameter_space_sweeps'] == 'testNetworkMotifIsing':
 	plot.plot_time_dependent_parameter(dict_pll, dict_net, dict_data, couplingStrVal_vs_time, 'K')
@@ -566,7 +570,7 @@ def evolve_system_on_tsim_array_time_dependent_change_of_inject_locking_coupling
 	clock_counter = dict_data['clock_counter']
 	phi = dict_data['phi']
 
-	injectLockCoupStrVal_vs_time = setup.setup_time_dependent_parameter(dict_net, dict_pll, dict_data, parameter='coupStr_2ndHarm', afterTsimPercent=0.1, forAllPLLsDifferent=False)[0]
+	injectLockCoupStrVal_vs_time = setup.setup_time_dependent_parameter(dict_net, dict_pll, dict_data, parameter='coupStr_2ndHarm', zero_initially=False, start_time_dependency_after_percent_of_tsim=0.1, for_all_plls_different_time_dependence=False)[0]
 
 	t = np.arange( 0, dict_net['max_delay_steps']+dict_pll['sim_time_steps'] ) * dict_pll['dt']
 	# if not dict_algo['parameter_space_sweeps'] == 'testNetworkMotifIsing':
@@ -625,7 +629,7 @@ def evolve_system_on_tsim_array_time_dependent_change_of_coupling_strength_shil(
 	clock_counter = dict_data['clock_counter']
 	phi = dict_data['phi']
 
-	couplingStrVal_vs_time = setup.setup_time_dependent_parameter(dict_net, dict_pll, dict_data, parameter='coupK', afterTsimPercent=0.1, forAllPLLsDifferent=False)[0]
+	couplingStrVal_vs_time = setup.setup_time_dependent_parameter(dict_net, dict_pll, dict_data, parameter='coupK', zero_initially=False, start_time_dependency_after_percent_of_tsim=0.1, for_all_plls_different_time_dependence=False)[0]
 
 	# if not dict_algo['parameter_space_sweeps'] == 'testNetworkMotifIsing':
 	try:
@@ -685,7 +689,7 @@ def evolve_system_on_tsim_array_time_dependent_change_of_coupling_strength_shil_
 	clock_counter = dict_data['clock_counter']
 	phi = dict_data['phi']
 
-	couplingStrVal_vs_time = setup.setup_time_dependent_parameter(dict_net, dict_pll, dict_data, parameter='coupK', afterTsimPercent=0.1, forAllPLLsDifferent=False)[0]
+	couplingStrVal_vs_time = setup.setup_time_dependent_parameter(dict_net, dict_pll, dict_data, parameter='coupK', zero_initially=False, start_time_dependency_after_percent_of_tsim=0.1, for_all_plls_different_time_dependence=False)[0]
 
 	# if not dict_algo['parameter_space_sweeps'] == 'testNetworkMotifIsing':
 	plot.plot_time_dependent_parameter(dict_pll, dict_net, dict_data, couplingStrVal_vs_time, 'K')
@@ -777,6 +781,146 @@ def evolve_system_on_tsim_array_time_dependent_change_of_delay_save_ctrl_signal(
 		dict_data.pop('clock_counter', None)
 		dict_data.update({'t': t, 'phi': phi_store})
 
+#############################################################################################################################################################################
+def evolve_system_on_tsim_array_time_dependent_change_of_intrinsic_frequency_save_ctrl_signal(dict_net: dict, dict_pll: dict, pll_list: list, dict_data: dict, dict_algo: dict):
+	"""Function that evolves the dynamics of a systems of oscillators in time. The intrinsic frequency of one or more oscillators is time-dependent and the time evolution of the control signal is saved.
+
+		Args:
+			dict_net:  contains as parameters the information about properties of the network to be simulated, the initial conditions and the synchronized states under investigation
+			dict_pll:  contains as parameters the information about properties of the PLLs, its components, the time delays, the types of signals exchanged
+			dict_algo: contains as parameters the information how the simulation has to be carried out and what type is run: e.g., 'single', 'classicBruteForceMethodRotatedSpace', 'listOfInitialPhaseConfigurations', 'single', 'statistics'
+			dict_data: contains the results of the simulation, i.e., the phases of all oscillators, time dependent parameters, etc.
+			pll_list
+
+		Returns:
+			nothing, operates on existing dicts
+	"""
+	store_ctrl_and_clock = dict_algo['store_ctrl_and_clock']
+
+	clock_counter = dict_data['clock_counter']
+	phi = dict_data['phi']
+
+	only_change_freq_of_reference = True
+	one_time_switch = True
+
+	if only_change_freq_of_reference:
+		#	print('\n\nAlso changing coupling strength here in this case!')
+		# coup_strength_vs_time = setup.setup_time_dependent_parameter(dict_net, dict_pll, dict_data, parameter='coupK', zero_initially=True, start_time_dependency_after_percent_of_tsim=0.1,
+		#															 for_all_plls_different_time_dependence=False)[0]
+
+		if dict_net['topology'] == 'entrainOne-ring':
+			pll_list[1].phase_detector_combiner.change_neighbors(new_neighbor_list=[2, dict_net['Nx'] * dict_net['Ny'] - 1], dict_pll=dict_pll, idx_time=dict_net['max_delay_steps']) 		# cut the first PLL of the mutually coupled PLLs off from the reference
+		elif dict_net['topology'] == 'entrainOne-chain':
+			pll_list[1].phase_detector_combiner.change_neighbors(new_neighbor_list=[2], dict_pll=dict_pll, idx_time=dict_net['max_delay_steps'])
+		elif dict_net['topology'] == 'entrainAll-ring':
+			pll_list[1].phase_detector_combiner.change_neighbors(new_neighbor_list=[2, dict_net['Nx'] * dict_net['Ny'] - 1], dict_pll=dict_pll, idx_time=dict_net['max_delay_steps'])
+			pll_list[dict_net['Nx'] * dict_net['Ny'] - 1].phase_detector_combiner.change_neighbors(new_neighbor_list=[dict_net['Nx'] * dict_net['Ny'] - 2, 1], dict_pll=dict_pll, idx_time=dict_net['max_delay_steps'])
+			for k in range(2, dict_net['Nx'] * dict_net['Ny']-1):
+				pll_list[k].phase_detector_combiner.change_neighbors(new_neighbor_list=[k-1, k+1], dict_pll=dict_pll, idx_time=dict_net['max_delay_steps'])
+		elif dict_net['topology'] == 'entrainAll-chain':
+			pll_list[1].phase_detector_combiner.change_neighbors(new_neighbor_list=[2], dict_pll=dict_pll, idx_time=dict_net['max_delay_steps'])
+			pll_list[dict_net['Nx'] * dict_net['Ny'] - 1].phase_detector_combiner.change_neighbors(new_neighbor_list=[dict_net['Nx'] * dict_net['Ny'] - 2], dict_pll=dict_pll, idx_time=dict_net['max_delay_steps'])
+			for k in range(2, dict_net['Nx'] * dict_net['Ny'] - 1):
+				pll_list[k].phase_detector_combiner.change_neighbors(new_neighbor_list=[k - 1, k + 1], dict_pll=dict_pll, idx_time=dict_net['max_delay_steps'])
+		else:
+			print('Please recheck the function evolve_system_on_tsim_array_time_dependent_change_of_intrinsic_frequency_save_ctrl_signal() in sim_lib.py before usage!')
+			sys.exit()
+
+		if isinstance(dict_pll['intrF'], np.int) or isinstance(dict_pll['intrF'], np.float):
+			dict_pll.update({'intrF': np.zeros(dict_net['Nx'] * dict_net['Ny']) + dict_pll['intrF']})
+		intr_freq_vs_time = setup.setup_time_dependent_parameter(dict_net, dict_pll, dict_data, parameter='intrF', zero_initially=False, start_time_dependency_after_percent_of_tsim=0.35,
+																for_all_plls_different_time_dependence=False)[0]
+
+	else:
+		intr_freq_vs_time = setup.setup_time_dependent_parameter(dict_net, dict_pll, dict_data, parameter='intrF', zero_initially=False, start_time_dependency_after_percent_of_tsim=0.35,
+																for_all_plls_different_time_dependence=False)[0]
+
+	# if not dict_algo['parameter_space_sweeps'] == 'testNetworkMotifIsing':
+	plot.plot_time_dependent_parameter(dict_pll, dict_net, dict_data, intr_freq_vs_time, r'f(t)')
+
+	phi_store = np.empty([dict_net['max_delay_steps']+dict_pll['sim_time_steps'], dict_net['Nx']*dict_net['Ny']])
+	if store_ctrl_and_clock:
+		clk_store = np.empty([dict_net['max_delay_steps']+dict_pll['sim_time_steps'], dict_net['Nx']*dict_net['Ny']])
+		ctl_store = np.empty([dict_net['max_delay_steps']+dict_pll['sim_time_steps'], dict_net['Nx']*dict_net['Ny']])
+		ctl_store[0:dict_net['max_delay_steps'], :] = 0
+		ctl_store[dict_net['max_delay_steps']+1, :] = [pll.low_pass_filter.control_signal for pll in pll_list]
+
+	phi_store[0:dict_net['max_delay_steps']+1, :] = phi[0:dict_net['max_delay_steps']+1, :]
+	phi_array_len = dict_net['phi_array_len']
+
+	#line = []; tlive = np.arange(0,phi_array_len-1)*dict_pll['dt']
+	if store_ctrl_and_clock:
+		for idx_time in range(dict_net['max_delay_steps'], dict_net['max_delay_steps']+dict_pll['sim_time_steps']-1, 1):
+
+			#print('[pll.next(idx_time,phi_array_len,phi) for pll in pll_list]:', [pll.next(idx_time,phi_array_len,phi) for pll in pll_list])
+			#print('Current state: phi[(idx_time)%phi_array_len,:]', phi[(idx_time)%phi_array_len,:], '\t(idx_time)%phi_array_len',(idx_time)%phi_array_len); sys.exit()
+			#print('(idx_time+1)%phi_array_len', ((idx_time+1)%phi_array_len)*dict_pll['dt']); #time.sleep(0.5)
+			phi[(idx_time+1) % phi_array_len, :] = [pll.next(idx_time, phi_array_len, phi) for pll in pll_list] 	# now the network is iterated, starting at t=0 with the history as prepared above
+			clock_counter[(idx_time+1) % phi_array_len, :] = [pll.clock_halfperiods_count(phi[(idx_time+1) % phi_array_len, pll.pll_id]) for pll in pll_list]
+			#print('clock count for all:', clock_counter[-1])
+			[pll.signal_controlled_oscillator.evolve_intrinsic_freq(intr_freq_vs_time[idx_time], dict_net, only_change_freq_of_reference=only_change_freq_of_reference) for pll in pll_list]
+			#print('intrinsic frequencies:', [pll.signal_controlled_oscillator.intr_freq_rad for pll in pll_list])
+			if idx_time == dict_data['tstep_annealing_start'] and one_time_switch:
+				print('Adding back the reference to the mutually coupled network!')
+				if dict_net['topology'] == 'entrainOne-ring':
+					pll_list[1].phase_detector_combiner.change_neighbors(new_neighbor_list=[2, dict_net['Nx'] * dict_net['Ny'] - 1, 0], dict_pll=dict_pll, idx_time=idx_time)  #
+				elif dict_net['topology'] == 'entrainOne-chain':
+					pll_list[1].phase_detector_combiner.change_neighbors(new_neighbor_list=[2, 0], dict_pll=dict_pll, idx_time=idx_time)
+				elif dict_net['topology'] == 'entrainAll-ring':
+					pll_list[1].phase_detector_combiner.change_neighbors(new_neighbor_list=[2, dict_net['Nx'] * dict_net['Ny'] - 1, 0], dict_pll=dict_pll, idx_time=idx_time)
+					pll_list[dict_net['Nx'] * dict_net['Ny'] - 1].phase_detector_combiner.change_neighbors(new_neighbor_list=[dict_net['Nx'] * dict_net['Ny'] - 2, 1, 0], dict_pll=dict_pll,
+																										idx_time=idx_time)
+					for k in range(2, dict_net['Nx'] * dict_net['Ny'] - 1):
+						pll_list[k].phase_detector_combiner.change_neighbors(new_neighbor_list=[k - 1, k + 1, 0], dict_pll=dict_pll, idx_time=idx_time)
+				elif dict_net['topology'] == 'entrainAll-chain':
+					pll_list[1].phase_detector_combiner.change_neighbors(new_neighbor_list=[2, 0], dict_pll=dict_pll, idx_time=idx_time)
+					pll_list[dict_net['Nx'] * dict_net['Ny'] - 1].phase_detector_combiner.change_neighbors(new_neighbor_list=[dict_net['Nx'] * dict_net['Ny'] - 2, 0], dict_pll=dict_pll,
+																										idx_time=idx_time)
+					for k in range(2, dict_net['Nx'] * dict_net['Ny'] - 1):
+						pll_list[k].phase_detector_combiner.change_neighbors(new_neighbor_list=[k - 1, k + 1, 0], dict_pll=dict_pll, idx_time=idx_time)
+				# pll_list[2].phase_detector_combiner.change_neighbors(new_neighbor_list=[0, 1], dict_pll=dict_pll, idx_time=idx_time)
+				one_time_switch = False 	# prevents from calling this all the time!
+
+			clk_store[idx_time+1, :] = clock_counter[(idx_time+1) % phi_array_len, :]
+			phi_store[idx_time+1, :] = phi[(idx_time+1) % phi_array_len, :]
+			ctl_store[idx_time+1, :] = [pll.low_pass_filter.get_control_signal() for pll in pll_list]
+			#phidot = (phi[1:,0]-phi[:-1,0])/(2*np.pi*dict_pll['dt'])
+			#line = livplt.live_plotter(tlive, phidot, line)
+	else:
+		for idx_time in range(dict_net['max_delay_steps'], dict_net['max_delay_steps']+dict_pll['sim_time_steps']-1, 1):
+
+			phi[(idx_time+1) % phi_array_len, :] = [pll.next(idx_time, phi_array_len, phi) for pll in pll_list] 	# now the network is iterated, starting at t=0 with the history as prepared above
+			phi_store[idx_time+1, :] = phi[(idx_time+1) % phi_array_len, :]
+			# print('intrinsic frequencies to be set:', intr_freq_vs_time[idx_time])
+			[pll.signal_controlled_oscillator.evolve_intrinsic_freq(intr_freq_vs_time[idx_time], dict_net, only_change_freq_of_reference=only_change_freq_of_reference) for pll in pll_list]
+			if idx_time == dict_data['tstep_annealing_start'] and one_time_switch:
+				print('Adding back the reference to the mutually coupled network!')
+				if dict_net['topology'] == 'entrainOne-ring':
+					pll_list[1].phase_detector_combiner.change_neighbors(new_neighbor_list=[2, dict_net['Nx'] * dict_net['Ny'] - 1, 0], dict_pll=dict_pll, idx_time=idx_time)  #
+				elif dict_net['topology'] == 'entrainOne-chain':
+					pll_list[1].phase_detector_combiner.change_neighbors(new_neighbor_list=[2, 0], dict_pll=dict_pll, idx_time=idx_time)
+				elif dict_net['topology'] == 'entrainAll-ring':
+					pll_list[1].phase_detector_combiner.change_neighbors(new_neighbor_list=[2, dict_net['Nx'] * dict_net['Ny'] - 1, 0], dict_pll=dict_pll, idx_time=idx_time)
+					pll_list[dict_net['Nx'] * dict_net['Ny'] - 1].phase_detector_combiner.change_neighbors(new_neighbor_list=[dict_net['Nx'] * dict_net['Ny'] - 2, 1, 0], dict_pll=dict_pll,
+																										idx_time=idx_time)
+					for k in range(2, dict_net['Nx'] * dict_net['Ny'] - 1):
+						pll_list[k].phase_detector_combiner.change_neighbors(new_neighbor_list=[k - 1, k + 1, 0], dict_pll=dict_pll, idx_time=idx_time)
+				elif dict_net['topology'] == 'entrainAll-chain':
+					pll_list[1].phase_detector_combiner.change_neighbors(new_neighbor_list=[2, 0], dict_pll=dict_pll, idx_time=idx_time)
+					pll_list[dict_net['Nx'] * dict_net['Ny'] - 1].phase_detector_combiner.change_neighbors(new_neighbor_list=[dict_net['Nx'] * dict_net['Ny'] - 2, 0], dict_pll=dict_pll,
+																										idx_time=idx_time)
+					for k in range(2, dict_net['Nx'] * dict_net['Ny'] - 1):
+						pll_list[k].phase_detector_combiner.change_neighbors(new_neighbor_list=[k - 1, k + 1, 0], dict_pll=dict_pll, idx_time=idx_time)
+				one_time_switch = False  # prevents from calling this all the time!
+			# print('intrinsic frequencies:', [pll.signal_controlled_oscillator.intr_freq_rad for pll in pll_list])
+			# time.sleep(1)
+
+	t = np.arange(0, len(phi_store[0:dict_net['max_delay_steps']+dict_pll['sim_time_steps'], 0]))*dict_pll['dt']
+	if store_ctrl_and_clock:
+		dict_data.update({'t': t, 'phi': phi_store, 'clock_counter': clk_store, 'ctrl': ctl_store, 'timeDepPara': intr_freq_vs_time, 'only_change_freq_of_reference': only_change_freq_of_reference})
+	else:
+		dict_data.pop('clock_counter', None)
+		dict_data.update({'t': t, 'phi': phi_store, 'timeDepPara': intr_freq_vs_time, 'only_change_freq_of_reference': only_change_freq_of_reference})
 
 #############################################################################################################################################################################
 def distributed_pll_in_3d_mobile(dict_net, dict_pll, phi, pos, coup_matrix, clock_counter, pll_list, dict_data, dict_algo):

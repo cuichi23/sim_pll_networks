@@ -62,7 +62,7 @@ def get_from_value_or_list(pll_id, parameter_input, pll_count):
 				return parameter_input[pll_id]  # set individual value
 			else:
 				return parameter_input  # set value for all
-		elif isinstance(parameter_input, float) or isinstance(parameter_input, int):
+		elif isinstance(parameter_input, np.float) or isinstance(parameter_input, np.int):
 			return parameter_input  # set value for all
 		else:
 			print('Error in PLL component constructor setting a variable using get_from_value_or_list() function! Check whether enough values for each oscillator are defined!')
@@ -289,7 +289,7 @@ class SignalControlledOscillator:
 		self.fric_coeff = get_from_value_or_list(pll_id, dict_pll['friction_coefficient'], dict_net['Nx'] * dict_net['Ny'])
 		self.sync_freq_rad 	= 2.0 * np.pi * get_from_value_or_list(pll_id, dict_pll['syncF'], dict_net['Nx'] * dict_net['Ny'])     #dict_pll['syncF']
 		if dict_pll['fric_coeff_PRE_vs_PRR'] == 'PRR':
-			self.intr_freq_rad 	= 2.0 * np.pi * get_from_value_or_list(pll_id, dict_pll['intrF'], dict_net['Nx'] * dict_net['Ny'])
+			self.intr_freq_rad = 2.0 * np.pi * get_from_value_or_list(pll_id, dict_pll['intrF'], dict_net['Nx'] * dict_net['Ny'])
 		elif dict_pll['fric_coeff_PRE_vs_PRR'] == 'PRE':
 			if isinstance(dict_pll['intrF'], list):
 				intrinsic_freqs_temp = np.array(dict_pll['intrF'])
@@ -297,7 +297,7 @@ class SignalControlledOscillator:
 				# 	print('Provide the correct number of individual intrinsic frequencies for the given network size, or alternatively a single value for all.'); sys.exit()
 			else:
 				intrinsic_freqs_temp = dict_pll['intrF']
-			self.intr_freq_rad 	= 2.0 * np.pi * get_from_value_or_list(pll_id, intrinsic_freqs_temp / self.fric_coeff, dict_net['Nx'] * dict_net['Ny'])
+			self.intr_freq_rad = 2.0 * np.pi * get_from_value_or_list(pll_id, intrinsic_freqs_temp / self.fric_coeff, dict_net['Nx'] * dict_net['Ny'])
 		self.K_rad = 2.0 * np.pi * get_from_value_or_list(pll_id, dict_pll['coupK'], dict_net['Nx'] * dict_net['Ny'])
 		self.c = get_from_value_or_list(pll_id, dict_pll['noiseVarVCO'], dict_net['Nx'] * dict_net['Ny'])
 		self.dt = dict_pll['dt']
@@ -360,6 +360,23 @@ class SignalControlledOscillator:
 
 		return None
 
+	def evolve_intrinsic_freq(self, new_value_or_list, dict_net: dict, only_change_freq_of_reference: bool = False) -> None:
+		"""
+		Evolves the values of the intrinsic frequency in time -- more precisely the PLLs intrinsic frequency.
+
+		Args:
+			new_value_or_list: the new value for the cross coupling strength, either a scalar or an array with individual values for each signal controlled oscillator in the network
+			dict_net: network related properties and parameters
+			only_change_freq_of_reference: of True, only the intrinsic frequency of the first oscillator with k=0 is changed
+		"""
+		if only_change_freq_of_reference:
+			if self.pll_id == 0:
+				self.intr_freq_rad = 2.0 * np.pi * new_value_or_list
+		else:
+			self.intr_freq_rad = 2.0 * np.pi * get_from_value_or_list(self.pll_id, new_value_or_list, dict_net['Nx'] * dict_net['Ny'])
+
+		return None
+
 	def next(self, control_signal) -> Tuple[np.float, np.float]:
 		"""
 		Evolves the instantaneous output frequency of the signal controlled oscillator according to the control signal
@@ -386,8 +403,8 @@ class SignalControlledOscillator:
 		Returns:
 			a tuple of the perturbed phase and the phase increment
 		"""
-		self.d_phi 	= phase_perturbation + self.evolve_phi(self.init_freq, self.K_rad, control_signal, self.c, self.dt)
-		self.phi 	= self.phi + self.d_phi
+		self.d_phi = phase_perturbation + self.evolve_phi(self.init_freq, self.K_rad, control_signal, self.c, self.dt)
+		self.phi = self.phi + self.d_phi
 		return self.phi, self.d_phi
 
 	def add_perturbation(self, phase_perturbation: np.float) -> np.float:
@@ -572,6 +589,20 @@ class PhaseDetectorCombiner:
 			print('High frequency components activated, using:', inspect.getsourcelines(self.compute)[0][0])
 		else:
 			print('Phase detector and combiner problem, dict_pll[*includeCompHF*] should either be True or False, check PhaseDetectorCombiner in pll_lib! ')
+
+	def change_neighbors(self, new_neighbor_list: list, dict_pll: dict, idx_time: np.int):
+		"""
+		Changes the neighbors of an oscillator in the network as specified.
+
+		Args:
+			new_neighbor_list: list of new neighbors
+			dict_pll: contains PLL configuration information
+			idx_time: the index that specifies where within the discrete time simulation the change takes place
+		"""
+		print('\nI am the PD of PLL%i, changing my neigbors from' % self.pll_id, self.idx_neighbors, 'to', new_neighbor_list, 'at time', idx_time*dict_pll['dt'], '!')
+		self.idx_neighbors = new_neighbor_list
+
+		return None
 
 	def next(self, feedback_delayed_phases: np.ndarray, transmission_delayed_phases: np.ndarray, antenna_in: float, index_current_time: int = 0) -> np.float:
 		"""
@@ -768,8 +799,8 @@ class Delayer:
 		# time-dependent delays as defined by a function
 		elif (dict_net['special_case'] == 'timeDepTransmissionDelay'):
 
+			time_dep_delay = setup.setup_time_dependent_parameter(dict_net, dict_pll, dict_data, parameter='transmission_delay', zero_initially=False, start_time_dependency_after_percent_of_tsim=0.075, for_all_plls_different_time_dependence=False)
 			print('Time dependent transmission delay set!')
-			time_dep_delay = setup.setup_time_dependent_parameter(dict_net, dict_pll, dict_data, parameter='transmission_delay', afterTsimPercent=0.075, forAllPLLsDifferent=False)
 
 			if len(time_dep_delay[:, 0]) == dict_net['Nx']*dict_net['Ny']:		# if there is a matrix, i.e., different time-dependencies for different delay, then use this
 				print('Test')

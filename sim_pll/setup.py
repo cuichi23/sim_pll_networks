@@ -306,7 +306,7 @@ def generate_phi0(dict_net: dict, dict_pll: dict, dict_algo: dict) -> None:
 
 
 ################################################################################
-def setup_time_dependent_parameter(dict_net: dict, dict_pll: dict, dict_data: dict, parameter: str ='coupStr_2ndHarm', afterTsimPercent: float = 0.15, forAllPLLsDifferent: bool =False) -> np.ndarray:
+def setup_time_dependent_parameter(dict_net: dict, dict_pll: dict, dict_data: dict, parameter: str = 'coupK', zero_initially: bool = False, start_time_dependency_after_percent_of_tsim: float = 0.15, for_all_plls_different_time_dependence: bool = False) -> np.ndarray:
 	"""
 	Set time dependent parameters to be used in the simulation. Different functional forms are available: triangle, linear, exponential
 
@@ -315,8 +315,9 @@ def setup_time_dependent_parameter(dict_net: dict, dict_pll: dict, dict_data: di
 		dict_net:  [dict] contains the setup information for the network and simulation
 		dict_data: [dict] contains data to prepare and results from the simulation
 		parameter: [str] the name of the parameter that shall be time-dependent
-		afterTsimPercent: [float] how long after the start of the simulation before the parameter starts changing in percent of Tsim, the simulation time
-		forAllPLLsDifferent: [bool] whether that time-dependence will be different or the same for all oscillators in the network
+		zero_initially: [bool] if True, the initial value until start_time_dependency_after_percent_of_tsim is reached is set to zero, if False it will be set to the first value set in
+		start_time_dependency_after_percent_of_tsim: [float] how long after the start of the simulation before the parameter starts changing in percent of Tsim, the simulation time dict_net['min_max_rate_timeDepPara']
+		for_all_plls_different_time_dependence: [bool] whether that time-dependence will be different or the same for all oscillators in the network
 
 	Returns:
 		time series as np.ndarray that contains the values of the parameter over time
@@ -329,23 +330,23 @@ def setup_time_dependent_parameter(dict_net: dict, dict_pll: dict, dict_data: di
 			length_modifier = 2
 		else:
 			length_modifier = 1
-		dict_net.update({'Tsim': (length_modifier * delta_max / dict_net['min_max_rate_timeDepPara'][2]) * (1.0 + afterTsimPercent)})
+		dict_net.update({'Tsim': (length_modifier * delta_max / dict_net['min_max_rate_timeDepPara'][2]) * (1.0 + start_time_dependency_after_percent_of_tsim)})
 	elif dict_net['typeOfTimeDependency'] == 'exponential':
-		dict_net.update({'Tsim': (1 / dict_net['min_max_rate_timeDepPara'][2]) * np.log(dict_net['min_max_rate_timeDepPara'][1]/dict_net['min_max_rate_timeDepPara'][0]) * (1.0 + afterTsimPercent)})
+		dict_net.update({'Tsim': (1 / dict_net['min_max_rate_timeDepPara'][2]) * np.log(dict_net['min_max_rate_timeDepPara'][1]/dict_net['min_max_rate_timeDepPara'][0]) * (1.0 + start_time_dependency_after_percent_of_tsim)})
 	else:
 		print('Unknown functional form for time-dependent parameter generation. Introduce! °)°')
 		sys.exit()
 
 	dict_pll.update({'sim_time_steps': int(dict_net['Tsim'] / dict_pll['dt'])})
-	print('Tsim:', dict_net['Tsim'], 'sim_time_steps:', dict_pll['sim_time_steps'])
 
-	if forAllPLLsDifferent:
+	if for_all_plls_different_time_dependence:
 		time_series = np.zeros([ dict_net['Nx']*dict_net['Ny'], dict_net['max_delay_steps']+dict_pll['sim_time_steps'] ])
 	else:
 		time_series = np.zeros([ 1, dict_net['max_delay_steps']+dict_pll['sim_time_steps'] ])
 	#print('dict_net[*min_max_rate_timeDepPara*][1]:', dict_net['min_max_rate_timeDepPara'][1])
 
-	tstep_annealing_start = dict_net['max_delay_steps'] + int(afterTsimPercent * dict_pll['sim_time_steps'])
+	tstep_annealing_start = dict_net['max_delay_steps'] + int(start_time_dependency_after_percent_of_tsim * dict_pll['sim_time_steps'])
+	print('Adjusted and updated Tsim to fit time-dependent parameter properties:', dict_net['Tsim'], 'sim_time_steps:', dict_pll['sim_time_steps'], '\nTime-dependent change starts at t_c=', tstep_annealing_start * dict_pll['dt'])
 
 	# starting after 'max_delay_steps', we write a list/array of the time-dependent parameter given the functional form chosen
 	sign = -1
@@ -354,8 +355,12 @@ def setup_time_dependent_parameter(dict_net: dict, dict_pll: dict, dict_data: di
 			print('NOTE: coupStr_2ndHarm overridden by min_max_rate_timeDepPara!')
 		for i in range(len(time_series[:, 0])):
 			sign *= -1
-			time_series[i, 0:tstep_annealing_start] = dict_net['min_max_rate_timeDepPara'][0]
-			for j in range(dict_net['max_delay_steps'] + int(afterTsimPercent * dict_pll['sim_time_steps'])-1, dict_net['max_delay_steps']+dict_pll['sim_time_steps']-1):
+			if zero_initially:
+				time_series[i, 0:tstep_annealing_start - 2] = 0
+				time_series[i, tstep_annealing_start - 2:tstep_annealing_start] = dict_net['min_max_rate_timeDepPara'][0]
+			else:
+				time_series[i, 0:tstep_annealing_start] = dict_net['min_max_rate_timeDepPara'][0]
+			for j in range(tstep_annealing_start-1, dict_net['max_delay_steps']+dict_pll['sim_time_steps']-1):
 				if np.abs( time_series[i, j] - dict_net['min_max_rate_timeDepPara'][0] ) <= delta_max:
 					time_series[i, j+1] = time_series[i, j] + sign * dict_pll['dt'] * dict_net['min_max_rate_timeDepPara'][2]
 					#print('time_series', time_series)
@@ -367,7 +372,11 @@ def setup_time_dependent_parameter(dict_net: dict, dict_pll: dict, dict_data: di
 			print('NOTE: coupStr_2ndHarm overridden by min_max_rate_timeDepPara!')
 		for i in range(len(time_series[:, 0])):
 			print('Annealing starts after: ', tstep_annealing_start, ' steps.')
-			time_series[i, 0:tstep_annealing_start] = dict_net['min_max_rate_timeDepPara'][0]
+			if zero_initially:
+				time_series[i, 0:tstep_annealing_start - 2] = 0
+				time_series[i, tstep_annealing_start - 2:tstep_annealing_start] = dict_net['min_max_rate_timeDepPara'][0]
+			else:
+				time_series[i, 0:tstep_annealing_start] = dict_net['min_max_rate_timeDepPara'][0]
 			for j in range(tstep_annealing_start-1, dict_net['max_delay_steps']+dict_pll['sim_time_steps']-1):
 				if np.abs(time_series[i, j] - dict_net['min_max_rate_timeDepPara'][0]) <= delta_max:
 					#print('j:', j, '\ttime = (j-j0)*dt=', (j-tstep_annealing_start+1)*dict_pll['dt'])
@@ -378,15 +387,20 @@ def setup_time_dependent_parameter(dict_net: dict, dict_pll: dict, dict_data: di
 					time_series[i, j+1] = time_series[i, j]
 
 	elif dict_net['typeOfTimeDependency'] == 'triangle':
+		index_max_value_time_dependent_parameter = np.zeros(len(time_series[:, 0]))
 		if (dict_net['special_case'] == 'timeDepInjectLockCoupStr'):
 			print('NOTE: coupStr_2ndHarm overridden by min_max_rate_timeDepPara!')
 		for i in range(len(time_series[:, 0])):
 			sign *= -1
-			time_series[i, 0:tstep_annealing_start] = dict_net['min_max_rate_timeDepPara'][0]
-			start_t_steps = dict_net['max_delay_steps']+int(afterTsimPercent*dict_pll['sim_time_steps'])-1
-			final_growth_t_steps = start_t_steps + np.int(np.floor((1-afterTsimPercent)*dict_pll['sim_time_steps']))
+			if zero_initially:
+				time_series[i, 0:tstep_annealing_start - 2] = 0
+				time_series[i, tstep_annealing_start - 2:tstep_annealing_start] = dict_net['min_max_rate_timeDepPara'][0]
+			else:
+				time_series[i, 0:tstep_annealing_start] = dict_net['min_max_rate_timeDepPara'][0]
+			start_t_steps = tstep_annealing_start-1
+			final_growth_t_steps = start_t_steps + np.int(np.floor((1-start_time_dependency_after_percent_of_tsim)*dict_pll['sim_time_steps']))
 			if final_growth_t_steps <= start_t_steps:
-				print('In setup_time_dependent_parameter(), the final time step value is smaller or equal w.r.t its initial! Change either afterTsimPercent or Tsim!')
+				print('In setup_time_dependent_parameter(), the final time step value is smaller or equal w.r.t its initial! Change either start_time_dependency_after_percent_of_tsim or Tsim!')
 				sys.exit()
 			#print( 'Set rising interval! Starting at t=%0.5f'%(start_t_steps*dict_pll['dt']) )
 			#print( 'Start raising value if %0.5f <= %0.5f'%(np.abs( time_series[i,start_t_steps] - dict_net['min_max_rate_timeDepPara'][0] ), delta_max) )
@@ -397,6 +411,12 @@ def setup_time_dependent_parameter(dict_net: dict, dict_pll: dict, dict_data: di
 				if np.abs(time_series[i, j+1] - dict_net['min_max_rate_timeDepPara'][0]) >= delta_max:
 					sign *= -1
 			#print( 'Finished raising value at t=%0.5f and current value %0.5f'%( final_growth_t_steps*dict_pll['dt'], time_series[i,final_growth_t_steps] ) )
+			#print('np.where(time_series[i, :] == np.max(time_series[i, :])):', np.where(time_series[i, :] == np.max(time_series[i, :])))
+			index_max_value_time_dependent_parameter[i] = np.where(time_series[i, :] == np.max(time_series[i, :]))[0][0]
+			print('Maximum of time-dependent parameter reached after t=%0.2f of the simulation time for PLL %i.' % (index_max_value_time_dependent_parameter * dict_pll['dt'], i))
+		dict_net.update({'index_max_value_time_dependent_parameter': index_max_value_time_dependent_parameter})
+		print('Hence, index_max_value_time_dependent_parameter=', index_max_value_time_dependent_parameter, ' while max_index_tsim=', len(time_series[0, :]))
+		# sys.exit()
 	else:
 		print('Unknown functional form for time-dependent parameter generation. Introduce! °)°')
 		sys.exit()
@@ -432,7 +452,7 @@ def setup_topology(dict_net: dict):
 		G.add_nodes_from([i for i in range(dict_net['Nx']*dict_net['Ny'])])
 		G.add_edges_from([(0, 1), (1, 0), (3, 2)])			  						# bidirectional coupling between 0 and 1 and 3 receives from 2, i.e., 2 entrains 3
 		for i in range(dict_net['Nx']*dict_net['Ny']):
-			print('For comparison entrainment vs mutual sync: neighbors of oscillator ',i,':', list(G.neighbors(i)) , ' and egdes of',i,':', list(G.edges(i)))
+			print('For comparison entrainment vs mutual sync: neighbors of oscillator ', i, ':', list(G.neighbors(i)), ' and egdes of', i, ':', list(G.edges(i)))
 
 	elif ( dict_net['topology'] == 'entrainPLLsHierarch'):
 		G = nx.DiGraph()
@@ -475,7 +495,7 @@ def setup_topology(dict_net: dict):
 			for i in range(2, dict_net['Nx'] - 1):
 				G.add_edge(i, 0)
 
-	elif ( dict_net['topology'] == 'chain' or dict_net['topology'] == 'entrainOne-chain' or dict_net['topology'] == 'entrainOne-chain'):
+	elif dict_net['topology'] == 'chain' or dict_net['topology'] == 'entrainOne-chain' or dict_net['topology'] == 'entrainAll-chain':
 		G = nx.path_graph(dict_net['Nx']*dict_net['Ny'])
 
 		if dict_net['topology'] == 'entrainOne-chain':

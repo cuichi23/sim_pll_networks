@@ -24,6 +24,7 @@ import pickle
 from sim_pll import plot_lib
 from sim_pll import sim_lib as sim
 from sim_pll import evaluation_lib as eva
+from sim_pll import setup
 from sim_pll import coupling_fct_lib as coupfct
 from sim_pll import check_dicts_lib as chk_dicts
 from sim_pll import synctools_interface_lib as synctools_interface
@@ -80,10 +81,10 @@ labelpadyaxis       = 20
 # load data
 folder		 = '/home/cuichi/Documents/MPI_PKS_Docs/2019_VIP+/Programs/2021_simPLL_pub/results/'#'/home/cuichi/data-z2/simPLL_2/1_CH_success/results/'
 ################################################################################
-filenamePLL  = folder+'dict_pll_K0.012_tau2.223_Fc0.000_mx0_my-999_N3_topochain_22:37_2022_9_23'
-filenameNet  = folder+'dict_net_K0.012_tau2.223_Fc0.000_mx0_my-999_N3_topochain_22:37_2022_9_23'
-filenameData = folder+'dict_data_K0.012_tau2.223_Fc0.000_mx0_my-999_N3_topochain_22:37_2022_9_23'
-filenameAlgo = folder+'dict_algo_K0.012_tau2.223_Fc0.000_mx0_my-999_N3_topochain_22:37_2022_9_23'
+filenamePLL  = folder+'dict_pll_K0.012_tau2.223_Fc0.000_mx0_my-999_N3_topochain_1:7_2022_9_27' #_K0.012_tau2.223_Fc0.000_mx0_my-999_N3_topochain_22:37_2022_9_23'
+filenameNet  = folder+'dict_net_K0.012_tau2.223_Fc0.000_mx0_my-999_N3_topochain_1:7_2022_9_27' #_K0.012_tau2.223_Fc0.000_mx0_my-999_N3_topochain_22:37_2022_9_23'
+filenameData = folder+'dict_data_K0.012_tau2.223_Fc0.000_mx0_my-999_N3_topochain_1:7_2022_9_27' #_K0.012_tau2.223_Fc0.000_mx0_my-999_N3_topochain_22:37_2022_9_23'
+filenameAlgo = folder+'dict_algo_K0.012_tau2.223_Fc0.000_mx0_my-999_N3_topochain_1:7_2022_9_27' #_K0.012_tau2.223_Fc0.000_mx0_my-999_N3_topochain_22:37_2022_9_23'
 ################################################################################
 if 'pool_data' in filenameData:
 	pool_data = pickle.load(open(filenameData, 'rb'))
@@ -138,6 +139,7 @@ else:
 
 	#dict_pll.update({'vco_out_sig': coupfct.sine})
 
+	#setup.setup_time_dependent_parameter(dict_net, dict_pll, dict_data)
 	sim.plot_results_simulation(dict_net, dict_pll, dict_algo, dict_data)
 
 	# dict_pllsyncTool = dict_pll.copy()

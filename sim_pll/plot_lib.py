@@ -651,9 +651,28 @@ def plot_clock_time_in_period_fractions(dict_pll: dict, dict_net: dict, dict_dat
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-def plotCtrlSigDny(dict_pll: dict, dict_net: dict, dict_data: dict):
+def plot_control_signal_dynamics(dict_pll: dict, dict_net: dict, dict_data: dict):
 	dict_pll, dict_net = prepareDictsForPlotting(dict_pll, dict_net)
 
+	param_name = dict_net['special_case']  # 'timeDepInjectLockCoupStr', 'timeDepTransmissionDelay', 'timeDepChangeOfCoupStr', 'distanceDepTransmissionDelay'
+	if param_name == 'timeDepTransmissionDelay':
+		dyn_x_label = r'$\frac{\tau\omega}{2\pi}$'
+		x_axis_scaling = np.mean(dict_pll['intrF'])
+	elif param_name == 'timeDepChangeOfCoupStr':
+		dyn_x_label = r'$\frac{2\pi K}{\omega}$'
+		x_axis_scaling = np.mean(1.0 / dict_pll['intrF'])
+	elif param_name == 'timeDepInjectLockCoupStr':
+		dyn_x_label = r'$\frac{2\pi K}{\omega}$'
+		x_axis_scaling = np.mean(1.0 / dict_pll['intrF'])
+	elif param_name == 'timeDepChangeOfIntrFreq':
+		if dict_data['only_change_freq_of_reference']:
+			dyn_x_label = r'$\frac{\omega_R}{\bar{\omega}_{k\neq R}}$'
+			x_axis_scaling = np.mean(1.0 / dict_pll['intrF'][1:])
+		else:
+			dyn_x_label = r'$\omega$'
+			x_axis_scaling = 1
+
+	opacity_reverse_change = 0.35
 	color = ['blue', 'red', 'purple', 'cyan', 'green', 'yellow']  # 'magenta'
 	linet = ['-', '-.', '--', ':', 'densily dashdotdotted', 'densely dashed']
 
@@ -674,6 +693,35 @@ def plotCtrlSigDny(dict_pll: dict, dict_net: dict, dict_data: dict):
 	plt.savefig('results/ctrlSig-t_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.png' % (
 	np.mean(dict_pll['coupK']), np.mean(dict_pll['cutFc']), np.mean(dict_pll['syncF']), np.mean(dict_pll['transmission_delay']), np.mean(dict_pll['noiseVarVCO']), now.year, now.month, now.day),
 				dpi=dpi_val, bbox_inches="tight")
+
+	if dict_net['special_case'] != 'False':
+		fig1010 = plt.figure(num=1010, figsize=(figwidth, figheight), dpi=dpi_val, facecolor='w', edgecolor='k')
+		fig1010.canvas.manager.set_window_title('control voltage vs time dependent parameter')  # plot the time evolution of the control signal
+		fig1010.set_size_inches(plot_size_inches_x, plot_size_inches_y)
+
+		if dict_net['typeOfTimeDependency'] == 'triangle':
+			labelname = r'R(t) $\uparrow$'
+			plt.plot(dict_data['timeDependentParameter'][0, 0:int(dict_net['index_max_value_time_dependent_parameter'][0]):dict_pll['sampleFplot']] * x_axis_scaling,
+					 dict_data['ctrl'][0:int(dict_net['index_max_value_time_dependent_parameter'][0]):dict_pll['sampleFplot']], 'b', linestyle=linet[0], label=labelname)
+			labelname = r'R(t) $\downarrow$'
+			plt.plot(dict_data['timeDependentParameter'][0, int(dict_net['index_max_value_time_dependent_parameter'][0]) + 1:-1:dict_pll['sampleFplot']] * x_axis_scaling,
+					 dict_data['ctrl'][int(dict_net['index_max_value_time_dependent_parameter'][0]) + 1:-1:dict_pll['sampleFplot']], 'c', linestyle=linet[1], alpha=opacity_reverse_change,
+					 label=labelname)
+		else:
+			plt.plot(dict_data['timeDependentParameter'][0, 0:len(dict_data['ctrl'][:])] * x_axis_scaling, dict_data['ctrl'], linewidth=1, linestyle=linet[0])
+
+		plt.xlabel(dyn_x_label, fontdict=labelfont, labelpad=labelpadxaxis)
+		plt.ylabel(r'$V_\textrm{ctrl}$', fontdict=labelfont, labelpad=labelpadyaxis)
+		plt.tick_params(axis='both', which='major', labelsize=tickSize)
+		# plt.legend(loc='upper right')
+
+		plt.savefig('results/ctrlSig_' + param_name + '_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.svg' % (
+			np.mean(dict_pll['coupK']), np.mean(dict_pll['cutFc']), np.mean(dict_pll['syncF']), np.mean(dict_pll['transmission_delay']), np.mean(dict_pll['noiseVarVCO']), now.year, now.month,
+			now.day), bbox_inches="tight")
+		plt.savefig('results/ctrlSig_' + param_name + '_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.png' % (
+			np.mean(dict_pll['coupK']), np.mean(dict_pll['cutFc']), np.mean(dict_pll['syncF']), np.mean(dict_pll['transmission_delay']), np.mean(dict_pll['noiseVarVCO']), now.year, now.month,
+			now.day), dpi=dpi_val, bbox_inches="tight")
+
 
 	return None
 

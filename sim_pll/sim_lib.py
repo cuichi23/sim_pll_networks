@@ -230,7 +230,7 @@ def perform_simulation_case(dict_net: dict, dict_pll: dict, dict_algo: dict, dic
 		if dict_algo['store_ctrl_and_clock'] == False:
 			dict_algo.update({'store_ctrl_and_clock': True})
 		evolve_system_on_tsim_array_time_dependent_change_of_delay_save_ctrl_signal(dict_net, dict_pll, pll_list, dict_data, dict_algo)
-		plot.plotCtrlSigDny(dict_pll, dict_net, dict_data)
+		plot.plot_control_signal_dynamics(dict_pll, dict_net, dict_data)
 	elif dict_net['special_case'] == 'timeDepInjectLockCoupStr':
 		evolve_system_on_tsim_array_time_dependent_change_of_inject_locking_coupling_strength_shil(dict_net, dict_pll, pll_list, dict_data, dict_algo)
 	elif dict_net['special_case'] == 'timeDepChangeOfCoupStr':
@@ -327,12 +327,19 @@ def plot_results_simulation(dict_net: dict, dict_pll: dict, dict_algo: dict, dic
 		plot.plot_inst_frequency_and_phase_difference(dict_pll, dict_net, dict_algo, dict_data, True, [], 2)
 		plot.plot_inst_frequency_and_order_parameter(dict_pll, dict_net, dict_data, [], True)
 		plot.plot_phase_relations_of_divided_signal(dict_pll, dict_net, dict_data, [], 2)
+		plot.plot_control_signal_dynamics(dict_pll, dict_net, dict_data)
 		if dict_net['special_case'] == 'False':
 			plot.plot_power_spectral_density(dict_pll, dict_net, dict_data, [0, 1, 2], saveData=False)
 		# try:
 		# 	plot.plot_allan_variance(dict_pll, dict_net, dict_data, 0.4 * dict_net['Tsim'], [0, 1, 2], 'overlapping_adev', 'frequency', 0.5 * dict_net['Tsim'])
 		# except:
 		# 	print('Failed to caluclate Allan variance!')
+	elif dict_net['Nx'] * dict_net['Ny'] == 4:
+		plot.plot_order_parameter(dict_pll, dict_net, dict_data)
+		plot.plot_inst_frequency_and_phase_difference(dict_pll, dict_net, dict_algo, dict_data, True, [], 2)
+		plot.plot_inst_frequency_and_order_parameter(dict_pll, dict_net, dict_data, [], True)
+		plot.plot_phase_relations_of_divided_signal(dict_pll, dict_net, dict_data, [], 2)
+		plot.plot_control_signal_dynamics(dict_pll, dict_net, dict_data)
 	elif dict_net['Nx']*dict_net['Ny'] == 64:
 		plot.plot_inst_frequency_and_phase_difference(dict_pll, dict_net, dict_algo, dict_data)
 		plot.plot_inst_frequency_and_order_parameter(dict_pll, dict_net, dict_data)

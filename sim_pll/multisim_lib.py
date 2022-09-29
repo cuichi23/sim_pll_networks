@@ -190,7 +190,7 @@ def evaluate_pool_data(dict_net, dict_pll, dict_algo, pool_data):
 			print('Plotting frequency vs time-dependent parameter!')
 			plot.plot_instantaneous_freqs_vs_time_dependent_parameter(pool_data[0][0]['dict_pll'], pool_data[0][0]['dict_net'], pool_data[0][0]['dict_data'])
 		if 'ctrl' in pool_data[0][0]['dict_data']:
-			plot.plotCtrlSigDny(pool_data[0][0]['dict_pll'], pool_data[0][0]['dict_net'], pool_data[0][0]['dict_data'])
+			plot.plot_control_signal_dynamics(pool_data[0][0]['dict_pll'], pool_data[0][0]['dict_net'], pool_data[0][0]['dict_data'])
 		if 'clock_counter' in pool_data[0][0]['dict_data']:
 			plot.plot_clock_time_in_period_fractions(pool_data[0][0]['dict_pll'], pool_data[0][0]['dict_net'], pool_data[0][0]['dict_data'])
 		plot.plot_phases_unwrapped(pool_data[0][0]['dict_pll'], pool_data[0][0]['dict_net'], pool_data[0][0]['dict_data'])

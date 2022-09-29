@@ -47,7 +47,7 @@ def getDicts(Fsim=55):
 		'freq_beacons': 0.25,													# frequency of external sender beacons, either a float or a list
 		'special_case': 'timeDepChangeOfIntrFreq', #'timeDepTransmissionDelay', #'False'					# 'False', or 'test_case', 'timeDepInjectLockCoupStr', 'timeDepTransmissionDelay', 'timeDepChangeOfCoupStr', 'distanceDepTransmissionDelay', 'timeDepChangeOfIntrFreq'
 		'typeOfTimeDependency': 'linear', #'triangle',										# adiabatic-{'exponential', 'linear', 'quadratic', 'triangle', 'cosine'} vs freerun-{'exponential', 'linear', 'quadratic', 'triangle', 'cosine'}
-		'min_max_rate_timeDepPara': [0.97, 1.03, 0.01/100] #[1.2, 3.4, 0.0005/100] 	#[760, 1800, 0.5/100] # provide a list with min, max and rate of the time-dependent parameter
+		'min_max_rate_timeDepPara': [0.985, 1.015, 0.00001/100] #[1.2, 3.4, 0.0005/100] 	#[760, 1800, 0.5/100] # provide a list with min, max and rate of the time-dependent parameter
 	}
 
 	dict_pll = {

@@ -127,22 +127,28 @@ class LowPassFilter:
 			self.cutoff_freq_rad = 2.0 * np.pi * self.cutoff_freq_Hz
 			self.beta = self.dt * self.cutoff_freq_rad
 
-			if self.order_loop_filter == 1:
-				print('I am the loop filter of PLL%i: first order, a=%i. Friction coefficient set to %0.2f.' % (self.pll_id, self.order_loop_filter, self.friction_coefficient))
-				#sys.exit('I WENT HERE! self.cutoff_freq_Hz=%s'%self.cutoff_freq_Hz)
-				self.evolve = lambda xPD: (1.0 - self.beta * self.friction_coefficient) * self.control_signal + self.beta * xPD
-				self.b = 1.0 / (2.0 * np.pi * self.cutoff_freq_Hz)
-			elif self.order_loop_filter >= 2:
-				if integrate_2nd_order_diff_eq:
-					print('I am the loop filter of PLL%i: order, a=%i (sequential RC LFs without buffer, using solve_ivp for 2 coupled first order ODEs). Friction coefficient set to %0.2f.' % (self.pll_id, self.order_loop_filter, self.friction_coefficient))
-					self.evolve = lambda xPD: self.solve_2nd_order_ordinary_diff_eq(xPD)
-					a = self.order_loop_filter
-					self.b = 1.0 / (2.0 * np.pi * self.cutoff_freq_Hz * a)
-					self.t = np.array([0, self.dt])
-				else:
-					print('I am the loop filter of PLL%i: order, a=%i (sequential RC LFs with buffers). Friction coefficient set to %0.2f.' % (self.pll_id, self.order_loop_filter, self.friction_coefficient))
-					self.evolve = lambda xPD: self.nth_order_sequential_lf(xPD)
+			# for a simulation that involves the entrainment by a reference oscillator, the oscillator with k=0 is chosen to be the reference: then we omit the filter as this can lead to underflow errors as
+			# the control signal becomes smaller and smaller until it cannot be represented by a np.float64 anymore which leads to an error
+			if 'entrain' in dict_net['topology'] and self.pll_id == 0:
+				print('I am the reference, hence simulating without loop filter to prevent underflow errors with the control signal!')
+				self.evolve = lambda xPD: xPD
+			else:
+				if self.order_loop_filter == 1:
+					print('I am the loop filter of PLL%i: first order, a=%i. Friction coefficient set to %0.2f.' % (self.pll_id, self.order_loop_filter, self.friction_coefficient))
+					#sys.exit('I WENT HERE! self.cutoff_freq_Hz=%s'%self.cutoff_freq_Hz)
+					self.evolve = lambda xPD: (1.0 - self.beta * self.friction_coefficient) * self.control_signal + self.beta * xPD
 					self.b = 1.0 / (2.0 * np.pi * self.cutoff_freq_Hz)
+				elif self.order_loop_filter >= 2:
+					if integrate_2nd_order_diff_eq:
+						print('I am the loop filter of PLL%i: order, a=%i (sequential RC LFs without buffer, using solve_ivp for 2 coupled first order ODEs). Friction coefficient set to %0.2f.' % (self.pll_id, self.order_loop_filter, self.friction_coefficient))
+						self.evolve = lambda xPD: self.solve_2nd_order_ordinary_diff_eq(xPD)
+						a = self.order_loop_filter
+						self.b = 1.0 / (2.0 * np.pi * self.cutoff_freq_Hz * a)
+						self.t = np.array([0, self.dt])
+					else:
+						print('I am the loop filter of PLL%i: order, a=%i (sequential RC LFs with buffers). Friction coefficient set to %0.2f.' % (self.pll_id, self.order_loop_filter, self.friction_coefficient))
+						self.evolve = lambda xPD: self.nth_order_sequential_lf(xPD)
+						self.b = 1.0 / (2.0 * np.pi * self.cutoff_freq_Hz)
 		elif self.cutoff_freq_Hz is None or self.cutoff_freq_Hz == 0:
 			print('No cut-off frequency defined (cutFc=%s), hence simulating without loop filter!' % self.cutoff_freq_Hz)
 			self.evolve = lambda xPD: xPD
@@ -151,7 +157,7 @@ class LowPassFilter:
 			sys.exit()
 
 
-	def nth_order_sequential_lf(self, phase_detector_output: float) -> np.float:
+	def nth_order_sequential_lf(self, phase_detector_output: np.float64) -> np.float:
 		""" Evolves the output of an n-th order loop filter by one time increment.
 
 		Args:
@@ -162,8 +168,11 @@ class LowPassFilter:
 		"""
 		for i in range(self.order_loop_filter):									# apply first order loop filter (identical RC) sequentially
 			# print('i=',i)
+			# print('self.control_signal: ', self.control_signal, ' self.beta: ', self.beta)
 			phase_detector_output = (1.0 - self.beta * self.friction_coefficient) * self.control_signal + self.beta * phase_detector_output
+			# print('osci%i phase_detector_output %i/1' % (self.pll_id, i), phase_detector_output)
 			self.control_signal = phase_detector_output							# needs to be updated in between!
+			# print('osci%i phase_detector_output %i/2' % (self.pll_id, i), phase_detector_output)
 
 		# prior_ctrl_sig = self.control_signal
 		# for i in range(self.order_loop_filter):									# apply first order loop filter (identical RC) sequentially

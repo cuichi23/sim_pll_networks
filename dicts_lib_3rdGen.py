@@ -31,21 +31,21 @@ gc.enable()
 def getDicts(Fsim=55):
 
 	dict_net = {
-		'Nx': 3,																# oscillators in x-direction
+		'Nx': 4,																# oscillators in x-direction
 		'Ny': 1,																# oscillators in y-direction
 		'mx': 0,																# twist/chequerboard in x-direction (depends on closed or open boundary conditions)
 		'my': -999,																# twist/chequerboard in y-direction
-		'topology': 'chain',													# 1d) ring, chain, 2d) square-open, square-periodic, hexagonal...
+		'topology': 'entrainOne-chain',													# 1d) ring, chain, 2d) square-open, square-periodic, hexagonal...
 																				# 3) global, entrainOne-[ring,chain,square-open], entrainAll-[ring,chain,square-open], entrainPLLsHierarch, compareEntrVsMutual
 		'normalize_mutual_coupling_by_inputs': True,  							# divide the sum over all inputs to a PLL by the number of inputs YES/NO -> True/False
 		'Tsim': 20000,															# simulation time in multiples of the period
 		'computeFreqAndStab': False,											# compute linear stability and global frequency if possible: True or False
 		'phi_array_mult_tau': 1,												# how many multiples of the delay is stored of the phi time series
-		'phiPerturb': [0 for i in range(3)],									# delta-perturbation on initial state -- PROVIDE EITHER ONE OF THEM! if [] set to zero
+		'phiPerturb': [0 for i in range(4)],									# delta-perturbation on initial state -- PROVIDE EITHER ONE OF THEM! if [] set to zero
 		'phiPerturbRot': [],													# delta-perturbation on initial state -- in rotated space
-		'phiInitConfig': [0 for i in range(3)],									# phase-configuration of sync state,  []: automatic, else provide list
+		'phiInitConfig': [0 for i in range(4)],									# phase-configuration of sync state,  []: automatic, else provide list
 		'freq_beacons': 0.25,													# frequency of external sender beacons, either a float or a list
-		'special_case': 'False',#'timeDepChangeOfIntrFreq', #'timeDepTransmissionDelay', #'False'					# 'False', or 'test_case', 'timeDepInjectLockCoupStr', 'timeDepTransmissionDelay', 'timeDepChangeOfCoupStr', 'distanceDepTransmissionDelay', 'timeDepChangeOfIntrFreq'
+		'special_case': 'timeDepChangeOfIntrFreq', #'timeDepTransmissionDelay', #'False'					# 'False', or 'test_case', 'timeDepInjectLockCoupStr', 'timeDepTransmissionDelay', 'timeDepChangeOfCoupStr', 'distanceDepTransmissionDelay', 'timeDepChangeOfIntrFreq'
 		'typeOfTimeDependency': 'linear', #'triangle',										# adiabatic-{'exponential', 'linear', 'quadratic', 'triangle', 'cosine'} vs freerun-{'exponential', 'linear', 'quadratic', 'triangle', 'cosine'}
 		'min_max_rate_timeDepPara': [0.985, 1.015, 0.00001/100] #[1.2, 3.4, 0.0005/100] 	#[760, 1800, 0.5/100] # provide a list with min, max and rate of the time-dependent parameter
 	}
@@ -56,7 +56,7 @@ def getDicts(Fsim=55):
 		'coupK': 0.01152, 														# [random.uniform(0.3, 0.4) for i in range(dict_net['Nx']*dict_net['Ny'])],# coupling strength (like phase model: K = Kvco/2 * G_all, NOTE: the /2 is for coupling functions that have peak2peal amplitude 2) in Hz float or [random.uniform(minK, maxK) for i in range(dict_net['Nx']*dict_net['Ny'])]
 		'gPDin': 1,																# gains of the different inputs to PD k from input l -- G_kl, see PD, set to 1 and all G_kl=1 (so far only implemented for some cases, check!): np.random.uniform(0.95,1.05,size=[dict_net['Nx']*dict_net['Ny'],dict_net['Nx']*dict_net['Ny']])
 		'gPDin_symmetric': True,												# set to True if G_kl == G_lk, False otherwise
-		'cutFc': 4.045E-5, #0.0207,												# LF cut-off frequency in Hz, here N=9 with mean 0.015: [0.05,0.015,0.00145,0.001,0.0001,0.001,0.00145,0.015,0.05], [random.uniform(0.001, 0.0015) for i in range(dict_net['Nx']*dict_net['Ny'])]
+		'cutFc': 0.0207, #4.045E-5, #0.0207,												# LF cut-off frequency in Hz, here N=9 with mean 0.015: [0.05,0.015,0.00145,0.001,0.0001,0.001,0.00145,0.015,0.05], [random.uniform(0.001, 0.0015) for i in range(dict_net['Nx']*dict_net['Ny'])]
 		'orderLF': 2,															# order of LF filter, either 1 or 2 at the moment
 		'div': 1,																# divisor of divider (int)
 		'friction_coefficient': 1,												# friction coefficient of 2nd order Kuramoto models

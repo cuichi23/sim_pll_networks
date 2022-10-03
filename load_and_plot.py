@@ -81,10 +81,10 @@ labelpadyaxis       = 20
 # load data
 folder		 = '/home/cuichi/Documents/MPI_PKS_Docs/2019_VIP+/Programs/2021_simPLL_pub/results/'#'/home/cuichi/data-z2/simPLL_2/1_CH_success/results/'
 ################################################################################
-filenamePLL  = folder+'dict_pll_K0.012_tau2.223_Fc0.000_mx0_my-999_N3_topochain_1:7_2022_9_27' #_K0.012_tau2.223_Fc0.000_mx0_my-999_N3_topochain_22:37_2022_9_23'
-filenameNet  = folder+'dict_net_K0.012_tau2.223_Fc0.000_mx0_my-999_N3_topochain_1:7_2022_9_27' #_K0.012_tau2.223_Fc0.000_mx0_my-999_N3_topochain_22:37_2022_9_23'
-filenameData = folder+'dict_data_K0.012_tau2.223_Fc0.000_mx0_my-999_N3_topochain_1:7_2022_9_27' #_K0.012_tau2.223_Fc0.000_mx0_my-999_N3_topochain_22:37_2022_9_23'
-filenameAlgo = folder+'dict_algo_K0.012_tau2.223_Fc0.000_mx0_my-999_N3_topochain_1:7_2022_9_27' #_K0.012_tau2.223_Fc0.000_mx0_my-999_N3_topochain_22:37_2022_9_23'
+filenamePLL  = folder+'dict_pll_K0.012_tau1.285_Fc0.021_mx0_my-999_N4_topoentrainOne-ring_1:56_2022_10_3' #_K0.012_tau1.285_Fc0.000_mx0_my-999_N4_topoentrainOne-chain_12:4_2022_10_1' #_K0.012_tau1.285_Fc0.021_mx0_my-999_N4_topoentrainOne-chain_1:27_2022_10_1' #_K0.012_tau2.223_Fc0.000_mx0_my-999_N3_topochain_1:7_2022_9_27' #_K0.012_tau2.223_Fc0.000_mx0_my-999_N3_topochain_22:37_2022_9_23'
+filenameNet  = folder+'dict_net_K0.012_tau1.285_Fc0.021_mx0_my-999_N4_topoentrainOne-ring_1:56_2022_10_3' #_K0.012_tau1.285_Fc0.000_mx0_my-999_N4_topoentrainOne-chain_12:4_2022_10_1' #_K0.012_tau1.285_Fc0.021_mx0_my-999_N4_topoentrainOne-chain_1:27_2022_10_1' #_K0.012_tau2.223_Fc0.000_mx0_my-999_N3_topochain_1:7_2022_9_27' #_K0.012_tau2.223_Fc0.000_mx0_my-999_N3_topochain_22:37_2022_9_23'
+filenameData = folder+'dict_data_K0.012_tau1.285_Fc0.021_mx0_my-999_N4_topoentrainOne-ring_1:56_2022_10_3' #_K0.012_tau1.285_Fc0.000_mx0_my-999_N4_topoentrainOne-chain_12:4_2022_10_1' #_K0.012_tau1.285_Fc0.021_mx0_my-999_N4_topoentrainOne-chain_1:27_2022_10_1' #_K0.012_tau2.223_Fc0.000_mx0_my-999_N3_topochain_1:7_2022_9_27' #_K0.012_tau2.223_Fc0.000_mx0_my-999_N3_topochain_22:37_2022_9_23'
+filenameAlgo = folder+'dict_algo_K0.012_tau1.285_Fc0.021_mx0_my-999_N4_topoentrainOne-ring_1:56_2022_10_3' #_K0.012_tau1.285_Fc0.000_mx0_my-999_N4_topoentrainOne-chain_12:4_2022_10_1' #_K0.012_tau1.285_Fc0.021_mx0_my-999_N4_topoentrainOne-chain_1:27_2022_10_1' # _K0.012_tau2.223_Fc0.000_mx0_my-999_N3_topochain_1:7_2022_9_27' #_K0.012_tau2.223_Fc0.000_mx0_my-999_N3_topochain_22:37_2022_9_23'
 ################################################################################
 if 'pool_data' in filenameData:
 	pool_data = pickle.load(open(filenameData, 'rb'))

@@ -302,10 +302,10 @@ def plot_results_simulation(dict_net: dict, dict_pll: dict, dict_algo: dict, dic
 	"""
 	if dict_net['special_case'] != 'False':
 		print('Plotting frequency vs time-dependent parameter!')
-		plot.plot_instantaneous_freqs_vs_time_dependent_parameter(dict_pll, dict_net, dict_data)
-		plot.plot_order_parameter_vs_time_dependent_parameter_div_and_undiv(dict_pll, dict_net, dict_data)
+		#plot.plot_instantaneous_freqs_vs_time_dependent_parameter(dict_pll, dict_net, dict_data)
+		#plot.plot_order_parameter_vs_time_dependent_parameter_div_and_undiv(dict_pll, dict_net, dict_data)
 		plot.plot_phase_differences_vs_time_dependent_parameter_divided_or_undivided(dict_pll, dict_net, dict_data, plotlist=[], phase_diff_wrap_to_interval=2, phases_of_divided_signals=True)
-		plot.plot_phase_differences_vs_time_dependent_parameter_divided_or_undivided(dict_pll, dict_net, dict_data, plotlist=[], phase_diff_wrap_to_interval=2, phases_of_divided_signals=False)
+		#plot.plot_phase_differences_vs_time_dependent_parameter_divided_or_undivided(dict_pll, dict_net, dict_data, plotlist=[], phase_diff_wrap_to_interval=2, phases_of_divided_signals=False)
 		plot.plot_inst_frequency_and_phase_difference_vs_time_dependent_parameter_divided_or_undivided(dict_pll, dict_net, dict_data, phases_of_divided_signals=True,
 																										frequency_of_divided_signals=False, plotlist=[], phase_diff_wrap_to_interval=2)
 

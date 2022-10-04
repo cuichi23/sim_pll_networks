@@ -11,6 +11,7 @@ from scipy.signal import sawtooth
 from scipy.signal import square
 from scipy.stats import cauchy
 from operator import add, sub
+import matplotlib.cm as cm
 
 from multiprocessing import Pool, freeze_support
 import itertools
@@ -226,8 +227,10 @@ def evaluate_pool_data(dict_net, dict_pll, dict_algo, pool_data):
 				plot.plot_inst_frequency_and_phase_difference(pool_data[0][i]['dict_pll'], pool_data[0][i]['dict_net'], pool_data[0][i]['dict_algo'], pool_data[0][i]['dict_data'])
 				plt.draw()
 				plt.show()
-		plot.plot_order_param_vs_parameter_space(pool_data, average_time_order_parameter_in_periods)
-		plot.plot_final_phase_configuration_vs_parameter_space(pool_data, average_time_phase_difference_in_periods=average_time_order_parameter_in_periods, phase_wrap=1, std_treshold_determine_time_dependency=0.15*np.pi, std_treshold_order_param_determine_time_dependency=0.075)
+		plot.plot_order_param_vs_parameter_space(pool_data, average_time_order_parameter_in_periods=average_time_order_parameter_in_periods, colormap=cm.hsv)
+		plot.plot_final_phase_configuration_vs_parameter_space(pool_data, average_time_phase_difference_in_periods=average_time_order_parameter_in_periods,
+															phase_wrap=1, std_treshold_determine_time_dependency=0.15*np.pi,
+															std_treshold_order_param_determine_time_dependency=0.075, colormap=cm.hsv)
 		plt.draw()
 		plt.show()
 

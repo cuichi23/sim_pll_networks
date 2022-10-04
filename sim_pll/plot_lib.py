@@ -1971,7 +1971,7 @@ def plot_allan_variance(dict_pll: dict, dict_net: dict, dict_data: dict, t_trans
 
 #################################################################################################################################################################################
 
-def plot_order_param_vs_parameter_space(pool_data: dict, average_time_order_parameter_in_periods: np.float, axis_normalization=True, add_scatter_plots: bool = False):
+def plot_order_param_vs_parameter_space(pool_data: dict, average_time_order_parameter_in_periods: np.float, colormap=cm.coolwarm, axis_normalization=True, add_scatter_plots: bool = False):
 	""" Function that plots the last value and an average of the order parameter in a 2d parameter space in two individual plots.
 		Each plot comes as a scatterplot and an imshow.
 
@@ -1998,13 +1998,13 @@ def plot_order_param_vs_parameter_space(pool_data: dict, average_time_order_para
 
 	# if (topology == 'entrainOne' or topology == 'entrainAll'):
 	# 	# cmap=plt.cm.get_cmap('Blues', 6)
-	# 	cmap 	  = plt.cm.get_cmap('seismic', 256);
-	# 	cmap1 	  = plt.cm.get_cmap('seismic', 256);
-	# 	colormap  = eva.shiftedColorMap(cmap,  start=0.0, midpoint=absR_conf, stop=1.0, name='shiftedcmap')
-	# 	colormap1 = eva.shiftedColorMap(cmap1, start=0.0, midpoint=absR_conf, stop=1.0, name='shiftedcmap1')
+	# 	cmap = plt.cm.get_cmap('seismic', 256);
+	# 	cmap1 = plt.cm.get_cmap('seismic', 256);
+	# 	my_colormap = eva.shiftedColorMap(cmap,  start=0.0, midpoint=absR_conf, stop=1.0, name='shiftedcmap')
+	# 	my_colormap1 = eva.shiftedColorMap(cmap1, start=0.0, midpoint=absR_conf, stop=1.0, name='shiftedcmap1')
 	# 	print('absR_conf=', absR_conf, ', min(results[:,1])=', min(results[:,1]), ', max(results[:,1])=', max(results[:,1]))
 	# else:
-	colormap = matplotlib.colors.LinearSegmentedColormap('my_colormap', cdict, 1024)
+	#	my_colormap = matplotlib.colors.LinearSegmentedColormap('my_colormap', cdict, 1024)
 
 	# extract the results from the data dictionary for plotting '''
 	results = []
@@ -2058,7 +2058,7 @@ def plot_order_param_vs_parameter_space(pool_data: dict, average_time_order_para
 	tempresults_ma = ma.masked_where(tempresults < 0, tempresults)  # Create masked array
 	# print('tempresult_ma:', tempresults_ma)
 	# print('initPhiPrime0:', initPhiPrime0)
-	plt.imshow(tempresults_ma.astype(float), interpolation='nearest', cmap=cm.coolwarm, aspect='auto', origin='lower',
+	plt.imshow(tempresults_ma.astype(float), interpolation='nearest', cmap=colormap, aspect='auto', origin='lower',
 			   extent=(dict_algo['min_max_range_parameter_0'][0], dict_algo['min_max_range_parameter_0'][1], dict_algo['min_max_range_parameter_1'][0], dict_algo['min_max_range_parameter_1'][1]),
 			   vmin=0, vmax=1)
 	plt.title(r'last $R(t)$')
@@ -2081,7 +2081,7 @@ def plot_order_param_vs_parameter_space(pool_data: dict, average_time_order_para
 	tempresults_ma = ma.masked_where(tempresults < 0, tempresults)  # Create masked array
 	# print('tempresult_ma:', tempresults_ma)
 	# print('initPhiPrime0:', initPhiPrime0)
-	plt.imshow(tempresults_ma.astype(float), interpolation='nearest', cmap=cm.coolwarm, aspect='auto', origin='lower',
+	plt.imshow(tempresults_ma.astype(float), interpolation='nearest', cmap=colormap, aspect='auto', origin='lower',
 			   extent=(dict_algo['min_max_range_parameter_0'][0], dict_algo['min_max_range_parameter_0'][1], dict_algo['min_max_range_parameter_1'][0], dict_algo['min_max_range_parameter_1'][1]),
 			   vmin=0, vmax=1)
 	plt.title(r'mean $R(t)$')
@@ -2104,7 +2104,7 @@ def plot_order_param_vs_parameter_space(pool_data: dict, average_time_order_para
 	tempresults_ma = ma.masked_where(tempresults < 0, tempresults)  # Create masked array
 	# print('tempresult_ma:', tempresults_ma)
 	# print('initPhiPrime0:', initPhiPrime0)
-	plt.imshow(tempresults_ma.astype(float), interpolation='nearest', cmap=cm.coolwarm, aspect='auto', origin='lower',
+	plt.imshow(tempresults_ma.astype(float), interpolation='nearest', cmap=colormap, aspect='auto', origin='lower',
 			   extent=(dict_algo['min_max_range_parameter_0'][0], dict_algo['min_max_range_parameter_0'][1], dict_algo['min_max_range_parameter_1'][0], dict_algo['min_max_range_parameter_1'][1]),
 			   vmin=np.min(tempresults_ma), vmax=np.max(tempresults_ma))
 	plt.title(r'std($\bar{R}_{T}(t)$)')
@@ -2127,7 +2127,7 @@ def plot_order_param_vs_parameter_space(pool_data: dict, average_time_order_para
 	tempresults_ma = ma.masked_where(tempresults < 0, tempresults)  # Create masked array
 	# print('tempresult_ma:', tempresults_ma)
 	# print('initPhiPrime0:', initPhiPrime0)
-	plt.imshow(tempresults_ma.astype(float), interpolation='nearest', cmap=cm.coolwarm, aspect='auto', origin='lower',
+	plt.imshow(tempresults_ma.astype(float), interpolation='nearest', cmap=colormap, aspect='auto', origin='lower',
 			   extent=(dict_algo['min_max_range_parameter_0'][0], dict_algo['min_max_range_parameter_0'][1], dict_algo['min_max_range_parameter_1'][0], dict_algo['min_max_range_parameter_1'][1]),
 			   vmin=np.min(tempresults_ma), vmax=np.max(tempresults_ma))
 	plt.title(r'std($\bar{R}_{1.3T}(t)$)')
@@ -2183,8 +2183,8 @@ def plot_order_param_vs_parameter_space(pool_data: dict, average_time_order_para
 
 
 def plot_final_phase_configuration_vs_parameter_space(pool_data: dict, average_time_phase_difference_in_periods: np.float, phase_wrap: np.int = 1, std_treshold_determine_time_dependency: np.float = 0.1*np.pi,
-													  std_treshold_order_param_determine_time_dependency: np.float = 0.075, axis_normalization: bool = True, phase_diff_wrt_osci_k_0: bool = False,
-													  plot_if_time_dependent: bool = False, add_scatter_plots: bool = False):
+														std_treshold_order_param_determine_time_dependency: np.float = 0.075, colormap=cm.coolwarm, axis_normalization: bool = True,
+														phase_diff_wrt_osci_k_0: bool = False, plot_if_time_dependent: bool = False, add_scatter_plots: bool = False):
 	""" Function that plots the last value of the phase and the std of the phase over the average time in a 2d parameter space in two individual plots.
 		Each plot comes as a scatterplot and an imshow.
 
@@ -2227,13 +2227,13 @@ def plot_final_phase_configuration_vs_parameter_space(pool_data: dict, average_t
 
 	# if (topology == 'entrainOne' or topology == 'entrainAll'):
 	# 	# cmap=plt.cm.get_cmap('Blues', 6)
-	# 	cmap 	  = plt.cm.get_cmap('seismic', 256);
-	# 	cmap1 	  = plt.cm.get_cmap('seismic', 256);
-	# 	colormap  = eva.shiftedColorMap(cmap,  start=0.0, midpoint=absR_conf, stop=1.0, name='shiftedcmap')
-	# 	colormap1 = eva.shiftedColorMap(cmap1, start=0.0, midpoint=absR_conf, stop=1.0, name='shiftedcmap1')
+	# 	cmap = plt.cm.get_cmap('seismic', 256);
+	# 	cmap1 = plt.cm.get_cmap('seismic', 256);
+	# 	my_colormap = eva.shiftedColorMap(cmap,  start=0.0, midpoint=absR_conf, stop=1.0, name='shiftedcmap')
+	# 	my_colormap1 = eva.shiftedColorMap(cmap1, start=0.0, midpoint=absR_conf, stop=1.0, name='shiftedcmap1')
 	# 	print('absR_conf=', absR_conf, ', min(results[:,1])=', min(results[:,1]), ', max(results[:,1])=', max(results[:,1]))
 	# else:
-	colormap = matplotlib.colors.LinearSegmentedColormap('my_colormap', cdict, 1024)
+	#	my_colormap = matplotlib.colors.LinearSegmentedColormap('my_colormap', cdict, 1024)
 
 	# extract the results from the data dictionary: here order parameter to decide whether or not a realization has settled into an asymptotic state with fixed phase relations '''
 	results = []
@@ -2398,7 +2398,7 @@ def plot_final_phase_configuration_vs_parameter_space(pool_data: dict, average_t
 		tempresults_ma = ma.masked_where(tempresults == np.nan, tempresults)  # Create masked array
 		# print('tempresult_ma:', tempresults_ma)
 
-		plt.imshow(tempresults_ma.astype(float), interpolation='nearest', cmap=cm.coolwarm, aspect='auto', origin='lower',
+		plt.imshow(tempresults_ma.astype(float), interpolation='nearest', cmap=colormap, aspect='auto', origin='lower',
 				   extent=(dict_algo['min_max_range_parameter_0'][0], dict_algo['min_max_range_parameter_0'][1], dict_algo['min_max_range_parameter_1'][0], dict_algo['min_max_range_parameter_1'][1]),
 				   vmin=imshow_min_val, vmax=imshow_max_val)
 		plt.title(r'last $\Delta$'+phi_string)
@@ -2422,7 +2422,7 @@ def plot_final_phase_configuration_vs_parameter_space(pool_data: dict, average_t
 		tempresults_ma = ma.masked_where(tempresults == np.nan, tempresults)  # Create masked array
 		# print('tempresult_ma:', tempresults_ma)
 
-		plt.imshow(tempresults_ma.astype(float), interpolation='nearest', cmap=cm.coolwarm, aspect='auto', origin='lower',
+		plt.imshow(tempresults_ma.astype(float), interpolation='nearest', cmap=colormap, aspect='auto', origin='lower',
 				   extent=(dict_algo['min_max_range_parameter_0'][0], dict_algo['min_max_range_parameter_0'][1], dict_algo['min_max_range_parameter_1'][0], dict_algo['min_max_range_parameter_1'][1]),
 				   vmin=imshow_min_val, vmax=imshow_max_val)
 		plt.title(r'$\bar{\Delta}$' + phi_string)
@@ -2442,7 +2442,7 @@ def plot_final_phase_configuration_vs_parameter_space(pool_data: dict, average_t
 		tempresults = predicted_beta_kl[j, :].reshape(dict_algo['paramDiscretization'][0], dict_algo['paramDiscretization'][1])
 		tempresults = np.transpose(tempresults)
 
-		plt.imshow(tempresults.astype(float), interpolation='nearest', cmap=cm.coolwarm, aspect='auto', origin='lower',
+		plt.imshow(tempresults.astype(float), interpolation='nearest', cmap=colormap, aspect='auto', origin='lower',
 				   extent=(dict_algo['min_max_range_parameter_0'][0], dict_algo['min_max_range_parameter_0'][1], dict_algo['min_max_range_parameter_1'][0], dict_algo['min_max_range_parameter_1'][1]),
 				   vmin=std_treshold_determine_time_dependency, vmax=2 * np.pi)
 		plt.title(r'$\Delta_\textrm{theory}$' + phi_string)
@@ -2468,7 +2468,7 @@ def plot_final_phase_configuration_vs_parameter_space(pool_data: dict, average_t
 		tempresults_ma = ma.masked_where(tempresults < std_treshold_determine_time_dependency, tempresults)  # Create masked array
 		# print('tempresult_ma:', tempresults_ma)
 
-		plt.imshow(tempresults_ma.astype(float), interpolation='nearest', cmap=cm.coolwarm, aspect='auto', origin='lower',
+		plt.imshow(tempresults_ma.astype(float), interpolation='nearest', cmap=colormap, aspect='auto', origin='lower',
 				   extent=(dict_algo['min_max_range_parameter_0'][0], dict_algo['min_max_range_parameter_0'][1], dict_algo['min_max_range_parameter_1'][0], dict_algo['min_max_range_parameter_1'][1]),
 				   vmin=std_treshold_determine_time_dependency, vmax=2 * np.pi)
 		plt.title(r'std($\Delta$' + phi_string + ')')
@@ -2492,10 +2492,10 @@ def plot_final_phase_configuration_vs_parameter_space(pool_data: dict, average_t
 		tempresults_ma = ma.masked_where(tempresults == np.nan, tempresults)  # Create masked array
 		# print('tempresult_ma:', tempresults_ma)
 
-		plt.imshow(tempresults_ma.astype(float), interpolation='nearest', cmap=cm.coolwarm, aspect='auto', origin='lower',
+		plt.imshow(tempresults_ma.astype(float), interpolation='nearest', cmap=colormap, aspect='auto', origin='lower',
 				   extent=(dict_algo['min_max_range_parameter_0'][0], dict_algo['min_max_range_parameter_0'][1], dict_algo['min_max_range_parameter_1'][0], dict_algo['min_max_range_parameter_1'][1]),
 				   vmin=std_treshold_determine_time_dependency, vmax=2 * np.pi)
-		plt.title(r'$\Delta$' + phi_string + r' for $R(t) \rightarrow\infty=c$')
+		plt.title(r'$\Delta$' + phi_string + r' for $R(t)\rightarrow\infty=c$')
 		plt.xlabel(x_label)
 		plt.ylabel(y_label)
 		plt.xlim([1.05 * dict_algo['min_max_range_parameter_0'][0], 1.05 * dict_algo['min_max_range_parameter_0'][1]])
@@ -2518,10 +2518,10 @@ def plot_final_phase_configuration_vs_parameter_space(pool_data: dict, average_t
 		tempresults_ma = ma.masked_where(tempresults == np.nan, tempresults)  # Create masked array
 		# print('tempresult_ma:', tempresults_ma)
 
-		plt.imshow(tempresults_ma.astype(float), interpolation='nearest', cmap=cm.coolwarm, aspect='auto', origin='lower',
+		plt.imshow(tempresults_ma.astype(float), interpolation='nearest', cmap=colormap, aspect='auto', origin='lower',
 				   extent=(dict_algo['min_max_range_parameter_0'][0], dict_algo['min_max_range_parameter_0'][1], dict_algo['min_max_range_parameter_1'][0], dict_algo['min_max_range_parameter_1'][1]),
 				   vmin=std_treshold_determine_time_dependency, vmax=2 * np.pi)
-		plt.title(r'$\Delta$' + phi_string + r' for $std(R(t)) and min/max(R(t)) increasing/decreasing$')
+		plt.title(r'$\Delta$' + phi_string + r' for $std(R(t))$ and min/max($R(t)$) increasing/decreasing')
 		plt.xlabel(x_label)
 		plt.ylabel(y_label)
 		plt.xlim([1.05 * dict_algo['min_max_range_parameter_0'][0], 1.05 * dict_algo['min_max_range_parameter_0'][1]])
@@ -2581,9 +2581,10 @@ def plot_final_phase_configuration_vs_parameter_space(pool_data: dict, average_t
 # ################################################################################################################################################################################
 
 
-def plot_order_parameter_vs_initial_phase_configuration_space(pool_data: dict, average_time_order_parameter_in_periods: np.float, axis_normalization=True):
+def plot_order_parameter_vs_initial_phase_configuration_space(pool_data: dict, average_time_order_parameter_in_periods: np.float, colormap=cm.coolwarm, axis_normalization=True):
 	"""Function that plots the last value and an average of the order parameter as a function of the initial phase-configuration  in two individual plots.
 		The initial phase configuration is expressed as the phase differences for 2d and 3d phase spaces. Each plot comes as a scatterplot and an imshow.
+		Derived from brute-force basin stability!
 
 		Args:
 			pool_data: contains the results of all simulations (realizations), i.e., the phases of all oscillators, time dependent parameters, etc.
@@ -2607,13 +2608,13 @@ def plot_order_parameter_vs_initial_phase_configuration_space(pool_data: dict, a
 
 	# if (topology == 'entrainOne' or topology == 'entrainAll'):
 	# 	# cmap=plt.cm.get_cmap('Blues', 6)
-	# 	cmap 	  = plt.cm.get_cmap('seismic', 256);
-	# 	cmap1 	  = plt.cm.get_cmap('seismic', 256);
-	# 	colormap  = eva.shiftedColorMap(cmap,  start=0.0, midpoint=absR_conf, stop=1.0, name='shiftedcmap')
-	# 	colormap1 = eva.shiftedColorMap(cmap1, start=0.0, midpoint=absR_conf, stop=1.0, name='shiftedcmap1')
+	# 	cmap = plt.cm.get_cmap('seismic', 256);
+	# 	cmap1 = plt.cm.get_cmap('seismic', 256);
+	# 	my_colormap = eva.shiftedColorMap(cmap,  start=0.0, midpoint=absR_conf, stop=1.0, name='shiftedcmap')
+	# 	my_colormap1 = eva.shiftedColorMap(cmap1, start=0.0, midpoint=absR_conf, stop=1.0, name='shiftedcmap1')
 	# 	print('absR_conf=', absR_conf, ', min(results[:,1])=', min(results[:,1]), ', max(results[:,1])=', max(results[:,1]))
 	# else:
-	colormap = matplotlib.colors.LinearSegmentedColormap('my_colormap', cdict, 1024)
+	#	my_colormap = matplotlib.colors.LinearSegmentedColormap('my_colormap', cdict, 1024)
 
 
 
@@ -2754,7 +2755,7 @@ def plot_order_parameter_vs_initial_phase_configuration_space(pool_data: dict, a
 	tempresults_ma = ma.masked_where(tempresults < 0, tempresults)  # Create masked array
 	# print('tempresult_ma:', tempresults_ma)
 	# print('initPhiPrime0:', initPhiPrime0)
-	plt.imshow(tempresults_ma.astype(float), interpolation='nearest', cmap=cm.coolwarm, aspect='auto', origin='lower',
+	plt.imshow(tempresults_ma.astype(float), interpolation='nearest', cmap=colormap, aspect='auto', origin='lower',
 			   extent=(allPoints[:, 0].min() + phiMr[d1], allPoints[:, 0].max() + phiMr[d1], allPoints[:, 1].min() + phiMr[d2], allPoints[:, 1].max() + phiMr[d2]), vmin=0, vmax=1)
 	plt.title(r'mean $R(t,m=%d )$, constant dim: $\phi_0^{\prime}=%.2f$' % (int(k), initPhiPrime0))
 	if N == 3:
@@ -2780,7 +2781,7 @@ def plot_order_parameter_vs_initial_phase_configuration_space(pool_data: dict, a
 	tempresults = results[:, 1].reshape((paramDiscretization, paramDiscretization))  # np.flipud()
 	tempresults = np.transpose(tempresults)
 	tempresults_ma = ma.masked_where(tempresults < 0, tempresults)  # Create masked array
-	plt.imshow(tempresults_ma.astype(float), interpolation='nearest', cmap=cm.coolwarm, aspect='auto', origin='lower',
+	plt.imshow(tempresults_ma.astype(float), interpolation='nearest', cmap=colormap, aspect='auto', origin='lower',
 			   extent=(allPoints[:, 0].min() + phiMr[d1], allPoints[:, 0].max() + phiMr[d1], allPoints[:, 1].min() + phiMr[d2], allPoints[:, 1].max() + phiMr[d2]), vmin=0, vmax=1)
 	plt.title(r'last $R(t,m=%d )$, constant dim: $\phi_0^{\prime}=%.2f$' % (int(k), initPhiPrime0))
 	if N == 3:

@@ -485,7 +485,7 @@ class PhaseDetectorCombiner:
 		a: the wave form of the wireless signal
 		K2nd_k: coupling strength for injection of 2nd harmonic, divide by PLL coupling strength as this is later multiplied again
 		activate_Rx:  turns antenna input off or on (0 or 1)
-		idx_neighbors: the identifiers of all neighbors from whom a signal is received
+		neighbors_ids: the identifiers of all neighbors from whom a signal is received
 		G_kl: component of feed forward path gain matrix: defines the gain of the feed forward path of oscillator k with respect to input l
 		compute: function that defines the dynamics based on the relation of input and feedback signal
 		y: phase detector output
@@ -527,10 +527,10 @@ class PhaseDetectorCombiner:
 		self.activate_Rx = 0
 		self.y = None
 
-		self.idx_neighbors = [n for n in dict_pll['G'].neighbors(self.pll_id)] # for networkx > v1.11
+		self.neighbor_ids = [n for n in dict_pll['G'].neighbors(self.pll_id)] 			# for networkx > v1.11
 		print('I am the phase detector of PLL%i, the frequency division is %i:' % (self.pll_id, self.div))
 		if isinstance(dict_pll['gPDin'], np.ndarray) or isinstance(dict_pll['gPDin'], list):
-			tempG_kl = [dict_pll['gPDin'][self.pll_id, i] for i in self.idx_neighbors]
+			tempG_kl = [dict_pll['gPDin'][self.pll_id, i] for i in self.neighbor_ids]
 			self.G_kl = np.array(tempG_kl)
 			print('PD has different gains for each input signal! Hence: G_kl are introduced. CHECK THESE CASES AGAIN! self.G_kl[%i,l]' % self.pll_id, self.G_kl)
 			# time.sleep(1)
@@ -599,7 +599,7 @@ class PhaseDetectorCombiner:
 		else:
 			print('Phase detector and combiner problem, dict_pll[*includeCompHF*] should either be True or False, check PhaseDetectorCombiner in pll_lib! ')
 
-	def change_neighbors(self, new_neighbor_list: list, dict_pll: dict, idx_time: np.int):
+	def update_list_of_neighbors_of_phase_detector(self, new_neighbor_list: list, dict_pll: dict, idx_time: np.int):
 		"""
 		Changes the neighbors of an oscillator in the network as specified.
 
@@ -608,8 +608,8 @@ class PhaseDetectorCombiner:
 			dict_pll: contains PLL configuration information
 			idx_time: the index that specifies where within the discrete time simulation the change takes place
 		"""
-		print('\nI am the PD of PLL%i, changing my neigbors from' % self.pll_id, self.idx_neighbors, 'to', new_neighbor_list, 'at time', idx_time*dict_pll['dt'], '!')
-		self.idx_neighbors = new_neighbor_list
+		print('\nI am the PD of PLL%i, changing my neighbors from' % self.pll_id, self.neighbor_ids, 'to', new_neighbor_list, 'at time', idx_time*dict_pll['dt'], '!')
+		self.neighbor_ids = new_neighbor_list
 
 		return None
 
@@ -627,15 +627,15 @@ class PhaseDetectorCombiner:
 		Returns:
 			phase detector output
 		"""
-		# print('self.idx_neighbors:', self.idx_neighbors)
+		# print('self.neighbor_ids:', self.neighbor_ids)
 		# print('x_delayed:', x_delayed, '\tx_feed:', x_feed)
 		# print('idx_time in pdc.next: ', idx_time)
 		# print('Next function of PDC, np.shape(x_feed)=',np.shape(x_feed),'\tnp.shape(x_delayed)=',np.shape(x_delayed))
 
 		#try:
 		#	#x_feed = x[self.idx_self]											# extract own state (phase) at time t and save to x_feed
-		#	if self.idx_neighbors:												# check whether there are neighbors
-		#		#x_neighbours = x_delayed[self.idx_neighbors]					# extract the states of all coupling neighbors at t-tau and save to x_neighbours
+		#	if self.neighbor_ids:												# check whether there are neighbors
+		#		#x_neighbours = x_delayed[self.neighbor_ids]					# extract the states of all coupling neighbors at t-tau and save to x_neighbours
 		#		#self.y = self.compute( x_neighbours, antenna_in, x_feed  )		--> replaced these by choosing in delayer already!
 		#		self.y = self.compute(transmission_delayed_phases, antenna_in, feedback_delayed_phases, index_current_time)
 		#	else:
@@ -648,8 +648,8 @@ class PhaseDetectorCombiner:
 		#
 		#	return self.y
 
-		if self.idx_neighbors:  # check whether there are neighbors
-			# x_neighbours = x_delayed[self.idx_neighbors]	# extract the states of all coupling neighbors at t-tau and save to x_neighbours
+		if self.neighbor_ids:  # check whether there are neighbors
+			# x_neighbours = x_delayed[self.neighbor_ids]	# extract the states of all coupling neighbors at t-tau and save to x_neighbours
 			self.y = self.compute(transmission_delayed_phases, antenna_in, feedback_delayed_phases)
 		else:  # this is triggered, e.g., in the case of reference oscillators that receive no input
 			# print('No neighbors found, setting self.y to zero! Check for digital PLLs or other types.')
@@ -770,11 +770,11 @@ class Delayer:
 
 		# this is being set after all (random) delays have been drawn
 		self.phi_array_len = None
-		# each Delayers neighbors are either given by a coupling topology stored in dict_pll['G'] or are updated during the simulation given the positions and a signal propagation speed
+		# each Delayer's neighbors are either given by a coupling topology stored in dict_pll['G'] or are updated during the simulation given the positions and a signal propagation speed
 		if not dict_net['special_case'] == 'distanceDepTransmissionDelay':
-			self.neighbor_ids = [n for n in dict_pll['G'].neighbors(self.pll_id)]	# for networkx > v1.11
+			self.neighbor_ids = [n for n in dict_pll['G'].neighbors(self.pll_id)]		# for networkx > v1.11
 		else:
-			self.neighbor_ids = None											# to be set via function self.set_list_of_current_neighbors(list_of_neighbors)
+			self.neighbor_ids = None													# to be set via function self.update_list_of_neighbors_of_delayer(list_of_neighbors)
 		print('\nI am the delayer of PLL%i, my neighbors (initially) have indexes:' % self.pll_id, self.neighbor_ids)
 
 		if ( (isinstance(dict_pll['transmission_delay'], float) or isinstance(dict_pll['transmission_delay'], int)) and not dict_net['special_case'] == 'timeDepTransmissionDelay'):
@@ -795,7 +795,7 @@ class Delayer:
 			if np.array(dict_pll['transmission_delay']).ndim == 1:				# tau_k case -- all inputs are subject to the same transmission delay
 				print('Delayer has different delays for each oscillator k, but all inputs are equally delayed! Hence: tau_k are introduced and all incoming signals are subject to the same time delay.')
 				self.transmit_delay_steps= int(np.round(dict_pll['transmission_delay'][self.pll_id] / self.dt))
-				self.pick_delayed_phases = lambda phi, t, abs_t, tau_k: phi[(t-tau_k)%self.phi_array_len, self.neighbor_ids]
+				self.pick_delayed_phases = lambda phi, t, abs_t, tau_k: phi[(t-tau_k) % self.phi_array_len, self.neighbor_ids]
 
 			elif np.array(dict_pll['transmission_delay']).ndim == 2: 			# tau_kl case -- all iputs can have different transmission delay values -- here we provide a 2D matrix of time delays
 				print('Delayer has different delays for each input signal! Hence: tau_kl are introduced via a matrix with dimensions %ix%i.'%(dict_net['Nx']*dict_net['Ny'], dict_net['Nx']*dict_net['Ny']))
@@ -845,13 +845,19 @@ class Delayer:
 				print('Feedback set to nonzero but is smaller than the time-step "dt", hence "self.feedback_delay_steps" < 1 !')
 				sys.exit()
 
-	def set_list_of_current_neighbors(self, list_of_neighbors: list) -> None:
-		"""Set the internal list of neighbors of the Delayer.
+	def update_list_of_neighbors_of_delayer(self, new_neighbor_list: list, dict_pll: dict, idx_time: np.int):
+		"""
+		Changes the neighbors of an oscillator in the network as specified.
 
 		Args:
-			list_of_neighbors: list of the current coupling neighbors of the Delayer
+			new_neighbor_list: list of new neighbors
+			dict_pll: contains PLL configuration information
+			idx_time: the index that specifies where within the discrete time simulation the change takes place
 		"""
-		self.neighbor_ids = list_of_neighbors
+		print('\nI am the Delayer of PLL%i, changing my neighbors from' % self.pll_id, self.neighbor_ids, 'to', new_neighbor_list, 'at time', idx_time*dict_pll['dt'], '!')
+		self.neighbor_ids = new_neighbor_list
+
+		return None
 
 	def get_list_of_current_neighbors(self) -> list:
 		"""Get the internal list of neighbors of the Delayer.
@@ -902,7 +908,7 @@ class Delayer:
 		# print('in delayer next: self.transmit_delay_steps=', self.transmit_delay_steps)
 		transmission_delayed_phases = self.pick_delayed_phases(phase_memory, index_current_time_cyclic, index_current_time_absolute, self.transmit_delay_steps)
 		feedback_delayed_phase		= phase_memory[(index_current_time_cyclic - self.feedback_delay_steps) % self.phi_array_len, self.pll_id]
-		# print('PLL%i with its feedback_delayed_phase [in steps]:'%self.idx_self,feedback_delayed_phase,', receives transmission_delayed_phases [in steps]:',transmission_delayed_phases,' from self.idx_neighbors:', self.idx_neighbors)
+		# print('PLL%i with its feedback_delayed_phase [in steps]:'%self.idx_self,feedback_delayed_phase,', receives transmission_delayed_phases [in steps]:',transmission_delayed_phases,' from self.neighbor_ids:', self.neighbor_ids)
 		#time.sleep(1)
 
 		return np.asarray(feedback_delayed_phase), np.asarray(transmission_delayed_phases) # x is is the time-series from which the values at t-tau_kl^f and t-tau_kl are returned
@@ -1160,6 +1166,21 @@ class PhaseLockedLoop:
 		control_signal = self.low_pass_filter.set_initial_control_signal(instantaneous_frequency, prior_to_instantaneous_frequency)
 		return self.signal_controlled_oscillator.delta_perturbation(perturbation, control_signal)[0]
 
+	def update_list_of_neighbors_of_pll(self, new_neighbor_list: list, dict_pll: dict, idx_time: np.int):
+		"""
+		Changes the neighbors of an oscillator in the network as specified.
+
+		Args:
+			new_neighbor_list: list of new neighbors
+			dict_pll: contains PLL configuration information
+			idx_time: the index that specifies where within the discrete time simulation the change takes place
+		"""
+		print('Updating the neighbors of PLL%i, changing the delayer and phase-detector!' % self.pll_id)
+		self.phase_detector_combiner.update_list_of_neighbors_of_phase_detector(new_neighbor_list, dict_pll, idx_time)
+		self.delayer.update_list_of_neighbors_of_delayer(new_neighbor_list, dict_pll, idx_time)
+
+		return None
+
 	def next_no_external_input(self, index_current_time: int, length_phase_memory: int, phase_memory: np.ndarray) -> float:
 		""" Function that evolves the voltage controlled oscillator in a closed loop configuration when there is no external input, i.e., free-running closed loop PLL.
 			1) delayer obtains the current state of the oscillator itself (potentially delayed by a feedback delay)
@@ -1302,7 +1323,7 @@ class PhaseLockedLoop:
 	# 						+ (all_plls_position[self.pll_id,2]-all_plls_position[i,2])**2 ) < distance_threshold ):
 	# 			list_of_neighbors_in_range.append(i)
 	#
-	# 	self.delayer.set_list_of_current_neighbors(list_of_neighbors_in_range)
+	# 	self.delayer.update_list_of_neighbors_for_delayer(list_of_neighbors_in_range)
 
 	# def update_propagation_time_delay_matrix_of_network(self, all_plls_positions: np.ndarray) -> np.ndarray:
 	# 	"""Function that updates the propagation time delays between each pair of oscillators in the system.

@@ -302,12 +302,12 @@ def plot_results_simulation(dict_net: dict, dict_pll: dict, dict_algo: dict, dic
 	"""
 	if dict_net['special_case'] != 'False':
 		print('Plotting frequency vs time-dependent parameter!')
-		# plot.plot_instantaneous_freqs_vs_time_dependent_parameter(dict_pll, dict_net, dict_data)
-		# plot.plot_order_parameter_vs_time_dependent_parameter_div_and_undiv(dict_pll, dict_net, dict_data)
-		# plot.plot_phase_differences_vs_time_dependent_parameter_divided_or_undivided(dict_pll, dict_net, dict_data, plotlist=[], phase_diff_wrap_to_interval=2, phases_of_divided_signals=True)
-		# plot.plot_phase_differences_vs_time_dependent_parameter_divided_or_undivided(dict_pll, dict_net, dict_data, plotlist=[], phase_diff_wrap_to_interval=2, phases_of_divided_signals=False)
-		# plot.plot_inst_frequency_and_phase_difference_vs_time_dependent_parameter_divided_or_undivided(dict_pll, dict_net, dict_data, phases_of_divided_signals=True,
-		# 																								frequency_of_divided_signals=False, plotlist=[], phase_diff_wrap_to_interval=2)
+		plot.plot_instantaneous_freqs_vs_time_dependent_parameter(dict_pll, dict_net, dict_data)
+		plot.plot_order_parameter_vs_time_dependent_parameter_div_and_undiv(dict_pll, dict_net, dict_data)
+		plot.plot_phase_differences_vs_time_dependent_parameter_divided_or_undivided(dict_pll, dict_net, dict_data, plotlist=[], phase_diff_wrap_to_interval=2, phases_of_divided_signals=True)
+		plot.plot_phase_differences_vs_time_dependent_parameter_divided_or_undivided(dict_pll, dict_net, dict_data, plotlist=[], phase_diff_wrap_to_interval=2, phases_of_divided_signals=False)
+		plot.plot_inst_frequency_and_phase_difference_vs_time_dependent_parameter_divided_or_undivided(dict_pll, dict_net, dict_data, phases_of_divided_signals=True,
+																										frequency_of_divided_signals=False, plotlist=[], phase_diff_wrap_to_interval=2)
 
 	# plot.plot_phases_unwrapped(dict_pll, dict_net, dict_data)
 	# plot.plot_phases_two_pi_periodic(dict_pll, dict_net, dict_data)
@@ -335,10 +335,10 @@ def plot_results_simulation(dict_net: dict, dict_pll: dict, dict_algo: dict, dic
 		# except:
 		# 	print('Failed to caluclate Allan variance!')
 	elif dict_net['Nx'] * dict_net['Ny'] == 4:
-		# plot.plot_order_parameter(dict_pll, dict_net, dict_data)
+		plot.plot_order_parameter(dict_pll, dict_net, dict_data)
 		plot.plot_inst_frequency_and_phase_difference(dict_pll, dict_net, dict_algo, dict_data, True, [], 2)
-		# plot.plot_inst_frequency_and_order_parameter(dict_pll, dict_net, dict_data, [], True)
-		# plot.plot_phase_relations_of_divided_signal(dict_pll, dict_net, dict_data, [], 2)
+		plot.plot_inst_frequency_and_order_parameter(dict_pll, dict_net, dict_data, [], True)
+		plot.plot_phase_relations_of_divided_signal(dict_pll, dict_net, dict_data, [], 2)
 		plot.plot_control_signal_dynamics(dict_pll, dict_net, dict_data)
 	elif dict_net['Nx']*dict_net['Ny'] == 64:
 		plot.plot_inst_frequency_and_phase_difference(dict_pll, dict_net, dict_algo, dict_data)
@@ -816,19 +816,19 @@ def evolve_system_on_tsim_array_time_dependent_change_of_intrinsic_frequency_sav
 		#															 for_all_plls_different_time_dependence=False)[0]
 
 		if dict_net['topology'] == 'entrainOne-ring':
-			pll_list[1].phase_detector_combiner.change_neighbors(new_neighbor_list=[2, dict_net['Nx'] * dict_net['Ny'] - 1], dict_pll=dict_pll, idx_time=dict_net['max_delay_steps']) 		# cut the first PLL of the mutually coupled PLLs off from the reference
+			pll_list[1].update_list_of_neighbors_of_pll(new_neighbor_list=[2, dict_net['Nx'] * dict_net['Ny'] - 1], dict_pll=dict_pll, idx_time=dict_net['max_delay_steps']) 		# cut the first PLL of the mutually coupled PLLs off from the reference
 		elif dict_net['topology'] == 'entrainOne-chain':
-			pll_list[1].phase_detector_combiner.change_neighbors(new_neighbor_list=[2], dict_pll=dict_pll, idx_time=dict_net['max_delay_steps'])
+			pll_list[1].update_list_of_neighbors_of_pll(new_neighbor_list=[2], dict_pll=dict_pll, idx_time=dict_net['max_delay_steps'])
 		elif dict_net['topology'] == 'entrainAll-ring':
-			pll_list[1].phase_detector_combiner.change_neighbors(new_neighbor_list=[2, dict_net['Nx'] * dict_net['Ny'] - 1], dict_pll=dict_pll, idx_time=dict_net['max_delay_steps'])
-			pll_list[dict_net['Nx'] * dict_net['Ny'] - 1].phase_detector_combiner.change_neighbors(new_neighbor_list=[dict_net['Nx'] * dict_net['Ny'] - 2, 1], dict_pll=dict_pll, idx_time=dict_net['max_delay_steps'])
+			pll_list[1].update_list_of_neighbors_of_pll(new_neighbor_list=[2, dict_net['Nx'] * dict_net['Ny'] - 1], dict_pll=dict_pll, idx_time=dict_net['max_delay_steps'])
+			pll_list[dict_net['Nx'] * dict_net['Ny'] - 1].update_list_of_neighbors_of_pll(new_neighbor_list=[dict_net['Nx'] * dict_net['Ny'] - 2, 1], dict_pll=dict_pll, idx_time=dict_net['max_delay_steps'])
 			for k in range(2, dict_net['Nx'] * dict_net['Ny']-1):
-				pll_list[k].phase_detector_combiner.change_neighbors(new_neighbor_list=[k-1, k+1], dict_pll=dict_pll, idx_time=dict_net['max_delay_steps'])
+				pll_list[k].update_list_of_neighbors_of_pll(new_neighbor_list=[k-1, k+1], dict_pll=dict_pll, idx_time=dict_net['max_delay_steps'])
 		elif dict_net['topology'] == 'entrainAll-chain':
-			pll_list[1].phase_detector_combiner.change_neighbors(new_neighbor_list=[2], dict_pll=dict_pll, idx_time=dict_net['max_delay_steps'])
-			pll_list[dict_net['Nx'] * dict_net['Ny'] - 1].phase_detector_combiner.change_neighbors(new_neighbor_list=[dict_net['Nx'] * dict_net['Ny'] - 2], dict_pll=dict_pll, idx_time=dict_net['max_delay_steps'])
+			pll_list[1].update_list_of_neighbors_of_pll(new_neighbor_list=[2], dict_pll=dict_pll, idx_time=dict_net['max_delay_steps'])
+			pll_list[dict_net['Nx'] * dict_net['Ny'] - 1].update_list_of_neighbors_of_pll(new_neighbor_list=[dict_net['Nx'] * dict_net['Ny'] - 2], dict_pll=dict_pll, idx_time=dict_net['max_delay_steps'])
 			for k in range(2, dict_net['Nx'] * dict_net['Ny'] - 1):
-				pll_list[k].phase_detector_combiner.change_neighbors(new_neighbor_list=[k - 1, k + 1], dict_pll=dict_pll, idx_time=dict_net['max_delay_steps'])
+				pll_list[k].update_list_of_neighbors_of_pll(new_neighbor_list=[k - 1, k + 1], dict_pll=dict_pll, idx_time=dict_net['max_delay_steps'])
 		else:
 			print('Please recheck the function evolve_system_on_tsim_array_time_dependent_change_of_intrinsic_frequency_save_ctrl_signal() in sim_lib.py before usage!')
 			sys.exit()
@@ -866,26 +866,29 @@ def evolve_system_on_tsim_array_time_dependent_change_of_intrinsic_frequency_sav
 			clock_counter[(idx_time+1) % phi_array_len, :] = [pll.clock_halfperiods_count(phi[(idx_time+1) % phi_array_len, pll.pll_id]) for pll in pll_list]
 			#print('clock count for all:', clock_counter[-1])
 			[pll.signal_controlled_oscillator.evolve_intrinsic_freq(intr_freq_vs_time[idx_time], dict_net, only_change_freq_of_reference=only_change_freq_of_reference) for pll in pll_list]
-			#print('intrinsic frequencies:', [pll.signal_controlled_oscillator.intr_freq_rad for pll in pll_list])
+			# print('neighbors of PLLs at time=%0.2f:' % (idx_time * dict_pll['dt']), [pll.phase_detector_combiner.idx_neighbors for pll in pll_list])
+			# if not one_time_switch:
+			# 	print('neighbors of PLLs at time=%0.2f:' % (idx_time * dict_pll['dt']), [pll.phase_detector_combiner.idx_neighbors for pll in pll_list])
+			# 	print('intrinsic frequencies at time=%0.2f:' % (idx_time*dict_pll['dt']), [pll.signal_controlled_oscillator.intr_freq_rad for pll in pll_list])
 			if idx_time == dict_data['tstep_annealing_start'] and one_time_switch:
 				print('Adding back the reference to the mutually coupled network!')
 				if dict_net['topology'] == 'entrainOne-ring':
-					pll_list[1].phase_detector_combiner.change_neighbors(new_neighbor_list=[2, dict_net['Nx'] * dict_net['Ny'] - 1, 0], dict_pll=dict_pll, idx_time=idx_time)  #
+					pll_list[1].update_list_of_neighbors_of_pll(new_neighbor_list=[2, dict_net['Nx'] * dict_net['Ny'] - 1, 0], dict_pll=dict_pll, idx_time=idx_time)  #
 				elif dict_net['topology'] == 'entrainOne-chain':
-					pll_list[1].phase_detector_combiner.change_neighbors(new_neighbor_list=[2, 0], dict_pll=dict_pll, idx_time=idx_time)
+					pll_list[1].update_list_of_neighbors_of_pll(new_neighbor_list=[2, 0], dict_pll=dict_pll, idx_time=idx_time)
 				elif dict_net['topology'] == 'entrainAll-ring':
-					pll_list[1].phase_detector_combiner.change_neighbors(new_neighbor_list=[2, dict_net['Nx'] * dict_net['Ny'] - 1, 0], dict_pll=dict_pll, idx_time=idx_time)
-					pll_list[dict_net['Nx'] * dict_net['Ny'] - 1].phase_detector_combiner.change_neighbors(new_neighbor_list=[dict_net['Nx'] * dict_net['Ny'] - 2, 1, 0], dict_pll=dict_pll,
+					pll_list[1].update_list_of_neighbors_of_pll(new_neighbor_list=[2, dict_net['Nx'] * dict_net['Ny'] - 1, 0], dict_pll=dict_pll, idx_time=idx_time)
+					pll_list[dict_net['Nx'] * dict_net['Ny'] - 1].update_list_of_neighbors_of_pll(new_neighbor_list=[dict_net['Nx'] * dict_net['Ny'] - 2, 1, 0], dict_pll=dict_pll,
 																										idx_time=idx_time)
 					for k in range(2, dict_net['Nx'] * dict_net['Ny'] - 1):
-						pll_list[k].phase_detector_combiner.change_neighbors(new_neighbor_list=[k - 1, k + 1, 0], dict_pll=dict_pll, idx_time=idx_time)
+						pll_list[k].update_list_of_neighbors_of_pll(new_neighbor_list=[k - 1, k + 1, 0], dict_pll=dict_pll, idx_time=idx_time)
 				elif dict_net['topology'] == 'entrainAll-chain':
-					pll_list[1].phase_detector_combiner.change_neighbors(new_neighbor_list=[2, 0], dict_pll=dict_pll, idx_time=idx_time)
-					pll_list[dict_net['Nx'] * dict_net['Ny'] - 1].phase_detector_combiner.change_neighbors(new_neighbor_list=[dict_net['Nx'] * dict_net['Ny'] - 2, 0], dict_pll=dict_pll,
+					pll_list[1].update_list_of_neighbors_of_pll(new_neighbor_list=[2, 0], dict_pll=dict_pll, idx_time=idx_time)
+					pll_list[dict_net['Nx'] * dict_net['Ny'] - 1].update_list_of_neighbors_of_pll(new_neighbor_list=[dict_net['Nx'] * dict_net['Ny'] - 2, 0], dict_pll=dict_pll,
 																										idx_time=idx_time)
 					for k in range(2, dict_net['Nx'] * dict_net['Ny'] - 1):
-						pll_list[k].phase_detector_combiner.change_neighbors(new_neighbor_list=[k - 1, k + 1, 0], dict_pll=dict_pll, idx_time=idx_time)
-				# pll_list[2].phase_detector_combiner.change_neighbors(new_neighbor_list=[0, 1], dict_pll=dict_pll, idx_time=idx_time)
+						pll_list[k].update_list_of_neighbors_of_pll(new_neighbor_list=[k - 1, k + 1, 0], dict_pll=dict_pll, idx_time=idx_time)
+				# pll_list[2].update_list_of_neighbors_of_pll(new_neighbor_list=[0, 1], dict_pll=dict_pll, idx_time=idx_time)
 				one_time_switch = False 	# prevents from calling this all the time!
 
 			clk_store[idx_time+1, :] = clock_counter[(idx_time+1) % phi_array_len, :]
@@ -903,21 +906,21 @@ def evolve_system_on_tsim_array_time_dependent_change_of_intrinsic_frequency_sav
 			if idx_time == dict_data['tstep_annealing_start'] and one_time_switch:
 				print('Adding back the reference to the mutually coupled network!')
 				if dict_net['topology'] == 'entrainOne-ring':
-					pll_list[1].phase_detector_combiner.change_neighbors(new_neighbor_list=[2, dict_net['Nx'] * dict_net['Ny'] - 1, 0], dict_pll=dict_pll, idx_time=idx_time)  #
+					pll_list[1].update_list_of_neighbors_of_pll(new_neighbor_list=[2, dict_net['Nx'] * dict_net['Ny'] - 1, 0], dict_pll=dict_pll, idx_time=idx_time)  #
 				elif dict_net['topology'] == 'entrainOne-chain':
-					pll_list[1].phase_detector_combiner.change_neighbors(new_neighbor_list=[2, 0], dict_pll=dict_pll, idx_time=idx_time)
+					pll_list[1].update_list_of_neighbors_of_pll(new_neighbor_list=[2, 0], dict_pll=dict_pll, idx_time=idx_time)
 				elif dict_net['topology'] == 'entrainAll-ring':
-					pll_list[1].phase_detector_combiner.change_neighbors(new_neighbor_list=[2, dict_net['Nx'] * dict_net['Ny'] - 1, 0], dict_pll=dict_pll, idx_time=idx_time)
-					pll_list[dict_net['Nx'] * dict_net['Ny'] - 1].phase_detector_combiner.change_neighbors(new_neighbor_list=[dict_net['Nx'] * dict_net['Ny'] - 2, 1, 0], dict_pll=dict_pll,
+					pll_list[1].update_list_of_neighbors_of_pll(new_neighbor_list=[2, dict_net['Nx'] * dict_net['Ny'] - 1, 0], dict_pll=dict_pll, idx_time=idx_time)
+					pll_list[dict_net['Nx'] * dict_net['Ny'] - 1].update_list_of_neighbors_of_pll(new_neighbor_list=[dict_net['Nx'] * dict_net['Ny'] - 2, 1, 0], dict_pll=dict_pll,
 																										idx_time=idx_time)
 					for k in range(2, dict_net['Nx'] * dict_net['Ny'] - 1):
-						pll_list[k].phase_detector_combiner.change_neighbors(new_neighbor_list=[k - 1, k + 1, 0], dict_pll=dict_pll, idx_time=idx_time)
+						pll_list[k].update_list_of_neighbors_of_pll(new_neighbor_list=[k - 1, k + 1, 0], dict_pll=dict_pll, idx_time=idx_time)
 				elif dict_net['topology'] == 'entrainAll-chain':
-					pll_list[1].phase_detector_combiner.change_neighbors(new_neighbor_list=[2, 0], dict_pll=dict_pll, idx_time=idx_time)
-					pll_list[dict_net['Nx'] * dict_net['Ny'] - 1].phase_detector_combiner.change_neighbors(new_neighbor_list=[dict_net['Nx'] * dict_net['Ny'] - 2, 0], dict_pll=dict_pll,
+					pll_list[1].update_list_of_neighbors_of_pll(new_neighbor_list=[2, 0], dict_pll=dict_pll, idx_time=idx_time)
+					pll_list[dict_net['Nx'] * dict_net['Ny'] - 1].update_list_of_neighbors_of_pll(new_neighbor_list=[dict_net['Nx'] * dict_net['Ny'] - 2, 0], dict_pll=dict_pll,
 																										idx_time=idx_time)
 					for k in range(2, dict_net['Nx'] * dict_net['Ny'] - 1):
-						pll_list[k].phase_detector_combiner.change_neighbors(new_neighbor_list=[k - 1, k + 1, 0], dict_pll=dict_pll, idx_time=idx_time)
+						pll_list[k].update_list_of_neighbors_of_pll(new_neighbor_list=[k - 1, k + 1, 0], dict_pll=dict_pll, idx_time=idx_time)
 				one_time_switch = False  # prevents from calling this all the time!
 			# print('intrinsic frequencies:', [pll.signal_controlled_oscillator.intr_freq_rad for pll in pll_list])
 			# time.sleep(1)
@@ -981,7 +984,7 @@ def distributed_pll_in_3d_mobile(dict_net, dict_pll, phi, pos, coup_matrix, cloc
 
 		# set the current time-delays and coupling parterns is range for all oscillators receiving signals from past or current neighbors:
 		# NOTE that there is a time shift by the maximum delay until an oscillator receives the signal of an oscillator that enters his reception zone
-		[pll.delayer.set_list_of_current_neighbors(current_adjacency_matrix[:, pll.pll_id].tolist()) for pll in pll_list]
+		[pll.delayer.update_list_of_neighbors_for_delayer(current_adjacency_matrix[:, pll.pll_id].tolist()) for pll in pll_list]
 		[pll.delayer.set_current_transmit_delay_steps(current_transmit_delay_steps[:, pll.pll_id].tolist()) for pll in pll_list]
 		# advance the phases of all oscillators by one time-increment
 		phi[(idx_time+1) % phi_array_len, :] = [pll.next(idx_time, phi_array_len, phi) for pll in pll_list] # now the network is iterated, starting at t=0 with the history as prepared above

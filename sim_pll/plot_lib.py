@@ -2298,9 +2298,9 @@ def plot_final_phase_configuration_vs_parameter_space(pool_data: dict, average_t
 					else:
 						constantR_beta_kl[j, i] = np.nan
 					# then check, whether it is decreasing -- check whether std decreases AND whether min and max values increase/decrease respectively
-					if results[i, 3] <= results[i, 2] and (results[i, 4] > results[i, 6] or results[i, 5] < results[i, 7]):
+					if results[i, 3] <= results[i, 2] or (results[i, 4] > results[i, 6] or results[i, 5] < results[i, 7]):
 						decreasingR_beta_kl[j, i] = ((pool_data[0][i]['dict_data']['phi'][-1, j] - pool_data[0][i]['dict_data']['phi'][-1, 0] + shift2piWin) % (2.0 * np.pi)) - shift2piWin
-					elif results[i, 3] > results[i, 2] and (results[i, 4] < results[i, 6] or results[i, 5] > results[i, 7]):
+					elif results[i, 3] > results[i, 2] or (results[i, 4] < results[i, 6] or results[i, 5] > results[i, 7]):
 						decreasingR_beta_kl[j, i] = np.nan
 					else:
 						print('Recheck logic here in plot_final_phase_configuration_vs_parameter_space-fct!')
@@ -2350,9 +2350,9 @@ def plot_final_phase_configuration_vs_parameter_space(pool_data: dict, average_t
 					else:
 						constantR_beta_kl[j, i] = np.nan
 					# then check, whether it is decreasing -- check whether std decreases AND whether min and max values increase/decrease respectively
-					if results[i, 3] <= results[i, 2] and (results[i, 4] > results[i, 6] or results[i, 5] < results[i, 7]):
+					if results[i, 3] <= results[i, 2] or (results[i, 4] > results[i, 6] or results[i, 5] < results[i, 7]):
 						decreasingR_beta_kl[j, i] = ((pool_data[0][i]['dict_data']['phi'][-1, j] - pool_data[0][i]['dict_data']['phi'][-1, 0] + shift2piWin) % (2.0 * np.pi)) - shift2piWin
-					elif results[i, 3] > results[i, 2] and (results[i, 4] < results[i, 6] or results[i, 5] > results[i, 7]):
+					elif results[i, 3] > results[i, 2] or (results[i, 4] < results[i, 6] or results[i, 5] > results[i, 7]):
 						decreasingR_beta_kl[j, i] = np.nan
 					else:
 						print('Recheck logic here in plot_final_phase_configuration_vs_parameter_space-fct!')

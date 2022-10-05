@@ -2243,11 +2243,13 @@ def plot_final_phase_configuration_vs_parameter_space(pool_data: dict, average_t
 		else:
 			averaging_time_as_index = np.int(average_time_phase_difference_in_periods * np.mean(pool_data[0][i]['dict_pll']['intrF']) / pool_data[0][i]['dict_pll']['dt'])
 		results.append(
-			[pool_data[0][i]['dict_data']['order_parameter'][-1], np.mean(pool_data[0][i]['dict_data']['order_parameter'][-averaging_time_as_index:]),														# 0 & 1
-			np.std(pool_data[0][i]['dict_data']['order_parameter'][-averaging_time_as_index:]), np.std(pool_data[0][i]['dict_data']['order_parameter'][-int(1.3 * averaging_time_as_index):]),				# 2 & 3
-			np.min(pool_data[0][i]['dict_data']['order_parameter'][-int(1.3 * averaging_time_as_index):]), np.max(pool_data[0][i]['dict_data']['order_parameter'][-int(1.3 * averaging_time_as_index):]),	# 4 & 5
-			np.min(pool_data[0][i]['dict_data']['order_parameter'][-int(2.6 * averaging_time_as_index):-int(1.3 * averaging_time_as_index)]),																# 6
-			np.max(pool_data[0][i]['dict_data']['order_parameter'][-int(2.6 * averaging_time_as_index):-int(1.3 * averaging_time_as_index)])])																# 7
+			[pool_data[0][i]['dict_data']['order_parameter'][-1], np.mean(pool_data[0][i]['dict_data']['order_parameter'][-averaging_time_as_index:]),		# 0 & 1
+			np.std(pool_data[0][i]['dict_data']['order_parameter'][-5.3*averaging_time_as_index:]),															# 2
+			np.std(pool_data[0][i]['dict_data']['order_parameter'][-int(8.3 * averaging_time_as_index):]),													# 3
+			np.min(pool_data[0][i]['dict_data']['order_parameter'][-int(5.3 * averaging_time_as_index):]),													# 4
+			np.max(pool_data[0][i]['dict_data']['order_parameter'][-int(5.3 * averaging_time_as_index):]),													# 5
+			np.min(pool_data[0][i]['dict_data']['order_parameter'][-int(10.6 * averaging_time_as_index):-int(5.3 * averaging_time_as_index)]),				# 6
+			np.max(pool_data[0][i]['dict_data']['order_parameter'][-int(10.6 * averaging_time_as_index):-int(5.3 * averaging_time_as_index)])])				# 7
 	results = np.array(results, dtype=object)
 
 	# extract the results from the data dictionary for plotting '''
@@ -2303,9 +2305,10 @@ def plot_final_phase_configuration_vs_parameter_space(pool_data: dict, average_t
 					else:
 						print('Recheck logic here in plot_final_phase_configuration_vs_parameter_space-fct!')
 						plt.figure(11111)
-						plt.plot(pool_data[0][i]['dict_data']['t'][-int(1.3 * averaging_time_as_index):], pool_data[0][i]['dict_data']['order_parameter'][-int(1.3 * averaging_time_as_index):], 'r')
-						plt.plot(pool_data[0][i]['dict_data']['t'][-int(2.6 * averaging_time_as_index):int(-1.3 * averaging_time_as_index)],
-								 pool_data[0][i]['dict_data']['order_parameter'][-int(2.6 * averaging_time_as_index):int(-1.3 * averaging_time_as_index)], 'b')
+						plt.plot(pool_data[0][i]['dict_data']['t'][-int(5.3 * averaging_time_as_index):],
+								pool_data[0][i]['dict_data']['order_parameter'][-int(5.3 * averaging_time_as_index):], 'r')
+						plt.plot(pool_data[0][i]['dict_data']['t'][-int(10.6 * averaging_time_as_index):-int(5.3 * averaging_time_as_index)],
+								pool_data[0][i]['dict_data']['order_parameter'][-int(10.6 * averaging_time_as_index):-int(5.3 * averaging_time_as_index)], 'b')
 						plt.xlabel('t')
 						plt.ylabel('R(t)')
 						plt.title('Recheck logic here!')
@@ -2354,9 +2357,10 @@ def plot_final_phase_configuration_vs_parameter_space(pool_data: dict, average_t
 					else:
 						print('Recheck logic here in plot_final_phase_configuration_vs_parameter_space-fct!')
 						plt.figure(11111)
-						plt.plot(pool_data[0][i]['dict_data']['t'][-int(1.3 * averaging_time_as_index):], pool_data[0][i]['dict_data']['order_parameter'][-int(1.3 * averaging_time_as_index):], 'r')
-						plt.plot(pool_data[0][i]['dict_data']['t'][-int(2.6 * averaging_time_as_index):int(-1.3 * averaging_time_as_index)],
-								 pool_data[0][i]['dict_data']['order_parameter'][-int(2.6 * averaging_time_as_index):int(-1.3 * averaging_time_as_index)], 'b')
+						plt.plot(pool_data[0][i]['dict_data']['t'][-int(5.3 * averaging_time_as_index):],
+								 pool_data[0][i]['dict_data']['order_parameter'][-int(5.3 * averaging_time_as_index):], 'r')
+						plt.plot(pool_data[0][i]['dict_data']['t'][-int(10.6 * averaging_time_as_index):-int(5.3 * averaging_time_as_index)],
+								 pool_data[0][i]['dict_data']['order_parameter'][-int(10.6 * averaging_time_as_index):-int(5.3 * averaging_time_as_index)], 'b')
 						plt.xlabel('t')
 						plt.ylabel('R(t)')
 						plt.title('Recheck logic here!')

@@ -2246,8 +2246,8 @@ def plot_final_phase_configuration_vs_parameter_space(pool_data: dict, average_t
 			[pool_data[0][i]['dict_data']['order_parameter'][-1], np.mean(pool_data[0][i]['dict_data']['order_parameter'][-averaging_time_as_index:]),														# 0 & 1
 			np.std(pool_data[0][i]['dict_data']['order_parameter'][-averaging_time_as_index:]), np.std(pool_data[0][i]['dict_data']['order_parameter'][-int(1.3 * averaging_time_as_index):]),				# 2 & 3
 			np.min(pool_data[0][i]['dict_data']['order_parameter'][-int(1.3 * averaging_time_as_index):]), np.max(pool_data[0][i]['dict_data']['order_parameter'][-int(1.3 * averaging_time_as_index):]),	# 4 & 5
-			np.min(pool_data[0][i]['dict_data']['order_parameter'][-int(2.3 * averaging_time_as_index):-int(1.3 * averaging_time_as_index)]),																# 6
-			np.max(pool_data[0][i]['dict_data']['order_parameter'][-int(2.3 * averaging_time_as_index):-int(1.3 * averaging_time_as_index)])])																# 7
+			np.min(pool_data[0][i]['dict_data']['order_parameter'][-int(2.6 * averaging_time_as_index):-int(1.3 * averaging_time_as_index)]),																# 6
+			np.max(pool_data[0][i]['dict_data']['order_parameter'][-int(2.6 * averaging_time_as_index):-int(1.3 * averaging_time_as_index)])])																# 7
 	results = np.array(results, dtype=object)
 
 	# extract the results from the data dictionary for plotting '''
@@ -2295,14 +2295,15 @@ def plot_final_phase_configuration_vs_parameter_space(pool_data: dict, average_t
 						constantR_beta_kl[j, i] = ((pool_data[0][i]['dict_data']['phi'][-1, j] - pool_data[0][i]['dict_data']['phi'][-1, 0] + shift2piWin) % (2.0 * np.pi)) - shift2piWin
 					else:
 						constantR_beta_kl[j, i] = np.nan
-					# then check, whether it is constant already of whether it is decreasing -- check whether std decreases AND whether min and max values increase/decrease respectively
+					# then check, whether it is decreasing -- check whether std decreases AND whether min and max values increase/decrease respectively
 					if results[i, 3] <= results[i, 2] and results[i, 4] > results[i, 6] and results[i, 5] < results[i, 7]:
 						decreasingR_beta_kl[j, i] = ((pool_data[0][i]['dict_data']['phi'][-1, j] - pool_data[0][i]['dict_data']['phi'][-1, 0] + shift2piWin) % (2.0 * np.pi)) - shift2piWin
 					elif results[i, 3] > results[i, 2] and results[i, 4] > results[i, 6] and results[i, 5] < results[i, 7]:
+						decreasingR_beta_kl[j, i] = np.nan
+					else:
 						print('Recheck logic here in plot_final_phase_configuration_vs_parameter_space-fct!')
 						sys.exit()
-					else:
-						decreasingR_beta_kl[j, i] = np.nan
+
 
 					print('Calculated beta_%i0=beta_%i-beta_0.' % (j, j), ' Hence, beta_%i0=' % j, beta_kl[j, i], ', and std(beta_%i0)=' % j, std_beta_kl[j, i])
 			else:
@@ -2336,14 +2337,14 @@ def plot_final_phase_configuration_vs_parameter_space(pool_data: dict, average_t
 						constantR_beta_kl[j, i] = ((pool_data[0][i]['dict_data']['phi'][-1, j] - pool_data[0][i]['dict_data']['phi'][-1, 0] + shift2piWin) % (2.0 * np.pi)) - shift2piWin
 					else:
 						constantR_beta_kl[j, i] = np.nan
-					# then check, whether it is constant already of whether it is decreasing -- check whether std decreases AND whether min and max values increase/decrease respectively
-					if results[i, 3] <= results[i, 2] and results[i, 4] > results[i, 6] and results[i, 5] < results[i, 7]:
-						decreasingR_beta_kl[j, i] = ((pool_data[0][i]['dict_data']['phi'][-1, j] - pool_data[0][i]['dict_data']['phi'][-1, 0] + shift2piWin) % (2.0 * np.pi)) - shift2piWin
-					elif results[i, 3] > results[i, 2] and results[i, 4] > results[i, 6] and results[i, 5] < results[i, 7]:
-						print('Recheck logic here in plot_final_phase_configuration_vs_parameter_space-fct!')
-						sys.exit()
-					else:
-						decreasingR_beta_kl[j, i] = np.nan
+						# then check, whether it is decreasing -- check whether std decreases AND whether min and max values increase/decrease respectively
+						if results[i, 3] <= results[i, 2] and results[i, 4] > results[i, 6] and results[i, 5] < results[i, 7]:
+							decreasingR_beta_kl[j, i] = ((pool_data[0][i]['dict_data']['phi'][-1, j] - pool_data[0][i]['dict_data']['phi'][-1, 0] + shift2piWin) % (2.0 * np.pi)) - shift2piWin
+						elif results[i, 3] > results[i, 2] and results[i, 4] > results[i, 6] and results[i, 5] < results[i, 7]:
+							decreasingR_beta_kl[j, i] = np.nan
+						else:
+							print('Recheck logic here in plot_final_phase_configuration_vs_parameter_space-fct!')
+							sys.exit()
 
 					print('Calculated beta_%i%i=beta_%i-beta_%i.' % (j, j + 1, j, j + 1), ' It is beta_%i%i=' % (j, j+1), beta_kl[j, i], ', and std(beta_%i%i)=' % (j, j+1), std_beta_kl[j, i])
 					# print('\nfrom: phi[-average_index:, j], phi[-average_index:, j+1]\n', pool_data[0][i]['dict_data']['phi'][-averaging_time_as_index:, j], '\n',

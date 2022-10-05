@@ -28,7 +28,7 @@ gc.enable()
 
 ''' THIS SIMULATES A 2ND ORDER KURAMOTO MODEL -- PROPERLY PREPROCESS ALL GAINS AND DETAILS WHEN COMPARING TO PLL CIRCUITRY '''
 
-def getDicts(Fsim=125):
+def getDicts(Fsim=55):
 
 	dict_net = {
 		'Nx': 3,																# oscillators in x-direction

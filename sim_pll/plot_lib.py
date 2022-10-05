@@ -2302,10 +2302,10 @@ def plot_final_phase_configuration_vs_parameter_space(pool_data: dict, average_t
 						decreasingR_beta_kl[j, i] = np.nan
 					else:
 						print('Recheck logic here in plot_final_phase_configuration_vs_parameter_space-fct!')
-						figure(11111)
-						plt.plot(pool_data[0][i]['dict_data']['t'][-1.3 * averaging_time_as_index:], pool_data[0][i]['dict_data']['order_parameter'][-1.3 * averaging_time_as_index:], 'r')
-						plt.plot(pool_data[0][i]['dict_data']['t'][-2.6 * averaging_time_as_index:-1.3 * averaging_time_as_index],
-								 pool_data[0][i]['dict_data']['order_parameter'][-2.6 * averaging_time_as_index:-1.3 * averaging_time_as_index], 'b')
+						plt.figure(11111)
+						plt.plot(pool_data[0][i]['dict_data']['t'][-int(1.3 * averaging_time_as_index):], pool_data[0][i]['dict_data']['order_parameter'][-int(1.3 * averaging_time_as_index):], 'r')
+						plt.plot(pool_data[0][i]['dict_data']['t'][-int(2.6 * averaging_time_as_index):int(-1.3 * averaging_time_as_index)],
+								 pool_data[0][i]['dict_data']['order_parameter'][-int(2.6 * averaging_time_as_index):int(-1.3 * averaging_time_as_index)], 'b')
 						plt.xlabel('t')
 						plt.ylabel('R(t)')
 						plt.title('Recheck logic here!')
@@ -2353,10 +2353,10 @@ def plot_final_phase_configuration_vs_parameter_space(pool_data: dict, average_t
 						decreasingR_beta_kl[j, i] = np.nan
 					else:
 						print('Recheck logic here in plot_final_phase_configuration_vs_parameter_space-fct!')
-						figure(11111)
-						plt.plot(pool_data[0][i]['dict_data']['t'][-1.3 * averaging_time_as_index:], pool_data[0][i]['dict_data']['order_parameter'][-1.3 * averaging_time_as_index:], 'r')
-						plt.plot(pool_data[0][i]['dict_data']['t'][-2.6 * averaging_time_as_index:-1.3 * averaging_time_as_index],
-								 pool_data[0][i]['dict_data']['order_parameter'][-2.6 * averaging_time_as_index:-1.3 * averaging_time_as_index], 'b')
+						plt.figure(11111)
+						plt.plot(pool_data[0][i]['dict_data']['t'][-int(1.3 * averaging_time_as_index):], pool_data[0][i]['dict_data']['order_parameter'][-int(1.3 * averaging_time_as_index):], 'r')
+						plt.plot(pool_data[0][i]['dict_data']['t'][-int(2.6 * averaging_time_as_index):int(-1.3 * averaging_time_as_index)],
+								 pool_data[0][i]['dict_data']['order_parameter'][-int(2.6 * averaging_time_as_index):int(-1.3 * averaging_time_as_index)], 'b')
 						plt.xlabel('t')
 						plt.ylabel('R(t)')
 						plt.title('Recheck logic here!')

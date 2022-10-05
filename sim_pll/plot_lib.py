@@ -2244,7 +2244,7 @@ def plot_final_phase_configuration_vs_parameter_space(pool_data: dict, average_t
 			averaging_time_as_index = np.int(average_time_phase_difference_in_periods * np.mean(pool_data[0][i]['dict_pll']['intrF']) / pool_data[0][i]['dict_pll']['dt'])
 		results.append(
 			[pool_data[0][i]['dict_data']['order_parameter'][-1], np.mean(pool_data[0][i]['dict_data']['order_parameter'][-averaging_time_as_index:]),		# 0 & 1
-			np.std(pool_data[0][i]['dict_data']['order_parameter'][-5.3*averaging_time_as_index:]),															# 2
+			np.std(pool_data[0][i]['dict_data']['order_parameter'][-int(5.3*averaging_time_as_index):]),														# 2
 			np.std(pool_data[0][i]['dict_data']['order_parameter'][-int(8.3 * averaging_time_as_index):]),													# 3
 			np.min(pool_data[0][i]['dict_data']['order_parameter'][-int(5.3 * averaging_time_as_index):]),													# 4
 			np.max(pool_data[0][i]['dict_data']['order_parameter'][-int(5.3 * averaging_time_as_index):]),													# 5

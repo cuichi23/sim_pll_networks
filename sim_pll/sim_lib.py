@@ -302,12 +302,12 @@ def plot_results_simulation(dict_net: dict, dict_pll: dict, dict_algo: dict, dic
 	"""
 	if dict_net['special_case'] != 'False':
 		print('Plotting frequency vs time-dependent parameter!')
-		plot.plot_instantaneous_freqs_vs_time_dependent_parameter(dict_pll, dict_net, dict_data)
-		plot.plot_order_parameter_vs_time_dependent_parameter_div_and_undiv(dict_pll, dict_net, dict_data)
-		plot.plot_phase_differences_vs_time_dependent_parameter_divided_or_undivided(dict_pll, dict_net, dict_data, plotlist=[], phase_diff_wrap_to_interval=2, phases_of_divided_signals=True)
-		plot.plot_phase_differences_vs_time_dependent_parameter_divided_or_undivided(dict_pll, dict_net, dict_data, plotlist=[], phase_diff_wrap_to_interval=2, phases_of_divided_signals=False)
-		plot.plot_inst_frequency_and_phase_difference_vs_time_dependent_parameter_divided_or_undivided(dict_pll, dict_net, dict_data, phases_of_divided_signals=True,
-																										frequency_of_divided_signals=False, plotlist=[], phase_diff_wrap_to_interval=2)
+		# plot.plot_instantaneous_freqs_vs_time_dependent_parameter(dict_pll, dict_net, dict_data)
+		# plot.plot_order_parameter_vs_time_dependent_parameter_div_and_undiv(dict_pll, dict_net, dict_data)
+		# plot.plot_phase_differences_vs_time_dependent_parameter_divided_or_undivided(dict_pll, dict_net, dict_data, plotlist=[], phase_diff_wrap_to_interval=2, phases_of_divided_signals=True)
+		# plot.plot_phase_differences_vs_time_dependent_parameter_divided_or_undivided(dict_pll, dict_net, dict_data, plotlist=[], phase_diff_wrap_to_interval=2, phases_of_divided_signals=False)
+		# plot.plot_inst_frequency_and_phase_difference_vs_time_dependent_parameter_divided_or_undivided(dict_pll, dict_net, dict_data, phases_of_divided_signals=True,
+		# 																								frequency_of_divided_signals=False, plotlist=[], phase_diff_wrap_to_interval=2)
 
 	# plot.plot_phases_unwrapped(dict_pll, dict_net, dict_data)
 	# plot.plot_phases_two_pi_periodic(dict_pll, dict_net, dict_data)
@@ -335,10 +335,10 @@ def plot_results_simulation(dict_net: dict, dict_pll: dict, dict_algo: dict, dic
 		# except:
 		# 	print('Failed to caluclate Allan variance!')
 	elif dict_net['Nx'] * dict_net['Ny'] == 4:
-		plot.plot_order_parameter(dict_pll, dict_net, dict_data)
+		# plot.plot_order_parameter(dict_pll, dict_net, dict_data)
 		plot.plot_inst_frequency_and_phase_difference(dict_pll, dict_net, dict_algo, dict_data, True, [], 2)
-		plot.plot_inst_frequency_and_order_parameter(dict_pll, dict_net, dict_data, [], True)
-		plot.plot_phase_relations_of_divided_signal(dict_pll, dict_net, dict_data, [], 2)
+		# plot.plot_inst_frequency_and_order_parameter(dict_pll, dict_net, dict_data, [], True)
+		# plot.plot_phase_relations_of_divided_signal(dict_pll, dict_net, dict_data, [], 2)
 		plot.plot_control_signal_dynamics(dict_pll, dict_net, dict_data)
 	elif dict_net['Nx']*dict_net['Ny'] == 64:
 		plot.plot_inst_frequency_and_phase_difference(dict_pll, dict_net, dict_algo, dict_data)

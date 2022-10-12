@@ -127,24 +127,41 @@ def deriv_triangular(x: np.float) -> np.float:
 	return (2.0/np.pi)*square(x, duty=0.5)
 
 
-def inverse_triangular(y: np.float, branch: str = 'positive') -> np.float:
+def inverse_triangular(y: np.float, branch: str = 'positive', phase_wrap: int = 0) -> np.float:
 	"""
 		Computes the inverse of the triangular function of the argument y.
 
 		Args:
 			y: argument
 			branch: chose negative or positive branch
+			phase_wrap: determines into which interval the phases are mapped
 
 		Returns:
 			result of either of the two branches
 		"""
-
-	if branch == 'positive' and np.abs(y) <= 1:
-		return (np.pi/2)*(y+1)
-	elif branch == 'negative' and np.abs(y) <= 1:
-		return -(np.pi/2)*(y+1)
-	else:
-		return np.nan
+	if phase_wrap == 1:  # plot phase-differences in [-pi, pi] interval
+		if branch == 'positive' and np.abs(y) <= 1:
+			return (np.pi / 2) * (y + 1)
+		elif branch == 'negative' and np.abs(y) <= 1:
+			return -(np.pi / 2) * (y + 1)
+		else:
+			return np.nan
+	elif phase_wrap == 2:  # plot phase-differences in [-pi/2, 3*pi/2] interval
+		if branch == 'positive' and np.abs(y) <= 1:
+			return (np.pi / 2) * (y + 1)
+		elif branch == 'negative' and y >= -1 and y < 0:
+			return -(np.pi / 2) * (y + 1)
+		elif branch == 'negative' and y < 1 and y >= 0:
+			return -(np.pi / 2) * (y - 3)
+		else:
+			return np.nan
+	elif phase_wrap == 3:  # plot phase-differences in [0, 2*pi] interval
+		if branch == 'positive' and np.abs(y) <= 1:
+			return (np.pi / 2) * (y + 1)
+		elif branch == 'negative' and np.abs(y) <= 1:
+			return -(np.pi / 2) * (y - 3)
+		else:
+			return np.nan
 
 
 def square_wave(x: np.float, duty=0.5) -> np.float:

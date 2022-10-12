@@ -81,10 +81,10 @@ labelpadyaxis       = 20
 # load data
 folder		 = '/home/cuichi/Documents/MPI_PKS_Docs/2019_VIP+/Programs/2021_simPLL_pub/results/'#'/home/cuichi/data-z2/simPLL_2/1_CH_success/results/'
 ################################################################################
-filenamePLL  = folder+'dict_pll_K0.013_tau2.280_Fc0.008_mx0_my-999_N4_topoentrainOne-ring_0:26_2022_10_5' #_K0.012_tau1.285_Fc0.021_mx0_my-999_N4_topoentrainOne-ring_1:56_2022_10_3' #_K0.012_tau1.285_Fc0.000_mx0_my-999_N4_topoentrainOne-chain_12:4_2022_10_1' #_K0.012_tau1.285_Fc0.021_mx0_my-999_N4_topoentrainOne-chain_1:27_2022_10_1' #_K0.012_tau2.223_Fc0.000_mx0_my-999_N3_topochain_1:7_2022_9_27' #_K0.012_tau2.223_Fc0.000_mx0_my-999_N3_topochain_22:37_2022_9_23'
-filenameNet  = folder+'dict_net_K0.013_tau2.280_Fc0.008_mx0_my-999_N4_topoentrainOne-ring_0:26_2022_10_5' #_K0.012_tau1.285_Fc0.021_mx0_my-999_N4_topoentrainOne-ring_1:56_2022_10_3' #_K0.012_tau1.285_Fc0.000_mx0_my-999_N4_topoentrainOne-chain_12:4_2022_10_1' #_K0.012_tau1.285_Fc0.021_mx0_my-999_N4_topoentrainOne-chain_1:27_2022_10_1' #_K0.012_tau2.223_Fc0.000_mx0_my-999_N3_topochain_1:7_2022_9_27' #_K0.012_tau2.223_Fc0.000_mx0_my-999_N3_topochain_22:37_2022_9_23'
-filenameData = folder+'dict_data_K0.013_tau2.280_Fc0.008_mx0_my-999_N4_topoentrainOne-ring_0:26_2022_10_5' #_K0.012_tau1.285_Fc0.021_mx0_my-999_N4_topoentrainOne-ring_1:56_2022_10_3' #_K0.012_tau1.285_Fc0.000_mx0_my-999_N4_topoentrainOne-chain_12:4_2022_10_1' #_K0.012_tau1.285_Fc0.021_mx0_my-999_N4_topoentrainOne-chain_1:27_2022_10_1' #_K0.012_tau2.223_Fc0.000_mx0_my-999_N3_topochain_1:7_2022_9_27' #_K0.012_tau2.223_Fc0.000_mx0_my-999_N3_topochain_22:37_2022_9_23'
-filenameAlgo = folder+'dict_algo_K0.013_tau2.280_Fc0.008_mx0_my-999_N4_topoentrainOne-ring_0:26_2022_10_5' #_K0.012_tau1.285_Fc0.021_mx0_my-999_N4_topoentrainOne-ring_1:56_2022_10_3' #_K0.012_tau1.285_Fc0.000_mx0_my-999_N4_topoentrainOne-chain_12:4_2022_10_1' #_K0.012_tau1.285_Fc0.021_mx0_my-999_N4_topoentrainOne-chain_1:27_2022_10_1' # _K0.012_tau2.223_Fc0.000_mx0_my-999_N3_topochain_1:7_2022_9_27' #_K0.012_tau2.223_Fc0.000_mx0_my-999_N3_topochain_22:37_2022_9_23'
+filenamePLL  = folder+'dict_pll_K0.013_tau2.280_Fc0.008_mx0_my-999_N4_topoentrainOne-ring_0:32_2022_10_12' #_K0.013_tau1.730_Fc0.008_mx0_my-999_N4_topoentrainOne-ring_12:7_2022_10_11'
+filenameNet  = folder+'dict_net_K0.013_tau2.280_Fc0.008_mx0_my-999_N4_topoentrainOne-ring_0:32_2022_10_12' #_K0.013_tau1.730_Fc0.008_mx0_my-999_N4_topoentrainOne-ring_12:7_2022_10_11'
+filenameData = folder+'pool_data_K0.013_tau2.280_Fc0.008_mx0_my-999_N4_topoentrainOne-ring_0:32_2022_10_12' #_K0.013_tau1.730_Fc0.008_mx0_my-999_N4_topoentrainOne-ring_12:7_2022_10_11'
+filenameAlgo = folder+'dict_algo_K0.013_tau2.280_Fc0.008_mx0_my-999_N4_topoentrainOne-ring_0:32_2022_10_12' #_K0.013_tau1.730_Fc0.008_mx0_my-999_N4_topoentrainOne-ring_12:7_2022_10_11'
 ################################################################################
 if 'pool_data' in filenameData:
 	pool_data = pickle.load(open(filenameData, 'rb'))
@@ -96,20 +96,29 @@ else:
 ################################################################################
 # if necessary update parameters related to plotting
 ################################################################################
-dict_pll.update({'PSD_freq_resolution': 1E-5})
-dict_pll.update({'sampleFplot': 1000})
-dict_pll.update({'intrF': 1})
-dict_pll.update({'orderLF': 1})
-print('updated intrinsic freq:', dict_pll['intrF'])
-# if not dict_algo:
-# 	dict_algo={
-# 		'parameter_space_sweeps': 'listOfInitialPhaseConfigurations',		# pick method for setting realizations 'classicBruteForceMethodRotatedSpace', 'listOfInitialPhaseConfigurations'
-# 		'paramDiscretization': [5, 3],#3										# parameter discetization for brute force parameter space scans
-# 		'min_max_range_parameter_0': [0.95, 1.05]									# specifies within which min and max value to linspace the detuning
-# 	}
-# else:
-# 	print('dict_algo has been loaded!')
-dict_pll, dict_net, dict_algo = chk_dicts.check_dicts_consistency(dict_pll, dict_net, dict_algo)
+if 'pool_data' in filenameData:
+	for i in range(len(pool_data[0][:])):
+		pool_data[0][i]['dict_pll'].update({'PSD_freq_resolution': 1E-5})
+		pool_data[0][i]['dict_pll'].update({'sampleFplot': 1000})
+		# pool_data[0][i]['dict_pll'].update({'intrF': 1})
+		# print('updated intrinsic freq:', pool_data[0][i]['dict_pll']['intrF'])
+		# pool_data[0][i]['dict_pll'].update({'orderLF': 1})
+		# dict_pll, dict_net, dict_algo = chk_dicts.check_dicts_consistency(dict_pll, dict_net, dict_algo)
+else:
+	dict_pll.update({'PSD_freq_resolution': 1E-5})
+	dict_pll.update({'sampleFplot': 1000})
+	dict_pll.update({'intrF': 1})
+	dict_pll.update({'orderLF': 1})
+	print('updated intrinsic freq:', dict_pll['intrF'])
+	# if not dict_algo:
+	# 	dict_algo={
+	# 		'parameter_space_sweeps': 'listOfInitialPhaseConfigurations',		# pick method for setting realizations 'classicBruteForceMethodRotatedSpace', 'listOfInitialPhaseConfigurations'
+	# 		'paramDiscretization': [5, 3],#3										# parameter discetization for brute force parameter space scans
+	# 		'min_max_range_parameter_0': [0.95, 1.05]									# specifies within which min and max value to linspace the detuning
+	# 	}
+	# else:
+	# 	print('dict_algo has been loaded!')
+	dict_pll, dict_net, dict_algo = chk_dicts.check_dicts_consistency(dict_pll, dict_net, dict_algo)
 ################################################################################
 ################################################################################
 
@@ -132,6 +141,8 @@ if 'pool_data' in filenameData:
 	elif pool_data[0][0]['dict_algo']['parameter_space_sweeps'] == 'classicBruteForceMethodRotatedSpace':
 		print('Implement evaluation as in the old version! Copy plots, etc...')
 		sys.exit()
+	elif pool_data[0][0]['dict_algo']['parameter_space_sweeps'] == 'one_parameter_sweep' and 'entrain' in pool_data[0][0]['dict_net']['topology']:
+		eva.evaluate_entrainment_of_mutual_sync(pool_data, average_time_for_time_series_in_periods=3.5)
 else:
 	# run evaluations
 	order_parameter, order_parameter_divided_phases, F1 = eva.compute_order_parameter(dict_pll, dict_net, dict_data)

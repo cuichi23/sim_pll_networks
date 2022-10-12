@@ -320,7 +320,7 @@ def plot_results_simulation(dict_net: dict, dict_pll: dict, dict_algo: dict, dic
 	if dict_net['Nx']*dict_net['Ny'] == 2:
 		plot.plot_inst_frequency_and_phase_difference(dict_pll, dict_net, dict_algo, dict_data)
 		plot.plot_inst_frequency_and_order_parameter(dict_pll, dict_net, dict_data)
-		plot.plot_power_spectral_density(dict_pll, dict_net, dict_data, [0, 1], saveData=False)
+		plot.plot_power_spectral_density(dict_pll, dict_net, dict_data, dict_algo, [0, 1], saveData=False)
 		plot.plot_allan_variance(dict_pll, dict_net, dict_data, 0.4 * dict_net['Tsim'], [0, 1], 'overlapping_adev', 'frequency', 0.5 * dict_net['Tsim'])
 	elif dict_net['Nx']*dict_net['Ny'] == 3:
 		plot.plot_order_parameter(dict_pll, dict_net, dict_data)
@@ -329,7 +329,7 @@ def plot_results_simulation(dict_net: dict, dict_pll: dict, dict_algo: dict, dic
 		plot.plot_phase_relations_of_divided_signal(dict_pll, dict_net, dict_data, [], 2)
 		plot.plot_control_signal_dynamics(dict_pll, dict_net, dict_data)
 		if dict_net['special_case'] == 'False':
-			plot.plot_power_spectral_density(dict_pll, dict_net, dict_data, [0, 1, 2], saveData=False)
+			plot.plot_power_spectral_density(dict_pll, dict_net, dict_data, dict_algo, [0, 1, 2], saveData=False)
 		# try:
 		# 	plot.plot_allan_variance(dict_pll, dict_net, dict_data, 0.4 * dict_net['Tsim'], [0, 1, 2], 'overlapping_adev', 'frequency', 0.5 * dict_net['Tsim'])
 		# except:
@@ -343,13 +343,13 @@ def plot_results_simulation(dict_net: dict, dict_pll: dict, dict_algo: dict, dic
 	elif dict_net['Nx']*dict_net['Ny'] == 64:
 		plot.plot_inst_frequency_and_phase_difference(dict_pll, dict_net, dict_algo, dict_data)
 		plot.plot_inst_frequency_and_order_parameter(dict_pll, dict_net, dict_data)
-		plot.plot_power_spectral_density(dict_pll, dict_net, dict_data, [0, 1, 7, 28, 29, 35, 36, 56, 63], saveData=False)			# [0, 1]
+		plot.plot_power_spectral_density(dict_pll, dict_net, dict_data, dict_algo, [0, 1, 7, 28, 29, 35, 36, 56, 63], saveData=False)			# [0, 1]
 		plot.plot_allan_variance(dict_pll, dict_net, dict_data, 0.4 * dict_net['Tsim'], [0, 1, 7, 28, 29, 35, 36, 56, 63], 'overlapping_adev', 'frequency', 0.5 * dict_net['Tsim'])
 	elif 256 <= dict_net['Nx']*dict_net['Ny'] <= 1024:
 		plot.plot_inst_frequency_and_phase_difference(dict_pll, dict_net, dict_algo, dict_data, [i for i in range(0, dict_net['Nx']*dict_net['Ny'], int(dict_net['Nx']*dict_net['Ny']/33))])
 		plot.plot_inst_frequency_and_order_parameter(dict_pll, dict_net, dict_data, [i for i in range(0, dict_net['Nx']*dict_net['Ny'], int(dict_net['Nx']*dict_net['Ny']/33))])
 		psd_list = [0, int(dict_net['Nx']*dict_net['Ny']/4), int(dict_net['Nx']*dict_net['Ny']/2), int(2*dict_net['Nx']*dict_net['Ny']/3), int(3*dict_net['Nx']*dict_net['Ny']/4), int(dict_net['Nx']*dict_net['Ny'])-1]
-		plot.plot_power_spectral_density(dict_pll, dict_net, dict_data, psd_list, saveData=False)
+		plot.plot_power_spectral_density(dict_pll, dict_net, dict_data, dict_algo, psd_list, saveData=False)
 		plot.plot_histogram(dict_pll, dict_net, dict_data, -1, 'phase-difference', 2, [], True, 15, 0.9)
 		plot.plot_histogram(dict_pll, dict_net, dict_data, -1, 'phase', 2, [], True, 15, 0.9)
 		plot.plot_histogram(dict_pll, dict_net, dict_data, int(dict_pll['transmission_delay'] / dict_pll['dt']), 'phase-difference', 2, [], True, 15, 0.9)
@@ -366,14 +366,14 @@ def plot_results_simulation(dict_net: dict, dict_pll: dict, dict_algo: dict, dic
 		plot.plot_inst_frequency_and_order_parameter(dict_pll, dict_net, dict_data)
 		if dict_net['special_case'] == 'False':
 			plot.plot_allan_variance(dict_pll, dict_net, dict_data, 0.4 * dict_net['Tsim'], [0, 16, 35], 'overlapping_adev', 'frequency', 0.5 * dict_net['Tsim'])
-		#plot.plot_power_spectral_density(dict_pll, dict_net, dict_data, [i for i in range(dict_net['Nx']*dict_net['Ny'])], saveData=False)
+		#plot.plot_power_spectral_density(dict_pll, dict_net, dict_data, dict_algo, [i for i in range(dict_net['Nx']*dict_net['Ny'])], saveData=False)
 		if dict_pll['extra_coup_sig'] == 'injection2ndHarm':
 			plot.plot_histogram(dict_pll, dict_net, dict_data, -1, 'phase-difference', 2, [], True, 15, 0.9)
 			plot.plot_histogram(dict_pll, dict_net, dict_data, 0, 'phase-difference', 2, [], True, 15, 0.9)
 	else:
 		plot.plot_inst_frequency_and_phase_difference(dict_pll, dict_net, dict_algo, dict_data, [0, 1])
 		plot.plot_inst_frequency_and_order_parameter(dict_pll, dict_net, dict_data, [0, 1])
-		plot.plot_power_spectral_density(dict_pll, dict_net, dict_data, [0, 1], saveData=False)
+		plot.plot_power_spectral_density(dict_pll, dict_net, dict_data, dict_algo, [0, 1], saveData=False)
 		plot.plot_allan_variance(dict_pll, dict_net, dict_data, 0.4 * dict_net['Tsim'], [0, int(dict_net['Nx']*dict_net['Ny']/2), dict_net['Nx']*dict_net['Ny']-1], 'overlapping_adev', 'frequency', 0.5 * dict_net['Tsim'])
 	plt.draw()
 

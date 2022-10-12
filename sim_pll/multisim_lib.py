@@ -131,13 +131,22 @@ def prepare_multiple_simulations(dict_net: dict, dict_pll: dict, dict_algo: dict
 
 			elif isinstance(dict_algo['paramDiscretization'], float) or isinstance(dict_algo['paramDiscretization'], int):
 				scanValues = np.random.uniform(low=-np.pi, high=np.pi, size=[dict_algo['paramDiscretization'], dict_net['Nx'] * dict_net['Ny']])
-
 			print('scanValues:', scanValues)
 			# sys.exit()
 
 	elif dict_algo['parameter_space_sweeps'] == 'two_parameter_sweep':  # organize after the data has been collected
 		scanValues, allPoints = setup.all_parameter_combinations_2d(dict_pll, dict_net, dict_algo)  # set paramDiscretization for the number of points to be simulated
 		print('scanning 2d parameter regime {', dict_algo['param_id_0'], ',', dict_algo['param_id_1'], '} allPoints:', [allPoints], '\nscanValues', scanValues)
+		# print('\nscanValues[0, 1][0]', scanValues[0, 4][0])
+		# print('\nscanValues[1, 1]', scanValues[1, 1])
+		# sys.exit()
+		Nsim = allPoints.shape[0]
+		dict_algo.update({'scanValues': scanValues, 'allPoints': allPoints})
+		print('multiprocessing', Nsim, 'realizations')
+
+	elif dict_algo['parameter_space_sweeps'] == 'one_parameter_sweep':  # organize after the data has been collected
+		scanValues, allPoints = setup.all_parameter_combinations_1d(dict_pll, dict_net, dict_algo)  # set paramDiscretization for the number of points to be simulated
+		print('scanning 1d parameter regime', dict_algo['param_id_0'], ' allPoints:', [allPoints], '\nscanValues', scanValues)
 		# print('\nscanValues[0, 1][0]', scanValues[0, 4][0])
 		# print('\nscanValues[1, 1]', scanValues[1, 1])
 		# sys.exit()
@@ -176,6 +185,32 @@ def perform_multiple_simulations(dict_net, dict_pll, dict_algo, scanValues):
 	elif dict_algo['parameter_space_sweeps'] == 'two_parameter_sweep':
 		pool_data.append(pool.map(multihelper_star, zip(  # this makes a map of all parameter combinations that have to be simulated, itertools.repeat() names the constants
 			itertools.product(*scanValues), itertools.repeat(initPhiPrime0), itertools.repeat(dict_net), itertools.repeat(dict_pll), itertools.repeat(dict_algo))))
+	elif dict_algo['parameter_space_sweeps'] == 'one_parameter_sweep':
+		pool_data.append(pool.map(multihelper_star, zip(  # this makes a map of all parameter combinations that have to be simulated, itertools.repeat() names the constants
+			itertools.product(scanValues), itertools.repeat(initPhiPrime0), itertools.repeat(dict_net), itertools.repeat(dict_pll), itertools.repeat(dict_algo))))
+	else:
+		print('This case is unknown in perform_multiple_simulations(...) in multisim_lib.py!')
+		sys.exit()
+	## def multihelper(phiSr, initPhiPrime0, dict_net, dict_pll, phi, clock_counter, pll_list):
+	# if dict_algo['parameter_space_sweeps'] == 'classicBruteForceMethodRotatedSpace' or 'two_parameter_sweep':
+	# 	pool_data.append(pool.map(multihelper_star, zip(  # this makes a map of all parameter combinations that have to be simulated, itertools.repeat() names the constants
+	# 		itertools.product(*scanValues), itertools.repeat(initPhiPrime0), itertools.repeat(dict_net), itertools.repeat(dict_pll), itertools.repeat(dict_algo))))
+	# elif dict_algo['parameter_space_sweeps'] == 'testNetworkMotifIsing' or dict_algo['parameter_space_sweeps'] == 'one_parameter_sweep':
+	# 	pool_data.append(pool.map(multihelper_star, zip(  # this makes a map of all parameter combinations that have to be simulated, itertools.repeat() names the constants
+	# 		itertools.product(scanValues), itertools.repeat(initPhiPrime0), itertools.repeat(dict_net), itertools.repeat(dict_pll), itertools.repeat(dict_algo))))
+	# elif dict_algo['parameter_space_sweeps'] == 'listOfInitialPhaseConfigurations':
+	# 	if isinstance(dict_algo['min_max_range_parameter_0'], np.float) or isinstance(dict_algo['min_max_range_parameter_0'], np.int):
+	# 		pool_data.append(pool.map(multihelper_star, zip(  # this makes a map of all parameter combinations that have to be simulated, itertools.repeat() names the constants
+	# 			itertools.product(scanValues), itertools.repeat(initPhiPrime0), itertools.repeat(dict_net), itertools.repeat(dict_pll), itertools.repeat(dict_algo))))
+	# 	elif isinstance(dict_algo['min_max_range_parameter_0'], np.ndarray) or isinstance(dict_algo['min_max_range_parameter_0'], list):
+	# 		pool_data.append(pool.map(multihelper_star, zip(  # this makes a map of all parameter combinations that have to be simulated, itertools.repeat() names the constants
+	# 			itertools.product(scanValues[0], scanValues[1]), itertools.repeat(initPhiPrime0), itertools.repeat(dict_net), itertools.repeat(dict_pll), itertools.repeat(dict_algo))))
+	# elif dict_algo['parameter_space_sweeps'] == 'single':
+	# 	pool_data.append(pool.map(multihelper_star, zip(  # this makes a map of all parameter combinations that have to be simulated, itertools.repeat() names the constants
+	# 		itertools.product(scanValues[0], scanValues[1]), itertools.repeat(initPhiPrime0), itertools.repeat(dict_net), itertools.repeat(dict_pll), itertools.repeat(dict_algo))))
+	# else:
+	# 	print('This case is unknown in perform_multiple_simulations(...) in multisim_lib.py!')
+	# 	sys.exit()
 	return pool_data
 
 
@@ -202,7 +237,7 @@ def evaluate_pool_data(dict_net, dict_pll, dict_algo, pool_data):
 		plot.plot_phase_difference(pool_data[0][0]['dict_pll'], pool_data[0][0]['dict_net'], pool_data[0][0]['dict_data'])
 		plot.plot_periodic_output_signal_from_phase(pool_data[0][0]['dict_pll'], pool_data[0][0]['dict_net'], pool_data[0][0]['dict_data'])
 		plot.plot_inst_frequency_and_phase_difference(pool_data[0][0]['dict_pll'], pool_data[0][0]['dict_net'], pool_data[0][0]['dict_algo'], pool_data[0][0]['dict_data'])
-		plot.plot_power_spectral_density(pool_data[0][0]['dict_pll'], pool_data[0][0]['dict_net'], pool_data[0][0]['dict_data'], [], saveData=False)
+		plot.plot_power_spectral_density(pool_data[0][0]['dict_pll'], pool_data[0][0]['dict_net'], pool_data[0][0]['dict_data'], pool_data[0][0]['dict_algo'], [], saveData=False)
 		plt.draw()
 		plt.show()
 
@@ -233,6 +268,29 @@ def evaluate_pool_data(dict_net, dict_pll, dict_algo, pool_data):
 															std_treshold_order_param_determine_time_dependency=0.075, colormap=cm.hsv)
 		plt.draw()
 		plt.show()
+
+	elif dict_algo['parameter_space_sweeps'] == 'one_parameter_sweep':
+		if 'entrain' in dict_net['topology'] and dict_algo['param_id_0'] == 'intrF':
+			eva.evaluate_entrainment_of_mutual_sync(pool_data)
+			if dict_algo['store_ctrl_and_clock']:
+				for i in range(len(pool_data[0][:])):
+					plot.plot_control_signal_dynamics(pool_data[0][i]['dict_pll'], pool_data[0][i]['dict_net'], pool_data[0][i]['dict_data'], plot_id=i)
+		else:
+			for i in range(len(pool_data[0][:])):
+				if i == int(len(pool_data[0][:])/2):
+					if dict_algo['store_ctrl_and_clock']:
+						plot.plot_control_signal_dynamics(pool_data[0][i]['dict_pll'], pool_data[0][i]['dict_net'], pool_data[0][i]['dict_data'], plot_id=i)
+					# plot.plot_phases_unwrapped(pool_data[0][i]['dict_pll'], pool_data[0][i]['dict_net'], pool_data[0][i]['dict_data'])
+					plot.plot_phases_two_pi_periodic(pool_data[0][i]['dict_pll'], pool_data[0][i]['dict_net'], pool_data[0][i]['dict_data'])
+					plot.plot_inst_frequency(pool_data[0][i]['dict_pll'], pool_data[0][i]['dict_net'], pool_data[0][i]['dict_data'])
+					plot.plot_order_parameter(pool_data[0][i]['dict_pll'], pool_data[0][i]['dict_net'], pool_data[0][i]['dict_data'])
+					plot.plot_phase_difference_wrt_to_osci_kzero(pool_data[0][i]['dict_pll'], pool_data[0][i]['dict_net'], pool_data[0][i]['dict_data'])
+					plot.plot_phase_difference(pool_data[0][i]['dict_pll'], pool_data[0][i]['dict_net'], pool_data[0][i]['dict_data'])
+					plot.plot_periodic_output_signal_from_phase(pool_data[0][i]['dict_pll'], pool_data[0][i]['dict_net'], pool_data[0][i]['dict_data'])
+					plot.plot_inst_frequency_and_phase_difference(pool_data[0][i]['dict_pll'], pool_data[0][i]['dict_net'], pool_data[0][i]['dict_algo'], pool_data[0][i]['dict_data'])
+					plot.plot_power_spectral_density(pool_data[0][i]['dict_pll'], pool_data[0][i]['dict_net'], pool_data[0][i]['dict_data'], pool_data[0][0]['dict_algo'], [], saveData=False)
+				if i != len(pool_data[0][:])-1:
+					plt.close('all')
 
 
 def multihelper(iterConfig, initPhiPrime0, dict_net, dict_pll, dict_algo, param_id='None'):
@@ -319,6 +377,18 @@ def multihelper(iterConfig, initPhiPrime0, dict_net, dict_pll, dict_algo, param_
 		change_param = list(iterConfig)
 		if not dict_algo['param_id_0'] == 'None':
 			dict_pll_rea.update({param_id: change_param})							# update the parameter chosen in change_param with a value of all scanvalues
+		else:
+			print('No parameters for sweep specified -- hence simulating the same parameter set for all realizations!')
+
+		return simulateSystem(dict_net_rea, dict_pll_rea, dict_algo_rea, multi_sim=True)
+
+	elif dict_algo['parameter_space_sweeps'] == 'one_parameter_sweep':
+		change_param = list(iterConfig)
+
+		print('######### realization for %s #########\n' % dict_algo['param_id_0'], change_param[0])
+
+		if not dict_algo['param_id_0'] == 'None':
+			dict_pll_rea.update({dict_algo['param_id_0']: change_param[0]})
 		else:
 			print('No parameters for sweep specified -- hence simulating the same parameter set for all realizations!')
 

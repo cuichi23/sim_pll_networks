@@ -96,7 +96,7 @@ def getDicts(Fsim=55):
 	}
 
 	dict_algo = {
-		'parameter_space_sweeps': 'single',										# pick method for setting realizations 'single', 'classicBruteForceMethodRotatedSpace', 'listOfInitialPhaseConfigurations', 'testNetworkMotifIsing', 'statistics'
+		'parameter_space_sweeps': 'single',										# pick method for setting realizations 'single', 'classicBruteForceMethodRotatedSpace', 'listOfInitialPhaseConfigurations', 'testNetworkMotifIsing', 'statistics', 'one_parameter_sweep'
 		'paramDiscretization': [7, 1],           								# parameter discretization for brute force parameter space scans, e.g., [15, 10], [15, 1]
 		'param_id_0': 'None',													# parameter to be changed between different realizations, according to the min_max_range_parameter: 'None' or string of any other parameter
 		'min_max_range_parameter_0': [0.95, 1.05],								# specifies within which min and max value to linspace the, e.g., initial frequency difference (w.r.t. HF Frequency, not divided) in the case of 'listOfInitialPhaseConfigurations', or any other parameter as in, e.g., 'two_parameter_sweep'

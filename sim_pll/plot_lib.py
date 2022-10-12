@@ -98,7 +98,7 @@ def prepareDictsForPlotting(dict_pll, dict_net):
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-def plot_power_spectral_density(dict_pll: dict, dict_net: dict, dict_data: dict, plotlist=[], saveData=False):
+def plot_power_spectral_density(dict_pll: dict, dict_net: dict, dict_data: dict, dict_algo: dict, plotlist=[], saveData=False):
 	dict_pll, dict_net = prepareDictsForPlotting(dict_pll, dict_net)
 
 	f = []
@@ -111,14 +111,14 @@ def plot_power_spectral_density(dict_pll: dict, dict_net: dict, dict_data: dict,
 	if plotlist:
 		print('\nPlotting PSD according to given plotlist:', plotlist)
 		for i in range(len(plotlist)):  # calculate spectrum of signals for the oscillators specified in the list
-			ftemp, Pxx_temp = eva.calcSpectrum(dict_data['phi'][:, plotlist[i]], dict_pll, dict_net, plotlist[i], dict_pll['percent_of_Tsim'])
+			ftemp, Pxx_temp = eva.calcSpectrum(dict_data['phi'][:, plotlist[i]], dict_pll, dict_net, dict_algo, plotlist[i], dict_pll['percent_of_Tsim'])
 			f.append(ftemp[0])
 			# print('Test Pxx_temp[0]:', Pxx_temp[0])
 			Pxx_db.append(Pxx_temp[0])
 	else:
 		plotlist = []
 		for i in range(len(dict_data['phi'][0, :])):  # calculate spectrum of signals for all oscillators
-			ftemp, Pxx_temp = eva.calcSpectrum(dict_data['phi'][:, i], dict_pll, dict_net, i, dict_pll['percent_of_Tsim'])
+			ftemp, Pxx_temp = eva.calcSpectrum(dict_data['phi'][:, i], dict_pll, dict_net, dict_algo, i, dict_pll['percent_of_Tsim'])
 			f.append(ftemp[0])
 			# print('Test Pxx_temp[0]:', Pxx_temp[0])
 			Pxx_db.append(Pxx_temp[0])
@@ -651,7 +651,7 @@ def plot_clock_time_in_period_fractions(dict_pll: dict, dict_net: dict, dict_dat
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-def plot_control_signal_dynamics(dict_pll: dict, dict_net: dict, dict_data: dict):
+def plot_control_signal_dynamics(dict_pll: dict, dict_net: dict, dict_data: dict, plot_id: int=0):
 	dict_pll, dict_net = prepareDictsForPlotting(dict_pll, dict_net)
 
 	param_name = dict_net['special_case']  # 'timeDepInjectLockCoupStr', 'timeDepTransmissionDelay', 'timeDepChangeOfCoupStr', 'distanceDepTransmissionDelay'
@@ -690,12 +690,12 @@ def plot_control_signal_dynamics(dict_pll: dict, dict_net: dict, dict_data: dict
 	plt.tick_params(axis='both', which='major', labelsize=tickSize)
 	# plt.legend(loc='upper right')
 
-	plt.savefig('results/ctrlSig-t_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.svg' % (
-	np.mean(dict_pll['coupK']), np.mean(dict_pll['cutFc']), np.mean(dict_pll['syncF']), np.mean(dict_pll['transmission_delay']), np.mean(dict_pll['noiseVarVCO']), now.year, now.month, now.day),
-				bbox_inches="tight")
-	plt.savefig('results/ctrlSig-t_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.png' % (
-	np.mean(dict_pll['coupK']), np.mean(dict_pll['cutFc']), np.mean(dict_pll['syncF']), np.mean(dict_pll['transmission_delay']), np.mean(dict_pll['noiseVarVCO']), now.year, now.month, now.day),
-				dpi=dpi_val, bbox_inches="tight")
+	plt.savefig('results/ctrlSig-t_id%i_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.svg' % (plot_id, np.mean(dict_pll['coupK']),
+					np.mean(dict_pll['cutFc']), np.mean(dict_pll['syncF']), np.mean(dict_pll['transmission_delay']), np.mean(dict_pll['noiseVarVCO']),
+					now.year, now.month, now.day), bbox_inches="tight")
+	plt.savefig('results/ctrlSig-t_id%i_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.png' % (plot_id, np.mean(dict_pll['coupK']),
+					np.mean(dict_pll['cutFc']), np.mean(dict_pll['syncF']), np.mean(dict_pll['transmission_delay']), np.mean(dict_pll['noiseVarVCO']),
+					now.year, now.month, now.day), bbox_inches="tight")
 
 	if dict_net['special_case'] != 'False':
 		fig1010 = plt.figure(num=1010, figsize=(figwidth, figheight), dpi=dpi_val, facecolor='w', edgecolor='k')
@@ -718,12 +718,12 @@ def plot_control_signal_dynamics(dict_pll: dict, dict_net: dict, dict_data: dict
 		plt.tick_params(axis='both', which='major', labelsize=tickSize)
 		# plt.legend(loc='upper right')
 
-		plt.savefig('results/ctrlSig_' + param_name + '_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.svg' % (
-			np.mean(dict_pll['coupK']), np.mean(dict_pll['cutFc']), np.mean(dict_pll['syncF']), np.mean(dict_pll['transmission_delay']), np.mean(dict_pll['noiseVarVCO']), now.year, now.month,
-			now.day), bbox_inches="tight")
-		plt.savefig('results/ctrlSig_' + param_name + '_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.png' % (
-			np.mean(dict_pll['coupK']), np.mean(dict_pll['cutFc']), np.mean(dict_pll['syncF']), np.mean(dict_pll['transmission_delay']), np.mean(dict_pll['noiseVarVCO']), now.year, now.month,
-			now.day), dpi=dpi_val, bbox_inches="tight")
+		plt.savefig('results/ctrlSig_id%i_' + param_name + '_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.svg' % (plot_id, np.mean(dict_pll['coupK']),
+				np.mean(dict_pll['cutFc']), np.mean(dict_pll['syncF']), np.mean(dict_pll['transmission_delay']), np.mean(dict_pll['noiseVarVCO']),
+				now.year, now.month, now.day), bbox_inches="tight")
+		plt.savefig('results/ctrlSig_id%i_' + param_name + '_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.png' % (plot_id, np.mean(dict_pll['coupK']),
+				np.mean(dict_pll['cutFc']), np.mean(dict_pll['syncF']), np.mean(dict_pll['transmission_delay']), np.mean(dict_pll['noiseVarVCO']),
+				now.year, now.month, now.day), bbox_inches="tight")
 
 
 	return None
@@ -1440,7 +1440,7 @@ def deltaThetaDot_vs_deltaTheta(dict_pll, dict_net, deltaTheta, deltaThetaDot, c
 
 
 def plot_inst_frequency_and_phase_difference(dict_pll: dict, dict_net: dict, dict_algo: dict, dict_data: dict, phases_of_divided_signals: bool = False, plotlist: list = [],
-											 						phase_diff_wrap_to_interval: np.int = 1, ylim_percent_of_min_val: np.float = 0.995, ylim_percent_of_max_val: np.float = 1.005):
+												phase_diff_wrap_to_interval: np.int = 1, ylim_percent_of_min_val: np.float = 0.995, ylim_percent_of_max_val: np.float = 1.005, plot_id: int=0):
 	# set to 1 if plotting in [-pi, +pi) and to 2 if plotting in [-pi/2, 3pi/2] or to 3 if phase differences to be plotted in [0, 2pi)
 
 	dict_pll, dict_net = prepareDictsForPlotting(dict_pll, dict_net)
@@ -1554,12 +1554,12 @@ def plot_inst_frequency_and_phase_difference(dict_pll: dict, dict_net: dict, dic
 	plt.legend(loc='upper right')
 	plt.grid()
 
-	plt.savefig('results/freq_phaseDiff_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.png' % (
-	np.mean(dict_pll['coupK']), np.mean(dict_pll['cutFc']), np.mean(dict_pll['syncF']), np.mean(dict_pll['transmission_delay']), np.mean(dict_pll['noiseVarVCO']), now.year, now.month, now.day),
-				dpi=dpi_val, bbox_inches="tight")
-	plt.savefig('results/freq_phaseDiff_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.svg' % (
-	np.mean(dict_pll['coupK']), np.mean(dict_pll['cutFc']), np.mean(dict_pll['syncF']), np.mean(dict_pll['transmission_delay']), np.mean(dict_pll['noiseVarVCO']), now.year, now.month, now.day),
-				dpi=dpi_val, bbox_inches="tight")
+	plt.savefig('results/id%i_freq_phaseDiff_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.png' % (plot_id, np.mean(dict_pll['coupK']),
+			np.mean(dict_pll['cutFc']), np.mean(dict_pll['syncF']), np.mean(dict_pll['transmission_delay']), np.mean(dict_pll['noiseVarVCO']),
+			now.year, now.month, now.day), dpi=dpi_val, bbox_inches="tight")
+	plt.savefig('results/id%i_freq_phaseDiff_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.svg' % (plot_id, np.mean(dict_pll['coupK']),
+			np.mean(dict_pll['cutFc']), np.mean(dict_pll['syncF']), np.mean(dict_pll['transmission_delay']), np.mean(dict_pll['noiseVarVCO']),
+			now.year, now.month, now.day), dpi=dpi_val, bbox_inches="tight")
 
 	try:
 		ax011.set_xlim([dict_data['t'][int(0.75 * np.round(np.mean(dict_pll['transmission_delay']) / dict_pll['dt']))],
@@ -1567,12 +1567,12 @@ def plot_inst_frequency_and_phase_difference(dict_pll: dict, dict_net: dict, dic
 		ax012.set_xlim([dict_data['t'][int(0.75 * np.round(np.mean(dict_pll['transmission_delay']) / dict_pll['dt']))],
 						dict_data['t'][int(5.75 * np.round(np.mean(dict_pll['transmission_delay']) / dict_pll['dt']))]])
 
-		plt.savefig('results/freq_phaseDiff_5tauInit_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.png' % (
-		np.mean(dict_pll['coupK']), np.mean(dict_pll['cutFc']), np.mean(dict_pll['syncF']), np.mean(dict_pll['transmission_delay']), np.mean(dict_pll['noiseVarVCO']), now.year, now.month, now.day),
-					dpi=dpi_val, bbox_inches="tight")
-		plt.savefig('results/freq_phaseDiff_5tauInit_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.svg' % (
-		np.mean(dict_pll['coupK']), np.mean(dict_pll['cutFc']), np.mean(dict_pll['syncF']), np.mean(dict_pll['transmission_delay']), np.mean(dict_pll['noiseVarVCO']), now.year, now.month, now.day),
-					dpi=dpi_val, bbox_inches="tight")
+		plt.savefig('results/id%i_freq_phaseDiff_5tauInit_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.png' % (plot_id, np.mean(dict_pll['coupK']),
+			np.mean(dict_pll['cutFc']), np.mean(dict_pll['syncF']), np.mean(dict_pll['transmission_delay']), np.mean(dict_pll['noiseVarVCO']),
+			now.year, now.month, now.day), dpi=dpi_val, bbox_inches="tight")
+		plt.savefig('results/id%i_freq_phaseDiff_5tauInit_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.svg' % (plot_id, np.mean(dict_pll['coupK']),
+			np.mean(dict_pll['cutFc']), np.mean(dict_pll['syncF']), np.mean(dict_pll['transmission_delay']), np.mean(dict_pll['noiseVarVCO']),
+			now.year, now.month, now.day), dpi=dpi_val, bbox_inches="tight")
 	except:
 		print('Time series not sufficiently long!')
 
@@ -1582,12 +1582,12 @@ def plot_inst_frequency_and_phase_difference(dict_pll: dict, dict_net: dict, dic
 		ax012.set_xlim([dict_data['t'][int(0.75 * np.round(np.mean(dict_pll['transmission_delay']) / dict_pll['dt']))],
 						dict_data['t'][int(20.75 * np.round(np.mean(dict_pll['transmission_delay']) / dict_pll['dt']))]])
 
-		plt.savefig('results/freq_phaseDiff_20tauInit_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.png' % (
-		np.mean(dict_pll['coupK']), np.mean(dict_pll['cutFc']), np.mean(dict_pll['syncF']), np.mean(dict_pll['transmission_delay']), np.mean(dict_pll['noiseVarVCO']), now.year, now.month, now.day),
-					dpi=dpi_val, bbox_inches="tight")
-		plt.savefig('results/freq_phaseDiff_20tauInit_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.svg' % (
-		np.mean(dict_pll['coupK']), np.mean(dict_pll['cutFc']), np.mean(dict_pll['syncF']), np.mean(dict_pll['transmission_delay']), np.mean(dict_pll['noiseVarVCO']), now.year, now.month, now.day),
-					dpi=dpi_val, bbox_inches="tight")
+		plt.savefig('results/id%i_freq_phaseDiff_20tauInit_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.png' % (plot_id, np.mean(dict_pll['coupK']),
+			np.mean(dict_pll['cutFc']), np.mean(dict_pll['syncF']), np.mean(dict_pll['transmission_delay']), np.mean(dict_pll['noiseVarVCO']),
+			now.year, now.month, now.day), dpi=dpi_val, bbox_inches="tight")
+		plt.savefig('results/id%i_freq_phaseDiff_20tauInit_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.svg' % (plot_id, np.mean(dict_pll['coupK']),
+			np.mean(dict_pll['cutFc']), np.mean(dict_pll['syncF']), np.mean(dict_pll['transmission_delay']), np.mean(dict_pll['noiseVarVCO']),
+			now.year, now.month, now.day), dpi=dpi_val, bbox_inches="tight")
 	except:
 		print('Time series not sufficiently long!')
 
@@ -1597,12 +1597,12 @@ def plot_inst_frequency_and_phase_difference(dict_pll: dict, dict_net: dict, dic
 		ax012.set_xlim([dict_data['t'][int(0.75 * np.round(np.mean(dict_pll['transmission_delay']) / dict_pll['dt']))],
 						dict_data['t'][int(50.75 * np.round(np.mean(dict_pll['transmission_delay']) / dict_pll['dt']))]])
 
-		plt.savefig('results/freq_phaseDiff_50tauInit_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.png' % (
-		np.mean(dict_pll['coupK']), np.mean(dict_pll['cutFc']), np.mean(dict_pll['syncF']), np.mean(dict_pll['transmission_delay']), np.mean(dict_pll['noiseVarVCO']), now.year, now.month, now.day),
-					dpi=dpi_val, bbox_inches="tight")
-		plt.savefig('results/freq_phaseDiff_50tauInit_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.svg' % (
-		np.mean(dict_pll['coupK']), np.mean(dict_pll['cutFc']), np.mean(dict_pll['syncF']), np.mean(dict_pll['transmission_delay']), np.mean(dict_pll['noiseVarVCO']), now.year, now.month, now.day),
-					dpi=dpi_val, bbox_inches="tight")
+		plt.savefig('results/id%i_freq_phaseDiff_50tauInit_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.png' % (plot_id, np.mean(dict_pll['coupK']),
+			np.mean(dict_pll['cutFc']), np.mean(dict_pll['syncF']), np.mean(dict_pll['transmission_delay']), np.mean(dict_pll['noiseVarVCO']),
+			now.year, now.month, now.day), dpi=dpi_val, bbox_inches="tight")
+		plt.savefig('results/id%i_freq_phaseDiff_50tauInit_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.svg' % (plot_id, np.mean(dict_pll['coupK']),
+			np.mean(dict_pll['cutFc']), np.mean(dict_pll['syncF']), np.mean(dict_pll['transmission_delay']), np.mean(dict_pll['noiseVarVCO']),
+			now.year, now.month, now.day), dpi=dpi_val, bbox_inches="tight")
 	except:
 		print('Time series not sufficiently long!')
 
@@ -1615,7 +1615,7 @@ def plot_inst_frequency_and_phase_difference(dict_pll: dict, dict_net: dict, dic
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
-def plot_inst_frequency_and_order_parameter(dict_pll: dict, dict_net: dict, dict_data: dict, plotlist: list = [], order_param_of_divided_signals: bool = True):
+def plot_inst_frequency_and_order_parameter(dict_pll: dict, dict_net: dict, dict_data: dict, plotlist: list = [], order_param_of_divided_signals: bool = True, plot_id: int=0):
 	dict_pll, dict_net = prepareDictsForPlotting(dict_pll, dict_net)
 
 	labeldict = {'wc': r'$\frac{\omega_\textrm{c}}{\omega}$', 'tau': r'$\frac{\Omega\tau}{2\pi}$', 'K': r'$K$',
@@ -1677,12 +1677,12 @@ def plot_inst_frequency_and_order_parameter(dict_pll: dict, dict_net: dict, dict
 	ax012.set_xlim([dict_data['t'][int(0.75 * np.round(np.mean(dict_pll['transmission_delay']) / dict_pll['dt']))], dict_data['t'][-1]])
 	plt.grid()
 
-	plt.savefig('results/freq_orderPar_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.png' % (
-	np.mean(dict_pll['coupK']), np.mean(dict_pll['cutFc']), np.mean(dict_pll['syncF']), np.mean(dict_pll['transmission_delay']), np.mean(dict_pll['noiseVarVCO']), now.year, now.month, now.day),
-				dpi=dpi_val, bbox_inches="tight")
-	plt.savefig('results/freq_orderPar_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.svg' % (
-	np.mean(dict_pll['coupK']), np.mean(dict_pll['cutFc']), np.mean(dict_pll['syncF']), np.mean(dict_pll['transmission_delay']), np.mean(dict_pll['noiseVarVCO']), now.year, now.month, now.day),
-				dpi=dpi_val, bbox_inches="tight")
+	plt.savefig('results/freq_orderPar_id%i_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.png' % (plot_id, np.mean(dict_pll['coupK']),
+				np.mean(dict_pll['cutFc']), np.mean(dict_pll['syncF']), np.mean(dict_pll['transmission_delay']), np.mean(dict_pll['noiseVarVCO']),
+				now.year, now.month, now.day), dpi=dpi_val, bbox_inches="tight")
+	plt.savefig('results/freq_orderPar_id%i_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.svg' % (plot_id, np.mean(dict_pll['coupK']),
+				np.mean(dict_pll['cutFc']), np.mean(dict_pll['syncF']), np.mean(dict_pll['transmission_delay']), np.mean(dict_pll['noiseVarVCO']),
+				now.year, now.month, now.day), dpi=dpi_val, bbox_inches="tight")
 
 	try:
 		ax011.set_xlim([dict_data['t'][int(0.75 * np.round(np.mean(dict_pll['transmission_delay']) / dict_pll['dt']))],

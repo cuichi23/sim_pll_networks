@@ -12,26 +12,32 @@ if not os.environ.get('SGE_ROOT') is None:										# this environment variable 
 	matplotlib.use('Agg') #'%pylab inline'
 import matplotlib.pyplot as plt
 
-def cutTimeSeriesOfIntegerPeriod(Fsim, Tsim, delay, syncF, maxK, phi, psd_id, percentOfTsim):
+def cutTimeSeriesOfIntegerPeriod(Fsim: np.float, Tsim: np.float, delay: np.float, syncF: np.float, maxK: np.float, phase_or_signal: np.ndarray, psd_id: np.int, percentOfTsim: np.float, signal_given: bool=False):
 
-	print('Fct: cutTimeSeriesOfIntegerPeriod -- trying to extract an integer number of periods from the time-series of PLL %i!'%psd_id)
+	print('Fct: cutTimeSeriesOfIntegerPeriod -- trying to extract an integer number of periods from the time-series of PLL %i!' % psd_id)
 	# Tsim = 1000; Fsim = 125; f = 0.999; phiInit = 0.0; percentOfTsim = 0.75;
-	signal		= square(phi, duty=0.5)											# history [-tau, 0) and [0, Tsim]
-	siglen		= len(signal);
-	analyzeL	= int(percentOfTsim*siglen);
+	if not signal_given:
+		signal = square(phase_or_signal, duty=0.5)											# history [-tau, 0) and [0, Tsim]
+	else:
+		signal = phase_or_signal
+
+	siglen = len(signal)
+	analyzeL = int(percentOfTsim*siglen)
 	#print(analyzeL)
-	testplot	= True
+	testplot = True
 	#print('analyze', analyzeL1/,' periods')
 
 	f = syncF + maxK
 
 	# find rising edge close to t[-analyzeL] and t[-1] -- NOTE f represents Omega here
-	widthWinI  = 3.3;
-	widthWin1E = 3.3; widthWin2E = 3.05; widthWin3E = 3.55;
-	indexesLowStateI = np.where(signal[-analyzeL-int(widthWinI*Fsim/f):-analyzeL]!= 1)
-	indexesHigStateI = np.where(signal[-analyzeL-int(widthWinI*Fsim/f):-analyzeL]!=-1)
-	indexesLowStateE = np.where(signal[-int(widthWin1E*Fsim/f):]!= 1)
-	indexesHigStateE = np.where(signal[-int(widthWin1E*Fsim/f):]!=-1)
+	widthWinI = 3.3
+	widthWin1E = 3.3
+	widthWin2E = 3.05
+	widthWin3E = 3.55
+	indexesLowStateI = np.where(signal[-analyzeL-int(widthWinI*Fsim/f):-analyzeL] != 1)
+	indexesHigStateI = np.where(signal[-analyzeL-int(widthWinI*Fsim/f):-analyzeL] !=-1)
+	indexesLowStateE = np.where(signal[-int(widthWin1E*Fsim/f):] != 1)
+	indexesHigStateE = np.where(signal[-int(widthWin1E*Fsim/f):] !=-1)
 	#print('indexesLowStateI and indexesHigStateI:', indexesLowStateI, '\t', indexesHigStateI)
 	#print('np.shape(indexesLowStateI) and np.shape(indexesHigStateI):', np.shape(indexesLowStateI), '\t', np.shape(indexesHigStateI))
 

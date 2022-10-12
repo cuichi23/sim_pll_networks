@@ -11,8 +11,8 @@ if __name__ == '__main__':
 	more_than_one_case = False
 
 	# multiprocessing based simulations
-	# multiprocess = True
-	multiprocess = False
+	multiprocess = True
+	# multiprocess = False
 
 	# obtain dictionaries for the PLLs and the network
 	# dict_pll, dict_net, dict_algo            = dicts_lib_FPEexplore.getDicts()

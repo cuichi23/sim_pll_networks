@@ -692,21 +692,68 @@ def all_parameter_combinations_2d(dict_pll: dict, dict_net: dict, dict_algo: dic
 	parameter_sweep_1 = np.linspace(dict_algo['min_max_range_parameter_1'][0], dict_algo['min_max_range_parameter_1'][1], dict_algo['paramDiscretization'][1])
 
 	# in the case of entrainment only the frequency of the reference oscillator is to be changed
-	if 'entrain' in dict_net['topology'] and dict_algo['param_id_0'] == 'intrF':
+	if 'entrain' in dict_net['topology'] and (dict_algo['param_id_0'] == 'intrF' or dict_algo['param_id_1'] == 'intrF'):
 		print('In the case of entrainment only the frequency of the reference oscillator is to be changed!')
-		temp = dict_pll['intrF'][1:]
-		parameter_sweep_0 = [[i] + temp for i in parameter_sweep_0]
-	elif 'entrain' in dict_net['topology'] and dict_algo['param_id_1'] == 'intrF':
-		print('In the case of entrainment only the frequency of the reference oscillator is to be changed!')
-		temp = dict_pll['intrF'][1:]
-		parameter_sweep_1 = [[i] + temp for i in parameter_sweep_1]
+		if isinstance(dict_pll['intrF'], list) or isinstance(dict_pll['intrF'], np.ndarray):
+			temp = dict_pll['intrF'][1:]
+		else:
+			print('In this case it is expected that the frequencies of all oscillators are given in a list or in an array.')
+			sys.exit()
+		if dict_algo['param_id_0'] == 'intrF':
+			parameter_sweep_0 = [[i] + temp for i in parameter_sweep_0]
+		elif dict_algo['param_id_1'] == 'intrF':
+			parameter_sweep_1 = [[i] + temp for i in parameter_sweep_1]
 
 	scanValues = np.array([parameter_sweep_0, parameter_sweep_1], dtype=object)
 
-	if 'entrain' in dict_net['topology'] and (isinstance(dict_pll['intrF'], list) or isinstance(dict_pll['intrF'], np.ndarray)):
+	# extract only the frequency of the reference which is being changed in that case
+	if 'entrain' in dict_net['topology'] and (dict_algo['param_id_0'] == 'intrF' or dict_algo['param_id_1'] == 'intrF') and (
+			isinstance(dict_pll['intrF'], list) or isinstance(dict_pll['intrF'], np.ndarray)):
 		_allPoints = itertools.product([i[0] for i in scanValues[0]], scanValues[1])
 	else:
 		_allPoints = itertools.product(scanValues[0], scanValues[1])
+	allPoints = list(_allPoints)  								# scanValues is a list of lists: create a new list that gives all the possible combinations of items between the lists
+	allPoints = np.array(allPoints)  							# convert the list to an array
+
+	return scanValues, allPoints
+
+################################################################################
+def all_parameter_combinations_1d(dict_pll: dict, dict_net: dict, dict_algo: dict):
+	"""
+	Generates all parameter combinations for the different simulation realizations (of 1 parameter) to be computed.
+
+	Args:
+		dict_pll:  [dict] contains the setup information for the PLL objects
+		dict_net:  [dict] contains the setup information for the network and simulation
+		dict_algo: [dict] contains the information which parameters are being changed, with which discretization
+
+	Returns:
+		list of lists with parameters to be scanned and array
+	"""
+
+	parameter_sweep_0 = np.linspace(dict_algo['min_max_range_parameter_0'][0], dict_algo['min_max_range_parameter_0'][1], dict_algo['paramDiscretization'][0])
+
+	# in the case of entrainment only the frequency of the reference oscillator is to be changed
+	if 'entrain' in dict_net['topology'] and dict_algo['param_id_0'] == 'intrF':
+		print('In the case of entrainment only the frequency of the reference oscillator is to be changed!')
+		if isinstance(dict_pll['intrF'], list) or isinstance(dict_pll['intrF'], np.ndarray):
+			temp = dict_pll['intrF'][1:]
+		else:
+			print('In this case it is expected that the frequencies of all oscillators are given in a list or in an array.')
+			sys.exit()
+		if dict_algo['param_id_0'] == 'intrF':
+			parameter_sweep_0 = [[i] + temp for i in parameter_sweep_0]
+		elif dict_algo['param_id_1'] == 'intrF':
+			print('If only one parameter is to be changed use param_id_0 to specify which parameter!')
+
+	scanValues = np.array(parameter_sweep_0, dtype=object)
+
+	# extract only the frequency of the reference which is being changed in that case
+	if 'entrain' in dict_net['topology'] and dict_algo['param_id_0'] == 'intrF' and (isinstance(dict_pll['intrF'], list) or isinstance(dict_pll['intrF'], np.ndarray)):
+		_allPoints = itertools.product([i[0] for i in scanValues])
+	else:
+		_allPoints = itertools.product(scanValues)
+
 	allPoints = list(_allPoints)  								# scanValues is a list of lists: create a new list that gives all the possible combinations of items between the lists
 	allPoints = np.array(allPoints)  							# convert the list to an array
 

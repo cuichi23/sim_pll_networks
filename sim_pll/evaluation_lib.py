@@ -129,9 +129,9 @@ def saveDictionaries(dictToSave, name, K, tau, Fc, Nx, Ny, mx, my, topology):
 		Fc = np.inf
 
 	N = int(Nx*Ny)
-	filename = 'results/%s_K%.3f_tau%.3f_Fc%.3f_mx%i_my%i_N%i_topo%s_%d:%d_%d_%d_%d'%(name, np.mean(K), np.mean(tau), np.mean(Fc), mx, my, N, topology, now.hour, now.minute, now.year, now.month, now.day)
-	f 		 = open(filename,'wb')
-	pickle.dump(dictToSave,f, protocol=4)
+	filename = 'results/%s_K%.3f_tau%.3f_Fc%.3f_mx%i_my%i_N%i_topo%s_%d:%d_%d_%d_%d' % (name, np.mean(K), np.mean(tau), np.mean(Fc), mx, my, N, topology, now.hour, now.minute, now.year, now.month, now.day)
+	f = open(filename,'wb')
+	pickle.dump(dictToSave, f, protocol=4)
 	f.close()
 
 	return None
@@ -177,39 +177,53 @@ def calculateEigenvalues(dict_net, dict_pll):
 ################################################################################
 
 ''' CALCULATE SPECTRUM '''
-def calcSpectrum( phi, dict_pll, dict_net, psd_id=0, percentOfTsim=0.5 ): #phi,Fsample,couplingfct,waveform=None,expectedFreq=-999,evalAllRealizations=False,decayTimeSlowestMode=None
+def calcSpectrum(phase_or_signal: np.ndarray, dict_pll: dict, dict_net: dict, dict_algo: dict, psd_id: np.int=0, percentOfTsim: np.float=0.5, signal_given: bool=False): #phi,Fsample,couplingfct,waveform=None,expectedFreq=-999,evalAllRealizations=False,decayTimeSlowestMode=None
 
-	Pxx_dBm=[]
-	Pxx_dBV=[];
-	f=[];
+	Pxx_dBm = []
+	Pxx_dBV = []
+	f = []
 	try:
-		windowset='boxcar' # here we choose boxcar since a modification of the ends of the time-series is not necessary for an integer number of periods
+		windowset = 'boxcar' 		# here we choose boxcar since a modification of the ends of the time-series is not necessary for an integer number of periods
 		print('Trying to cut integer number of periods! Inside calcSpectrum.')
 		if dict_pll['extra_coup_sig'] is None:
 			analyzeL = findIntTinSig.cutTimeSeriesOfIntegerPeriod(dict_pll['sampleF'], dict_net['Tsim'], dict_pll['transmission_delay'], dict_pll['syncF'],
-																np.max(dict_pll['coupK']), phi, psd_id, percentOfTsim)
+																np.max(dict_pll['coupK']), phase_or_signal, psd_id, percentOfTsim, signal_given)
 		else:
 			analyzeL = findIntTinSig.cutTimeSeriesOfIntegerPeriod(dict_pll['sampleF'], dict_net['Tsim'], dict_pll['transmission_delay'], dict_pll['syncF'],
-																np.max([np.max(dict_pll['coupK']), np.max(dict_pll['coupStr_2ndHarm'])]), phi, psd_id, percentOfTsim)
+																np.max([np.max(dict_pll['coupK']), np.max(dict_pll['coupStr_2ndHarm'])]), phase_or_signal, psd_id, percentOfTsim, signal_given)
 	except:
-		windowset='hamming' 													#'hamming' #'hamming', 'boxcar'
+		windowset = 'hamming' 													#'hamming' #'hamming', 'boxcar'
 		print('\n\nError in cutTimeSeriesOfIntegerPeriod-function! Not picking integer number of periods for PSD! Using window %s!\n\n'%windowset)
-		analyzeL= [ int( dict_net['Tsim']*dict_pll['sampleF']*(1-percentOfTsim) ), int( dict_net['Tsim']*dict_pll['sampleF'] )-1 ]
+		analyzeL = [int(dict_net['Tsim'] * dict_pll['sampleF'] * (1-percentOfTsim)), int(dict_net['Tsim'] * dict_pll['sampleF'])-1]
 
-	window = scipy.signal.get_window(windowset, analyzeL[1]-analyzeL[0], fftbins=True);
-	#print('Length window:', len(window), '\tshape window:', np.shape(window))
-	print('\nCurrent window option is', windowset, 'for waveform', inspect.getsourcelines(dict_pll['PSD_from_signal'])[0][0],
-			'NOTE: in principle can always choose to be sin() for cleaner PSD in first harmonic approximation of the signal.')
-	print('Calculate spectrum for',percentOfTsim,'percent of the time-series. Implement better solution using decay times.')
+	window = scipy.signal.get_window(windowset, analyzeL[1]-analyzeL[0], fftbins=True)
 
-	tsdata		= dict_pll['PSD_from_signal'](phi[analyzeL[0]:analyzeL[1]])
+	if signal_given:
+		print('phase_or_signal', phase_or_signal)
+		if 'entrain' in dict_net['topology'] and psd_id == 0 and (isinstance(dict_pll['intrF'], list) or
+						isinstance(dict_pll['intrF'], np.ndarray)) and (dict_algo['param_id_0'] == 'intrF' or dict_algo['param_id_1'] == 'intrF'):
+			print('Caution - may lead to: FloatingPointError: divide by zero encountered in log10 since the control signal of the reference is usually constant!')
+			# tsdata = phase_or_signal[analyzeL[0]:analyzeL[1], 1:]
+		else:
+			tsdata = phase_or_signal[analyzeL[0]:analyzeL[1]]
+
+		print('\nCurrent window option is', windowset,
+			'for the waveform of the signal provided.\nNOTE: in principle can always choose to be sin() for cleaner PSD in first harmonic approximation of the signal.')
+	else:
+		tsdata = dict_pll['PSD_from_signal'](phase_or_signal[analyzeL[0]:analyzeL[1]])
+		print('\nCurrent window option is', windowset, 'for waveform', inspect.getsourcelines(dict_pll['PSD_from_signal'])[0][0],
+			  'NOTE: in principle can always choose to be sin() for cleaner PSD in first harmonic approximation of the signal.')
 	#print('Length tsdata:', len(tsdata), '\tshape tsdata:', np.shape(tsdata))
 
-	ftemp, Vxx 	= scipy.signal.periodogram(tsdata, dict_pll['sampleF'], return_onesided=True, window=window, scaling='density', axis=0) #  returns Pxx with dimensions [V^2] if scaling='spectrum' and [V^2/Hz] if if scaling='density'
-	P0 = 1E-3; R=50; 															# for P0 in [mW/Hz] and R [ohm]
+	#print('Length window:', len(window), '\tshape window:', np.shape(window))
+	print('Calculate spectrum for', percentOfTsim, 'percent of the time-series. Implement better solution using decay times.')
 
-	Pxx_dBm.append( 10*np.log10((Vxx/R)/P0) )
-	f.append( ftemp )
+	ftemp, Vxx = scipy.signal.periodogram(tsdata, dict_pll['sampleF'], return_onesided=True, window=window, scaling='density', axis=0) #  returns Pxx with dimensions [V^2] if scaling='spectrum' and [V^2/Hz] if if scaling='density'
+	P0 = 1E-3														# 1000 mW
+	R = 50 															# 50 Ohms --> for P0 in [mW/Hz] and R [ohm]
+
+	Pxx_dBm.append(10*np.log10((Vxx/R)/P0))
+	f.append(ftemp)
 
 	return f, Pxx_dBm
 
@@ -501,7 +515,7 @@ def compute_order_parameter(dict_pll: dict, dict_net: dict, dict_data: dict):
 
 ################################################################################
 
-def evaluateSimulationsChrisHoyer(pool_data):
+def evaluateSimulationsChrisHoyer(pool_data: dict) -> None:
 
 	#print('pool_data', pool_data[0][0])
 	# pool_data = load(...)														# in principle saved pool data can be loaded and plotted
@@ -557,14 +571,14 @@ def evaluateSimulationsChrisHoyer(pool_data):
 
 			# test whether frequency is larger or smaller than mean intrinsic frequency as a first distinction between multistable synced states with the same phase relations but
 			# different frequency -- for more than 3 multistable in- or anti-phase synched states that needs to be reworked
-			if ( pool_data[0][i]['dict_data']['phi'][-1,0] - pool_data[0][i]['dict_data']['phi'][-2,0] ) / pool_data[0][i]['dict_pll']['dt'] > np.mean( pool_data[0][i]['dict_pll']['intrF'] ):
+			if ( pool_data[0][i]['dict_data']['phi'][-1, 0] - pool_data[0][i]['dict_data']['phi'][-2, 0] ) / pool_data[0][i]['dict_pll']['dt'] > np.mean( pool_data[0][i]['dict_pll']['intrF'] ):
 				initmarker = 'd'
 			else:
 				initmarker = 'o'
 
 			deltaTheta 			= pool_data[0][i]['dict_data']['phi'][:,0] - pool_data[0][i]['dict_data']['phi'][:,1]
 			deltaThetaDot		= np.diff( deltaTheta, axis=0 ) / pool_data[0][i]['dict_pll']['dt']
-			deltaThetaDiv 		= pool_data[0][i]['dict_data']['phi'][:,0]/pool_data[0][i]['dict_pll']['div'] - pool_data[0][i]['dict_data']['phi'][:,1]/pool_data[0][i]['dict_pll']['div']
+			deltaThetaDiv 		= pool_data[0][i]['dict_data']['phi'][:, 0]/pool_data[0][i]['dict_pll']['div'] - pool_data[0][i]['dict_data']['phi'][:, 1]/pool_data[0][i]['dict_pll']['div']
 			deltaThetaDivDot	= np.diff( deltaThetaDiv, axis=0 ) / pool_data[0][i]['dict_pll']['dt']
 
 			if np.abs( np.abs( (deltaTheta[-1]+np.pi)%(2.*np.pi)-np.pi ) - np.pi ) < threshold_statState:
@@ -576,9 +590,9 @@ def evaluateSimulationsChrisHoyer(pool_data):
 
 
 			# plot for HF output
-			ax16.plot((deltaTheta[delay_steps+1::pool_data[0][0]['dict_pll']['sampleFplot']]+np.pi)%(2.*np.pi)-np.pi, deltaThetaDot[delay_steps::pool_data[0][0]['dict_pll']['sampleFplot']], '-', color=color, alpha=alpha, linewidth=linewidth)	 	# plot trajectory
-			ax16.plot((deltaTheta[delay_steps]+np.pi)%(2.*np.pi)-np.pi, deltaThetaDot[delay_steps], 'o', color=color, alpha=alpha)	 		# plot initial dot
-			ax16.plot((deltaTheta[-1]+np.pi)%(2.*np.pi)-np.pi, deltaThetaDot[-1], 'x', color=color, alpha=alpha)						 	# plot final state cross
+			ax16.plot((deltaTheta[delay_steps+1::pool_data[0][0]['dict_pll']['sampleFplot']]+np.pi) % (2.*np.pi)-np.pi, deltaThetaDot[delay_steps::pool_data[0][0]['dict_pll']['sampleFplot']], '-', color=color, alpha=alpha, linewidth=linewidth)	 	# plot trajectory
+			ax16.plot((deltaTheta[delay_steps]+np.pi) % (2.*np.pi)-np.pi, deltaThetaDot[delay_steps], 'o', color=color, alpha=alpha)	 		# plot initial dot
+			ax16.plot((deltaTheta[-1]+np.pi) % (2.*np.pi)-np.pi, deltaThetaDot[-1], 'x', color=color, alpha=alpha)						 	# plot final state cross
 			#plot_lib.deltaThetaDot_vs_deltaTheta(pool_data[0][i]['dict_pll'], pool_data[0][i]['dict_net'], (deltaTheta[1:]+np.pi)%(2.*np.pi)-np.pi, deltaThetaDot, color, alpha)
 			ax17.plot(deltaTheta[delay_steps+1::pool_data[0][0]['dict_pll']['sampleFplot']], deltaThetaDot[delay_steps::pool_data[0][0]['dict_pll']['sampleFplot']], '-', color=color, alpha=alpha, linewidth=linewidth)		# plot trajectory
 			ax17.plot(deltaTheta[delay_steps], deltaThetaDot[delay_steps], 'o', color=color, alpha=alpha)			# plot initial dot
@@ -646,7 +660,252 @@ def evaluateSimulationsChrisHoyer(pool_data):
 	np.save('results/deltaThetaDivSave_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.npy' %(np.mean(pool_data[0][0]['dict_pll']['coupK']), np.mean(pool_data[0][0]['dict_pll']['cutFc']), np.mean(pool_data[0][0]['dict_pll']['syncF']), np.mean(pool_data[0][0]['dict_pll']['transmission_delay']), np.mean(pool_data[0][0]['dict_pll']['noiseVarVCO']), now.year, now.month, now.day), deltaThetaDivSave)
 	np.save('results/deltaThetaDivDotSave_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.npy' %(np.mean(pool_data[0][0]['dict_pll']['coupK']), np.mean(pool_data[0][0]['dict_pll']['cutFc']), np.mean(pool_data[0][0]['dict_pll']['syncF']), np.mean(pool_data[0][0]['dict_pll']['transmission_delay']), np.mean(pool_data[0][0]['dict_pll']['noiseVarVCO']), now.year, now.month, now.day), deltaThetaDivDotSave)
 	np.save('results/LF-stats_init_phase_conf_final_state_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.npy' %(np.mean(pool_data[0][0]['dict_pll']['coupK']), np.mean(pool_data[0][0]['dict_pll']['cutFc']), np.mean(pool_data[0][0]['dict_pll']['syncF']), np.mean(pool_data[0][0]['dict_pll']['transmission_delay']), np.mean(pool_data[0][0]['dict_pll']['noiseVarVCO']), now.year, now.month, now.day), stats_init_phase_conf_final_state)
-	plt.draw(); plt.show()
+	plt.draw()
+	plt.show()
+
+	return None
+
+################################################################################
+
+def evaluate_entrainment_of_mutual_sync(pool_data: dict, average_time_for_time_series_in_periods: np.float=3.5) -> None:
+	# plot parameter
+	axisLabel = 60
+	tickSize = 35
+	titleLabel = 10
+	dpi_val = 150
+	figwidth = 10
+	figheight = 5
+	plot_size_inches_x = 10
+	plot_size_inches_y = 5
+	alpha = 0.5
+	linewidth = 0.5
+	labelpadxaxis = 10
+	labelpadyaxis = 20
+
+	linet = ['-', '-.', '--', ':', 'densily dashdotdotted', 'densely dashed']
+	marker_list_blue = ['b^', 'bd', 'bo']
+	marker_list_red = ['r^', 'rd', 'ro']
+	marker_list = ['k^', 'bo', 'r.']
+
+	# set a threshold below which the peaks are considered to be originating from the noise and not an actual stable oscillation
+	peak_power_noise_threshold = 0
+
+	# setup container array with dimensions: number of realizations, oscillators in each realization WITHOUT the reference
+	freq_of_ctrl_signals = 999 + np.zeros([len(pool_data[0][:]), len(pool_data[0][0]['dict_data']['phi'][0, 1:])])
+	peak_power_of_ctrl_signal_freq = 999 + np.zeros([len(pool_data[0][:]), len(pool_data[0][0]['dict_data']['phi'][0, 1:])])
+	vp2p_of_ctrl_signals = 999 + np.zeros([len(pool_data[0][:]), len(pool_data[0][0]['dict_data']['phi'][0, 1:])])
+
+	mean_ensemble_frequency_mutual_coup_oscis = 999 + np.zeros([len(pool_data[0][:]), len(pool_data[0][0]['dict_data']['phi'][:, 0])-1])
+	std_ensemble_frequency_mutual_coup_oscis = 999 + np.zeros([len(pool_data[0][:]), len(pool_data[0][0]['dict_data']['phi'][:, 0])-1])
+	mean_frequency_mutual_coup_oscis = 999 + np.zeros([len(pool_data[0][:]), len(pool_data[0][0]['dict_data']['phi'][0, 1:])])
+	std_frequency_mutual_coup_oscis = 999 + np.zeros([len(pool_data[0][:]), len(pool_data[0][0]['dict_data']['phi'][0, 1:])])
+	mean_ensemble_controlsig_mutual_coup_oscis = 999 + np.zeros([len(pool_data[0][:]), len(pool_data[0][0]['dict_data']['ctrl'][:, 0])])
+	std_ensemble_controlsig_mutual_coup_oscis = 999 + np.zeros([len(pool_data[0][:]), len(pool_data[0][0]['dict_data']['ctrl'][:, 0])])
+	mean_controlsig_mutual_coup_oscis = 999 + np.zeros([len(pool_data[0][:]), len(pool_data[0][0]['dict_data']['phi'][0, 1:])])
+	std_controlsig_mutual_coup_oscis = 999 + np.zeros([len(pool_data[0][:]), len(pool_data[0][0]['dict_data']['phi'][0, 1:])])
+	# loop over all realizations
+	for i in range(len(pool_data[0][:])):
+		plt.close('all')
+		# calculate the range of indexes to be averaged corresponding to a given number of periods of the mean intrinsic frequency (excluding the reference)
+		average_time_for_time_series_as_indexes = np.int(average_time_for_time_series_in_periods *
+														np.mean(pool_data[0][i]['dict_pll']['intrF'][1:]) / pool_data[0][i]['dict_pll']['dt'])
+
+		# compute instantaneous frequencies for all oscillators, including the reference from the phase-time series
+		instantaneous_frequencies = np.diff(pool_data[0][i]['dict_data']['phi'], axis=0) / (2 * np.pi * pool_data[0][i]['dict_pll']['dt'])
+		# compute time-series of ensemble averages and standard deviations of instantaneous frequency
+		mean_ensemble_frequency_mutual_coup_oscis[i, :] = np.mean(instantaneous_frequencies[:, 1:], axis=1)
+		std_ensemble_frequency_mutual_coup_oscis[i, :] = np.std(instantaneous_frequencies[:, 1:], axis=1)
+		# compute the mean and std of instantaneous frequency over time for all oscillators
+		mean_frequency_mutual_coup_oscis[i, :] = np.mean(instantaneous_frequencies[-average_time_for_time_series_as_indexes:, 1:], axis=0)
+		std_frequency_mutual_coup_oscis[i, :] = np.std(instantaneous_frequencies[-average_time_for_time_series_as_indexes:, 1:], axis=0)
+		# compute time-series of ensemble averages and standard deviations of the ctrl signal
+		mean_ensemble_controlsig_mutual_coup_oscis[i, :] = np.mean(pool_data[0][i]['dict_data']['ctrl'][:, 1:], axis=1)
+		std_ensemble_controlsig_mutual_coup_oscis[i, :] = np.std(pool_data[0][i]['dict_data']['ctrl'][:, 1:], axis=1)
+		# compute the mean and std of the ctrl signal over time for all oscillators
+		mean_controlsig_mutual_coup_oscis[i, :] = np.mean(pool_data[0][i]['dict_data']['ctrl'][-average_time_for_time_series_as_indexes:, 1:], axis=0)
+		std_controlsig_mutual_coup_oscis[i, :] = np.std(pool_data[0][i]['dict_data']['ctrl'][-average_time_for_time_series_as_indexes:, 1:], axis=0)
+
+		# calculate power spectra of the control signal
+		f = []
+		Pxx_db = []
+		# print('pool_data[0][i][*dict_data*][*ctrl*]', pool_data[0][i]['dict_data']['ctrl'])
+		# plt.plot(pool_data[0][i]['dict_data']['t'] , pool_data[0][i]['dict_data']['ctrl'][:, 0])
+		# plt.draw()
+		# plt.show()
+		for j in range(1, len(pool_data[0][i]['dict_data']['phi'][0, :])):  # calculate spectrum of signals for all oscillators
+			ftemp, Pxx_temp = calcSpectrum(pool_data[0][i]['dict_data']['ctrl'][:, j], pool_data[0][i]['dict_pll'], pool_data[0][i]['dict_net'],
+										pool_data[0][i]['dict_algo'], psd_id=j, percentOfTsim=0.5, signal_given=True)
+			# print('Test ftemp[0]:', ftemp[0])
+			f.append(ftemp[0])
+			# print('Test Pxx_temp[0]:', Pxx_temp[0])
+			# time.sleep(2)
+			Pxx_db.append(Pxx_temp[0])
+
+		fig0 = plt.figure(num=0, figsize=(figwidth, figheight), dpi=dpi_val, facecolor='w', edgecolor='k')
+		fig0.canvas.manager.set_window_title('PSD plots of the realizations')  # plot spectrum
+		fig0.set_size_inches(plot_size_inches_x, plot_size_inches_y)
+
+		plt.xlabel('frequencies [Hz]', fontdict=labelfont, labelpad=labelpadxaxis)
+		plt.ylabel('P [dBm]', fontdict=labelfont, labelpad=labelpadyaxis)
+		plt.tick_params(axis='both', which='major', labelsize=tickSize)
+
+		peak_power_val = []
+		index_of_highest_peak = []
+		frequency_of_max_peak = []
+		for j in range(len(f)):		# do not evaluate for the reference
+			# print('Test:', Pxx_db[i])
+			index_of_highest_peak.append(np.argmax(Pxx_db[j]))  			# find the principle peak
+			frequency_of_max_peak.append(f[j][index_of_highest_peak[j]])  	# save the frequency where the maximum peak is found
+			peak_power_val.append(Pxx_db[j][index_of_highest_peak[j]])  	# save the peak power value
+			peak_power_of_ctrl_signal_freq[i, j] = peak_power_val[-1]		# save the peak power value
+			if peak_power_val[-1] >= peak_power_noise_threshold:			# only save the frequency if the peak power is above a threshold
+				freq_of_ctrl_signals[i, j] = frequency_of_max_peak[-1]		# save the frequency of the first harmonic
+			else:
+				freq_of_ctrl_signals[i, j] = 0
+			time_window_to_detect_min_max_of_signal_if_periodic = int((2.3 / frequency_of_max_peak[-1]) / pool_data[0][i]['dict_pll']['dt'])
+			vp2p_of_ctrl_signals[i, j] = (np.max(pool_data[0][i]['dict_data']['ctrl'][-time_window_to_detect_min_max_of_signal_if_periodic:, j+1], axis=0) -
+											np.min(pool_data[0][i]['dict_data']['ctrl'][-time_window_to_detect_min_max_of_signal_if_periodic:, j+1], axis=0)) 	# peak to peak amplitude of the control signal at within the averaging range
+
+			plt.plot(f[j], Pxx_db[j], '-', label='PLL%i' % (j+1))
+
+		#print('f[0][2] - f[0][1]), peak_power_val[0])', f[0][2] - f[0][1], peak_power_val[0])
+		plt.title(r'power spectrum $\Delta f=$%0.5E' % (f[0][2] - f[0][1]), fontdict=labelfont)
+		plt.legend(loc='upper right')
+		plt.grid()
+
+		try:
+			plt.ylim([np.min(Pxx_db[0][index_of_highest_peak[0]:]), np.max(peak_power_val) + 5])
+		except:
+			print('Could not set ylim accordingly!')
+		plt.xlim(0, 2.5 * np.min(pool_data[0][i]['dict_pll']['intrF']))
+
+		plt.savefig('results/PSD_realization%i_dB_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.svg' % (i, np.mean(pool_data[0][i]['dict_pll']['coupK']),
+			np.mean(pool_data[0][i]['dict_pll']['cutFc']), np.mean(pool_data[0][i]['dict_pll']['syncF']), np.mean(pool_data[0][i]['dict_pll']['transmission_delay']),
+			np.mean(pool_data[0][i]['dict_pll']['noiseVarVCO']), now.year, now.month, now.day), dpi=dpi_val, bbox_inches="tight")
+		plt.savefig('results/PSD_realization%i_dB_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.png' % (i, np.mean(pool_data[0][i]['dict_pll']['coupK']),
+			np.mean(pool_data[0][i]['dict_pll']['cutFc']), np.mean(pool_data[0][i]['dict_pll']['syncF']), np.mean(pool_data[0][i]['dict_pll']['transmission_delay']),
+			np.mean(pool_data[0][i]['dict_pll']['noiseVarVCO']), now.year, now.month, now.day), dpi=dpi_val, bbox_inches="tight")
+		plt.close('all')
+
+		# for a few cases plot the time-series
+		data_points = len(pool_data[0][0]['dict_algo']['allPoints'])
+		if i == int(0.2*data_points) or i == int(0.5*data_points) or i == int(0.8*data_points):
+			plot_lib.plot_inst_frequency_and_phase_difference(pool_data[0][i]['dict_pll'], pool_data[0][i]['dict_net'], pool_data[0][i]['dict_algo'],
+				pool_data[0][i]['dict_data'], False, [], 1, 0.995, 1.005, plot_id=i)
+			plt.close('all')
+			if 'ctrl' in pool_data[0][0]['dict_data']:
+				plot_lib.plot_control_signal_dynamics(pool_data[0][i]['dict_pll'], pool_data[0][i]['dict_net'], pool_data[0][i]['dict_data'], plot_id=i)
+			plot_lib.plot_inst_frequency_and_order_parameter(pool_data[0][i]['dict_pll'], pool_data[0][i]['dict_net'], pool_data[0][i]['dict_data'], [], True, plot_id=i)
+			plt.close('all')
+
+	x_values = pool_data[0][0]['dict_algo']['allPoints']
+
+	print('x_values:', x_values, 'freq_of_ctrl_signals:', freq_of_ctrl_signals)
+	print('np.mean(freq_of_ctrl_signals, axis=1):', np.mean(freq_of_ctrl_signals, axis=1), 'np.std(freq_of_ctrl_signals, axis=1):', np.std(freq_of_ctrl_signals, axis=1))
+	print('np.mean(vp2p_of_ctrl_signals, axis=1):', np.mean(vp2p_of_ctrl_signals, axis=1), 'np.std(vp2p_of_ctrl_signals, axis=1):', np.std(vp2p_of_ctrl_signals, axis=1))
+
+	# plot the results for each realization, corresponding to the difference x_values: frequencies and frequency of tuning voltages
+	fig1 = plt.figure(num=1, figsize=(figwidth, figheight), dpi=dpi_val, facecolor='w', edgecolor='k')
+	fig1.canvas.manager.set_window_title('results reference frequency scan for {tau=%0.02f, topology=%s}' % (pool_data[0][0]['dict_pll']['transmission_delay'], pool_data[0][0]['dict_net']['topology']))  #
+	ax1 = fig1.add_subplot(111)
+	ax2 = ax1.twinx()
+
+	# plot ref frequencies
+	ax1.plot(x_values, x_values, 'kx', label=r'$\frac{f_\textrm{\tiny ref}}{\langle\omega_k\rangle_k}$')
+	for i in range(len(f)):
+		#ax1.plot(x_values, np.mean(freq_of_ctrl_signals, axis=1), 'kd', label=r'$\frac{\langle f_k^\textrm{ctrl} \rangle_k}{\langle\omega_k\rangle_k}$')
+		ax2.plot(x_values, freq_of_ctrl_signals[:, i], marker_list[i], label=r'$\frac{f_%i^\textrm{\tiny ctrl}}{\omega_k}$' % i)
+		# plot amplitudes
+		#ax2.plot(x_values, np.mean(vp2p_of_ctrl_signals, axis=1), 'b^', label=r'$\langle V_\textrm{pp} \rangle_k$')
+		#ax2.errorbar(x_values, np.mean(vp2p_of_ctrl_signals, axis=1), np.std(vp2p_of_ctrl_signals, axis=1), None, 'b^', capsize=3, label=r'$\langle V_\textrm{pp} \rangle_k$')
+
+	ax1.set_xlabel(r'$\frac{\omega_\textrm{\small ref}}{\bar{\omega_k}}$', fontsize=axisLabel, color='k')
+	ax1.set_ylabel(r'$\frac{\dot{\theta}(t)}{\bar{\omega_k}}$', fontsize=axisLabel, color='k')
+	#ax2.set_ylabel(r'$V_\textrm{\tiny pp}$', fontsize=axisLabel, color='b')
+	ax2.set_ylabel(r'$\frac{\langle f_k^\textrm{\small ctrl} \rangle_k}{\langle\omega_k\rangle_k}$', fontsize=axisLabel, color='b')
+
+	ax1.legend(loc='center left')
+	ax2.legend(loc='center right')
+	fig1.savefig('results/evaluation_ctrl_signals_and_frequencies_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.png' % (
+	np.mean(pool_data[0][0]['dict_pll']['coupK']), np.mean(pool_data[0][0]['dict_pll']['cutFc']), np.mean(pool_data[0][0]['dict_pll']['syncF']),
+	np.mean(pool_data[0][0]['dict_pll']['transmission_delay']), np.mean(pool_data[0][0]['dict_pll']['noiseVarVCO']), now.year, now.month, now.day), dpi=dpi_val)
+	fig1.savefig('results/evaluation_ctrl_signals_and_frequencies_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.svg' % (
+	np.mean(pool_data[0][0]['dict_pll']['coupK']), np.mean(pool_data[0][0]['dict_pll']['cutFc']), np.mean(pool_data[0][0]['dict_pll']['syncF']),
+	np.mean(pool_data[0][0]['dict_pll']['transmission_delay']), np.mean(pool_data[0][0]['dict_pll']['noiseVarVCO']), now.year, now.month, now.day), dpi=dpi_val)
+
+	# plot the results for each realization, corresponding to the difference x_values: frequencies and peak-2-peak amplitudes of tuning voltages
+	fig2 = plt.figure(num=2, figsize=(figwidth, figheight), dpi=dpi_val, facecolor='w', edgecolor='k')
+	fig2.canvas.manager.set_window_title(
+		'results reference frequency scan for {tau=%0.02f, topology=%s}' % (pool_data[0][0]['dict_pll']['transmission_delay'], pool_data[0][0]['dict_net']['topology']))  #
+	ax1 = fig2.add_subplot(111)
+	ax2 = ax1.twinx()
+
+	# plot ref frequencies
+	ax1.plot(x_values, x_values, 'kx', label=r'$\frac{\omega_\textrm{\tiny ref}}{\bar{\omega_k}}$')
+	for i in range(len(f)):
+		# plot the ensemble mean and std of the frequencies of the mutually coupled Plls
+		#ax1.plot(x_values[:, 0], mean_frequency_mutual_coup_oscis[:, i], marker_list_red[i], markersize=2.5, label=r'$\frac{\dot{\theta}_%i(t_e)}{\omega_k}$' % i)
+		ax1.errorbar(x_values[:, 0], mean_frequency_mutual_coup_oscis[:, i], std_frequency_mutual_coup_oscis[:, i], None, marker_list_red[i], capsize=3, markersize=2.5, label=r'$\frac{\dot{\theta}_%i(t_e)}{\omega_k}$' % i)
+		# plot the ensemble mean and std of the control signal peak to peak voltages
+		ax2.plot(x_values[:, 0], vp2p_of_ctrl_signals[:, i], marker_list_blue[i], label=r'$V_\textrm{pp}$ PLL%i' % i)
+		# ax2.plot(x_values, np.mean(vp2p_of_ctrl_signals, axis=1), 'b^', label=r'$V_\textrm{pp}$')
+
+
+	ax1.set_xlabel(r'$\frac{\omega_\textrm{\small ref}}{\bar{\omega}_k}$', fontsize=axisLabel, color='k')
+	ax1.set_ylabel(r'$\frac{\dot{\theta}(t)}{\bar{\omega_k}}$', fontsize=axisLabel, color='k')
+	ax2.set_ylabel(r'$V_\textrm{\small pp}$', fontsize=axisLabel, color='b')
+
+	ax1.legend(loc='center left')
+	ax2.legend(loc='center right')
+	fig2.savefig('results/evaluation_ctrl_signals_and_amplitudes_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.png' % (
+		np.mean(pool_data[0][0]['dict_pll']['coupK']), np.mean(pool_data[0][0]['dict_pll']['cutFc']), np.mean(pool_data[0][0]['dict_pll']['syncF']),
+		np.mean(pool_data[0][0]['dict_pll']['transmission_delay']), np.mean(pool_data[0][0]['dict_pll']['noiseVarVCO']), now.year, now.month, now.day), dpi=dpi_val)
+	fig2.savefig('results/evaluation_ctrl_signals_and_amplitudes_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.svg' % (
+		np.mean(pool_data[0][0]['dict_pll']['coupK']), np.mean(pool_data[0][0]['dict_pll']['cutFc']), np.mean(pool_data[0][0]['dict_pll']['syncF']),
+		np.mean(pool_data[0][0]['dict_pll']['transmission_delay']), np.mean(pool_data[0][0]['dict_pll']['noiseVarVCO']), now.year, now.month, now.day), dpi=dpi_val)
+
+	# plot the results for each realization, corresponding to the difference x_values: time-series of frequencies and control signals
+	plot_time_series = False
+	if plot_time_series:
+		for i in range(len(pool_data[0][:])):
+			fig3 = plt.figure(num=3, figsize=(figwidth, figheight), dpi=dpi_val, facecolor='w', edgecolor='k')
+			fig3.canvas.manager.set_window_title(
+				'results reference frequency scan for {tau=%0.02f, topology=%s}' % (pool_data[0][0]['dict_pll']['transmission_delay'], pool_data[0][0]['dict_net']['topology']))  #
+			ax1 = fig3.add_subplot(111)
+			ax2 = ax1.twinx()
+
+			ax1.errorbar(pool_data[0][0]['dict_data']['t'], mean_ensemble_frequency_mutual_coup_oscis[i, :], std_ensemble_frequency_mutual_coup_oscis[i, :], None, 'kx', capsize=3, label=r'$$')
+
+			ax2.plot(pool_data[0][0]['dict_data']['t'], mean_ensemble_controlsig_mutual_coup_oscis[i, :], std_ensemble_controlsig_mutual_coup_oscis[i, :], 'b^', capsize=3, label=r'$V_\textrm{pp}$')
+
+			ax1.set_xlabel(r'$t$', fontsize=axisLabel, color='k')
+			ax1.set_ylabel(r'$\frac{\dot{theta}(t)}{\bar{\omega_k}}$', fontsize=axisLabel, color='k')
+			ax2.set_ylabel(r'$V_\textrm{pp}$', fontsize=axisLabel, color='b')
+
+			plt.legend()
+			fig3.savefig('results/timeseries_ctrl_signals_and_amplitudes_fref%0.2f_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.png' % (x_values[i],
+				np.mean(pool_data[0][0]['dict_pll']['coupK']), np.mean(pool_data[0][0]['dict_pll']['cutFc']), np.mean(pool_data[0][0]['dict_pll']['syncF']),
+				np.mean(pool_data[0][0]['dict_pll']['transmission_delay']), np.mean(pool_data[0][0]['dict_pll']['noiseVarVCO']), now.year, now.month, now.day), dpi=dpi_val)
+			fig3.savefig('results/timeseries_ctrl_signals_and_amplitudes_fref%0.2f_K%.4f_Fc%.4f_FOm%.4f_tau%.4f_c%.7e_%d_%d_%d.svg' % (x_values[i],
+				np.mean(pool_data[0][0]['dict_pll']['coupK']), np.mean(pool_data[0][0]['dict_pll']['cutFc']), np.mean(pool_data[0][0]['dict_pll']['syncF']),
+				np.mean(pool_data[0][0]['dict_pll']['transmission_delay']), np.mean(pool_data[0][0]['dict_pll']['noiseVarVCO']), now.year, now.month, now.day), dpi=dpi_val)
+
+	# @Chris: I can now run several individual realizations for different omega_R in parallel - then I use the data and extract:
+	# 	the mean and std of the frequencies of the PLLs in the ring/chain, compute the power spectrum of the control signal
+	# 	and measure the peak to peak amplitude/std of the control signal?!
+	#
+	# analyze peak to peak amplitude of ctrl signal
+	#
+	# extract frequency of ctrl signal
+	#
+	# check whether mean frequencies of
+	#
+	# Dict with cross coupling frequency of each node + ref, vtune vpp and frequency
+
+	dict_for_chris = {'fref': x_values, 'instantaneous_frequencies_time_series': instantaneous_frequencies, 'freq_ctrl_sig': freq_of_ctrl_signals,
+						'peak_power_frist_harm_ctrl_signal': peak_power_of_ctrl_signal_freq, 'p2p_amplitude_ctrl_sig': vp2p_of_ctrl_signals,
+					  	'time_averaged_inst_osci_frequency_values': mean_frequency_mutual_coup_oscis, 'std_of_time_averaged_inst_osci_frequency_values': std_frequency_mutual_coup_oscis}
+	np.save('results/dict_for_chris_tau-%0.3f_topology-%s.npy' % (pool_data[0][0]['dict_pll']['transmission_delay'], pool_data[0][0]['dict_net']['topology']), dict_for_chris)
 
 	return None
 

@@ -145,7 +145,7 @@ if 'pool_data' in filenameData:
 		eva.evaluate_entrainment_of_mutual_sync(pool_data, average_time_for_time_series_in_periods=3.5)
 else:
 	if dict_net['special_case'] == 'timeDepChangeOfIntrFreq':
-		phase_diff_wrap_to_interval = 1
+		phase_diff_wrap_to_interval = 3
 		if phase_diff_wrap_to_interval == 1:  # plot phase-differences in [-pi, pi] interval
 			shift2piWin = np.pi
 		elif phase_diff_wrap_to_interval == 2:  # plot phase-differences in [-pi/2, 3*pi/2] interval

@@ -685,10 +685,12 @@ def evaluate_entrainment_of_mutual_sync(pool_data: dict, average_time_for_time_s
 	linet = ['-', '-.', '--', ':', 'densily dashdotdotted', 'densely dashed']
 	marker_list_blue = ['b^', 'bd', 'bo']
 	marker_list_red = ['r^', 'rd', 'ro']
-	marker_list = ['k^', 'bo', 'r.']
+	marker_list = ['kd', 'bo', 'r.']
+
+	plot_time_series = False
 
 	# set a threshold below which the peaks are considered to be originating from the noise and not an actual stable oscillation
-	peak_power_noise_threshold = 0
+	peak_power_noise_threshold = -60
 
 	# setup container array with dimensions: number of realizations, oscillators in each realization WITHOUT the reference
 	freq_of_ctrl_signals = 999 + np.zeros([len(pool_data[0][:]), len(pool_data[0][0]['dict_data']['phi'][0, 1:])])
@@ -713,14 +715,16 @@ def evaluate_entrainment_of_mutual_sync(pool_data: dict, average_time_for_time_s
 		# compute instantaneous frequencies for all oscillators, including the reference from the phase-time series
 		instantaneous_frequencies = np.diff(pool_data[0][i]['dict_data']['phi'], axis=0) / (2 * np.pi * pool_data[0][i]['dict_pll']['dt'])
 		# compute time-series of ensemble averages and standard deviations of instantaneous frequency
-		mean_ensemble_frequency_mutual_coup_oscis[i, :] = np.mean(instantaneous_frequencies[:, 1:], axis=1)
-		std_ensemble_frequency_mutual_coup_oscis[i, :] = np.std(instantaneous_frequencies[:, 1:], axis=1)
+		if plot_time_series:
+			mean_ensemble_frequency_mutual_coup_oscis[i, :] = np.mean(instantaneous_frequencies[:, 1:], axis=1)
+			std_ensemble_frequency_mutual_coup_oscis[i, :] = np.std(instantaneous_frequencies[:, 1:], axis=1)
 		# compute the mean and std of instantaneous frequency over time for all oscillators
 		mean_frequency_mutual_coup_oscis[i, :] = np.mean(instantaneous_frequencies[-average_time_for_time_series_as_indexes:, 1:], axis=0)
 		std_frequency_mutual_coup_oscis[i, :] = np.std(instantaneous_frequencies[-average_time_for_time_series_as_indexes:, 1:], axis=0)
 		# compute time-series of ensemble averages and standard deviations of the ctrl signal
-		mean_ensemble_controlsig_mutual_coup_oscis[i, :] = np.mean(pool_data[0][i]['dict_data']['ctrl'][:, 1:], axis=1)
-		std_ensemble_controlsig_mutual_coup_oscis[i, :] = np.std(pool_data[0][i]['dict_data']['ctrl'][:, 1:], axis=1)
+		if plot_time_series:
+			mean_ensemble_controlsig_mutual_coup_oscis[i, :] = np.mean(pool_data[0][i]['dict_data']['ctrl'][:, 1:], axis=1)
+			std_ensemble_controlsig_mutual_coup_oscis[i, :] = np.std(pool_data[0][i]['dict_data']['ctrl'][:, 1:], axis=1)
 		# compute the mean and std of the ctrl signal over time for all oscillators
 		mean_controlsig_mutual_coup_oscis[i, :] = np.mean(pool_data[0][i]['dict_data']['ctrl'][-average_time_for_time_series_as_indexes:, 1:], axis=0)
 		std_controlsig_mutual_coup_oscis[i, :] = np.std(pool_data[0][i]['dict_data']['ctrl'][-average_time_for_time_series_as_indexes:, 1:], axis=0)
@@ -865,7 +869,6 @@ def evaluate_entrainment_of_mutual_sync(pool_data: dict, average_time_for_time_s
 		np.mean(pool_data[0][0]['dict_pll']['transmission_delay']), np.mean(pool_data[0][0]['dict_pll']['noiseVarVCO']), now.year, now.month, now.day), dpi=dpi_val)
 
 	# plot the results for each realization, corresponding to the difference x_values: time-series of frequencies and control signals
-	plot_time_series = False
 	if plot_time_series:
 		for i in range(len(pool_data[0][:])):
 			fig3 = plt.figure(num=3, figsize=(figwidth, figheight), dpi=dpi_val, facecolor='w', edgecolor='k')

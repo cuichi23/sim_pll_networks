@@ -81,10 +81,10 @@ labelpadyaxis       = 20
 # load data
 folder		 = '/home/cuichi/Documents/MPI_PKS_Docs/2019_VIP+/Programs/2021_simPLL_pub/results/'#'/home/cuichi/data-z2/simPLL_2/1_CH_success/results/'
 ################################################################################
-filenamePLL  = folder+'dict_pll_K0.013_tau2.280_Fc0.008_mx0_my-999_N4_topoentrainOne-ring_0:32_2022_10_12' #_K0.013_tau1.730_Fc0.008_mx0_my-999_N4_topoentrainOne-ring_12:7_2022_10_11'
-filenameNet  = folder+'dict_net_K0.013_tau2.280_Fc0.008_mx0_my-999_N4_topoentrainOne-ring_0:32_2022_10_12' #_K0.013_tau1.730_Fc0.008_mx0_my-999_N4_topoentrainOne-ring_12:7_2022_10_11'
-filenameData = folder+'pool_data_K0.013_tau2.280_Fc0.008_mx0_my-999_N4_topoentrainOne-ring_0:32_2022_10_12' #_K0.013_tau1.730_Fc0.008_mx0_my-999_N4_topoentrainOne-ring_12:7_2022_10_11'
-filenameAlgo = folder+'dict_algo_K0.013_tau2.280_Fc0.008_mx0_my-999_N4_topoentrainOne-ring_0:32_2022_10_12' #_K0.013_tau1.730_Fc0.008_mx0_my-999_N4_topoentrainOne-ring_12:7_2022_10_11'
+filenamePLL  = folder+'dict_pll_K0.013_tau1.730_Fc0.008_mx0_my-999_N4_topoentrainOne-ring_0:43_2022_10_13' #_K0.013_tau1.730_Fc0.008_mx0_my-999_N4_topoentrainOne-ring_12:7_2022_10_11'
+filenameNet  = folder+'dict_net_K0.013_tau1.730_Fc0.008_mx0_my-999_N4_topoentrainOne-ring_0:43_2022_10_13' #_K0.013_tau1.730_Fc0.008_mx0_my-999_N4_topoentrainOne-ring_12:7_2022_10_11'
+filenameData = folder+'pool_data_K0.013_tau1.730_Fc0.008_mx0_my-999_N4_topoentrainOne-ring_0:43_2022_10_13' #_K0.013_tau1.730_Fc0.008_mx0_my-999_N4_topoentrainOne-ring_12:7_2022_10_11'
+filenameAlgo = folder+'dict_algo_K0.013_tau1.730_Fc0.008_mx0_my-999_N4_topoentrainOne-ring_0:43_2022_10_13' #_K0.013_tau1.730_Fc0.008_mx0_my-999_N4_topoentrainOne-ring_12:7_2022_10_11'
 ################################################################################
 if 'pool_data' in filenameData:
 	pool_data = pickle.load(open(filenameData, 'rb'))
@@ -144,6 +144,23 @@ if 'pool_data' in filenameData:
 	elif pool_data[0][0]['dict_algo']['parameter_space_sweeps'] == 'one_parameter_sweep' and 'entrain' in pool_data[0][0]['dict_net']['topology']:
 		eva.evaluate_entrainment_of_mutual_sync(pool_data, average_time_for_time_series_in_periods=3.5)
 else:
+	if dict_net['special_case'] == 'timeDepChangeOfIntrFreq':
+		phase_diff_wrap_to_interval = 1
+		if phase_diff_wrap_to_interval == 1:  # plot phase-differences in [-pi, pi] interval
+			shift2piWin = np.pi
+		elif phase_diff_wrap_to_interval == 2:  # plot phase-differences in [-pi/2, 3*pi/2] interval
+			shift2piWin = 0.5 * np.pi
+		elif phase_diff_wrap_to_interval == 3:  # plot phase-differences in [0, 2*pi] interval
+			shift2piWin = 0.0
+		sampling = 100
+		inst_freq = np.diff(dict_data['phi'] / dict_pll['div'], axis=0) / (2 * np.pi * dict_pll['dt'])
+		phase_diffs = np.zeros([len(dict_data['phi'][0:-1:sampling, 0]), 2])
+		for i in range(1, 3):
+			phase_diffs[:, i-1] = ((dict_data['phi'][0:-1:sampling, i] / dict_pll['div'] - dict_data['phi'][0:-1:sampling, 3] / dict_pll['div'] + shift2piWin) % (2 * np.pi)) - shift2piWin
+		dict_for_chris_adiabatic = {'time_dependent_parameter': dict_data['timeDependentParameter'][0, 0:-1:sampling],
+									'instantaneous_frequencies_Hz': inst_freq[0:-1:sampling, :], 'phase_differences_rad': phase_diffs, 'control_signal': dict_data['ctrl'][0, 0:-1:sampling]}
+		np.save('results/dict_for_chris_adiabatic_tau-%0.3f_topology-%s.npy' % (dict_pll['transmission_delay'], dict_net['topology']), dict_for_chris_adiabatic)
+		sys.exit()
 	# run evaluations
 	order_parameter, order_parameter_divided_phases, F1 = eva.compute_order_parameter(dict_pll, dict_net, dict_data)
 	dict_data.update({'order_parameter': order_parameter, 'order_parameter_divided_phases': order_parameter_divided_phases, 'F1': F1})

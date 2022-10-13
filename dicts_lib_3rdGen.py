@@ -64,7 +64,7 @@ def getDicts(Fsim=55):
 		'noiseVarVCO': 1E-12,													# variance of VCO GWN
 		'feedback_delay': 0,													# value of feedback delay in seconds
 		'feedback_delay_var': None, 											# variance of feedback delay
-		'transmission_delay': 2.28, #1.73, #1.285, #0.77 #1.75,#3.05,#1571.805,				# value of transmission delay in seconds, float (single), list (tau_k) or list of lists (tau_kl): np.random.uniform(min,max,size=[dict_net['Nx']*dict_net['Ny'],dict_net['Nx']*dict_net['Ny']]), OR [np.random.uniform(min,max) for i in range(dict_net['Nx']*dict_net['Ny'])]
+		'transmission_delay': 1.73, #1.285, #0.77 #1.75,#3.05,#1571.805,				# value of transmission delay in seconds, float (single), list (tau_k) or list of lists (tau_kl): np.random.uniform(min,max,size=[dict_net['Nx']*dict_net['Ny'],dict_net['Nx']*dict_net['Ny']]), OR [np.random.uniform(min,max) for i in range(dict_net['Nx']*dict_net['Ny'])]
 		'transmission_delay_var': None, 										# variance of transmission delays
 		'distribution_for_delays': None,										# from what distribution are random delays drawn?
 		# choose from coupfct.<ID>: sine, cosine, neg_sine, neg_cosine, triangular, deriv_triangular, square_wave, pfd, inverse_cosine, inverse_sine

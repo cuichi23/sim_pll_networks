@@ -154,11 +154,12 @@ else:
 			shift2piWin = 0.0
 		sampling = 100
 		inst_freq = np.diff(dict_data['phi'] / dict_pll['div'], axis=0) / (2 * np.pi * dict_pll['dt'])
-		phase_diffs = np.zeros([len(dict_data['phi'][0:-1:sampling, 0]), 2])
-		for i in range(1, 3):
-			phase_diffs[:, i-1] = ((dict_data['phi'][0:-1:sampling, i] / dict_pll['div'] - dict_data['phi'][0:-1:sampling, 3] / dict_pll['div'] + shift2piWin) % (2 * np.pi)) - shift2piWin
+		phase_diffs = np.zeros([len(dict_data['phi'][0:-1:sampling, 0]), 3])
+		phase_diffs[:, 0] = ((dict_data['phi'][0:-1:sampling, 1] / dict_pll['div'] - dict_data['phi'][0:-1:sampling, 2] / dict_pll['div'] + shift2piWin) % (2 * np.pi)) - shift2piWin
+		phase_diffs[:, 1] = ((dict_data['phi'][0:-1:sampling, 1] / dict_pll['div'] - dict_data['phi'][0:-1:sampling, 3] / dict_pll['div'] + shift2piWin) % (2 * np.pi)) - shift2piWin
+		phase_diffs[:, 2] = ((dict_data['phi'][0:-1:sampling, 2] / dict_pll['div'] - dict_data['phi'][0:-1:sampling, 3] / dict_pll['div'] + shift2piWin) % (2 * np.pi)) - shift2piWin
 		dict_for_chris_adiabatic = {'time_dependent_parameter': dict_data['timeDependentParameter'][0, 0:-1:sampling],
-									'instantaneous_frequencies_Hz': inst_freq[0:-1:sampling, :], 'phase_differences_rad': phase_diffs, 'control_signal': dict_data['ctrl'][0, 0:-1:sampling]}
+									'instantaneous_frequencies_Hz': inst_freq[0:-1:sampling, :], 'phase_differences_rad': phase_diffs, 'control_signal': dict_data['ctrl'][:, 0:-1:sampling]}
 		np.save('results/dict_for_chris_adiabatic_tau-%0.3f_topology-%s.npy' % (dict_pll['transmission_delay'], dict_net['topology']), dict_for_chris_adiabatic)
 		sys.exit()
 	# run evaluations

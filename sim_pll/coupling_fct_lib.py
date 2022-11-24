@@ -127,14 +127,14 @@ def deriv_triangular(x: np.float) -> np.float:
 	return (2.0/np.pi)*square(x, duty=0.5)
 
 
-def inverse_triangular(y: np.float, branch: str = 'positive', phase_wrap: int = 0) -> np.float:
+def inverse_triangular(y: np.float, branch: str = 'positive', phase_wrap: int = 1) -> np.float:
 	"""
 		Computes the inverse of the triangular function of the argument y.
 
 		Args:
 			y: argument
 			branch: chose negative or positive branch
-			phase_wrap: determines into which interval the phases are mapped
+			phase_wrap: determines the phase wrapping used: 1 = [-pi, pi], 2 = [-pi/2, 3*pi/2], 3 = [0, 2*pi]
 
 		Returns:
 			result of either of the two branches
@@ -162,6 +162,9 @@ def inverse_triangular(y: np.float, branch: str = 'positive', phase_wrap: int = 
 			return -(np.pi / 2) * (y - 3)
 		else:
 			return np.nan
+	elif phase_wrap == 0 or phase_wrap > 3:
+		print('Choose a phase wrap! (...and implement the general case with all branches)')
+		sys.exit()
 
 
 def square_wave(x: np.float, duty=0.5) -> np.float:

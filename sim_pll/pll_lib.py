@@ -146,7 +146,7 @@ class LowPassFilter:
 						self.b = 1.0 / (2.0 * np.pi * self.cutoff_freq_Hz * a)
 						self.t = np.array([0, self.dt])
 					else:
-						print('I am the loop filter of PLL%i: order, a=%i (sequential RC LFs with buffers). Friction coefficient set to %0.2f.' % (self.pll_id, self.order_loop_filter, self.friction_coefficient))
+						print('I am the loop filter of PLL%i: order, a=%i (sequential RC LFs with buffers). Friction coef ficient set to %0.2f.' % (self.pll_id, self.order_loop_filter, self.friction_coefficient))
 						self.evolve = lambda xPD: self.nth_order_sequential_lf(xPD)
 						self.b = 1.0 / (2.0 * np.pi * self.cutoff_freq_Hz)
 		elif self.cutoff_freq_Hz is None or self.cutoff_freq_Hz == 0:
@@ -972,7 +972,7 @@ class PhaseLockedLoop:
 		processing, the interaction / coupling strength, and many additional options such as additional injection of
 		signals, noise, heterogeneity, etc.
 
-		It allows to implement first and second order Kuramoto models with delayed and non delayed coupling for
+		It allows implementing first and second order Kuramoto models with delayed and non-delayed coupling for
 		different coupling topologies, heterogeneous oscillators and dynamic and quenched noise.
 
 		Attributes:

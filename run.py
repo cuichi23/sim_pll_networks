@@ -16,10 +16,10 @@ if __name__ == '__main__':
 
 	# obtain dictionaries for the PLLs and the network
 	# dict_pll, dict_net, dict_algo            = dicts_lib_FPEexplore.getDicts()
-	# dict_pll, dict_net, dict_algo            = dicts_lib_entrainMutC.getDicts()
+	dict_pll, dict_net, dict_algo            = dicts_lib_entrainMutC.getDicts()
 	# dict_pll, dict_net, dict_algo            = dicts_lib_entrainAll.getDicts()
 	# dict_pll, dict_net, dict_algo            = dicts_lib_4thGen.getDicts()
-	dict_pll, dict_net, dict_algo            = dicts_lib_3rdGen.getDicts()
+	# dict_pll, dict_net, dict_algo            = dicts_lib_3rdGen.getDicts()
 	# dict_pll, dict_net, dict_algo            = dicts_lib_Ising.getDicts()
 	# dict_pll, dict_net, dict_algo            = dicts_lib_test.getDicts()
 	# dict_pll, dict_net, dict_algo            = dicts_lib_Nav.getDicts()

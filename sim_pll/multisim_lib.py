@@ -101,11 +101,11 @@ def prepare_multiple_simulations(dict_net: dict, dict_pll: dict, dict_algo: dict
 			print('multiprocessing', Nsim, 'realizations')
 		else:
 			print(
-				'2 modes: iterate for no detuning over phase-differences, or detuning and phase-differences! Choose one. HINT: if dict_algo[*paramDiscretization*] is an instance of list or ndarray, there needs to be a list of intrinsic frequencies!')
+				'2 modes: iterate for no detuning over phase-differences, or detuning and phase-differences! Choose one. HINT: if dict_algo[*paramDiscretization*] == an instance of list or ndarray, there needs to be a list of intrinsic frequencies!')
 			sys.exit()
 
 	elif dict_algo['parameter_space_sweeps'] == 'single':
-		if dict_algo['param_id_0'] is 'None':
+		if dict_algo['param_id_0'] == 'None':
 			dict_algo.update({'min_max_range_parameter_0': [1, 1], 'paramDiscretization': [1, 1]})
 			print('No parameter to be changed, simulate only one realization!')
 		else:
@@ -126,8 +126,8 @@ def prepare_multiple_simulations(dict_net: dict, dict_pll: dict, dict_algo: dict
 		elif dict_net['Nx'] * dict_net['Ny'] > 3:
 			if isinstance(dict_algo['paramDiscretization'], list):
 				scanValues = np.random.uniform(low=-np.pi, high=np.pi, size=[dict_algo['paramDiscretization'][0], dict_net['Nx'] * dict_net['Ny']])
-				if not dict_algo['param_id_0'] is None:
-					print('Implement here that a parameter is changed and then generate all combinations with the above realizations?!')
+				if not dict_algo['param_id_0'] == None:
+					print('Implement here that a parameter == changed and then generate all combinations with the above realizations?!')
 
 			elif isinstance(dict_algo['paramDiscretization'], float) or isinstance(dict_algo['paramDiscretization'], int):
 				scanValues = np.random.uniform(low=-np.pi, high=np.pi, size=[dict_algo['paramDiscretization'], dict_net['Nx'] * dict_net['Ny']])

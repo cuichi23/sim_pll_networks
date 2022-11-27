@@ -152,7 +152,7 @@ def phase_configuration_ref_to_one_for_chain_topology(dict_net: dict, dict_pll: 
 						branch=dict_pll['branch_of_inverse_coupling_fct_if_applies'], phase_wrap=phase_wrap)
 
 	# calculate the phase-offsets from the phase-differences for all oscillators, assuming that beta_0 = 0!
-	print('CHECK: asymptotic_phase_differences_entrained_sync_state[0]=', asymptotic_phase_differences_entrained_sync_state[0])
+	# print('CHECK: asymptotic_phase_differences_entrained_sync_state[0]=', asymptotic_phase_differences_entrained_sync_state[0])
 	for i in range(1, dict_net['Nx']):
 		# NOTE: asymptotic_phase_differences_entrained_sync_state has been filled from the end towards the beginning... the first entry is 0, representing beta_0=0
 		# so we start \beta_
@@ -178,6 +178,7 @@ def phase_configuration_ref_to_one_for_chain_topology(dict_net: dict, dict_pll: 
 		# time.sleep(10)
 
 	dict_net.update({'phiInitConfig': asymptotic_phase_configuration_entrained_sync_state})
+	dict_net.update({'phiDiffsInitConfig': asymptotic_phase_differences_entrained_sync_state})
 
 	return None
 

@@ -53,7 +53,7 @@ def getDicts(Fsim=55):
 	dict_pll = {
 		'intrF': [1, 1, 1, 1],													# intrinsic frequency in Hz [random.uniform(0.95, 1.05) for i in range(dict_net['Nx']*dict_net['Ny'])]
 		'syncF': 0.9968,														# frequency of synchronized state in Hz
-		'coupK': 0.0148, #2.89E-5, #0.0125, 														# [random.uniform(0.3, 0.4) for i in range(dict_net['Nx']*dict_net['Ny'])],# coupling strength (like phase model: K = Kvco/2 * G_all, NOTE: the /2 is for coupling functions that have peak2peal amplitude 2) in Hz float or [random.uniform(minK, maxK) for i in range(dict_net['Nx']*dict_net['Ny'])]
+		'coupK': 0.0148, #2.89E-5, #0.0125, 									# [random.uniform(0.3, 0.4) for i in range(dict_net['Nx']*dict_net['Ny'])],# coupling strength (like phase model: K = Kvco/2 * G_all, NOTE: the /2 is for coupling functions that have peak2peal amplitude 2) in Hz float or [random.uniform(minK, maxK) for i in range(dict_net['Nx']*dict_net['Ny'])]
 		'gPDin': 1,																# gains of the different inputs to PD k from input l -- G_kl, see PD, set to 1 and all G_kl=1 (so far only implemented for some cases, check!): np.random.uniform(0.95,1.05,size=[dict_net['Nx']*dict_net['Ny'],dict_net['Nx']*dict_net['Ny']])
 		'gPDin_symmetric': True,												# set to True if G_kl == G_lk, False otherwise
 		'cutFc': 0.00839,#4.378E-5,												# LF cut-off frequency in Hz, here N=9 with mean 0.015: [0.05,0.015,0.00145,0.001,0.0001,0.001,0.00145,0.015,0.05], [random.uniform(0.001, 0.0015) for i in range(dict_net['Nx']*dict_net['Ny'])]
@@ -102,7 +102,7 @@ def getDicts(Fsim=55):
 		'param_id_0': 'intrF',													# parameter to be changed between different realizations, according to the min_max_range_parameter: 'None' or string of any other parameter
 		'min_max_range_parameter_0': [0.95, 1.05],								# specifies within which min and max value to linspace the, e.g., initial frequency difference (w.r.t. HF Frequency, not divided) in the case of 'listOfInitialPhaseConfigurations', or any other parameter as in, e.g., 'two_parameter_sweep'
 		'param_id_1': 'transmission_delay',	  									# parameter to be changed between different realizations, according to the min_max_range_parameter: 'None' or string of any other parameter
-		'min_max_range_parameter_1': [1.73, 2.28],  								# specifies within which min and max value to linspace the, e.g., initial frequency difference (w.r.t. HF Frequency, not divided) in the case of 'listOfInitialPhaseConfigurations', or any other parameter as in, e.g., 'two_parameter_sweep'
+		'min_max_range_parameter_1': [1.73, 2.28],  							# specifies within which min and max value to linspace the, e.g., initial frequency difference (w.r.t. HF Frequency, not divided) in the case of 'listOfInitialPhaseConfigurations', or any other parameter as in, e.g., 'two_parameter_sweep'
 		'store_ctrl_and_clock': True,											# whether the control signals and clock signal is being computed (time and memory usage)
 		'store_phases_tau_array': True,											# whether the phases are saved when simulation on tau-array
 		'number_of_processes_in_multisim': 6									# choose there an integer number that specifies the number of parallel threads to be simulated

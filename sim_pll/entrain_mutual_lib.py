@@ -148,7 +148,7 @@ def phase_configuration_ref_to_one_for_chain_topology(dict_net: dict, dict_pll: 
 			#print('Now processing the remaining!')
 			asymptotic_phase_differences_entrained_sync_state[i] = -2*np.pi*dict_pll['intrF'][0]*dict_pll['transmission_delay'] - dict_pll['div']*dict_pll['inverse_coup_fct_sig'](
 				(2*(dict_pll['inverse_fct_vco_response'](dict_pll['intrF'][0]) - frequency_or_voltage[i]))/dict_pll['coupK'][i] - dict_pll['coup_fct_sig'](
-					(-2*np.pi*dict_pll['intrF'][0]*dict_pll['transmission_delay'] - asymptotic_phase_configuration_entrained_sync_state[i+1]) / dict_pll['div']),
+					(-2*np.pi*dict_pll['intrF'][0]*dict_pll['transmission_delay'] + asymptotic_phase_differences_entrained_sync_state[i+1]) / dict_pll['div']),
 						branch=dict_pll['branch_of_inverse_coupling_fct_if_applies'], phase_wrap=phase_wrap)
 
 	# calculate the phase-offsets from the phase-differences for all oscillators, assuming that beta_0 = 0!
@@ -157,21 +157,22 @@ def phase_configuration_ref_to_one_for_chain_topology(dict_net: dict, dict_pll: 
 		# NOTE: asymptotic_phase_differences_entrained_sync_state has been filled from the end towards the beginning... the first entry is 0, representing beta_0=0
 		# so we start \beta_
 
-		asymptotic_phase_configuration_entrained_sync_state[i] = asymptotic_phase_configuration_entrained_sync_state[i-1] - asymptotic_phase_differences_entrained_sync_state[i]
+		asymptotic_phase_configuration_entrained_sync_state[i] = asymptotic_phase_configuration_entrained_sync_state[i-1] + asymptotic_phase_differences_entrained_sync_state[i]
 
-	shift2piWin = 0.0
-	if phase_wrap == 1:  # plot phase-differences in [-pi, pi] interval
-		shift2piWin = np.pi
-	elif phase_wrap == 2:  # plot phase-differences in [-pi/2, 3*pi/2] interval
-		shift2piWin = 0.5 * np.pi
-	elif phase_wrap == 3:  # plot phase-differences in [0, 2*pi] interval
+	if not any(np.isnan(asymptotic_phase_differences_entrained_sync_state)):
 		shift2piWin = 0.0
-
-	asymptotic_phase_configuration_entrained_sync_state = [(asymptotic_phase_configuration_entrained_sync_state[i] + shift2piWin) % (2*np.pi) - shift2piWin for i in range(len(asymptotic_phase_configuration_entrained_sync_state))]
+		if phase_wrap == 1:  # plot phase-differences in [-pi, pi] interval
+			shift2piWin = np.pi
+		elif phase_wrap == 2:  # plot phase-differences in [-pi/2, 3*pi/2] interval
+			shift2piWin = 0.5 * np.pi
+		elif phase_wrap == 3:  # plot phase-differences in [0, 2*pi] interval
+			shift2piWin = 0.0
+		asymptotic_phase_configuration_entrained_sync_state = [((asymptotic_phase_configuration_entrained_sync_state[i] + shift2piWin) % (2.0 * np.pi) - shift2piWin) for i in
+															   range(len(asymptotic_phase_configuration_entrained_sync_state))]
 
 	if not any(np.isnan(asymptotic_phase_differences_entrained_sync_state)):
 		print('\nComputed initial phase-differences for {tau=%0.2f, fR=%0.2f} to be dphi_kl=phi_k-phi_l' % (dict_pll['transmission_delay'],
-																							dict_pll['intrF'][0]), asymptotic_phase_differences_entrained_sync_state)
+																							dict_pll['intrF'][0]), asymptotic_phase_differences_entrained_sync_state[1:])
 		print('\nComputed initial phases for {tau=%0.2f, fR=%0.2f} to be phi_k=' % (dict_pll['transmission_delay'],
 																							dict_pll['intrF'][0]), asymptotic_phase_configuration_entrained_sync_state)
 		# print('dict_pll[*inverse_fct_vco_response*](dict_pll[*intrF*][0])', dict_pll['inverse_fct_vco_response'](dict_pll['intrF'][0]))

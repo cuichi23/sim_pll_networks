@@ -105,11 +105,17 @@ def prepare_multiple_simulations(dict_net: dict, dict_pll: dict, dict_algo: dict
 			sys.exit()
 
 	elif dict_algo['parameter_space_sweeps'] == 'single':
-		if dict_algo['param_id_0'] == 'None':
-			dict_algo.update({'min_max_range_parameter_0': [1, 1], 'paramDiscretization': [1, 1]})
+		# if dict_algo['param_id_0'] == 'None':
+		# 	dict_algo.update({'min_max_range_parameter_0': [1, 1], 'paramDiscretization': [1, 1]})
+		# 	print('No parameter to be changed, simulate only one realization!')
+		if dict_algo['param_id_0'] == 'None' and dict_algo['param_id_1'] == 'None':
+			dict_algo.update({'min_max_range_parameter_0': [1, 1], 'min_max_range_parameter_1': [1, 1], 'paramDiscretization': [1, 1]})
 			print('No parameter to be changed, simulate only one realization!')
+		elif dict_algo['param_id_0'] != 'None' or dict_algo['param_id_1'] != 'None':
+			dict_algo.update({'min_max_range_parameter_0': [1, 1], 'min_max_range_parameter_1': [1, 1], 'paramDiscretization': [1, 1]})
+			print('Single realization mode! No sweeps intended here.')
 		else:
-			print('Implement this!')
+			print('Implement this! Check what was wanted.')
 			sys.exit()
 		scanValues, allPoints = setup.all_initial_phase_combinations(dict_pll, dict_net, dict_algo, paramDiscretization=dict_algo['paramDiscretization'])
 		print('allPoints:', [allPoints], '\nscanValues', scanValues)
@@ -264,7 +270,7 @@ def evaluate_pool_data(dict_net, dict_pll, dict_algo, pool_data):
 				plt.show()
 		plot.plot_order_param_vs_parameter_space(pool_data, average_time_order_parameter_in_periods=average_time_order_parameter_in_periods, colormap=cm.hsv)
 		plot.plot_final_phase_configuration_vs_parameter_space(pool_data, average_time_phase_difference_in_periods=average_time_order_parameter_in_periods,
-															phase_wrap=1, std_treshold_determine_time_dependency=0.15*np.pi,
+															phase_wrap=3, std_treshold_determine_time_dependency=0.15*np.pi,
 															std_treshold_order_param_determine_time_dependency=0.075, colormap=cm.hsv)
 		plt.draw()
 		plt.show()
@@ -379,6 +385,8 @@ def multihelper(iterConfig, initPhiPrime0, dict_net, dict_pll, dict_algo, param_
 			dict_pll_rea.update({param_id: change_param})							# update the parameter chosen in change_param with a value of all scanvalues
 		else:
 			print('No parameters for sweep specified -- hence simulating the same parameter set for all realizations!')
+		if 'entrain' in dict_net['topology'] and dict_pll['typeOfHist'] == 'syncState':  # set syncF to the reference frequency
+			dict_pll_rea.update({'syncF': dict_pll_rea['intrF'][0]})
 
 		return simulateSystem(dict_net_rea, dict_pll_rea, dict_algo_rea, multi_sim=True)
 
@@ -407,6 +415,8 @@ def multihelper(iterConfig, initPhiPrime0, dict_net, dict_pll, dict_algo, param_
 		else:
 			print('No parameters for sweep specified -- hence simulating the same parameter set for all realizations!')
 
+		if 'entrain' in dict_net['topology'] and dict_pll['typeOfHist'] == 'syncState':  # set syncF to the reference frequency
+			dict_pll_rea.update({'syncF': dict_pll_rea['intrF'][0]})
 		if not dict_net['phiInitConfig'] and 'entrain' in dict_net_rea['topology']:  # needs to be done here to catch this case below if there are np.nans!
 			print('\nPhase configuration of synchronized state will be set according to supplied topology and twist state information!')
 			setup.generate_phi0(dict_net_rea, dict_pll_rea, dict_algo_rea)

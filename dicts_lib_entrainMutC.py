@@ -38,7 +38,7 @@ def getDicts(Fsim: int = 55):
 		'topology': 'entrainOne-chain',											# 1d) ring, chain, 2d) square-open, square-periodic, hexagonal...
 																				# 3) global, entrainOne-[ring,chain,square-open], entrainAll-[ring,chain,square-open], entrainPLLsHierarch, compareEntrVsMutual
 		'normalize_mutual_coupling_by_inputs': True,  							# divide the sum over all inputs to a PLL by the number of inputs YES/NO -> True/False
-		'Tsim': 4400,															# simulation time in multiples of the period
+		'Tsim': 75,															# simulation time in multiples of the period
 		'computeFreqAndStab':  False,											# compute linear stability and global frequency if possible: True or False
 		'phi_array_mult_tau': 1,												# how many multiples of the delay is stored of the phi time series
 		'phiPerturb': [random.uniform(0, 1E-9) for i in range(3)],				# delta-perturbation on initial state -- PROVIDE EITHER ONE OF THEM! if [] set to zero
@@ -51,26 +51,26 @@ def getDicts(Fsim: int = 55):
 	}
 
 	dict_pll = {
-		'intrF': [1, 1.004, 0.996],												# intrinsic frequency in Hz: Note that always he first entry is that of the reference!
-		'syncF': 1,																# frequency of synchronized state in Hz
-		'coupK': [0., 0.408, 0.4225],											# [random.uniform(0.3, 0.4) for i in range(dict_net['Nx']*dict_net['Ny'])],# coupling strength (like phase model: K = Kvco/2 * G_all, NOTE: the /2 is for coupling functions that have peak2peal amplitude 2) in Hz float or [random.uniform(minK, maxK) for i in range(dict_net['Nx']*dict_net['Ny'])]
+		'intrF': [0.865, 1.004, 0.996],											# intrinsic frequency in Hz: Note that always he first entry is that of the reference!
+		'syncF': 1,															    # frequency of synchronized state in Hz
+		'coupK': [0., 0.408/2, 0.4225/2],											# [random.uniform(0.3, 0.4) for i in range(dict_net['Nx']*dict_net['Ny'])],# coupling strength (like phase model: K = Kvco/2 * G_all, NOTE: the /2 is for coupling functions that have peak2peal amplitude 2) in Hz float or [random.uniform(minK, maxK) for i in range(dict_net['Nx']*dict_net['Ny'])]
 		'gPDin': 1.0,	#8.5													# gains of the different inputs to PD k from input l -- G_kl, see PD, set to 1 and all G_kl=1 (so far only implemented for some cases, check!): np.random.uniform(0.95,1.05,size=[dict_net['Nx']*dict_net['Ny'],dict_net['Nx']*dict_net['Ny']])
 		'gPDin_symmetric': False,												# set to True if G_kl == G_lk, False otherwise
-		'cutFc': [0., 0.0156, 0.0156],											# LF cut-off frequency in Hz, None for no LF, or e.g., N=9 with mean 0.015: [0.05,0.015,0.00145,0.001,0.0001,0.001,0.00145,0.015,0.05], [0.0148, 0.0148, 0.0957, 0.0957, 0.0148, 0.0148, 0.0957, 0.0957, 0.0148, 0.0148, 0.0957, 0.0957, 0.0148, 0.0148, 0.0957, 0.0957] # [0.0148, 0.0957, 0.0148, 0.0957, 0.0148, 0.0957, 0.0148, 0.0957, 0.0148, 0.0957, 0.0148, 0.0957, 0.0148, 0.0957, 0.0148, 0.0957], #
+		'cutFc': [100, 0.0156*10, 0.0156*10],											# LF cut-off frequency in Hz, None for no LF, or e.g., N=9 with mean 0.015: [0.05,0.015,0.00145,0.001,0.0001,0.001,0.00145,0.015,0.05], [0.0148, 0.0148, 0.0957, 0.0957, 0.0148, 0.0148, 0.0957, 0.0957, 0.0148, 0.0148, 0.0957, 0.0957, 0.0148, 0.0148, 0.0957, 0.0957] # [0.0148, 0.0957, 0.0148, 0.0957, 0.0148, 0.0957, 0.0148, 0.0957, 0.0148, 0.0957, 0.0148, 0.0957, 0.0148, 0.0957, 0.0148, 0.0957], #
 		'orderLF': 1,															# order of LF filter, either 1 or 2 at the moment (not compatible with synctools!)
 		'div': 1,																# divisor of divider (int)
 		'friction_coefficient': 1,												# friction coefficient of 2nd order Kuramoto models
 		'fric_coeff_PRE_vs_PRR': 'PRE',											# 'PRR': friction coefficient multiplied to instant. AND intrin. freq, 'PRE': friction coefficient multiplied only to instant. freq
-		'noiseVarVCO': [0, 5E-10, 1E-9],										# variance of VCO GWN
+		'noiseVarVCO': [0, 5E-10, 1E-10],										# variance of VCO GWN
 		'feedback_delay': 0,													# value of feedback delay in seconds
 		'feedback_delay_var': None, 											# variance of feedback delay
-		'transmission_delay': 0.256, #5.0, 										# value of transmission delay in seconds, float (single), list (tau_k) or list of lists (tau_kl): np.random.uniform(min,max,size=[dict_net['Nx']*dict_net['Ny'],dict_net['Nx']*dict_net['Ny']]), OR [np.random.uniform(min,max) for i in range(dict_net['Nx']*dict_net['Ny'])]
+		'transmission_delay': 0.349, #0.256, #5.0, 								# value of transmission delay in seconds, float (single), list (tau_k) or list of lists (tau_kl): np.random.uniform(min,max,size=[dict_net['Nx']*dict_net['Ny'],dict_net['Nx']*dict_net['Ny']]), OR [np.random.uniform(min,max) for i in range(dict_net['Nx']*dict_net['Ny'])]
 		'transmission_delay_var': None, 										# variance of transmission delays
 		'distribution_for_delays': None,										# from what distribution are random delays drawn?
 		# choose from coupfct.<ID>: sine, cosine, neg_sine, neg_cosine, triangular, deriv_triangular, square_wave, pfd, inverse_cosine, inverse_sine
 		'coup_fct_sig': coupfct.triangular,	#coupfct.sine,						# coupling function h(x) for PLLs with ideally filtered PD signals:
 		'derivative_coup_fct': coupfct.deriv_triangular,						# derivative h'(x) of coupling function h(x)
-		'branch_of_inverse_coupling_fct_if_applies': 'negative',				# choose the branch of the coupling function, e.g., for triangular: 'negative' or 'positive'
+		'branch_of_inverse_coupling_fct_if_applies': 'positive',				# choose the branch of the coupling function, e.g., for triangular: 'negative' or 'positive'
 		'includeCompHF': False,													# boolean True/False whether to simulate with HF components
 		'vco_out_sig': coupfct.square_wave_symm_zero,							# for HF case, e.g.: coupfct.sine, coupfct.square_wave, coupfct.square_wave_symm_zero
 		'typeVCOsig': 'analogHF',												# 'analogHF' or 'digitalHF' - determines whether XOR PD or multiplier is used
@@ -98,8 +98,8 @@ def getDicts(Fsim: int = 55):
 
 	dict_algo = {
 		'parameter_space_sweeps': 'two_parameter_sweep',						# pick method for setting realizations 'single', 'classicBruteForceMethodRotatedSpace', 'listOfInitialPhaseConfigurations', 'two_parameter_sweep', 'one_parameter_sweep'
-		'paramDiscretization': [25, 25],										# parameter discretization for brute force initial phases and parameter space scans, e.g., for 'listOfInitialPhaseConfigurations' it specifies the number of initial phase differences and the discretization points for 'min_max_range_parameter_0'
-		'param_id_0': 'intrF',													# parameter to be changed between different realizations, according to the min_max_range_parameter: 'None' or string of any other parameter
+		'paramDiscretization': [16, 16],										# parameter discretization for brute force initial phases and parameter space scans, e.g., for 'listOfInitialPhaseConfigurations' it specifies the number of initial phase differences and the discretization points for 'min_max_range_parameter_0'
+		'param_id_0': 'intrF',  												# parameter to be changed between different realizations, according to the min_max_range_parameter: 'None' or string of any other parameter
 		'min_max_range_parameter_0': [0.55, 1.45],								# specifies within which min and max value to linspace the, e.g., initial frequency difference (w.r.t. HF Frequency, not divided) in the case of 'listOfInitialPhaseConfigurations', or any other parameter as in, e.g., 'two_parameter_sweep'
 		'param_id_1': 'transmission_delay',  									# parameter to be changed between different realizations, according to the min_max_range_parameter: 'None' or string of any other parameter
 		'min_max_range_parameter_1': [0.01, 2.6],  								# specifies within which min and max value to linspace the, e.g., initial frequency difference (w.r.t. HF Frequency, not divided) in the case of 'listOfInitialPhaseConfigurations', or any other parameter as in, e.g., 'two_parameter_sweep'

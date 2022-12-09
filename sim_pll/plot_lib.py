@@ -863,7 +863,7 @@ def plot_instantaneous_freqs_vs_time_dependent_parameter(dict_pll: dict, dict_ne
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
-def plot_order_parameter_vs_time_dependent_parameter_div_and_undiv(dict_pll: dict, dict_net: dict, dict_data: dict):
+def plot_order_parameter_vs_time_dependent_parameter_div_and_undiv(dict_pll: dict, dict_net: dict, dict_data: dict, dict_algo: dict):
 	dict_pll, dict_net = prepareDictsForPlotting(dict_pll, dict_net)
 
 	opacity_reverse_change = 0.35
@@ -2204,7 +2204,7 @@ def plot_final_phase_configuration_vs_parameter_space(pool_data: dict, average_t
 	if phase_wrap == 1:  # plot phase-differences in [-pi, pi) interval
 		shift2piWin = np.pi
 		imshow_min_val = -np.pi
-		imshow_max_val = np.pi-0.000001
+		imshow_max_val = np.pi - 0.000001
 	elif phase_wrap == 2:  # plot phase-differences in [-pi/2, 3*pi/2) interval
 		shift2piWin = 0.5 * np.pi
 		imshow_min_val = -np.pi/2
@@ -2244,8 +2244,8 @@ def plot_final_phase_configuration_vs_parameter_space(pool_data: dict, average_t
 			averaging_time_as_index = np.int(average_time_phase_difference_in_periods * np.mean(pool_data[0][i]['dict_pll']['intrF']) / pool_data[0][i]['dict_pll']['dt'])
 		results.append(
 			[pool_data[0][i]['dict_data']['order_parameter'][-1], np.mean(pool_data[0][i]['dict_data']['order_parameter'][-averaging_time_as_index:]),		# 0 & 1
-			np.std(pool_data[0][i]['dict_data']['order_parameter'][-int(5.3*averaging_time_as_index):]),														# 2
-			np.std(pool_data[0][i]['dict_data']['order_parameter'][-int(8.3 * averaging_time_as_index):]),													# 3
+			np.std(pool_data[0][i]['dict_data']['order_parameter'][-int(10.3 * averaging_time_as_index):]),													# 2
+			np.std(pool_data[0][i]['dict_data']['order_parameter'][-int(20.6 * averaging_time_as_index):]),													# 3
 			np.min(pool_data[0][i]['dict_data']['order_parameter'][-int(5.3 * averaging_time_as_index):]),													# 4
 			np.max(pool_data[0][i]['dict_data']['order_parameter'][-int(5.3 * averaging_time_as_index):]),													# 5
 			np.min(pool_data[0][i]['dict_data']['order_parameter'][-int(10.6 * averaging_time_as_index):-int(5.3 * averaging_time_as_index)]),				# 6
@@ -2298,9 +2298,9 @@ def plot_final_phase_configuration_vs_parameter_space(pool_data: dict, average_t
 					else:
 						constantR_beta_kl[j, i] = np.nan
 					# then check, whether it is decreasing -- check whether std decreases AND whether min and max values increase/decrease respectively
-					if results[i, 3] <= results[i, 2] or (results[i, 4] > results[i, 6] or results[i, 5] < results[i, 7]):
+					if results[i, 3] <= results[i, 2]: 			# or (results[i, 4] > results[i, 6] or results[i, 5] < results[i, 7]):
 						decreasingR_beta_kl[j, i] = ((pool_data[0][i]['dict_data']['phi'][-1, j] - pool_data[0][i]['dict_data']['phi'][-1, 0] + shift2piWin) % (2.0 * np.pi)) - shift2piWin
-					elif results[i, 3] > results[i, 2] or (results[i, 4] < results[i, 6] or results[i, 5] > results[i, 7]):
+					elif results[i, 3] > results[i, 2]: 		# or (results[i, 4] < results[i, 6] or results[i, 5] > results[i, 7]):
 						decreasingR_beta_kl[j, i] = np.nan
 					else:
 						print('Recheck logic here in plot_final_phase_configuration_vs_parameter_space-fct!')
@@ -2349,10 +2349,19 @@ def plot_final_phase_configuration_vs_parameter_space(pool_data: dict, average_t
 						constantR_beta_kl[j, i] = ((pool_data[0][i]['dict_data']['phi'][-1, j] - pool_data[0][i]['dict_data']['phi'][-1, 0] + shift2piWin) % (2.0 * np.pi)) - shift2piWin
 					else:
 						constantR_beta_kl[j, i] = np.nan
-					# then check, whether it is decreasing -- check whether std decreases AND whether min and max values increase/decrease respectively
-					if results[i, 3] <= results[i, 2] or (results[i, 4] > results[i, 6] or results[i, 5] < results[i, 7]):
+					# then check, whether order parameter peak2peak is decreasing -- check whether std decreases AND whether min and max values increase/decrease respectively
+					if results[i, 3] <= results[i, 2]:			# and (results[i, 4] > results[i, 6] or results[i, 5] < results[i, 7]):		# standard deviation decreases, min and max values get closer to each other
+
+						# here change maybe... the peak to peak between max and min of the order paramerter should become smaller...
+						# solution 1) 	write a function that analyzes the time-series in the following way: smooth the data to average out noise and fluctuations and then
+						#				check whether the distance between minima and maxima in become smaller for larger times
+						# solution 2)	calculate the standard deviation over an interval that defines a running window and then analyze the time evolution of the
+						#				std as time advances -- this has the advantage that local extreme events/fluctuations do not yield incorrect classifiction,
+						#				we want to understand the overall trend of the std as time progresses
+
+
 						decreasingR_beta_kl[j, i] = ((pool_data[0][i]['dict_data']['phi'][-1, j] - pool_data[0][i]['dict_data']['phi'][-1, 0] + shift2piWin) % (2.0 * np.pi)) - shift2piWin
-					elif results[i, 3] > results[i, 2] or (results[i, 4] < results[i, 6] or results[i, 5] > results[i, 7]):
+					elif results[i, 3] > results[i, 2]:							# and (results[i, 4] < results[i, 6] or results[i, 5] > results[i, 7]):
 						decreasingR_beta_kl[j, i] = np.nan
 					else:
 						print('Recheck logic here in plot_final_phase_configuration_vs_parameter_space-fct!')
@@ -2467,7 +2476,7 @@ def plot_final_phase_configuration_vs_parameter_space(pool_data: dict, average_t
 
 		plt.imshow(tempresults.astype(float), interpolation='nearest', cmap=colormap, aspect='auto', origin='lower',
 				   extent=(dict_algo['min_max_range_parameter_0'][0], dict_algo['min_max_range_parameter_0'][1], dict_algo['min_max_range_parameter_1'][0], dict_algo['min_max_range_parameter_1'][1]),
-				   vmin=std_treshold_determine_time_dependency, vmax=2 * np.pi)
+				   vmin=imshow_min_val, vmax=imshow_max_val) #vmin=std_treshold_determine_time_dependency, vmax=2 * np.pi)
 		plt.title(r'$\Delta_\textrm{theory}$' + phi_string)
 		plt.xlabel(x_label)
 		plt.ylabel(y_label)
@@ -2493,7 +2502,7 @@ def plot_final_phase_configuration_vs_parameter_space(pool_data: dict, average_t
 
 		plt.imshow(tempresults_ma.astype(float), interpolation='nearest', cmap=colormap, aspect='auto', origin='lower',
 				   extent=(dict_algo['min_max_range_parameter_0'][0], dict_algo['min_max_range_parameter_0'][1], dict_algo['min_max_range_parameter_1'][0], dict_algo['min_max_range_parameter_1'][1]),
-				   vmin=std_treshold_determine_time_dependency, vmax=2 * np.pi)
+				   vmin=imshow_min_val, vmax=imshow_max_val) #vmin=std_treshold_determine_time_dependency, vmax=2 * np.pi)
 		plt.title(r'std($\Delta$' + phi_string + ')')
 		plt.xlabel(x_label)
 		plt.ylabel(y_label)
@@ -2517,7 +2526,7 @@ def plot_final_phase_configuration_vs_parameter_space(pool_data: dict, average_t
 
 		plt.imshow(tempresults_ma.astype(float), interpolation='nearest', cmap=colormap, aspect='auto', origin='lower',
 				   extent=(dict_algo['min_max_range_parameter_0'][0], dict_algo['min_max_range_parameter_0'][1], dict_algo['min_max_range_parameter_1'][0], dict_algo['min_max_range_parameter_1'][1]),
-				   vmin=std_treshold_determine_time_dependency, vmax=2 * np.pi)
+				   vmin=imshow_min_val, vmax=imshow_max_val) #vmin=std_treshold_determine_time_dependency, vmax=2 * np.pi)
 		plt.title(r'$\Delta$' + phi_string + r' for $R(t)\rightarrow\infty=c$')
 		plt.xlabel(x_label)
 		plt.ylabel(y_label)
@@ -2543,7 +2552,7 @@ def plot_final_phase_configuration_vs_parameter_space(pool_data: dict, average_t
 
 		plt.imshow(tempresults_ma.astype(float), interpolation='nearest', cmap=colormap, aspect='auto', origin='lower',
 				   extent=(dict_algo['min_max_range_parameter_0'][0], dict_algo['min_max_range_parameter_0'][1], dict_algo['min_max_range_parameter_1'][0], dict_algo['min_max_range_parameter_1'][1]),
-				   vmin=std_treshold_determine_time_dependency, vmax=2 * np.pi)
+				   vmin=imshow_min_val, vmax=imshow_max_val) #vmin=std_treshold_determine_time_dependency, vmax=2 * np.pi)
 		plt.title(r'$\Delta$' + phi_string + r' for $std(R(t))$ and min/max($R(t)$) increasing/decreasing')
 		plt.xlabel(x_label)
 		plt.ylabel(y_label)

@@ -296,7 +296,7 @@ class SignalControlledOscillator:
 		self.d_phi = None
 		self.pll_id = pll_id
 		self.fric_coeff = get_from_value_or_list(pll_id, dict_pll['friction_coefficient'], dict_net['Nx'] * dict_net['Ny'])
-		self.sync_freq_rad 	= 2.0 * np.pi * get_from_value_or_list(pll_id, dict_pll['syncF'], dict_net['Nx'] * dict_net['Ny'])     #dict_pll['syncF']
+		self.sync_freq_rad = 2.0 * np.pi * get_from_value_or_list(pll_id, dict_pll['syncF'], dict_net['Nx'] * dict_net['Ny'])
 		if dict_pll['fric_coeff_PRE_vs_PRR'] == 'PRR':
 			self.intr_freq_rad = 2.0 * np.pi * get_from_value_or_list(pll_id, dict_pll['intrF'], dict_net['Nx'] * dict_net['Ny'])
 		elif dict_pll['fric_coeff_PRE_vs_PRR'] == 'PRE':
@@ -314,7 +314,8 @@ class SignalControlledOscillator:
 		self.response_vco = dict_pll['responseVCO']
 
 		if dict_pll['typeOfHist'] == 'syncState':
-			print('I am the VCO of PLL%i with intrinsic frequency f=%0.2f Hz and K=%0.2f Hz, initially in a synchronized state.' % (self.pll_id, self.intr_freq_rad / (2.0 * np.pi), self.K_rad / (2.0 * np.pi)))
+			print('I am the VCO of PLL%i with intrinsic frequency f=%0.2f Hz and K=%0.2f Hz, initially in a synchronized state with sync. frequency fsync=%0.2f Hz.' % (self.pll_id,
+																								self.intr_freq_rad / (2.0 * np.pi), self.K_rad / (2.0 * np.pi), self.sync_freq_rad / (2.0 * np.pi)))
 			self.init_freq = self.sync_freq_rad
 		elif dict_pll['typeOfHist'] == 'freeRunning':
 			print('I am the VCO of PLL%i with intrinsic frequency f=%0.2f Hz and K=%0.2f Hz, initially in free running.' % (self.pll_id, self.intr_freq_rad / (2.0 * np.pi), self.K_rad / (2.0 * np.pi)))

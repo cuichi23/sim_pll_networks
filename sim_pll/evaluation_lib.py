@@ -222,7 +222,10 @@ def calcSpectrum(phase_or_signal: np.ndarray, dict_pll: dict, dict_net: dict, di
 	P0 = 1E-3														# 1000 mW
 	R = 50 															# 50 Ohms --> for P0 in [mW/Hz] and R [ohm]
 
-	Pxx_dBm.append(10*np.log10((Vxx/R)/P0))
+	try:
+		Pxx_dBm.append(10*np.log10((Vxx/R)/P0))
+	except:
+		print('ERROR in PSD computation caught via try/except! check Vxx:', Vxx)
 	f.append(ftemp)
 
 	return f, Pxx_dBm

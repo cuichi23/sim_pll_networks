@@ -142,7 +142,7 @@ def prepare_simulation(dict_net: dict, dict_pll: dict, dict_algo: dict):
 		for i in range(max_delay_steps + 1, 0, -1):
 			# print('i-1',i-1)
 			phi[i - 1, :] = [pll.setup_hist_reverse() for pll in pll_list]
-	elif dict_pll['typeOfHist'] == 'syncState':  # in the 'syncstate' case the oscillators evolve as if synced and then receive a delta perturbation
+	elif dict_pll['typeOfHist'] == 'syncState':  # in the 'syncstate' case the oscillators evolve as if synced and then receive a delta perturbation -- syncF is the frequency
 		# since we want a delta perturbation, the perturbation is removed towards the prior step
 		phi[max_delay_steps - 1, :] = list(map(sub, [pll.setup_hist_reverse() for pll in pll_list], dict_net['phiPerturb']))  # local container to help the setup
 
@@ -245,7 +245,7 @@ def perform_simulation_case(dict_net: dict, dict_pll: dict, dict_algo: dict, dic
 		evolve_system_on_tsim_array_time_dependent_change_of_intrinsic_frequency_save_ctrl_signal(dict_net, dict_pll, pll_list, dict_data, dict_algo)
 	# run evaluations - necessary here?
 	perform_evaluation(dict_net, dict_pll, dict_data)
-	if dict_algo['parameter_space_sweeps'] is None:
+	if 'timeDep' in dict_net['special_case'] and (dict_algo['parameter_space_sweeps'] is None or dict_algo['parameter_space_sweeps'] == 'single'):
 		plot.plot_order_parameter_vs_time_dependent_parameter_div_and_undiv(dict_pll, dict_net, dict_data, dict_algo)
 
 

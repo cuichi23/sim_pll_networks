@@ -40,7 +40,7 @@ dict_net={
 dict_pll={
 	'analyzeFreq': 'max',														# choose from 'max', 'min', 'middle' --> which of up to three multistable Omega to analyze
 	'intrF': 1.0,																# intrinsic frequency in Hz
-	'syncF': 1.0,																# frequency of synchronized state in Hz
+	'syncF': 1.0,																# frequency of synchronized state in Hz -- or the reference frequency of there is a reference
 	'coupK': 0.2, #0.0004,														# [random.uniform(0.3, 0.4) for i in range(dict_net['Nx']*dict_net['Ny'])],# coupling strength in Hz float or [random.uniform(minK, maxK) for i in range(dict_net['Nx']*dict_net['Ny'])]
 	'cutFc': 0.00035, # 0.0008 ,#0.1,											# LF cut-off frequency in Hz, None for no LF, or e.g., N=9 with mean 0.015: [0.05,0.015,0.00145,0.001,0.0001,0.001,0.00145,0.015,0.05]
 	'div': 64, #1024,															# divisor of divider (int)

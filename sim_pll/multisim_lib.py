@@ -399,6 +399,8 @@ def multihelper(iterConfig, initPhiPrime0, dict_net, dict_pll, dict_algo, param_
 			dict_pll_rea.update({dict_algo['param_id_0']: change_param[0]})
 		else:
 			print('No parameters for sweep specified -- hence simulating the same parameter set for all realizations!')
+		if 'entrain' in dict_net['topology'] and dict_pll['typeOfHist'] == 'syncState':  # set syncF to the reference frequency
+			dict_pll_rea.update({'syncF': dict_pll_rea['intrF'][0]})
 
 		return simulateSystem(dict_net_rea, dict_pll_rea, dict_algo_rea, multi_sim=True)
 
@@ -423,7 +425,7 @@ def multihelper(iterConfig, initPhiPrime0, dict_net, dict_pll, dict_algo, param_
 		if np.isnan(dict_net_rea['phiInitConfig']).any() and 'entrain' in dict_net_rea['topology']:
 			print('Set dummy solution! Detected case has no valid solution to the inverse coupling function, hence no solution exists.')
 			dict_data = {'order_parameter': np.zeros(int(number_period_dyn / (dict_pll['syncF'] * dict_pll['dt']))) - dict_pll_rea['div'], 'phi': np.zeros([1, int(dict_net_rea['Nx'] * dict_net_rea['Ny'])]),
-							  'order_parameter_divided_phases': np.zeros(int(number_period_dyn / (dict_pll['syncF'] * dict_pll['dt']))) - 1, 'F1': 1}
+							'order_parameter_divided_phases': np.zeros(int(number_period_dyn / (dict_pll['syncF'] * dict_pll['dt']))) - dict_pll_rea['div'], 'F1': 1}
 			realizationDict = {'dict_net': dict_net_rea, 'dict_pll': dict_pll_rea, 'dict_algo': dict_algo_rea, 'dict_data': dict_data}
 			return realizationDict
 		else:

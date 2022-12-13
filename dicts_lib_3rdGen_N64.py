@@ -52,7 +52,7 @@ def getDicts(Fsim=55):
 
 	dict_pll={
 		'intrF': 1,																# intrinsic frequency in Hz [random.uniform(0.95, 1.05) for i in range(dict_net['Nx']*dict_net['Ny'])]
-		'syncF': 1.0443942814145974,#1,#0.980808,								# frequency of synchronized state in Hz
+		'syncF': 1.0443942814145974,#1,#0.980808,								# frequency of synchronized state in Hz -- or the reference frequency of there is a reference
 		'coupK': 0.5*0.0500991,													# [random.uniform(0.3, 0.4) for i in range(dict_net['Nx']*dict_net['Ny'])],# coupling strength (like phase model: K = Kvco/2 * G_all, NOTE: the /2 is for coupling functions that have peak2peal amplitude 2) in Hz float or [random.uniform(minK, maxK) for i in range(dict_net['Nx']*dict_net['Ny'])]
 		'gPDin': 1,																# gains of the different inputs to PD k from input l -- G_kl, see PD, set to 1 and all G_kl=1 (so far only implemented for some cases, check!): np.random.uniform(0.95,1.05,size=[dict_net['Nx']*dict_net['Ny'],dict_net['Nx']*dict_net['Ny']])
 		'gPDin_symmetric': True,												# set to True if G_kl == G_lk, False otherwise

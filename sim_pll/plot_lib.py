@@ -2014,11 +2014,11 @@ def plot_order_param_vs_parameter_space(pool_data: dict, average_time_order_para
 		else:
 			averaging_time_as_index = np.int(average_time_order_parameter_in_periods * np.mean(pool_data[0][i]['dict_pll']['intrF']) / pool_data[0][i]['dict_pll']['dt'])
 		results.append(
-			[pool_data[0][i]['dict_data']['order_parameter'][-1], np.mean(pool_data[0][i]['dict_data']['order_parameter'][-averaging_time_as_index:]),
-				np.std(pool_data[0][i]['dict_data']['order_parameter'][-averaging_time_as_index:]), np.std(pool_data[0][i]['dict_data']['order_parameter'][-int(1.3*averaging_time_as_index):]),
-				np.min(pool_data[0][i]['dict_data']['order_parameter'][-int(1.3*averaging_time_as_index):]), np.max(pool_data[0][i]['dict_data']['order_parameter'][-int(1.3*averaging_time_as_index):]),
-				np.min(pool_data[0][i]['dict_data']['order_parameter'][-int(2.3*averaging_time_as_index):-int(1.3*averaging_time_as_index)]),
-			 	np.max(pool_data[0][i]['dict_data']['order_parameter'][-int(2.3*averaging_time_as_index):-int(1.3*averaging_time_as_index)])])
+			[pool_data[0][i]['dict_data']['order_parameter'][-1], np.mean(pool_data[0][i]['dict_data']['order_parameter'][-averaging_time_as_index:]),														 	# 0, 1
+				np.std(pool_data[0][i]['dict_data']['order_parameter'][-averaging_time_as_index:]), np.std(pool_data[0][i]['dict_data']['order_parameter'][-int(1.3*averaging_time_as_index):]),			 	# 2, 3
+				np.min(pool_data[0][i]['dict_data']['order_parameter'][-int(1.3*averaging_time_as_index):]), np.max(pool_data[0][i]['dict_data']['order_parameter'][-int(1.3*averaging_time_as_index):]),	 	# 4, 5
+				np.min(pool_data[0][i]['dict_data']['order_parameter'][-int(2.3*averaging_time_as_index):-int(1.3*averaging_time_as_index)]),																 	# 6
+			 	np.max(pool_data[0][i]['dict_data']['order_parameter'][-int(2.3*averaging_time_as_index):-int(1.3*averaging_time_as_index)])])																 	# 7
 	results = np.array(results, dtype=object)
 	#pool_data[0][0].update({'results_order_parameter': results})
 
@@ -2098,15 +2098,17 @@ def plot_order_param_vs_parameter_space(pool_data: dict, average_time_order_para
 	fig22.canvas.manager.set_window_title('std of order parameter over t_aver=%0.2fT parameter space %s vs %s' % (average_time_order_parameter_in_periods, dict_algo['param_id_0'], dict_algo['param_id_1']))
 	fig22.set_size_inches(plot_size_inches_x, plot_size_inches_y)
 
+	mask = results[:, 1].reshape(dict_algo['paramDiscretization'][0], dict_algo['paramDiscretization'][1])
+	mask = np.transpose(mask)
 	tempresults = results[:, 2].reshape(dict_algo['paramDiscretization'][0], dict_algo['paramDiscretization'][1])
 	tempresults = np.transpose(tempresults)
 	# print('tempresults:', tempresults)
-	tempresults_ma = ma.masked_where(tempresults < 0, tempresults)  # Create masked array
+	tempresults_ma = ma.masked_where(mask < 0, tempresults)  # Create masked array
 	# print('tempresult_ma:', tempresults_ma)
 	# print('initPhiPrime0:', initPhiPrime0)
 	plt.imshow(tempresults_ma.astype(float), interpolation='nearest', cmap=colormap, aspect='auto', origin='lower',
 			   extent=(dict_algo['min_max_range_parameter_0'][0], dict_algo['min_max_range_parameter_0'][1], dict_algo['min_max_range_parameter_1'][0], dict_algo['min_max_range_parameter_1'][1]),
-			   vmin=np.min(tempresults_ma), vmax=np.max(tempresults_ma))
+			   vmin=np.min(tempresults), vmax=np.max(tempresults))
 	plt.title(r'std($\bar{R}_{T}(t)$)')
 	plt.xlabel(x_label)
 	plt.ylabel(y_label)
@@ -2124,12 +2126,12 @@ def plot_order_param_vs_parameter_space(pool_data: dict, average_time_order_para
 	tempresults = results[:, 3].reshape(dict_algo['paramDiscretization'][0], dict_algo['paramDiscretization'][1])
 	tempresults = np.transpose(tempresults)
 	# print('tempresults:', tempresults)
-	tempresults_ma = ma.masked_where(tempresults < 0, tempresults)  # Create masked array
+	tempresults_ma = ma.masked_where(mask < 0, tempresults)  # Create masked array
 	# print('tempresult_ma:', tempresults_ma)
 	# print('initPhiPrime0:', initPhiPrime0)
 	plt.imshow(tempresults_ma.astype(float), interpolation='nearest', cmap=colormap, aspect='auto', origin='lower',
 			   extent=(dict_algo['min_max_range_parameter_0'][0], dict_algo['min_max_range_parameter_0'][1], dict_algo['min_max_range_parameter_1'][0], dict_algo['min_max_range_parameter_1'][1]),
-			   vmin=np.min(tempresults_ma), vmax=np.max(tempresults_ma))
+			   vmin=np.min(tempresults), vmax=np.max(tempresults))
 	plt.title(r'std($\bar{R}_{1.3T}(t)$)')
 	plt.xlabel(x_label)
 	plt.ylabel(y_label)

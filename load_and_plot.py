@@ -23,6 +23,7 @@ import pickle
 
 from sim_pll import plot_lib
 from sim_pll import sim_lib as sim
+from sim_pll import multisim_lib as multisim
 from sim_pll import evaluation_lib as eva
 from sim_pll import setup
 from sim_pll import coupling_fct_lib as coupfct
@@ -81,18 +82,18 @@ labelpadyaxis       = 20
 # load data
 folder		 = '/home/cuichi/Documents/MPI_PKS_Docs/2019_VIP+/Programs/2021_simPLL_pub/results/'#'/home/cuichi/data-z2/simPLL_2/1_CH_success/results/'
 ################################################################################
-filenamePLL  = folder+'dict_pll_K0.013_tau1.730_Fc0.008_mx0_my-999_N4_topoentrainOne-ring_0:43_2022_10_13' #_K0.013_tau1.730_Fc0.008_mx0_my-999_N4_topoentrainOne-ring_12:7_2022_10_11'
-filenameNet  = folder+'dict_net_K0.013_tau1.730_Fc0.008_mx0_my-999_N4_topoentrainOne-ring_0:43_2022_10_13' #_K0.013_tau1.730_Fc0.008_mx0_my-999_N4_topoentrainOne-ring_12:7_2022_10_11'
-filenameData = folder+'pool_data_K0.013_tau1.730_Fc0.008_mx0_my-999_N4_topoentrainOne-ring_0:43_2022_10_13' #_K0.013_tau1.730_Fc0.008_mx0_my-999_N4_topoentrainOne-ring_12:7_2022_10_11'
-filenameAlgo = folder+'dict_algo_K0.013_tau1.730_Fc0.008_mx0_my-999_N4_topoentrainOne-ring_0:43_2022_10_13' #_K0.013_tau1.730_Fc0.008_mx0_my-999_N4_topoentrainOne-ring_12:7_2022_10_11'
+filenamePLL  = folder+'dict_pll_K0.138_tau0.349_Fc333.437_mx0_my-999_N3_topoentrainOne-chain_23:47_2022_12_14' #_K0.013_tau1.730_Fc0.008_mx0_my-999_N4_topoentrainOne-ring_12:7_2022_10_11'
+filenameNet  = folder+'dict_net_K0.138_tau0.349_Fc333.437_mx0_my-999_N3_topoentrainOne-chain_23:47_2022_12_14' #_K0.013_tau1.730_Fc0.008_mx0_my-999_N4_topoentrainOne-ring_12:7_2022_10_11'
+filenameData = folder+'pool_data_K0.138_tau0.349_Fc333.437_mx0_my-999_N3_topoentrainOne-chain_23:47_2022_12_14' #_K0.013_tau1.730_Fc0.008_mx0_my-999_N4_topoentrainOne-ring_12:7_2022_10_11'
+filenameAlgo = folder+'dict_algo_K0.138_tau0.349_Fc333.437_mx0_my-999_N3_topoentrainOne-chain_23:47_2022_12_14' #_K0.013_tau1.730_Fc0.008_mx0_my-999_N4_topoentrainOne-ring_12:7_2022_10_11'
 ################################################################################
+dict_pll  = pickle.load(open(filenamePLL, 'rb'))
+dict_net  = pickle.load(open(filenameNet, 'rb'))
+dict_algo = pickle.load(open(filenameAlgo, 'rb'))
 if 'pool_data' in filenameData:
 	pool_data = pickle.load(open(filenameData, 'rb'))
 else:
 	dict_data = pickle.load(open(filenameData, 'rb'))
-	dict_pll  = pickle.load(open(filenamePLL, 'rb'))
-	dict_net  = pickle.load(open(filenameNet, 'rb'))
-	dict_algo = pickle.load(open(filenameAlgo, 'rb'))
 ################################################################################
 # if necessary update parameters related to plotting
 ################################################################################
@@ -143,6 +144,8 @@ if 'pool_data' in filenameData:
 		sys.exit()
 	elif pool_data[0][0]['dict_algo']['parameter_space_sweeps'] == 'one_parameter_sweep' and 'entrain' in pool_data[0][0]['dict_net']['topology']:
 		eva.evaluate_entrainment_of_mutual_sync(pool_data, average_time_for_time_series_in_periods=3.5)
+	elif pool_data[0][0]['dict_algo']['parameter_space_sweeps'] == 'two_parameter_sweep' and 'entrain' in pool_data[0][0]['dict_net']['topology']:
+		multisim.evaluate_pool_data(dict_net, dict_pll, dict_algo, pool_data)
 else:
 	if dict_net['special_case'] == 'timeDepChangeOfIntrFreq':
 		phase_diff_wrap_to_interval = 3

@@ -3,3 +3,4 @@ parametricPlotsTheory/plots
 meep
 *.ipynb
 *.pyc
+.idea

@@ -1,1 +1,4 @@
 key-listener to interact with simulation, i.e., induce perturbation: https://nitratine.net/blog/post/how-to-detect-key-presses-in-python/
+
+
+add: a channel for each PLL through which perturbations can be injected into the PLL!

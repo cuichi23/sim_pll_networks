@@ -30,14 +30,14 @@ gc.enable()
 def getDicts(Fsim=125):
 
 	dict_net={
-		'Nx': 20,																# oscillators in x-direction
+		'Nx': 7,																# oscillators in x-direction
 		'Ny': 1,																# oscillators in y-direction
 		'mx': 0,																# twist/chequerboard in x-direction (depends on closed or open boundary conditions)
 		'my': -999,																# twist/chequerboard in y-direction
 		'topology': 'global',													# 1d) ring, chain, 2d) square-open, square-periodic, hexagonal...
 																				# 3) global, entrainOne-[ring,chain,square-open], entrainAll-[ring,chain,square-open], entrainPLLsHierarch, compareEntrVsMutual
 		'normalize_mutual_coupling_by_inputs': False, 							# divide the sum over all inputs to a PLL by the number of inputs YES/NO -> True/False
-		'Tsim': 45,																# simulation time in multiples of the period
+		'Tsim': 450,															# simulation time in multiples of the period
 		'computeFreqAndStab': False,											# compute linear stability and global frequency if possible: True or False (only identical oscis and Kuramoto 2nd order)
 		'phi_array_mult_tau': 1,												# how many multiples of the delay is stored of the phi time series
 		'phiInitConfig': [],#[0, np.pi, np.pi, np.pi],							# phase-configuration of sync state,  []: automatic, else provide list
@@ -54,26 +54,35 @@ def getDicts(Fsim=125):
 	})
 
 	global gkl_list20
-	gkl_list20 = [[0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-					[0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-					[1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-					[0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-					[0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-					[0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-					[0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-					[0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-					[0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-					[0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-					[0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0],
-					[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0],
-					[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0],
-					[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0],
-					[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0],
-					[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0],
-					[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0],
-					[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 1],
-					[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0],
-					[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0]]
+	# gkl_list20 = [[0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+	# 				[0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+	# 				[1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+	# 				[0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+	# 				[0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+	# 				[0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+	# 				[0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+	# 				[0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+	# 				[0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+	# 				[0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+	# 				[0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0],
+	# 				[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0],
+	# 				[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0],
+	# 				[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0],
+	# 				[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0],
+	# 				[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0],
+	# 				[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0],
+	# 				[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 1],
+	# 				[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0],
+	# 				[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0]]
+
+	gkl_list20 = [[0, 1, 0, 0, 0, 1, 0],
+				  [1, 0, 1, 0, 0, 0, 0],
+				  [0, 1, 0, 1, 0, 0, 1],
+				  [0, 0, 1, 0, 0, 0, 1],
+				  [0, 0, 0, 0, 0, 1, 1],
+				  [1, 0, 0, 0, 1, 0, 1],
+				  [0, 0, 0, 1, 0, 1, 0]]
+
 
 	dict_pll={
 		'intrF': 1.0, #[1.0, 1.01, 0.99, 1.02],									# [Hz] intrinsic frequency in Hz
@@ -90,7 +99,7 @@ def getDicts(Fsim=125):
 		'noiseVarVCO': 1E-3,													# variance of VCO GWN, i.e., sigma^2, then we have for the std: sqrt(sigma^2)=sigma
 		'feedback_delay': 0.0,													# value of feedback delay in seconds
 		'feedback_delay_var': None, 											# variance of feedback delay
-		'transmission_delay': 10.2,	 											# value of transmission delay in seconds, float (single), list (tau_k) or list of lists (tau_kl): np.random.uniform(min,max,size=[dict_net['Nx']*dict_net['Ny'],dict_net['Nx']*dict_net['Ny']]), OR [np.random.uniform(min,max) for i in range(dict_net['Nx']*dict_net['Ny'])]
+		'transmission_delay': 0,	 											# value of transmission delay in seconds, float (single), list (tau_k) or list of lists (tau_kl): np.random.uniform(min,max,size=[dict_net['Nx']*dict_net['Ny'],dict_net['Nx']*dict_net['Ny']]), OR [np.random.uniform(min,max) for i in range(dict_net['Nx']*dict_net['Ny'])]
 		'transmission_delay_var': None, 										# variance of transmission delays
 		'distribution_for_delays': None,										# from what distribution are random delays drawn?
 		# choose from coupfct.<ID>: sine, cosine, neg_sine, neg_cosine, triangular, deriv_triangular, square_wave, pfd, inverse_cosine, inverse_sine
@@ -124,11 +133,14 @@ def getDicts(Fsim=125):
 
 	dict_algo={
 		'parameter_space_sweeps': 'testNetworkMotifIsing',					# pick method for setting realizations 'single', 'classicBruteForceMethodRotatedSpace', 'listOfInitialPhaseConfigurations', 'testNetworkMotifIsing', 'statistics', 'one_parameter_sweep'
-		'paramDiscretization': [18, 1],#[15, 10],								# parameter discretization for brute force parameter space scans, e.g., for 'testNetworkMotifIsing': first entry is number of realizations, second of parameter sweep
-		'param_id_0': 'None',														# parameter to be changed between different realizations, according to the min_max_range_parameter: 'None' or string of any other parameter
-		'min_max_range_parameter_0': [0.95, 1.05],								# specifies within which min and max value to linspace the, e.g., initial frequency difference (w.r.t. HF Frequency, not divided) in the case of 'listOfInitialPhaseConfigurations', or any other parameter as in, e.g., 'two_parameter_sweep'
-		'store_ctrl_and_clock': False,											# whether the control signals and clock signal is being computed (time and memory usage)
-		'store_phases_tau_array': True  										# whether the phases are saved when simulation on tau-array
+		'paramDiscretization': [18, 1],#[15, 10],							# parameter discretization for brute force parameter space scans, e.g., for 'testNetworkMotifIsing': first entry is number of realizations, second of parameter sweep
+		'param_id_0': 'None',												# parameter to be changed between different realizations, according to the min_max_range_parameter: 'None' or string of any other parameter
+		'min_max_range_parameter_0': [0.95, 1.05],							# specifies within which min and max value to linspace the, e.g., initial frequency difference (w.r.t. HF Frequency, not divided) in the case of 'listOfInitialPhaseConfigurations', or any other parameter as in, e.g., 'two_parameter_sweep'
+		'param_id_1': 'None',  												# parameter to be changed between different realizations, according to the min_max_range_parameter: 'None' or string of any other parameter
+		'min_max_range_parameter_1': [0.95, 1.05],							# specifies within which min and max value to linspace the, e.g., initial frequency difference (w.r.t. HF Frequency, not divided) in the case of 'listOfInitialPhaseConfigurations', or any other parameter as in, e.g., 'two_parameter_sweep'
+		'store_ctrl_and_clock': False,										# whether the control signals and clock signal is being computed (time and memory usage)
+		'store_phases_tau_array': True,  									# whether the phases are saved when simulation on tau-array
+		'number_of_processes_in_multisim': 5  								# choose there an integer number that specifies the number of parallel threads to be simulated
 	}
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

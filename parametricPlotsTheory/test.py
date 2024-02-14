@@ -16,4 +16,7 @@ import cmath
 from scipy import signal
 
 
-mu = np.arange(-10,10,0.01); plot(mu, np.cos(mu)/np.sin(mu), 'b'); plot(mu, 1/mu+mu, 'r'); plt.ylim([-10, 10]);
+mu = np.arange(-10,10,0.01);
+plot(mu, np.cos(mu)/np.sin(mu), 'b');
+plot(mu, 1/mu+mu, 'r');
+plt.ylim([-10, 10]);

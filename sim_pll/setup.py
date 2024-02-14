@@ -337,11 +337,12 @@ def setup_time_dependent_parameter(dict_net: dict, dict_pll: dict, dict_data: di
 		print('Unknown functional form for time-dependent parameter generation. Introduce! °)°')
 		sys.exit()
 
-	dict_pll.update({'sim_time_steps': int(dict_net['Tsim'] / dict_pll['dt'])})
+	dict_pll.update({'sim_time_steps': np.abs(int(dict_net['Tsim'] / dict_pll['dt']))})
 
 	if for_all_plls_different_time_dependence:
 		time_series = np.zeros([ dict_net['Nx']*dict_net['Ny'], dict_net['max_delay_steps']+dict_pll['sim_time_steps'] ])
 	else:
+		print('TEST:', dict_net['max_delay_steps'], dict_pll['sim_time_steps'])
 		time_series = np.zeros([ 1, dict_net['max_delay_steps']+dict_pll['sim_time_steps'] ])
 	#print('dict_net[*min_max_rate_timeDepPara*][1]:', dict_net['min_max_rate_timeDepPara'][1])
 

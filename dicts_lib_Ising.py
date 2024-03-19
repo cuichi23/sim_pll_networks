@@ -30,7 +30,7 @@ gc.enable()
 def getDicts(Fsim=125):
 
 	dict_net={
-		'Nx': 7,																# oscillators in x-direction
+		'Nx': 8,																# oscillators in x-direction
 		'Ny': 1,																# oscillators in y-direction
 		'mx': 0,																# twist/chequerboard in x-direction (depends on closed or open boundary conditions)
 		'my': -999,																# twist/chequerboard in y-direction
@@ -75,13 +75,22 @@ def getDicts(Fsim=125):
 	# 				[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0],
 	# 				[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0]]
 
-	gkl_list20 = [[0, 1, 0, 0, 0, 1, 0],
-				  [1, 0, 1, 0, 0, 0, 0],
-				  [0, 1, 0, 1, 0, 0, 1],
-				  [0, 0, 1, 0, 0, 0, 1],
-				  [0, 0, 0, 0, 0, 1, 1],
-				  [1, 0, 0, 0, 1, 0, 1],
-				  [0, 0, 0, 1, 0, 1, 0]]
+	# gkl_list20 = [[0, 1, 0, 0, 0, 1, 0],
+	# 			  [1, 0, 1, 0, 0, 0, 0],
+	# 			  [0, 1, 0, 1, 0, 0, 1],
+	# 			  [0, 0, 1, 0, 0, 0, 1],
+	# 			  [0, 0, 0, 0, 0, 1, 1],
+	# 			  [1, 0, 0, 0, 1, 0, 1],
+	# 			  [0, 0, 0, 1, 0, 1, 0]]
+
+	gkl_list20 = [[0, 1, 0, 0, 1, 0, 0, 0],
+				  [1, 0, 1, 0, 0, 0, 0, 0],
+				  [0, 1, 0, 1, 0, 0, 0, 0],
+				  [0, 0, 1, 0, 1, 0, 0, 0],
+				  [1, 0, 0, 1, 0, 0, 0, 0],
+				  [0, 0, 0, 0, 0, 0, 0, 0],
+				  [0, 0, 0, 0, 0, 0, 0, 0],
+				  [0, 0, 0, 0, 0, 0, 0, 0]]
 
 
 	dict_pll={
@@ -140,7 +149,7 @@ def getDicts(Fsim=125):
 		'min_max_range_parameter_1': [0.95, 1.05],							# specifies within which min and max value to linspace the, e.g., initial frequency difference (w.r.t. HF Frequency, not divided) in the case of 'listOfInitialPhaseConfigurations', or any other parameter as in, e.g., 'two_parameter_sweep'
 		'store_ctrl_and_clock': False,										# whether the control signals and clock signal is being computed (time and memory usage)
 		'store_phases_tau_array': True,  									# whether the phases are saved when simulation on tau-array
-		'number_of_processes_in_multisim': 5  								# choose there an integer number that specifies the number of parallel threads to be simulated
+		'number_of_processes_in_multisim': 7  								# choose there an integer number that specifies the number of parallel threads to be simulated
 	}
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

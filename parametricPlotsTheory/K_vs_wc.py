@@ -27,7 +27,7 @@ import coupling_fct_lib as coupfct
 dict_net={
 	'Nx': 3,																	# oscillators in x-direction
 	'Ny': 3,																	# oscillators in y-direction
-	'mx': 0	,																	# twist/chequerboard in x-direction (depends on closed or open boundary conditions)
+	'mx': 0,																	# twist/chequerboard in x-direction (depends on closed or open boundary conditions)
 	'my': 0,																	# twist/chequerboard in y-direction
 	'Tsim': 100,
 	'topology': 'square-periodic',															# 1d) ring, chain, 2d) square-open, square-periodic, hexagonal...

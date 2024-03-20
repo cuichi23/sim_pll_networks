@@ -62,7 +62,7 @@ def get_from_value_or_list(pll_id, parameter_input, pll_count):
 				return parameter_input[pll_id]  # set individual value
 			else:
 				return parameter_input  # set value for all
-		elif isinstance(parameter_input, np.float) or isinstance(parameter_input, np.int):
+		elif isinstance(parameter_input, float) or isinstance(parameter_input, np.int):
 			return parameter_input  # set value for all
 		else:
 			print('Error in PLL component constructor setting a variable using get_from_value_or_list() function! Check whether enough values for each oscillator are defined!')
@@ -127,8 +127,8 @@ class LowPassFilter:
 			self.cutoff_freq_rad = 2.0 * np.pi * self.cutoff_freq_Hz
 			self.beta = self.dt * self.cutoff_freq_rad
 
-			# for a simulation that involves the entrainment by a reference oscillator, the oscillator with k=0 is chosen to be the reference: then we omit the filter as this can lead to underflow errors as
-			# the control signal becomes smaller and smaller until it cannot be represented by a np.float64 anymore which leads to an error
+			# for a simulation that involves the entrainment by a reference oscillator, the oscillator with k=0 is chosen to be the reference: then we omit the filter for the reference oscillator
+			# as this can lead to underflow errors as the control signal becomes smaller and smaller until it cannot be represented by a np.float64 anymore which leads to an error
 			if 'entrain' in dict_net['topology'] and self.pll_id == 0:
 				print('I am the reference, hence simulating without loop filter to prevent underflow errors with the control signal!')
 				self.evolve = lambda xPD: xPD
@@ -157,7 +157,7 @@ class LowPassFilter:
 			sys.exit()
 
 
-	def nth_order_sequential_lf(self, phase_detector_output: np.float64) -> np.float:
+	def nth_order_sequential_lf(self, phase_detector_output: np.float64) -> np.float64:
 		""" Evolves the output of an n-th order loop filter by one time increment.
 
 		Args:
@@ -182,7 +182,7 @@ class LowPassFilter:
 
 		return phase_detector_output
 
-	def second_order_ordinary_diff_eq(self, t, z, phase_detector_output, buffered_vs_preloaded=3):
+	def second_order_ordinary_diff_eq(self, t, z, phase_detector_output: np.float64, buffered_vs_preloaded: int = 3):
 		""" Defines the second order ordinary differential equation of the second order loop filter as a set of two
 		first order coupled differential equations.
 
@@ -197,7 +197,7 @@ class LowPassFilter:
 		# print('Solving control signal with 2nd order LF. Initial conditions are:', self.dydt, ',\t', self.y*(1+2.0/self.b)); time.sleep(2)
 		return [y, (1.0/self.b**2) * (phase_detector_output - x) - (buffered_vs_preloaded / self.b) * y]	# -self.y-(self.dydt+(2.0*self.y)/self.b)
 
-	def solve_2nd_order_ordinary_diff_eq(self, phase_detector_output):
+	def solve_2nd_order_ordinary_diff_eq(self, phase_detector_output: np.float64):
 		""" Evolves the output of the second order loop filter by one time increment.
 
 		Args:
@@ -219,7 +219,7 @@ class LowPassFilter:
 		# print('self.control_signal:', self.control_signal, '\tcontrol_signal: ', control_signal, '\tderivative_control_signal:', self.derivative_control_signal); time.sleep(1)
 		return control_signal
 
-	def set_initial_control_signal(self, instantaneous_freq_Hz: float, prior_instantaneous_freq_Hz: float) -> np.float:
+	def set_initial_control_signal(self, instantaneous_freq_Hz: np.float64, prior_instantaneous_freq_Hz: np.float64) -> np.float64:
 		""" Sets the initial control signal for the last time step depending on the history.
 
 		Args:
@@ -232,19 +232,19 @@ class LowPassFilter:
 
 		# print('REWORK: setting of initial time-derivative of control signal in case of second order LFs.')
 		# TODO clean up
-		self.instantaneous_freq_Hz = instantaneous_freq_Hz												# calculate the instantaneous frequency for the last time step of the history
-		#self.y = (self.sync_freq_Hz - self.intr_freq_Hz) / (self.K_Hz)								# calculate the state of the LF at the last time step of the history, it is needed for the simulation of the network
-		if self.K_Hz != 0:														# this if-call is fine, since it will only be evaluated once
+		self.instantaneous_freq_Hz = instantaneous_freq_Hz										# calculate the instantaneous frequency for the last time step of the history
+		#self.y = (self.sync_freq_Hz - self.intr_freq_Hz) / (self.K_Hz)							# calculate the state of the LF at the last time step of the history, it is needed for the simulation of the network
+		if self.K_Hz != 0:																		# this if-call is fine, since it will only be evaluated once
 			self.control_signal 	  = (self.instantaneous_freq_Hz - self.intr_freq_Hz) / (self.K_Hz)				# calculate the state of the LF at the last time step of the history, it is needed for the simulation of the network
 			yNminus1  = (prior_instantaneous_freq_Hz - self.intr_freq_Hz) / (self.K_Hz)			# calculate the state of the LF at the last time step of the history, it is needed for the simulation of the network
-			self.derivative_control_signal = (self.control_signal - yNminus1) / self.dt							# calculate the change of the state of the LF at the last time step of the history
+			self.derivative_control_signal = (self.control_signal - yNminus1) / self.dt			# calculate the change of the state of the LF at the last time step of the history
 			print('Set initial ctrl signal! self.instantF, self.intrF, self.K_Hz', self.instantaneous_freq_Hz, ' ', self.intr_freq_Hz, ' ', self.K_Hz)
 		else:
 			self.control_signal = 0.0
 		# print('Set initial control signal of PLL %i to:' %self.pll_id, self.control_signal)
 		return self.control_signal
 
-	def next(self, phase_detector_output: np.float) -> np.float:
+	def next(self, phase_detector_output: np.float64) -> np.float64:
 		""" This function evolves the control signal in time according to the input signal from the phase detector and combiner.
 
 		Args:
@@ -258,7 +258,7 @@ class LowPassFilter:
 		# print('Current control signal of PLL %i:' %self.pll_id, self.control_signal)
 		return self.control_signal
 
-	def get_control_signal(self) -> np.float:
+	def get_control_signal(self) -> np.float64:
 		"""
 		Returns:
 			control signal
@@ -310,7 +310,7 @@ class SignalControlledOscillator:
 		self.K_rad = 2.0 * np.pi * get_from_value_or_list(pll_id, dict_pll['coupK'], dict_net['Nx'] * dict_net['Ny'])
 		self.c = get_from_value_or_list(pll_id, dict_pll['noiseVarVCO'], dict_net['Nx'] * dict_net['Ny'])
 		self.dt = dict_pll['dt']
-		self.phi: Optional[float] = None
+		self.phi: Optional[np.float64] = None
 		self.response_vco = dict_pll['responseVCO']
 
 		if dict_pll['typeOfHist'] == 'syncState':
@@ -326,7 +326,7 @@ class SignalControlledOscillator:
 
 		if self.c > 0:															# create noisy VCO output
 			print('VCO output noise with variance=%0.5E and std=%0.5E is enabled!' % (self.c, np.sqrt(self.c)))
-			if self.response_vco == 'linear':										# this simulates a linear response of the VCO
+			if self.response_vco == 'linear':									# this simulates a linear response of the VCO
 				self.evolve_phi = lambda w, K, x_ctrl, c, dt: (w + K * x_ctrl) * dt + np.random.normal(loc=0.0, scale=np.sqrt(c * dt))
 			elif not self.response_vco == 'linear':								# this simulates a user defined nonlinear VCO response
 				print('\nself.responVCO:', self.response_vco, '\n')
@@ -387,7 +387,7 @@ class SignalControlledOscillator:
 
 		return None
 
-	def next(self, control_signal) -> Tuple[np.float, np.float]:
+	def next(self, control_signal: np.float64) -> Tuple[np.float64, np.float64]:
 		"""
 		Evolves the instantaneous output frequency of the signal controlled oscillator according to the control signal
 		and the dynamic noise.
@@ -403,7 +403,7 @@ class SignalControlledOscillator:
 		self.phi = self.phi + self.d_phi
 		return self.phi, self.d_phi
 
-	def delta_perturbation(self, phase_perturbation: np.float, control_signal: np.float) -> Tuple[np.float, np.float]:
+	def delta_perturbation(self, phase_perturbation: np.float64, control_signal: np.float64) -> Tuple[np.float64, np.float64]:
 		"""
 		Sets a delta-like perturbation.
 
@@ -417,7 +417,7 @@ class SignalControlledOscillator:
 		self.phi = self.phi + self.d_phi
 		return self.phi, self.d_phi
 
-	def add_perturbation(self, phase_perturbation: np.float) -> np.float:
+	def add_perturbation(self, phase_perturbation: np.float64) -> np.float64:
 		"""
 		Adds user defined perturbation to current state.
 
@@ -429,7 +429,7 @@ class SignalControlledOscillator:
 		self.phi 	= self.phi + phase_perturbation
 		return self.phi
 
-	def set_initial_forward(self) -> Tuple[np.float, np.float]:
+	def set_initial_forward(self) -> Tuple[np.float64, np.float64]:
 		"""
 		Sets the phase history of the signal controlled oscillator based on the frequency for the initial frequency.
 		Starts at time t - tau_max (the maximum time delay) and evolves the history until the time at which the
@@ -442,7 +442,7 @@ class SignalControlledOscillator:
 		self.phi = self.phi + self.d_phi
 		return self.phi, self.d_phi
 
-	def set_initial_reverse(self) -> Tuple[np.float, np.float]:
+	def set_initial_reverse(self) -> Tuple[np.float64, np.float64]:
 		"""
 		Sets the phase history of the signal controlled oscillator based on the frequency for the initial frequency.
 		Starts at the time at which the simulation starts and evolves the history until time t - tau_max
@@ -535,12 +535,12 @@ class PhaseDetectorCombiner:
 			self.G_kl = np.array(tempG_kl)
 			print('PD has different gains for each input signal! Hence: G_kl are introduced. CHECK THESE CASES AGAIN! self.G_kl[%i,l]' % self.pll_id, self.G_kl)
 			# time.sleep(1)
-		elif (isinstance(dict_pll['gPDin'], int) or isinstance(dict_pll['gPDin'], np.float)) and dict_pll['extra_coup_sig'] == 'injection2ndHarm':
+		elif (isinstance(dict_pll['gPDin'], int) or isinstance(dict_pll['gPDin'], float)) and dict_pll['extra_coup_sig'] == 'injection2ndHarm':
 			self.G_kl = dict_pll['gPDin'] + np.zeros(dict_net['Nx'] * dict_net['Ny'] - 1)
 		else:
 			self.G_kl = dict_pll['gPDin']
 
-		normalized_mutual_coupling = False
+		# normalized_mutual_coupling = False
 
 		# CHOICES for different coupling functions: layer1 with or without HF components of the PD signal
 		if not dict_pll['includeCompHF']:
@@ -614,7 +614,7 @@ class PhaseDetectorCombiner:
 
 		return None
 
-	def next(self, feedback_delayed_phases: np.ndarray, transmission_delayed_phases: np.ndarray, antenna_in: float, index_current_time: int = 0) -> np.float:
+	def next(self, feedback_delayed_phases: np.ndarray, transmission_delayed_phases: np.ndarray, antenna_in: np.float64, index_current_time: int = 0) -> np.float64:
 		"""
 		Evaluates delayed phase states of coupling partners and feedback delayed phase state of itself to yield phase
 		detector output.
@@ -713,7 +713,7 @@ class InjectionLockingSignal:
 		elif second_harmonic_from_feedback == 0:
 			self.compute = lambda x_feed, idx_time: - self.K2nd_rad_k * self.h((2.0 * (self.omega * idx_time * self.dt - x_feed)) / self.div)
 
-	def next(self, feedback_delayed_phases: np.ndarray, index_current_time: int = 0) -> np.float:
+	def next(self, feedback_delayed_phases: np.ndarray, index_current_time: int = 0) -> np.float64:
 		"""
 		Generates the second harmonic injection locking signal at time t.
 
@@ -884,7 +884,7 @@ class Delayer:
 		"""
 		return self.transmit_delay_steps
 
-	def evolve_delay_in_time(self, new_delay_value: float) -> None:
+	def evolve_delay_in_time(self, new_delay_value: np.float64) -> None:
 		"""Assigns a new delay value to an incoming signal. So far this only works if all incoming delays are equal.
 
 		Args:
@@ -924,9 +924,9 @@ class Counter:
 		reference_phase: the phase at which counting starts
 	"""
 	def __init__(self):
-		self.reference_phase: float = 0
+		self.reference_phase: np.float64 = 0
 
-	def reset(self, reference_phase: float) -> None:
+	def reset(self, reference_phase: np.float64) -> None:
 		"""Resets the clock counter by setting the reference phase.
 
 		Args:
@@ -936,7 +936,7 @@ class Counter:
 		self.reference_phase = reference_phase
 		return None
 
-	def read_periods(self, current_phase: float) -> int:
+	def read_periods(self, current_phase: np.float64) -> int:
 		"""
 		Calculates number of fully completed periods given by the difference between the current and reference phase.
 
@@ -949,7 +949,7 @@ class Counter:
 		"""
 		return np.floor((current_phase - self.reference_phase) / (2.0 * np.pi))
 
-	def read_half_periods(self, current_phase: float) -> int:
+	def read_half_periods(self, current_phase: np.float64) -> int:
 		"""
 		Calculates number of half periods given by the difference between the current and reference phase.
 
@@ -1142,7 +1142,7 @@ class PhaseLockedLoop:
 		"""
 		self.counter.reset(current_phase_state)
 
-	def setup_hist_reverse(self) -> float:
+	def setup_hist_reverse(self) -> np.float64:
 		""" Function that sets the history of the oscillator using the voltage controlled oscillator. Given the required phase at the start of the simulation,
 			the function calls the VCO's function to set the history/memory backwards in time until the memory is filled.
 
@@ -1151,7 +1151,7 @@ class PhaseLockedLoop:
 		"""
 		return self.signal_controlled_oscillator.set_initial_reverse()[0]
 
-	def set_delta_perturbation(self, perturbation, instantaneous_frequency, prior_to_instantaneous_frequency) -> float:
+	def set_delta_perturbation(self, perturbation, instantaneous_frequency, prior_to_instantaneous_frequency) -> np.float64:
 		""" Function that applies a delta-like perturbation to the phase of the oscillator at the start of the simulation.
 			Corrects the internal state of the oscillator with respect to the perturbation, calculated the initial control signal.
 
@@ -1182,7 +1182,7 @@ class PhaseLockedLoop:
 
 		return None
 
-	def next_no_external_input(self, index_current_time: int, length_phase_memory: int, phase_memory: np.ndarray) -> float:
+	def next_no_external_input(self, index_current_time: int, length_phase_memory: int, phase_memory: np.ndarray) -> np.float64:
 		""" Function that evolves the voltage controlled oscillator in a closed loop configuration when there is no external input, i.e., free-running closed loop PLL.
 			1) delayer obtains the current state of the oscillator itself (potentially delayed by a feedback delay)
 			2) this state is fed in the phase detector and combiner for zero external signal which yields the PD signal
@@ -1204,7 +1204,7 @@ class PhaseLockedLoop:
 		control_signal = self.low_pass_filter.next(phase_detector_output)
 		return self.signal_controlled_oscillator.next(control_signal)[0]
 
-	def next_free_running_open_loop(self) -> float:
+	def next_free_running_open_loop(self) -> np.float64:
 		""" Function that evolves the voltage controlled oscillator when there is no external input, i.e., free-running open loop PLL.
 
 			Returns:
@@ -1341,7 +1341,7 @@ class PhaseLockedLoop:
 	# 	self.delayer.set_current_transmit_delay_steps(current_transmit_delay_steps)
 	# 	return propagation_time_delay_in_steps_matrix
 
-	# def obtain_transmission_time_delay_from_distances(self, first_position: np.ndarray, second_position: np.ndarray, signal_propagation_speed: np.float) -> np.float:
+	# def obtain_transmission_time_delay_from_distances(self, first_position: np.ndarray, second_position: np.ndarray, signal_propagation_speed: np.float64) -> np.float64:
 	# 	"""Function that calculates the distance between two coordinate vectors x_1 and x_2 and returns the time it takes to go from x_1 to x_2 at a given
 	# 		constant propagation speed.
 	#
@@ -1368,7 +1368,7 @@ class Space:
 			dimensions_xyz: the length of the boundaries in x-, y- and z-direction
 	"""
 
-	def __init__(self, signal_propagation_speed: np.float, dimensions_xyz: np.ndarray):
+	def __init__(self, signal_propagation_speed: np.float64, dimensions_xyz: np.ndarray):
 		"""
 			Args:
 				signals_tracked_currently: N x N matrix in which all current potential signal exchange events are tracked, the entry contains the time of signal emission t_e

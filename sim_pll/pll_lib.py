@@ -63,8 +63,8 @@ def get_from_value_or_list(pll_id, parameter_input, pll_count):
 		elif isinstance(parameter_input, float) or isinstance(parameter_input, int):
 			return parameter_input  # set value for all
 		else:
-			print('Error in PLL component constructor setting a variable using get_from_value_or_list() function! Check whether enough values for each oscillator are defined!')
-			sys.exit()
+			raise ValueError('Error in PLL component constructor setting a variable using get_from_value_or_list() function! '
+							 'Check whether enough values for each oscillator are defined!')
 
 
 class LowPassFilter:
@@ -151,8 +151,7 @@ class LowPassFilter:
 			print('No cut-off frequency defined (cutFc=%s), hence simulating without loop filter!' % self.cutoff_freq_Hz)
 			self.evolve = lambda xPD: xPD
 		else:
-			print('Problem in LF class!')
-			sys.exit()
+			raise ValueError('Problem in LowPassFilter class: inconsistent cut-off frequency / loop-filter order configuration!')
 
 
 	def nth_order_sequential_lf(self, phase_detector_output: np.float64) -> np.float64:
@@ -319,8 +318,7 @@ class SignalControlledOscillator:
 			print('I am the VCO of PLL%i with intrinsic frequency f=%0.2f Hz and K=%0.2f Hz, initially in free running.' % (self.pll_id, self.intr_freq_rad / (2.0 * np.pi), self.K_rad / (2.0 * np.pi)))
 			self.init_freq = self.intr_freq_rad
 		else:
-			print('\nSet typeOfHist dict entry correctly!')
-			sys.exit()
+			raise ValueError("Set dict_pll['typeOfHist'] correctly! Supported: 'syncState' or 'freeRunning'.")
 
 		if self.c > 0:															# create noisy VCO output
 			print('VCO output noise with variance=%0.5E and std=%0.5E is enabled!' % (self.c, np.sqrt(self.c)))
@@ -352,8 +350,7 @@ class SignalControlledOscillator:
 
 		test = self.evolve_phi(self.intr_freq_rad, self.K_rad, 0.01, self.c, self.dt)
 		if not (isinstance(test, float) or isinstance(test, int)):
-			print('Specified VCO response function unknown, check VCO initialization in pll_lib!')
-			sys.exit()
+			raise ValueError('Specified VCO response function unknown, check VCO initialization in pll_lib!')
 
 	def evolve_coupling_strength(self, new_coupling_strength_value_or_list, dict_net: dict) -> None:
 		"""
@@ -570,8 +567,7 @@ class PhaseDetectorCombiner:
 				elif self.normalized_mutual_coupling is True:
 					self.compute = lambda x_ext, ant_in, x_feed: np.mean(self.G_kl * self.h((x_ext - x_feed) / self.div + self.phase_shift))
 				else:
-					print('Chose whether the coupling is normalized or not!')
-					sys.exit()
+					raise ValueError("Choose whether the coupling is normalized or not: set dict_net['normalize_mutual_coupling_by_inputs'] to True or False.")
 
 		elif dict_pll['includeCompHF']:
 			print('High frequency components actived!')
@@ -780,8 +776,7 @@ class Delayer:
 			self.transmit_delay 		= dict_pll['transmission_delay']
 			self.transmit_delay_steps 	= int(np.round( self.transmit_delay / self.dt ))	# when initialized, the delay in time-steps is set to delay_steps
 			if ( self.transmit_delay_steps == 0 and self.transmit_delay > 0 ):
-				print('Transmission delay set nonzero but smaller than the time-step "dt", hence "self.transmit_delay_steps" < 1 !')
-				sys.exit()
+				raise ValueError('Transmission delay set nonzero but smaller than the time-step "dt", hence "self.transmit_delay_steps" < 1 !')
 			elif ( self.transmit_delay_steps == 0 and self.transmit_delay == 0 ):
 				print('Transmission delay set to zero!')
 			#self.get_delayed_states		= lambda;
@@ -831,8 +826,7 @@ class Delayer:
 			self.transmit_delay_steps 	= [int(np.round(delay / self.dt)) for delay in self.transmit_delay] # when initialized, the delay in time-steps is set to delay_steps
 
 			if self.transmit_delay_steps == 0 and self.transmit_delay > 0:
-				print('Transmission delay set nonzero but smaller than the time-step "dt", hence "self.transmit_delay_steps" < 1 !')
-				sys.exit()
+				raise ValueError('Transmission delay set nonzero but smaller than the time-step "dt", hence "self.transmit_delay_steps" < 1 !')
 
 			#self.get_delayed_states		= lambda;
 			self.pick_delayed_phases = lambda phi, t, abs_t, tau: phi[(t-tau[abs_t]) % self.phi_array_len, self.neighbor_ids]
@@ -841,8 +835,7 @@ class Delayer:
 			self.feedback_delay 		= dict_pll['feedback_delay']
 			self.feedback_delay_steps 	= int(np.round( self.feedback_delay / self.dt ))	# when initialized, the delay in time-steps is set to delay_steps
 			if self.feedback_delay_steps == 0 and self.feedback_delay > 0:
-				print('Feedback set to nonzero but is smaller than the time-step "dt", hence "self.feedback_delay_steps" < 1 !')
-				sys.exit()
+				raise ValueError('Feedback set to nonzero but is smaller than the time-step "dt", hence "self.feedback_delay_steps" < 1 !')
 
 	def update_list_of_neighbors_of_delayer(self, new_neighbor_list: list, dict_pll: dict, idx_time: int):
 		"""

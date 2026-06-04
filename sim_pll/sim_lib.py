@@ -158,9 +158,9 @@ def prepare_simulation(dict_net: dict, dict_pll: dict, dict_algo: dict):
 	elif (len(phi[0, :]) == len(dict_net['phiInitConfig']) and len(phi[0, :]) == len(dict_net['phiPerturb'])):
 		phi[dict_net['max_delay_steps'], :] = list(map(add, dict_net['phiInitConfig'], dict_net['phiPerturb']))  # set phase-configuration phiInitConfig at t=0 + the perturbation phiPerturb
 	else:
-		print('len(phi[0,:])', len(phi[0, :]), '\t len(dict_net[*phiInitConfig*])', len(dict_net['phiInitConfig']))
-		print('Provide initial phase-configuration of length %i to setup simulation!' % len(phi[dict_net['max_delay_steps'], :]))
-		sys.exit()
+		raise ValueError('Provide initial phase-configuration of length %i to setup simulation! '
+						 'Got len(phiInitConfig)=%i and len(phiPerturb)=%i.'
+						 % (len(phi[dict_net['max_delay_steps'], :]), len(dict_net['phiInitConfig']), len(dict_net['phiPerturb'])))
 	## TESTS!
 	# plt.plot(phi[:,0], 'o'); plt.plot(phi[:,1], 'd'); plt.draw(); plt.show();
 	# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -186,8 +186,7 @@ def prepare_simulation(dict_net: dict, dict_pll: dict, dict_algo: dict):
 		for i in range(len(pll_list)):
 			pll_list[i].signal_controlled_oscillator.phi = phi[max_delay_steps, i]
 	else:
-		print('Specify the type of history, syncState or freeRunning supported!')
-		sys.exit()
+		raise ValueError("Specify the type of history: only 'syncState' or 'freeRunning' are supported!")
 	## TESTS!
 	# plt.plot(phi[:,0], 'o'); plt.plot(phi[:,1], 'd'); plt.draw(); plt.show();
 	# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

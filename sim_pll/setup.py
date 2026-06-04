@@ -469,7 +469,7 @@ def setup_topology(dict_net: dict):
 	elif ( dict_net['topology'] == 'entrainPLLsHierarch'):
 		G = nx.DiGraph()
 		if dict_net['hierarchy_level'] > dict_net['Nx']*dict_net['Ny']:
-			sys.exit('Special dict_net[*topology*] does not work like that... decrease hierarchy level - cannot exceed the number of PLLs in the system!')
+			raise ValueError('Topology "entrainPLLsHierarch": the hierarchy level cannot exceed the number of PLLs in the system!')
 		G.add_nodes_from([i for i in range(dict_net['Nx']*dict_net['Ny'])])
 		for i in range(0, dict_net['hierarchy_level']):
 			G.add_edge(i+1 ,i)														# add unidirectional edge from osci 0 to 1, 1 to 2, and so on until level_hierarch is reached

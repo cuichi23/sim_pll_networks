@@ -104,6 +104,15 @@ class TestCustomTopology:
             setup.setup_topology(dict_net)
 
 
+class TestTopologyValidation:
+
+    def test_hierarchy_level_exceeding_network_raises(self):
+        dict_net = make_dict_net('entrainPLLsHierarch', 3, 1)
+        dict_net['hierarchy_level'] = 99  # > Nx*Ny
+        with pytest.raises(ValueError):
+            setup.setup_topology(dict_net)
+
+
 class TestGeneratePhi0:
 
     @staticmethod

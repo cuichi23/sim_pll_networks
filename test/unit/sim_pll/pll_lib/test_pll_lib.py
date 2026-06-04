@@ -22,3 +22,7 @@ class TestGetFromValueOrList:
     def test_ndarray_indexed_by_pll_id(self):
         values = np.array([7.0, 8.0, 9.0])
         assert get_from_value_or_list(1, values, 3) == 8.0
+
+    def test_unsupported_type_raises(self):
+        with pytest.raises(ValueError):
+            get_from_value_or_list(0, {'bad': 'type'}, 3)

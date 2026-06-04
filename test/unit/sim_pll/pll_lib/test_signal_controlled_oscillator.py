@@ -82,3 +82,9 @@ class TestSignalControlledOscillator:
         result = vco.add_perturbation(0.2)
         assert result == pytest.approx(0.5)
         assert vco.phi == pytest.approx(0.5)
+
+    def test_invalid_type_of_history_raises(self):
+        dict_pll, dict_net = build_component_dicts(n=3, noise_var_vco=0.0)
+        dict_pll['typeOfHist'] = 'not_a_valid_choice'
+        with pytest.raises(ValueError):
+            SignalControlledOscillator(0, dict_pll, dict_net)

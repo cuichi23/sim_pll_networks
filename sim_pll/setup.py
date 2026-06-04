@@ -144,12 +144,9 @@ def generate_phi0(dict_net: dict, dict_pll: dict, dict_algo: dict) -> None:
 			  ' and on top a perturbation of (original coordinates):', dict_net['phiPerturb'], ' and in, (rotated coordinates):', dict_net['phiPerturbRot'], '\n')
 
 	elif dict_net['topology'] == 'compareEntrVsMutual':
-		print('REWORK THIS!')
-		sys.exit()
-		phiM = dict_net['phiConfig']
-		if len(dict_net['phiPerturbRot']) == 0:
-			phiS = np.zeros(dict_net['Nx']*dict_net['Ny'])
-		dict_net.update({'phiPerturb': eva.rotate_phases(phiSr.flatten(), isInverse=False)})
+		# the previous implementation was dead code referencing undefined variables (phiSr);
+		# fail loudly until the phase configuration for this topology is reworked
+		raise NotImplementedError("generate_phi0 for topology 'compareEntrVsMutual' needs to be reworked.")
 	else:
 		print('Run single time-series and plot phase and frequency time series!')
 		initPhiPrime0 = 0.0
@@ -242,12 +239,11 @@ def generate_phi0(dict_net: dict, dict_pll: dict, dict_algo: dict) -> None:
 				for columns in range(dict_net['Nx']):															# set the chequerboard state's initial condition (history of "perfect" configuration)
 					phiMtemp = np.arange(0.0, (dict_net['Ny'])*cheqdelta_y, cheqdelta_y)
 					dict_net['phiInitConfig'].append(phiMtemp)
-				dict_net.update({'phiInitConfig': np.array(phiM)%(2.0*np.pi)})
-				# phiM = phiM.flatten(); # print('phiM: ', phiM)
+				dict_net.update({'phiInitConfig': np.array(dict_net['phiInitConfig'])%(2.0*np.pi)})
 				dict_net.update({'phiInitConfig': np.concatenate( dict_net['phiInitConfig'], axis=0)})
 
 		elif dict_net['topology'] == 'hexagon-periodic' or dict_net['topology'] == 'octagon-periodic' or dict_net['topology'] == 'square-periodic':
-			twistdelta_x = ( 2.0 * np.pi * dict_net['my'] / ( float( dict_net['Nx'] ) ) )						# phase difference between neighboring oscillators in a stable m-twist state
+			twistdelta_x = ( 2.0 * np.pi * dict_net['mx'] / ( float( dict_net['Nx'] ) ) )						# phase difference between neighboring oscillators in a stable m-twist state
 			twistdelta_y = ( 2.0 * np.pi * dict_net['my'] / ( float( dict_net['Ny'] ) ) )						# phase difference between neighboring oscillators in a stable m-twist state
 			# print('phase differences of',k,'-twist:', twistdelta, '\n')
 			# print('N =', N, '    Nx =', Nx, '    Ny =', Ny, '    k =', k, '    kx =', kx, '    ky =', ky)
@@ -530,12 +526,12 @@ def setup_topology(dict_net: dict):
 
 		elif dict_net['topology'] == 'hexagon':
 			print('\nIf Nx =! Ny, then check the graph that is generated again!')
-			G = nx.grid_2d_graph(dict_net['Nx'],dict_net['Ny'])							# why not ..._graph(Nx,Ny) ? NOTE the for n in G: loop has to be changed, loop over nx and ny respectively, etc....
+			G = nx.grid_2d_graph(dict_net['Nx'],dict_net['Ny'])
 			for n in G:
 				x, y = n
 				if x > 0 and y > 0:
 					G.add_edge(n, (x-1, y-1))
-				if x < Nx-1 and y < Ny-1:
+				if x < dict_net['Nx']-1 and y < dict_net['Ny']-1:
 					G.add_edge(n, (x+1, y+1))
 
 		elif dict_net['topology'] == 'hexagon-periodic':
@@ -544,20 +540,18 @@ def setup_topology(dict_net: dict):
 				x, y = n
 				G.add_edge(n, ((x-1) % dict_net['Nx'], (y-1) % dict_net['Ny']))
 
-		elif dict_net['topology'] == 'octagon':									# why not ..._graph(Nx,Ny) ? NOTE the for n in G: loop has to be changed, loop over nx and ny respectively, etc....
+		elif dict_net['topology'] == 'octagon':
 			print('\nIf Nx =! Ny, then check the graph that is generated again!')
 			G = nx.grid_2d_graph(dict_net['Nx'],dict_net['Ny'])
 			for n in G:
 				x, y = n
 				if x > 0 and y > 0:
 					G.add_edge(n, (x-1, y-1))
-				if x < Nx-1 and y < Ny-1:
+				if x < dict_net['Nx']-1 and y < dict_net['Ny']-1:
 					G.add_edge(n, (x+1, y+1))
-				if x < Nx-1 and y > 0:
+				if x < dict_net['Nx']-1 and y > 0:
 					G.add_edge(n, (x+1, y-1))
-				if x < Nx-1 and y > 0:
-					G.add_edge(n, (x+1, y-1))
-				if x > 0 and y < Ny-1:
+				if x > 0 and y < dict_net['Ny']-1:
 					G.add_edge(n, (x-1, y+1))
 
 		elif dict_net['topology'] == 'octagon-periodic':

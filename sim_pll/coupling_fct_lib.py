@@ -92,11 +92,7 @@ def inverse_sine(y: float, branch: str = 'positive') -> float:
 		Returns:
 			float value of function
 		"""
-	# if y>=0:
-	# 	return np.arcsin(y)
-	# else:
-	# 	return np.pi+np.arcsin(y)
-	np.arcsin(y)
+	return np.arcsin(y)
 
 
 def triangular(x: float) -> float:

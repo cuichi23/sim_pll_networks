@@ -100,3 +100,14 @@ class TestPfd:
     @pytest.mark.parametrize("x", [0.3, 1.0, 2.0, 3.0])
     def test_pfd_is_odd(self, x):
         assert cpl.pfd(x) == pytest.approx(-cpl.pfd(-x))
+
+
+class TestInverseSine:
+    """Regression: inverse_sine was missing its return statement and yielded None."""
+
+    def test_inverse_sine_round_trip(self):
+        for x in (-1.2, -0.3, 0.0, 0.5, 1.4):
+            assert cpl.inverse_sine(cpl.sine(x)) == pytest.approx(np.arcsin(np.sin(x)))
+
+    def test_inverse_sine_returns_float_not_none(self):
+        assert cpl.inverse_sine(0.5) is not None

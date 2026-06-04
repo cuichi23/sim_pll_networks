@@ -4,3 +4,6 @@ meep
 *.ipynb
 *.pyc
 .idea
+.venv
+venv
+__pycache__/

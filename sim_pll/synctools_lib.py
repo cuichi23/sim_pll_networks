@@ -151,7 +151,7 @@ class PeriodicCubic2D(Cubic2D):
 	def wrap_coordinates(self, yx):
 		y_wrap = int(np.mod(yx[0], self.ny))
 		x_wrap = int(np.mod(yx[1], self.nx))
-		return np.array([y_wrap, x_wrap], dtype=np.int)
+		return np.array([y_wrap, x_wrap], dtype=int)
 
 
 class OpenCubic2D(Cubic2D):

@@ -88,8 +88,8 @@ def prepare_multiple_simulations(dict_net: dict, dict_pll: dict, dict_algo: dict
 		print('multiprocessing', Nsim, 'realizations')
 
 	elif dict_algo['parameter_space_sweeps'] == 'listOfInitialPhaseConfigurations':  									# so far for N=2, work it out for N>2
-		if (isinstance(dict_algo['paramDiscretization'], np.float) or isinstance(dict_algo['paramDiscretization'], np.int)) and (
-				isinstance(dict_algo['min_max_range_parameter_0'], np.float) or isinstance(dict_algo['min_max_range_parameter_0'], np.int)):
+		if (isinstance(dict_algo['paramDiscretization'], float) or isinstance(dict_algo['paramDiscretization'], int)) and (
+				isinstance(dict_algo['min_max_range_parameter_0'], float) or isinstance(dict_algo['min_max_range_parameter_0'], int)):
 			scanValues = np.linspace(-np.pi, np.pi, dict_algo['paramDiscretization'])
 			print('scanValues', scanValues)
 			Nsim = len(scanValues)
@@ -179,7 +179,7 @@ def perform_multiple_simulations(dict_net, dict_pll, dict_algo, scanValues):
 		pool_data.append(pool.map(multihelper_star, zip(  # this makes a map of all parameter combinations that have to be simulated, itertools.repeat() names the constants
 			itertools.product(scanValues), itertools.repeat(initPhiPrime0), itertools.repeat(dict_net), itertools.repeat(dict_pll), itertools.repeat(dict_algo))))
 	elif dict_algo['parameter_space_sweeps'] == 'listOfInitialPhaseConfigurations':
-		if isinstance(dict_algo['min_max_range_parameter_0'], np.float) or isinstance(dict_algo['min_max_range_parameter_0'], np.int):
+		if isinstance(dict_algo['min_max_range_parameter_0'], float) or isinstance(dict_algo['min_max_range_parameter_0'], int):
 			pool_data.append(pool.map(multihelper_star, zip(  # this makes a map of all parameter combinations that have to be simulated, itertools.repeat() names the constants
 				itertools.product(scanValues), itertools.repeat(initPhiPrime0), itertools.repeat(dict_net), itertools.repeat(dict_pll), itertools.repeat(dict_algo))))
 		elif isinstance(dict_algo['min_max_range_parameter_0'], np.ndarray) or isinstance(dict_algo['min_max_range_parameter_0'], list):
@@ -205,7 +205,7 @@ def perform_multiple_simulations(dict_net, dict_pll, dict_algo, scanValues):
 	# 	pool_data.append(pool.map(multihelper_star, zip(  # this makes a map of all parameter combinations that have to be simulated, itertools.repeat() names the constants
 	# 		itertools.product(scanValues), itertools.repeat(initPhiPrime0), itertools.repeat(dict_net), itertools.repeat(dict_pll), itertools.repeat(dict_algo))))
 	# elif dict_algo['parameter_space_sweeps'] == 'listOfInitialPhaseConfigurations':
-	# 	if isinstance(dict_algo['min_max_range_parameter_0'], np.float) or isinstance(dict_algo['min_max_range_parameter_0'], np.int):
+	# 	if isinstance(dict_algo['min_max_range_parameter_0'], float) or isinstance(dict_algo['min_max_range_parameter_0'], int):
 	# 		pool_data.append(pool.map(multihelper_star, zip(  # this makes a map of all parameter combinations that have to be simulated, itertools.repeat() names the constants
 	# 			itertools.product(scanValues), itertools.repeat(initPhiPrime0), itertools.repeat(dict_net), itertools.repeat(dict_pll), itertools.repeat(dict_algo))))
 	# 	elif isinstance(dict_algo['min_max_range_parameter_0'], np.ndarray) or isinstance(dict_algo['min_max_range_parameter_0'], list):

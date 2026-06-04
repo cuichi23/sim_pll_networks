@@ -25,7 +25,7 @@ import matplotlib.cm as cm
 from matplotlib import rc
 from mpl_toolkits.axes_grid1.inset_locator import zoomed_inset_axes
 from mpl_toolkits.axes_grid1.inset_locator import mark_inset
-from scipy.ndimage.filters import uniform_filter1d
+from scipy.ndimage import uniform_filter1d
 import time
 import datetime
 import pandas as pd
@@ -177,7 +177,7 @@ def calculateEigenvalues(dict_net, dict_pll):
 ################################################################################
 
 ''' CALCULATE SPECTRUM '''
-def calcSpectrum(phase_or_signal: np.ndarray, dict_pll: dict, dict_net: dict, dict_algo: dict, psd_id: np.int=0, percentOfTsim: np.float=0.5, signal_given: bool=False): #phi,Fsample,couplingfct,waveform=None,expectedFreq=-999,evalAllRealizations=False,decayTimeSlowestMode=None
+def calcSpectrum(phase_or_signal: np.ndarray, dict_pll: dict, dict_net: dict, dict_algo: dict, psd_id: int=0, percentOfTsim: float=0.5, signal_given: bool=False): #phi,Fsample,couplingfct,waveform=None,expectedFreq=-999,evalAllRealizations=False,decayTimeSlowestMode=None
 
 	Pxx_dBm = []
 	Pxx_dBV = []
@@ -670,7 +670,7 @@ def evaluateSimulationsChrisHoyer(pool_data: dict) -> None:
 
 ################################################################################
 
-def evaluate_entrainment_of_mutual_sync(pool_data: dict, phase_diff_wrap_to_interval: int=3, average_time_for_time_series_in_periods: np.float=3.5) -> None:
+def evaluate_entrainment_of_mutual_sync(pool_data: dict, phase_diff_wrap_to_interval: int=3, average_time_for_time_series_in_periods: float=3.5) -> None:
 	# plot parameter
 	axisLabel = 60
 	tickSize = 35
@@ -721,7 +721,7 @@ def evaluate_entrainment_of_mutual_sync(pool_data: dict, phase_diff_wrap_to_inte
 	for i in range(len(pool_data[0][:])):
 		plt.close('all')
 		# calculate the range of indexes to be averaged corresponding to a given number of periods of the mean intrinsic frequency (excluding the reference)
-		average_time_for_time_series_as_indexes = np.int(average_time_for_time_series_in_periods *
+		average_time_for_time_series_as_indexes = int(average_time_for_time_series_in_periods *
 														np.mean(pool_data[0][i]['dict_pll']['intrF'][1:]) / pool_data[0][i]['dict_pll']['dt'])
 
 		# compute instantaneous frequencies for all oscillators, including the reference from the phase-time series
@@ -845,7 +845,7 @@ def evaluate_entrainment_of_mutual_sync(pool_data: dict, phase_diff_wrap_to_inte
 	fig1 = plt.figure(num=1, figsize=(figwidth, figheight), dpi=dpi_val, facecolor='w', edgecolor='k')
 	if isinstance(pool_data[0][0]['dict_pll']['transmission_delay'], list) or isinstance(pool_data[0][0]['dict_pll']['transmission_delay'], np.ndarray):
 		fig1.canvas.manager.set_window_title('results reference frequency scan for {<tau>=%0.02f, topology=%s}' % (np.mean(pool_data[0][0]['dict_pll']['transmission_delay']), pool_data[0][0]['dict_net']['topology']))
-	elif isinstance(pool_data[0][0]['dict_pll']['transmission_delay'], np.float) or isinstance(pool_data[0][0]['dict_pll']['transmission_delay'], np.int):
+	elif isinstance(pool_data[0][0]['dict_pll']['transmission_delay'], float) or isinstance(pool_data[0][0]['dict_pll']['transmission_delay'], int):
 		fig1.canvas.manager.set_window_title('results reference frequency scan for {tau=%0.02f, topology=%s}' % (pool_data[0][0]['dict_pll']['transmission_delay'], pool_data[0][0]['dict_net']['topology']))
 	ax1 = fig1.add_subplot(111)
 	ax2 = ax1.twinx()
@@ -877,7 +877,7 @@ def evaluate_entrainment_of_mutual_sync(pool_data: dict, phase_diff_wrap_to_inte
 	fig2 = plt.figure(num=2, figsize=(figwidth, figheight), dpi=dpi_val, facecolor='w', edgecolor='k')
 	if isinstance(pool_data[0][0]['dict_pll']['transmission_delay'], list) or isinstance(pool_data[0][0]['dict_pll']['transmission_delay'], np.ndarray):
 		fig2.canvas.manager.set_window_title('results ctrl sig scan for {<tau>=%0.02f, topology=%s}' % (np.mean(pool_data[0][0]['dict_pll']['transmission_delay']), pool_data[0][0]['dict_net']['topology']))
-	elif isinstance(pool_data[0][0]['dict_pll']['transmission_delay'], np.float) or isinstance(pool_data[0][0]['dict_pll']['transmission_delay'], np.int):
+	elif isinstance(pool_data[0][0]['dict_pll']['transmission_delay'], float) or isinstance(pool_data[0][0]['dict_pll']['transmission_delay'], int):
 		fig2.canvas.manager.set_window_title('results ctrl sig scan for {tau=%0.02f, topology=%s}' % (pool_data[0][0]['dict_pll']['transmission_delay'], pool_data[0][0]['dict_net']['topology']))
 	ax1 = fig2.add_subplot(111)
 	ax2 = ax1.twinx()
@@ -910,7 +910,7 @@ def evaluate_entrainment_of_mutual_sync(pool_data: dict, phase_diff_wrap_to_inte
 	fig3 = plt.figure(num=3, figsize=(figwidth, figheight), dpi=dpi_val, facecolor='w', edgecolor='k')
 	if isinstance(pool_data[0][0]['dict_pll']['transmission_delay'], list) or isinstance(pool_data[0][0]['dict_pll']['transmission_delay'], np.ndarray):
 		fig3.canvas.manager.set_window_title('phase-differences reference frequency scan for {<tau>=%0.02f, topology=%s}' % (np.mean(pool_data[0][0]['dict_pll']['transmission_delay']), pool_data[0][0]['dict_net']['topology']))
-	elif isinstance(pool_data[0][0]['dict_pll']['transmission_delay'], np.float) or isinstance(pool_data[0][0]['dict_pll']['transmission_delay'], np.int):
+	elif isinstance(pool_data[0][0]['dict_pll']['transmission_delay'], float) or isinstance(pool_data[0][0]['dict_pll']['transmission_delay'], int):
 		fig3.canvas.manager.set_window_title('phase-differences reference frequency scan for {tau=%0.02f, topology=%s}' % (pool_data[0][0]['dict_pll']['transmission_delay'], pool_data[0][0]['dict_net']['topology']))
 	ax1 = fig3.add_subplot(111)
 	# ax2 = ax1.twinx()
@@ -943,7 +943,7 @@ def evaluate_entrainment_of_mutual_sync(pool_data: dict, phase_diff_wrap_to_inte
 			if isinstance(pool_data[0][0]['dict_pll']['transmission_delay'], list) or isinstance(pool_data[0][0]['dict_pll']['transmission_delay'], np.ndarray):
 				fig4.canvas.manager.set_window_title('time series for {<tau>=%0.02f, topology=%s}' % (
 				np.mean(pool_data[0][0]['dict_pll']['transmission_delay']), pool_data[0][0]['dict_net']['topology']))
-			elif isinstance(pool_data[0][0]['dict_pll']['transmission_delay'], np.float) or isinstance(pool_data[0][0]['dict_pll']['transmission_delay'], np.int):
+			elif isinstance(pool_data[0][0]['dict_pll']['transmission_delay'], float) or isinstance(pool_data[0][0]['dict_pll']['transmission_delay'], int):
 				fig4.canvas.manager.set_window_title('time series for {tau=%0.02f, topology=%s}' % (pool_data[0][0]['dict_pll']['transmission_delay'], pool_data[0][0]['dict_net']['topology']))
 			ax1 = fig4.add_subplot(111)
 			ax2 = ax1.twinx()
@@ -982,7 +982,7 @@ def evaluate_entrainment_of_mutual_sync(pool_data: dict, phase_diff_wrap_to_inte
 					  	'mean_phase_differences_wrt_osci_3': mean_phase_differences, 'std_phase_differences_wrt_osci_3': std_phase_differences}
 	if isinstance(pool_data[0][0]['dict_pll']['transmission_delay'], list) or isinstance(pool_data[0][0]['dict_pll']['transmission_delay'], np.ndarray):
 		np.save('results/dict_for_chris_tau-%0.3f_topology-%s.npy' % (np.mean(pool_data[0][0]['dict_pll']['transmission_delay']), pool_data[0][0]['dict_net']['topology']), dict_for_chris)
-	elif isinstance(pool_data[0][0]['dict_pll']['transmission_delay'], np.float) or isinstance(pool_data[0][0]['dict_pll']['transmission_delay'], np.int):
+	elif isinstance(pool_data[0][0]['dict_pll']['transmission_delay'], float) or isinstance(pool_data[0][0]['dict_pll']['transmission_delay'], int):
 		np.save('results/dict_for_chris_tau-%0.3f_topology-%s.npy' % (pool_data[0][0]['dict_pll']['transmission_delay'], pool_data[0][0]['dict_net']['topology']), dict_for_chris)
 
 	return None
@@ -1364,14 +1364,14 @@ def shiftedColorMap(cmap, start=0, midpoint=0.5, stop=1.0, name='shiftedcmap'):
 #
 # 	fig16, ax16 = plt.subplots(int(np.ceil(len(pool_data[0][:])/numberColsPlt)), numberColsPlt, figsize=(figwidth, figheight), dpi=dpi_val, facecolor='w', edgecolor='k')
 # 	fig16.canvas.manager.set_window_title('Ising different initial conditions, fixed topology, phase relations')					# phase relations
-# 	if isinstance( pool_data[0][0]['dict_pll']['cutFc'], np.float):
+# 	if isinstance( pool_data[0][0]['dict_pll']['cutFc'], float):
 # 		fig16.suptitle(r'parameters: $f=$%0.2f Hz, $K=$%0.2f Hz/V, $K^\textrm{I}=$%0.2f Hz/V, $f_c=$%0.2f Hz, $\tau=$%0.2f s'%(pool_data[0][0]['dict_pll']['intrF'], pool_data[0][0]['dict_pll']['coupK'], pool_data[0][0]['dict_pll']['coupStr_2ndHarm'], pool_data[0][0]['dict_pll']['cutFc'], pool_data[0][0]['dict_pll']['transmission_delay']))
 # 	fig16.subplots_adjust(hspace=0.4, wspace=0.4)
 # 	ax16 = ax16.ravel()
 #
 # 	fig161, ax161 = plt.subplots(int(np.ceil(len(pool_data[0][:]) / numberColsPlt)), numberColsPlt, figsize=(figwidth, figheight), dpi=dpi_val, facecolor='w', edgecolor='k')
 # 	fig161.canvas.manager.set_window_title('Ising different initial conditions, fixed topology, smoothed out phase relations')  # phase relations
-# 	if isinstance(pool_data[0][0]['dict_pll']['cutFc'], np.float):
+# 	if isinstance(pool_data[0][0]['dict_pll']['cutFc'], float):
 # 		fig161.suptitle(r'parameters: $f=$%0.2f Hz, $K=$%0.2f Hz/V, $K^\textrm{I}=$%0.2f Hz/V, $f_c=$%0.2f Hz, $\tau=$%0.2f s' % (
 # 		pool_data[0][0]['dict_pll']['intrF'], pool_data[0][0]['dict_pll']['coupK'], pool_data[0][0]['dict_pll']['coupStr_2ndHarm'], pool_data[0][0]['dict_pll']['cutFc'],
 # 		pool_data[0][0]['dict_pll']['transmission_delay']))

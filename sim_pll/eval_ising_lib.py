@@ -23,7 +23,7 @@ if not os.environ.get('SGE_ROOT') is None:										# this environment variable 
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 from matplotlib import rc
-from scipy.ndimage.filters import uniform_filter1d
+from scipy.ndimage import uniform_filter1d
 import time
 import datetime
 import pandas as pd
@@ -66,7 +66,7 @@ annotationfont = {
 		}
 
 
-def evaluateSimulationIsing(pool_data: dict, phase_wrap: np.int = 0, number_of_histogram_bins: np.int = 25, prob_density: bool = False, order_param_solution: np.float = 0.0, number_of_expected_oscis_in_one_group: np.int = 10) -> None:
+def evaluateSimulationIsing(pool_data: dict, phase_wrap: int = 0, number_of_histogram_bins: int = 25, prob_density: bool = False, order_param_solution: float = 0.0, number_of_expected_oscis_in_one_group: int = 10) -> None:
 	"""
 		Evaluates the simulations with SHIL, solving the MAX-cut problem in this case
 
@@ -120,14 +120,14 @@ def evaluateSimulationIsing(pool_data: dict, phase_wrap: np.int = 0, number_of_h
 
 	fig16, ax16 = plt.subplots(int(np.ceil(len(pool_data[0][:])/numberColsPlt)), numberColsPlt, figsize=(figwidth, figheight), dpi=dpi_val, facecolor='w', edgecolor='k')
 	fig16.canvas.manager.set_window_title('Ising different initial conditions, fixed topology, phase relations')					# phase relations
-	if isinstance( pool_data[0][0]['dict_pll']['cutFc'], np.float):
+	if isinstance( pool_data[0][0]['dict_pll']['cutFc'], float):
 		fig16.suptitle(r'parameters: $f=$%0.2f Hz, $K=$%0.2f Hz/V, $K^\textrm{I}=$%0.2f Hz/V, $f_c=$%0.2f Hz, $\tau=$%0.2f s'%(pool_data[0][0]['dict_pll']['intrF'], pool_data[0][0]['dict_pll']['coupK'], pool_data[0][0]['dict_pll']['coupStr_2ndHarm'], pool_data[0][0]['dict_pll']['cutFc'], pool_data[0][0]['dict_pll']['transmission_delay']))
 	fig16.subplots_adjust(hspace=0.4, wspace=0.4)
 	ax16 = ax16.ravel()
 
 	fig161, ax161 = plt.subplots(int(np.ceil(len(pool_data[0][:]) / numberColsPlt)), numberColsPlt, figsize=(figwidth, figheight), dpi=dpi_val, facecolor='w', edgecolor='k')
 	fig161.canvas.manager.set_window_title('Ising different initial conditions, fixed topology, smoothed out phase relations')  # phase relations
-	if isinstance(pool_data[0][0]['dict_pll']['cutFc'], np.float):
+	if isinstance(pool_data[0][0]['dict_pll']['cutFc'], float):
 		fig161.suptitle(r'parameters: $f=$%0.2f Hz, $K=$%0.2f Hz/V, $K^\textrm{I}=$%0.2f Hz/V, $f_c=$%0.2f Hz, $\tau=$%0.2f s' % (
 		pool_data[0][0]['dict_pll']['intrF'], pool_data[0][0]['dict_pll']['coupK'], pool_data[0][0]['dict_pll']['coupStr_2ndHarm'], pool_data[0][0]['dict_pll']['cutFc'],
 		pool_data[0][0]['dict_pll']['transmission_delay']))

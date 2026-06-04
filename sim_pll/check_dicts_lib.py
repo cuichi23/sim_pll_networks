@@ -84,8 +84,8 @@ def check_dicts_consistency(dict_pll, dict_net, dict_algo):
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 	if not (isinstance(dict_pll['transmission_delay'], np.ndarray) or isinstance(dict_pll['transmission_delay'], list)):
-		if np.abs(dict_pll['dt']*np.int(np.round(dict_pll['transmission_delay']/dict_pll['dt'])) - dict_pll['transmission_delay']) > 0.01*dict_pll['transmission_delay']:
-			print('NOTE: time step dt not small enough to resolve the time delay.\ntranmission time delay contineous time: %0.3f\ntransmission time delay after time discretization: %0.3f' % (dict_pll['transmission_delay'], dict_pll['dt']*np.int( np.round( dict_pll['transmission_delay']/dict_pll['dt'] ) ) ))
+		if np.abs(dict_pll['dt']*int(np.round(dict_pll['transmission_delay']/dict_pll['dt'])) - dict_pll['transmission_delay']) > 0.01*dict_pll['transmission_delay']:
+			print('NOTE: time step dt not small enough to resolve the time delay.\ntranmission time delay contineous time: %0.3f\ntransmission time delay after time discretization: %0.3f' % (dict_pll['transmission_delay'], dict_pll['dt']*int( np.round( dict_pll['transmission_delay']/dict_pll['dt'] ) ) ))
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -113,7 +113,7 @@ def check_dicts_consistency(dict_pll, dict_net, dict_algo):
 	# consistency check for basin stability plots
 	#print('HERE type(dict_algo):', type(dict_algo))
 	if dict_algo['parameter_space_sweeps'] == 'listOfInitialPhaseConfigurations' and ( isinstance(dict_algo['paramDiscretization'], list) or isinstance(dict_algo['paramDiscretization'], np.ndarray) ):
-		if ( isinstance(dict_algo['min_max_range_parameter_0'], np.float) or isinstance(dict_algo['min_max_range_parameter_0'], np.int) ):
+		if ( isinstance(dict_algo['min_max_range_parameter_0'], float) or isinstance(dict_algo['min_max_range_parameter_0'], int) ):
 			print('NOTE: in multisim_lib, the case listOfInitialPhaseConfigurations needs a minimum and maximum intrinsic frequency, e.g., [wmin, wmax]! Please provide.')
 			sys.exit()
 
@@ -172,8 +172,8 @@ def check_dicts_consistency(dict_pll, dict_net, dict_algo):
 			if choice == 'y':
 				synctools.generate_delay_plot(dict_pll, dict_net)
 
-		elif ( (isinstance(dict_pll['intrF'], np.float) or isinstance(dict_pll['intrF'], np.int)) and (isinstance(dict_pll['cutFc'], np.float) or isinstance(dict_pll['cutFc'], np.int)) and
-			(isinstance(dict_pll['coupK'], np.float) or isinstance(dict_pll['coupK'], np.int)) and (isinstance(dict_pll['transmission_delay'], np.float) or isinstance(dict_pll['transmission_delay'], np.int)) ):
+		elif ( (isinstance(dict_pll['intrF'], float) or isinstance(dict_pll['intrF'], int)) and (isinstance(dict_pll['cutFc'], float) or isinstance(dict_pll['cutFc'], int)) and
+			(isinstance(dict_pll['coupK'], float) or isinstance(dict_pll['coupK'], int)) and (isinstance(dict_pll['transmission_delay'], float) or isinstance(dict_pll['transmission_delay'], int)) ):
 			#try:
 			isRadian = False													# set this False to get values returned in [Hz] instead of [rad * Hz]
 			sf = synctools.SweepFactory(dict_pll, dict_net, isRadians=isRadian)
@@ -309,8 +309,8 @@ def check_consistency_initPert(dict_net):
 		elif userIn == 'allzero':
 			dict_net.update({'phiPerturb': np.zeros(dict_net['Nx']*dict_net['Ny']).tolist()})
 		elif userIn == 'iid':
-			lowerPertBound = np.float(input('Lower bound [e.g., -3.14159]: '))
-			upperPertBound = np.float(input('Upper bound [e.g., +3.14159]: '))
+			lowerPertBound = float(input('Lower bound [e.g., -3.14159]: '))
+			upperPertBound = float(input('Upper bound [e.g., +3.14159]: '))
 			dict_net.update({'phiPerturb': (np.random.rand(dict_net['Nx']*dict_net['Ny'])*np.abs((upperPertBound-lowerPertBound))-lowerPertBound).tolist()})
 		else:
 			return None

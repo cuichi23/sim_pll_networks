@@ -62,7 +62,7 @@ def get_from_value_or_list(pll_id, parameter_input, pll_count):
 				return parameter_input[pll_id]  # set individual value
 			else:
 				return parameter_input  # set value for all
-		elif isinstance(parameter_input, float) or isinstance(parameter_input, np.int):
+		elif isinstance(parameter_input, float) or isinstance(parameter_input, int):
 			return parameter_input  # set value for all
 		else:
 			print('Error in PLL component constructor setting a variable using get_from_value_or_list() function! Check whether enough values for each oscillator are defined!')
@@ -600,7 +600,7 @@ class PhaseDetectorCombiner:
 		else:
 			print('Phase detector and combiner problem, dict_pll[*includeCompHF*] should either be True or False, check PhaseDetectorCombiner in pll_lib! ')
 
-	def update_list_of_neighbors_of_phase_detector(self, new_neighbor_list: list, dict_pll: dict, idx_time: np.int):
+	def update_list_of_neighbors_of_phase_detector(self, new_neighbor_list: list, dict_pll: dict, idx_time: int):
 		"""
 		Changes the neighbors of an oscillator in the network as specified.
 
@@ -846,7 +846,7 @@ class Delayer:
 				print('Feedback set to nonzero but is smaller than the time-step "dt", hence "self.feedback_delay_steps" < 1 !')
 				sys.exit()
 
-	def update_list_of_neighbors_of_delayer(self, new_neighbor_list: list, dict_pll: dict, idx_time: np.int):
+	def update_list_of_neighbors_of_delayer(self, new_neighbor_list: list, dict_pll: dict, idx_time: int):
 		"""
 		Changes the neighbors of an oscillator in the network as specified.
 
@@ -1167,7 +1167,7 @@ class PhaseLockedLoop:
 		control_signal = self.low_pass_filter.set_initial_control_signal(instantaneous_frequency, prior_to_instantaneous_frequency)
 		return self.signal_controlled_oscillator.delta_perturbation(perturbation, control_signal)[0]
 
-	def update_list_of_neighbors_of_pll(self, new_neighbor_list: list, dict_pll: dict, idx_time: np.int):
+	def update_list_of_neighbors_of_pll(self, new_neighbor_list: list, dict_pll: dict, idx_time: int):
 		"""
 		Changes the neighbors of an oscillator in the network as specified.
 

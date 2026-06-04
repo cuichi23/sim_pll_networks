@@ -19,7 +19,7 @@ import matplotlib.cm as cm
 from scipy import optimize
 from mpl_toolkits.axes_grid1.inset_locator import zoomed_inset_axes
 from mpl_toolkits.axes_grid1.inset_locator import mark_inset
-from scipy.ndimage.filters import uniform_filter1d
+from scipy.ndimage import uniform_filter1d
 # from scipy.interpolate import spline
 from scipy.special import lambertw
 from scipy.signal import square
@@ -667,7 +667,7 @@ def plot_control_signal_dynamics(dict_pll: dict, dict_net: dict, dict_data: dict
 	elif param_name == 'timeDepChangeOfIntrFreq':
 		if dict_data['only_change_freq_of_reference']:
 			dyn_x_label = r'$\frac{\omega_R}{\bar{\omega}_{k\neq R}}$'
-			if isinstance(dict_pll['intrF'], np.int) or isinstance(dict_pll['intrF'], np.float):
+			if isinstance(dict_pll['intrF'], int) or isinstance(dict_pll['intrF'], float):
 				x_axis_scaling = 1.0 / dict_pll['intrF']
 			elif isinstance(dict_pll['intrF'], list) or isinstance(dict_pll['intrF'], np.ndarray):
 				x_axis_scaling = np.mean(1.0 / dict_pll['intrF'][1:])
@@ -788,7 +788,7 @@ def plot_instantaneous_freqs_vs_time_dependent_parameter(dict_pll: dict, dict_ne
 	elif param_name == 'timeDepChangeOfIntrFreq':
 		if dict_data['only_change_freq_of_reference']:
 			dyn_x_label = r'$\frac{\omega_R}{\bar{\omega}_{k\neq R}}$'
-			if isinstance(dict_pll['intrF'], np.int) or isinstance(dict_pll['intrF'], np.float):
+			if isinstance(dict_pll['intrF'], int) or isinstance(dict_pll['intrF'], float):
 				x_axis_scaling = 1.0 / dict_pll['intrF']
 			elif isinstance(dict_pll['intrF'], list) or isinstance(dict_pll['intrF'], np.ndarray):
 				x_axis_scaling = np.mean(1.0 / dict_pll['intrF'][1:])
@@ -883,7 +883,7 @@ def plot_order_parameter_vs_time_dependent_parameter_div_and_undiv(dict_pll: dic
 	elif param_name == 'timeDepChangeOfIntrFreq':
 		if dict_data['only_change_freq_of_reference']:
 			dyn_x_label = r'$\frac{\omega_R}{\bar{\omega}_{k\neq R}}$'
-			if isinstance(dict_pll['intrF'], np.int) or isinstance(dict_pll['intrF'], np.float):
+			if isinstance(dict_pll['intrF'], int) or isinstance(dict_pll['intrF'], float):
 				x_axis_scaling = 1.0 / dict_pll['intrF']
 			elif isinstance(dict_pll['intrF'], list) or isinstance(dict_pll['intrF'], np.ndarray):
 				x_axis_scaling = np.mean(1.0 / dict_pll['intrF'][1:])
@@ -951,7 +951,7 @@ def plot_order_parameter_vs_time_dependent_parameter_div_and_undiv(dict_pll: dic
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 def plot_phase_differences_vs_time_dependent_parameter_divided_or_undivided(dict_pll: dict, dict_net: dict, dict_data: dict, plotlist: list = [],
-																			phase_diff_wrap_to_interval: np.int = 1, phases_of_divided_signals: bool = True):
+																			phase_diff_wrap_to_interval: int = 1, phases_of_divided_signals: bool = True):
 	plt.clf()
 
 	dict_pll, dict_net = prepareDictsForPlotting(dict_pll, dict_net)
@@ -975,7 +975,7 @@ def plot_phase_differences_vs_time_dependent_parameter_divided_or_undivided(dict
 	elif param_name == 'timeDepChangeOfIntrFreq':
 		if dict_data['only_change_freq_of_reference']:
 			dyn_x_label = r'$\frac{\omega_R}{\bar{\omega}_{k\neq R}}$'
-			if isinstance(dict_pll['intrF'], np.int) or isinstance(dict_pll['intrF'], np.float):
+			if isinstance(dict_pll['intrF'], int) or isinstance(dict_pll['intrF'], float):
 				x_axis_scaling = 1.0 / dict_pll['intrF']
 			elif isinstance(dict_pll['intrF'], list) or isinstance(dict_pll['intrF'], np.ndarray):
 				x_axis_scaling = np.mean(1.0 / dict_pll['intrF'][1:])
@@ -1092,8 +1092,8 @@ def plot_phase_differences_vs_time_dependent_parameter_divided_or_undivided(dict
 
 
 def plot_inst_frequency_and_phase_difference_vs_time_dependent_parameter_divided_or_undivided(dict_pll: dict, dict_net: dict, dict_data: dict, phases_of_divided_signals: bool = True,
-																			frequency_of_divided_signals: bool = True, plotlist: list = [], phase_diff_wrap_to_interval: np.int = 1,
-																			ylim_percent_of_min_val: np.float = 0.995, ylim_percent_of_max_val: np.float = 1.005):
+																			frequency_of_divided_signals: bool = True, plotlist: list = [], phase_diff_wrap_to_interval: int = 1,
+																			ylim_percent_of_min_val: float = 0.995, ylim_percent_of_max_val: float = 1.005):
 	# clear the figure in case more than one is to be plotted
 	plt.clf()
 	# set to 1 if plotting in [-pi, +pi) and to 2 if plotting in [-pi/2, 3pi/2] or to 3 if phase differences to be plotted in [0, 2pi)
@@ -1120,7 +1120,7 @@ def plot_inst_frequency_and_phase_difference_vs_time_dependent_parameter_divided
 	elif param_name == 'timeDepChangeOfIntrFreq':
 		if dict_data['only_change_freq_of_reference']:
 			dyn_x_label = r'$\frac{\omega_R}{\bar{\omega}_{k\neq R}}$'
-			if isinstance(dict_pll['intrF'], np.int) or isinstance(dict_pll['intrF'], np.float):
+			if isinstance(dict_pll['intrF'], int) or isinstance(dict_pll['intrF'], float):
 				x_axis_scaling = 1.0 / dict_pll['intrF']
 			elif isinstance(dict_pll['intrF'], list) or isinstance(dict_pll['intrF'], np.ndarray):
 				x_axis_scaling = np.mean(1.0 / dict_pll['intrF'][1:])
@@ -1440,7 +1440,7 @@ def deltaThetaDot_vs_deltaTheta(dict_pll, dict_net, deltaTheta, deltaThetaDot, c
 
 
 def plot_inst_frequency_and_phase_difference(dict_pll: dict, dict_net: dict, dict_algo: dict, dict_data: dict, phases_of_divided_signals: bool = False, plotlist: list = [],
-												phase_diff_wrap_to_interval: np.int = 1, ylim_percent_of_min_val: np.float = 0.995, ylim_percent_of_max_val: np.float = 1.005, plot_id: int=0):
+												phase_diff_wrap_to_interval: int = 1, ylim_percent_of_min_val: float = 0.995, ylim_percent_of_max_val: float = 1.005, plot_id: int=0):
 	# set to 1 if plotting in [-pi, +pi) and to 2 if plotting in [-pi/2, 3pi/2] or to 3 if phase differences to be plotted in [0, 2pi)
 
 	dict_pll, dict_net = prepareDictsForPlotting(dict_pll, dict_net)
@@ -1971,7 +1971,7 @@ def plot_allan_variance(dict_pll: dict, dict_net: dict, dict_data: dict, t_trans
 
 #################################################################################################################################################################################
 
-def plot_order_param_vs_parameter_space(pool_data: dict, average_time_order_parameter_in_periods: np.float, colormap=cm.coolwarm, axis_normalization=True, add_scatter_plots: bool = False):
+def plot_order_param_vs_parameter_space(pool_data: dict, average_time_order_parameter_in_periods: float, colormap=cm.coolwarm, axis_normalization=True, add_scatter_plots: bool = False):
 	""" Function that plots the last value and an average of the order parameter in a 2d parameter space in two individual plots.
 		Each plot comes as a scatterplot and an imshow.
 
@@ -2010,9 +2010,9 @@ def plot_order_param_vs_parameter_space(pool_data: dict, average_time_order_para
 	results = []
 	for i in range(dict_algo['paramDiscretization'][0] * dict_algo['paramDiscretization'][1]):
 		if 'entrain' in dict_net['topology'] and (isinstance(pool_data[0][i]['dict_pll']['intrF'], list) or isinstance(pool_data[0][i]['dict_pll']['intrF'], np.ndarray)):
-			averaging_time_as_index = np.int(average_time_order_parameter_in_periods * np.mean(pool_data[0][i]['dict_pll']['intrF'][1:]) / pool_data[0][i]['dict_pll']['dt'])
+			averaging_time_as_index = int(average_time_order_parameter_in_periods * np.mean(pool_data[0][i]['dict_pll']['intrF'][1:]) / pool_data[0][i]['dict_pll']['dt'])
 		else:
-			averaging_time_as_index = np.int(average_time_order_parameter_in_periods * np.mean(pool_data[0][i]['dict_pll']['intrF']) / pool_data[0][i]['dict_pll']['dt'])
+			averaging_time_as_index = int(average_time_order_parameter_in_periods * np.mean(pool_data[0][i]['dict_pll']['intrF']) / pool_data[0][i]['dict_pll']['dt'])
 		results.append(
 			[pool_data[0][i]['dict_data']['order_parameter'][-1], np.mean(pool_data[0][i]['dict_data']['order_parameter'][-averaging_time_as_index:]),														 	# 0, 1
 				np.std(pool_data[0][i]['dict_data']['order_parameter'][-averaging_time_as_index:]), np.std(pool_data[0][i]['dict_data']['order_parameter'][-int(1.3*averaging_time_as_index):]),			 	# 2, 3
@@ -2184,8 +2184,8 @@ def plot_order_param_vs_parameter_space(pool_data: dict, average_time_order_para
 # ################################################################################################################################################################################
 
 
-def plot_final_phase_configuration_vs_parameter_space(pool_data: dict, average_time_phase_difference_in_periods: np.float, phase_wrap: np.int = 1, std_treshold_determine_time_dependency: np.float = 0.1*np.pi,
-														std_treshold_order_param_determine_time_dependency: np.float = 0.075, colormap=cm.coolwarm, axis_normalization: bool = True,
+def plot_final_phase_configuration_vs_parameter_space(pool_data: dict, average_time_phase_difference_in_periods: float, phase_wrap: int = 1, std_treshold_determine_time_dependency: float = 0.1*np.pi,
+														std_treshold_order_param_determine_time_dependency: float = 0.075, colormap=cm.coolwarm, axis_normalization: bool = True,
 														phase_diff_wrt_osci_k_0: bool = False, plot_if_time_dependent: bool = False, add_scatter_plots: bool = False):
 	""" Function that plots the last value of the phase and the std of the phase over the average time in a 2d parameter space in two individual plots.
 		Each plot comes as a scatterplot and an imshow.
@@ -2241,9 +2241,9 @@ def plot_final_phase_configuration_vs_parameter_space(pool_data: dict, average_t
 	results = []
 	for i in range(dict_algo['paramDiscretization'][0] * dict_algo['paramDiscretization'][1]):
 		if 'entrain' in dict_net['topology'] and (isinstance(pool_data[0][i]['dict_pll']['intrF'], list) or isinstance(pool_data[0][i]['dict_pll']['intrF'], np.ndarray)):
-			averaging_time_as_index = np.int(average_time_phase_difference_in_periods * np.mean(pool_data[0][i]['dict_pll']['intrF'][1:]) / pool_data[0][i]['dict_pll']['dt'])
+			averaging_time_as_index = int(average_time_phase_difference_in_periods * np.mean(pool_data[0][i]['dict_pll']['intrF'][1:]) / pool_data[0][i]['dict_pll']['dt'])
 		else:
-			averaging_time_as_index = np.int(average_time_phase_difference_in_periods * np.mean(pool_data[0][i]['dict_pll']['intrF']) / pool_data[0][i]['dict_pll']['dt'])
+			averaging_time_as_index = int(average_time_phase_difference_in_periods * np.mean(pool_data[0][i]['dict_pll']['intrF']) / pool_data[0][i]['dict_pll']['dt'])
 		results.append(
 			[pool_data[0][i]['dict_data']['order_parameter'][-1], np.mean(pool_data[0][i]['dict_data']['order_parameter'][-averaging_time_as_index:]),		# 0 & 1
 			np.std(pool_data[0][i]['dict_data']['order_parameter'][-int(10.3 * averaging_time_as_index):]),													# 2
@@ -2267,9 +2267,9 @@ def plot_final_phase_configuration_vs_parameter_space(pool_data: dict, average_t
 	for i in range(dict_algo['paramDiscretization'][0] * dict_algo['paramDiscretization'][1]):
 		print('\n\ni=', i)
 		if 'entrain' in dict_net['topology'] and (isinstance(pool_data[0][i]['dict_pll']['intrF'], list) or isinstance(pool_data[0][i]['dict_pll']['intrF'], np.ndarray)):
-			averaging_time_as_index = np.int(average_time_phase_difference_in_periods * np.mean(pool_data[0][i]['dict_pll']['intrF'][1:]) / pool_data[0][i]['dict_pll']['dt'])
+			averaging_time_as_index = int(average_time_phase_difference_in_periods * np.mean(pool_data[0][i]['dict_pll']['intrF'][1:]) / pool_data[0][i]['dict_pll']['dt'])
 		else:
-			averaging_time_as_index = np.int(average_time_phase_difference_in_periods * np.mean(pool_data[0][i]['dict_pll']['intrF']) / pool_data[0][i]['dict_pll']['dt'])
+			averaging_time_as_index = int(average_time_phase_difference_in_periods * np.mean(pool_data[0][i]['dict_pll']['intrF']) / pool_data[0][i]['dict_pll']['dt'])
 		if np.isnan(pool_data[0][i]['dict_net']['phiInitConfig']).any() and 'entrain' in dict_net['topology']:
 			print('Set all betas and std_betas to np.nan since for this parameter set no solution exists given the inverse coupling function to be evaluated.')
 			decreasingR_beta_kl[:, i] = np.nan
@@ -2615,7 +2615,7 @@ def plot_final_phase_configuration_vs_parameter_space(pool_data: dict, average_t
 # ################################################################################################################################################################################
 
 
-def plot_order_parameter_vs_initial_phase_configuration_space(pool_data: dict, average_time_order_parameter_in_periods: np.float, colormap=cm.coolwarm, axis_normalization=True):
+def plot_order_parameter_vs_initial_phase_configuration_space(pool_data: dict, average_time_order_parameter_in_periods: float, colormap=cm.coolwarm, axis_normalization=True):
 	"""Function that plots the last value and an average of the order parameter as a function of the initial phase-configuration  in two individual plots.
 		The initial phase configuration is expressed as the phase differences for 2d and 3d phase spaces. Each plot comes as a scatterplot and an imshow.
 		Derived from brute-force basin stability!
@@ -2653,8 +2653,8 @@ def plot_order_parameter_vs_initial_phase_configuration_space(pool_data: dict, a
 
 
 	# we want to plot all the m-twist locations in rotated phase space: calculate phases, rotate and then plot into the results
-	twist_points = np.zeros((dict_net['Nx']*dict_net['Ny'], dict_net['Nx']*dict_net['Ny']), dtype=np.float)  # twist points in physical phase space
-	twist_pointsR = np.zeros((dict_net['Nx']*dict_net['Ny'], dict_net['Nx']*dict_net['Ny']), dtype=np.float)  # twist points in rotated phase space
+	twist_points = np.zeros((dict_net['Nx']*dict_net['Ny'], dict_net['Nx']*dict_net['Ny']), dtype=float)  # twist points in physical phase space
+	twist_pointsR = np.zeros((dict_net['Nx']*dict_net['Ny'], dict_net['Nx']*dict_net['Ny']), dtype=float)  # twist points in rotated phase space
 	alltwistP = []
 
 	if F_Omeg > 0:  		# for f=0, there would otherwise be a float division by zero

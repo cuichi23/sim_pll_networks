@@ -23,7 +23,7 @@ if not os.environ.get('SGE_ROOT') is None:										# this environment variable 
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 from matplotlib import rc
-from scipy.ndimage.filters import uniform_filter1d
+from scipy.ndimage import uniform_filter1d
 import time
 import datetime
 import pandas as pd
@@ -118,7 +118,7 @@ def phase_configuration_ref_to_one_for_chain_topology(dict_net: dict, dict_pll: 
 	if dict_pll['responseVCO'] == 'linear':
 		if isinstance(dict_pll['intrF'], list) or isinstance(dict_pll['intrF'], np.ndarray):
 			frequency_or_voltage = dict_pll['intrF']
-		elif isinstance(dict_pll['intrF'], np.float) or isinstance(dict_pll['intrF'], int):
+		elif isinstance(dict_pll['intrF'], float) or isinstance(dict_pll['intrF'], int):
 			frequency_or_voltage = [dict_pll['intrF'] for i in range(dict_net['Nx'])]
 	elif dict_pll['responseVCO'] == 'nonlinear_3rd_gen':
 		# dict_pll['prebias_voltage_vco'] contains all the prebias voltages of all PLLs to realize the specific intrinsic VCO frequencies

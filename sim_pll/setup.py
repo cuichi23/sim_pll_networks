@@ -399,7 +399,7 @@ def setup_time_dependent_parameter(dict_net: dict, dict_pll: dict, dict_data: di
 			else:
 				time_series[i, 0:tstep_annealing_start] = dict_net['min_max_rate_timeDepPara'][0]
 			start_t_steps = tstep_annealing_start-1
-			final_growth_t_steps = start_t_steps + np.int(np.floor((1-start_time_dependency_after_percent_of_tsim)*dict_pll['sim_time_steps']))
+			final_growth_t_steps = start_t_steps + int(np.floor((1-start_time_dependency_after_percent_of_tsim)*dict_pll['sim_time_steps']))
 			if final_growth_t_steps <= start_t_steps:
 				print('In setup_time_dependent_parameter(), the final time step value is smaller or equal w.r.t its initial! Change either start_time_dependency_after_percent_of_tsim or Tsim!')
 				sys.exit()
@@ -595,7 +595,7 @@ def all_initial_phase_combinations(dict_pll: dict, dict_net: dict, dict_algo: di
 		a list of lists and a list of all combinations of this
 	"""
 
-	if isinstance(paramDiscretization, np.int):
+	if isinstance(paramDiscretization, int):
 		paramDiscr = [paramDiscretization, paramDiscretization]
 	elif isinstance(paramDiscretization, list):
 		paramDiscr = paramDiscretization
@@ -615,7 +615,7 @@ def all_initial_phase_combinations(dict_pll: dict, dict_net: dict, dict_algo: di
 			allPoints 		= list(_allPoints)									# scanValues is a list of lists: create a new list that gives all the possible combinations of items between the lists
 			allPoints 		= np.array(allPoints)								# convert the list to an array
 		else:
-			scanValues = np.zeros((dict_net['Nx']*dict_net['Ny'], paramDiscr[0]), dtype=np.float) # create container for all points in the discretized rotated phase space, +/- pi around each dimension (unit area)
+			scanValues = np.zeros((dict_net['Nx']*dict_net['Ny'], paramDiscr[0]), dtype=float) # create container for all points in the discretized rotated phase space, +/- pi around each dimension (unit area)
 			# scanValues[0,:] = np.linspace(phiMr[0]-(np.pi), phiMr[0]+(np.pi), paramDiscretization) 	# all entries are in rotated, and reduced phase space
 			# scanValues[1,:] = np.linspace(phiMr[1]-(np.pi), phiMr[1]+(np.pi), paramDiscretization) 	# all entries are in rotated, and reduced phase space
 			scanValues[0, :] = np.linspace(-(np.pi), +(np.pi), paramDiscr[0]) 	# all entries are in rotated, and reduced phase space NOTE: adjust unit cell accordingly!
@@ -633,7 +633,7 @@ def all_initial_phase_combinations(dict_pll: dict, dict_net: dict, dict_algo: di
 
 	elif dict_net['Nx'] * dict_net['Ny'] == 3:
 		# setup a matrix for all N variables/dimensions and create a cube around the origin with side lengths 2pi
-		scanValues = np.zeros((dict_net['Nx'] * dict_net['Ny'] - 1, paramDiscr[0]), dtype=np.float)		# create container for all points in the discretized rotated phase space, +/- pi around each dimension (unit area)
+		scanValues = np.zeros((dict_net['Nx'] * dict_net['Ny'] - 1, paramDiscr[0]), dtype=float)		# create container for all points in the discretized rotated phase space, +/- pi around each dimension (unit area)
 		for i in range(0, dict_net['Nx'] * dict_net['Ny'] - 1):											# the different coordinates of the solution, discretize an interval plus/minus pi around each variable
 			# scanValues[i,:] = np.linspace(phiMr[i+1]-np.pi, phiMr[i+1]+np.pi, paramDiscretization) # all entries are in rotated, and reduced phase space
 			if i == 0:															# theta2 (x-axis)
@@ -653,7 +653,7 @@ def all_initial_phase_combinations(dict_pll: dict, dict_net: dict, dict_algo: di
 
 	elif dict_net['Nx'] * dict_net['Ny'] > 3:
 		# setup a matrix for all N variables/dimensions and create a cube around the origin with side lengths 2pi
-		scanValues = np.zeros((dict_net['Nx'] * dict_net['Ny'] - 1, paramDiscr[0]), dtype=np.float)		# create container for all points in the discretized rotated phase space, +/- pi around each dimension (unit area)
+		scanValues = np.zeros((dict_net['Nx'] * dict_net['Ny'] - 1, paramDiscr[0]), dtype=float)		# create container for all points in the discretized rotated phase space, +/- pi around each dimension (unit area)
 		for i in range(0, dict_net['Nx'] * dict_net['Ny'] - 1):											# the different coordinates of the solution, discretize an interval plus/minus pi around each variable
 			# scanValues[i,:] = np.linspace(phiMr[i+1]-np.pi, phiMr[i+1]+np.pi, paramDiscretization) # all entries are in rotated, and reduced phase space
 			if i == 0:															# theta2 (x-axis)

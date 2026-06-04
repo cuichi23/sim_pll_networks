@@ -833,7 +833,7 @@ def evolve_system_on_tsim_array_time_dependent_change_of_intrinsic_frequency_sav
 			print('Please recheck the function evolve_system_on_tsim_array_time_dependent_change_of_intrinsic_frequency_save_ctrl_signal() in sim_lib.py before usage!')
 			sys.exit()
 
-		if isinstance(dict_pll['intrF'], np.int) or isinstance(dict_pll['intrF'], np.float):
+		if isinstance(dict_pll['intrF'], int) or isinstance(dict_pll['intrF'], float):
 			dict_pll.update({'intrF': np.zeros(dict_net['Nx'] * dict_net['Ny']) + dict_pll['intrF']})
 		intr_freq_vs_time = setup.setup_time_dependent_parameter(dict_net, dict_pll, dict_data, parameter='intrF', zero_initially=False, start_time_dependency_after_percent_of_tsim=0.20,
 																for_all_plls_different_time_dependence=False)[0]

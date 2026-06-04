@@ -13,7 +13,7 @@ from scipy.signal import square
 from scipy.stats import cauchy
 
 
-def neg_cosine(x: np.float) -> np.float:
+def neg_cosine(x: float) -> float:
 	"""
 		Computes the negative cosine of the argument x.
 
@@ -21,12 +21,12 @@ def neg_cosine(x: np.float) -> np.float:
 			x: argument
 
 		Returns:
-			np.float value of function
+			float value of function
 		"""
 	return -1.0*np.cos(x)
 
 
-def cosine(x: np.float) -> np.float:
+def cosine(x: float) -> float:
 	"""
 		Computes the cosine of the argument x.
 
@@ -34,12 +34,12 @@ def cosine(x: np.float) -> np.float:
 			x: argument
 
 		Returns:
-			np.float value of function
+			float value of function
 		"""
 	return np.cos(x)
 
 
-def inverse_cosine(y: np.float, branch: str = 'positive') -> np.float:
+def inverse_cosine(y: float, branch: str = 'positive') -> float:
 	"""
 		Computes the inverse of the cosine of the argument y.
 
@@ -48,7 +48,7 @@ def inverse_cosine(y: np.float, branch: str = 'positive') -> np.float:
 			branch: HERE: dummy variable to chose negative or positive branch
 
 		Returns:
-			np.float value of function
+			float value of function
 		"""
 	# if y>=0:
 	# 	return +np.arccos(y)
@@ -57,7 +57,7 @@ def inverse_cosine(y: np.float, branch: str = 'positive') -> np.float:
 	return np.arccos(y)
 
 
-def neg_sine(x: np.float) -> np.float:
+def neg_sine(x: float) -> float:
 	"""
 		Computes the negative sine of the argument x.
 
@@ -65,12 +65,12 @@ def neg_sine(x: np.float) -> np.float:
 			x: argument
 
 		Returns:
-			np.float value of function
+			float value of function
 		"""
 	return -1.0*np.sin(x)
 
 
-def sine(x: np.float):
+def sine(x: float):
 	"""
 		Computes the sine of the argument x.
 
@@ -78,12 +78,12 @@ def sine(x: np.float):
 			x: argument
 
 		Returns:
-			np.float value of function
+			float value of function
 		"""
 	return np.sin(x)
 
 
-def inverse_sine(y: np.float, branch: str = 'positive') -> np.float:
+def inverse_sine(y: float, branch: str = 'positive') -> float:
 	"""
 		Computes the inverse sine of the argument y.
 
@@ -92,7 +92,7 @@ def inverse_sine(y: np.float, branch: str = 'positive') -> np.float:
 			branch: HERE: dummy variable to chose negative or positive branch
 
 		Returns:
-			np.float value of function
+			float value of function
 		"""
 	# if y>=0:
 	# 	return np.arcsin(y)
@@ -101,7 +101,7 @@ def inverse_sine(y: np.float, branch: str = 'positive') -> np.float:
 	np.arcsin(y)
 
 
-def triangular(x: np.float) -> np.float:
+def triangular(x: float) -> float:
 	"""
 		Computes the triangular function of the argument x.
 
@@ -109,12 +109,12 @@ def triangular(x: np.float) -> np.float:
 			x: argument
 
 		Returns:
-			np.float value of function
+			float value of function
 		"""
 	return sawtooth(x, width=0.5)
 
 
-def deriv_triangular(x: np.float) -> np.float:
+def deriv_triangular(x: float) -> float:
 	"""
 		Computes the derivative of the triangular function of the argument x.
 
@@ -122,12 +122,12 @@ def deriv_triangular(x: np.float) -> np.float:
 			x: argument
 
 		Returns:
-			np.float value of function
+			float value of function
 		"""
 	return (2.0/np.pi)*square(x, duty=0.5)
 
 
-def inverse_triangular(y: np.float, branch: str = 'positive', phase_wrap: int = 1) -> np.float:
+def inverse_triangular(y: float, branch: str = 'positive', phase_wrap: int = 1) -> float:
 	"""
 		Computes the inverse of the triangular function of the argument y.
 
@@ -167,7 +167,7 @@ def inverse_triangular(y: np.float, branch: str = 'positive', phase_wrap: int = 
 		sys.exit()
 
 
-def square_wave(x: np.float, duty=0.5) -> np.float:
+def square_wave(x: float, duty=0.5) -> float:
 	"""
 		Computes the square wave function with peak to peak amplitude one and shifted to the interval [0, 1] of the argument x.
 
@@ -181,7 +181,7 @@ def square_wave(x: np.float, duty=0.5) -> np.float:
 	return 0.5*(1.0+square(x, duty=0.5))
 
 
-def square_wave_symm_zero(x: np.float, duty=0.5) -> np.float:
+def square_wave_symm_zero(x: float, duty=0.5) -> float:
 	"""
 		Computes the functional value of the square wave function with peak to peak amplitude two and symmetric about zero of the argument x.
 
@@ -195,7 +195,7 @@ def square_wave_symm_zero(x: np.float, duty=0.5) -> np.float:
 	return 0.5*(square(x, duty=0.5))
 
 
-def pfd(x: np.float) -> np.float:
+def pfd(x: float) -> float:
 	"""
 		Computes phase frequency detector function (pfd) of the argument x.
 
@@ -208,7 +208,7 @@ def pfd(x: np.float) -> np.float:
 	return 0.5*(np.sign(x)*(1+sawtooth(1*x*np.sign(x), width=1)))
 
 
-def inverse_linear(y: np.float) -> np.float:
+def inverse_linear(y: float) -> float:
 	"""
 		Computes the inverse a linear function of the argument y.
 
@@ -216,12 +216,12 @@ def inverse_linear(y: np.float) -> np.float:
 			y: argument
 
 		Returns:
-			np.float value of function
+			float value of function
 		"""
 	return y
 
 
-def nonlinear_response_vco_3rd_gen(loop_filter_signal: np.float, voltage_bias: np.float, normalized=True, vco_parameter_1=20.7923E9, vco_parameter_2=2.1944E9) -> np.float:
+def nonlinear_response_vco_3rd_gen(loop_filter_signal: float, voltage_bias: float, normalized=True, vco_parameter_1=20.7923E9, vco_parameter_2=2.1944E9) -> float:
 	"""
 		Computes the nonlinear response of the VCO according to the functional form derived for the 3rd generation prototypes.
 
@@ -256,7 +256,7 @@ def nonlinear_response_vco_3rd_gen_calculate_voltage_bias(frequency_of_vco_in_hz
 	return ((frequency_of_vco_in_hz - vco_parameter_1) / vco_parameter_2) ** 2
 
 
-def inverse_nonlinear_response_vco_3rd_gen(frequency_of_vco_in_hz: np.float, voltage_bias: np.float, normalized=True, vco_parameter_1=20.7923E9, vco_parameter_2=2.1944E9) -> np.float:
+def inverse_nonlinear_response_vco_3rd_gen(frequency_of_vco_in_hz: float, voltage_bias: float, normalized=True, vco_parameter_1=20.7923E9, vco_parameter_2=2.1944E9) -> float:
 	"""
 		Computes the inverse nonlinear response of the VCO according to the functional form derived for the 3rd generation prototypes.
 

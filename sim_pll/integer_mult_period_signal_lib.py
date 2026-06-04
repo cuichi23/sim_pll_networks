@@ -12,7 +12,7 @@ if not os.environ.get('SGE_ROOT') is None:										# this environment variable 
 	matplotlib.use('Agg') #'%pylab inline'
 import matplotlib.pyplot as plt
 
-def cutTimeSeriesOfIntegerPeriod(Fsim: np.float, Tsim: np.float, delay: np.float, syncF: np.float, maxK: np.float, phase_or_signal: np.ndarray, psd_id: np.int, percentOfTsim: np.float, signal_given: bool=False):
+def cutTimeSeriesOfIntegerPeriod(Fsim: float, Tsim: float, delay: float, syncF: float, maxK: float, phase_or_signal: np.ndarray, psd_id: int, percentOfTsim: float, signal_given: bool=False):
 
 	print('Fct: cutTimeSeriesOfIntegerPeriod -- trying to extract an integer number of periods from the time-series of PLL %i!' % psd_id)
 	# Tsim = 1000; Fsim = 125; f = 0.999; phiInit = 0.0; percentOfTsim = 0.75;

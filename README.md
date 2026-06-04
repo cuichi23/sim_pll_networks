@@ -1,16 +1,165 @@
-# SIM-PLL
+# sim_pll — delay-coupled PLL network simulator
 
-## How to install
+`sim_pll` simulates networks of delay-coupled phase-locked loops (PLLs). Each
+oscillator is modelled as a second-order Kuramoto oscillator with delayed
+coupling: a signal-controlled oscillator whose instantaneous frequency is driven
+by a control signal derived from delayed phase comparisons with its neighbours,
+filtered by a first- or second-order loop filter. The library supports arbitrary
+coupling topologies, heterogeneous oscillators, transmission and feedback delays,
+dynamic and quenched noise, frequency division, and second-harmonic injection
+locking (used for Ising-machine experiments).
 
-TODO
+Each PLL is assembled from the components in `sim_pll/pll_lib.py`:
 
-## How to use
+- **Delayer** — provides the delayed phases of coupling partners (`tau_kl`) and
+  the feedback-delayed own phase, using a circular phase buffer.
+- **PhaseDetectorCombiner** — compares feedback and incoming phases through a
+  coupling function `h`, summing or averaging over the inputs.
+- **LowPassFilter** — first- or second-order loop filter producing the control
+  signal.
+- **SignalControlledOscillator** — advances the phase by
+  `(2*pi*intrF + K_rad * control_signal) * dt` per step.
+- **Counter** — derives a clock (period / half-period count) from the phase.
 
-TODO
+## Install
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -e ".[test]"
+```
+
+This installs the `sim_pll` package in editable mode together with the test
+dependencies (pytest).
+
+## Quick start
+
+### Programmatic (recommended)
+
+Build the three configuration dictionaries with `dicts_factory.generate_dicts`
+and run a headless simulation with `sim_lib.simulate_headless`. The example below
+couples three oscillators all-to-all through a custom adjacency matrix
+(`adjacency_matrix[k][l] == 1` means oscillator `k` receives the signal of
+oscillator `l`):
+
+```python
+import numpy as np
+from sim_pll import dicts_factory, sim_lib
+
+adjacency = np.ones((3, 3)) - np.eye(3)  # all-to-all, no self-coupling
+
+dict_pll, dict_net, dict_algo = dicts_factory.generate_dicts(
+    n=3,
+    topology='custom',
+    adjacency_matrix=adjacency,
+    intrinsic_freqs_hz=1.0,
+    coupling_strength_hz=0.15,
+    cutoff_freqs_hz=0.25,
+    transmission_delay_s=8.0 / 125.0,  # 8 time steps at sampleF = 125 Hz
+    sim_time_periods=200.0,            # in multiples of the mean intrinsic period
+    sample_freq_hz=125.0,
+    coupling_function='sin',
+)
+
+result = sim_lib.simulate_headless(dict_net, dict_pll, dict_algo, seed=42)
+
+phi = result['dict_data']['phi']       # phases, shape [steps, N]
+t = result['dict_data']['t']           # time vector in seconds
+inst_freq = np.diff(phi, axis=0) / (2.0 * np.pi * result['dict_pll']['dt'])
+print('locked frequencies (Hz):', inst_freq[-1, :])
+```
+
+`simulate_headless` runs the consistency check, prepares the network, evolves the
+dynamics, and returns the four dictionaries without opening figures or writing
+files. Pass `seed=<int>` for reproducible runs with VCO noise.
+
+### Classic (interactive run script)
+
+The legacy entry point is `run.py`, which selects one of the `dicts_lib_*`
+configuration modules, simulates, evaluates, and plots:
+
+```bash
+python run.py
+```
+
+Edit `run.py` to choose the configuration (`dicts_lib.getDicts()`,
+`dicts_lib_Ising.getDicts()`, `dicts_lib_test.getDicts()`, …). These modules
+return `(dict_pll, dict_net, dict_algo)` already passed through the consistency
+check, and are the historical templates the `dicts_factory` was distilled from.
+
+## Configuration reference
+
+Frequencies are in Hz, delays in seconds, phases in radians. The consistency
+check (`check_dicts_lib.check_dicts_consistency`) derives `dt = 1/sampleF` and
+`sim_time_steps` and must be run before simulating (it is called for you by
+`simulate_headless`).
+
+### `dict_net` — network and simulation
+
+| Key | Type | Unit | Meaning |
+| --- | --- | --- | --- |
+| `Nx`, `Ny` | int | — | Number of oscillators in x / y direction (network size `Nx*Ny`). |
+| `mx`, `my` | int | — | Twist / chequerboard winding number in x / y direction. |
+| `topology` | str | — | Coupling topology: `global`, `ring`, `chain`, `square-open`, `square-periodic`, `hexagon`, `octagon`, `custom`, `entrain*`, … |
+| `adjacency_matrix` | ndarray (N×N) | — | Required for `topology='custom'`; entry `[k][l]==1` means k receives the signal of l. |
+| `normalize_mutual_coupling_by_inputs` | bool | — | If True the phase-detector output is the mean over inputs, otherwise the sum. |
+| `Tsim` | float | periods | Simulation time in multiples of the mean intrinsic period. |
+| `phi_array_mult_tau` | int | — | Multiples of the max delay kept in the phase buffer. |
+| `phiPerturb` | list | rad | Delta phase perturbation per oscillator (`[]` → zero). |
+| `phiInitConfig` | list | rad | Initial phase configuration (`[]` → generated from topology/twist). |
+| `special_case` | str | — | Selects special simulation modes (time-/distance-dependent delays, etc.); `'False'` for the standard case. |
+
+### `dict_pll` — oscillator / PLL components
+
+| Key | Type | Unit | Meaning |
+| --- | --- | --- | --- |
+| `intrF` | float or list | Hz | Intrinsic VCO frequency (per oscillator). |
+| `syncF` | float | Hz | Frequency of the synchronized / reference state. |
+| `coupK` | float or list | Hz | Coupling strength K (phase-model convention). |
+| `gPDin` | int or ndarray (N×N) | — | Feed-forward phase-detector gains G_kl per input. |
+| `cutFc` | float or list | Hz | Loop-filter cut-off frequency (`None`/`0` → no filter). |
+| `orderLF` | int | — | Loop-filter order (1 or 2). |
+| `div` | int | — | Frequency-divider ratio in the feedback path. |
+| `friction_coefficient` | float | — | Friction coefficient of the second-order Kuramoto model. |
+| `noiseVarVCO` | float | Hz | Variance of the VCO Gaussian white noise (0 → deterministic). |
+| `feedback_delay` | float | s | Feedback-path delay. |
+| `transmission_delay` | float, list, or N×N | s | Transmission delay(s): single value, per-oscillator `tau_k`, or per-link `tau_kl` matrix. |
+| `coup_fct_sig` | callable | — | Coupling function h(x) (from `coupling_fct_lib`). |
+| `derivative_coup_fct` | callable | — | Derivative h'(x) of the coupling function. |
+| `includeCompHF` | bool | — | Whether to include high-frequency components of the PD signal. |
+| `typeVCOsig` | str | — | `analogHF` (multiplier PD) or `digitalHF` (XOR PD). |
+| `responseVCO` | str or callable | — | VCO response: `linear`, `nonlinear_3rd_gen`, or a custom function. |
+| `typeOfHist` | str | — | History initialization: `freeRunning` or `syncState`. |
+| `sampleF` | float | Hz | Sampling frequency; sets the integration step `dt = 1/sampleF`. |
+
+### `dict_algo` — algorithm / sweep control
+
+| Key | Type | Unit | Meaning |
+| --- | --- | --- | --- |
+| `parameter_space_sweeps` | str | — | Run mode: `single`, `one_parameter_sweep`, `statistics`, `listOfInitialPhaseConfigurations`, `testNetworkMotifIsing`, … |
+| `paramDiscretization` | list | — | Discretization `[n0, n1]` for brute-force parameter-space scans. |
+| `param_id_0`, `param_id_1` | str | — | Names of the parameters varied across realizations (`'None'` to disable). |
+| `min_max_range_parameter_0`, `_1` | list | — | `[min, max]` range for the corresponding swept parameter. |
+| `store_ctrl_and_clock` | bool | — | Whether to compute and store the control and clock signals. |
+| `number_of_processes_in_multisim` | int | — | Number of parallel threads in a multi-simulation run. |
 
 ## How to run the tests
 
+```bash
+pip install -e ".[test]"
+python -m pytest test/ -q
 ```
-pip install unittest
-python -m unittest test/unit/run_all_unit_tests.py
-```
+
+`test/unit/` holds fast component tests (`pll_lib`, `setup`, coupling functions);
+`test/integration/` holds end-to-end `simulate_headless` runs that check
+self-consistency of the locked states.
+
+## Repository layout
+
+| Path | Contents |
+| --- | --- |
+| `sim_pll/` | The installable package: `pll_lib.py` (components), `sim_lib.py` (simulation driver), `setup.py` (topology / history setup), `coupling_fct_lib.py` (coupling functions), `dicts_factory.py` (config builder), `check_dicts_lib.py` (consistency checks), plotting and evaluation libraries. |
+| `dicts_lib*.py` | Legacy configuration modules (one `getDicts()` per experiment), used by `run.py`. |
+| `run.py`, `load_and_plot.py` | Interactive entry points for running and replotting simulations. |
+| `legacy/` | Archived earlier versions of modules (kept, not deleted). |
+| `test/` | pytest suite (`unit/`, `integration/`). |

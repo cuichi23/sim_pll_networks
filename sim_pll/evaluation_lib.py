@@ -497,7 +497,7 @@ def compute_order_parameter(dict_pll: dict, dict_net: dict, dict_data: dict):
 		r = oracle_chequerboard_order_parameter_one_dimension(dict_data['phi'][-int(numb_av_T*1.0/(F1*dict_pll['dt'])):, :], dict_net['mx'])
 		order_parameter = oracle_chequerboard_order_parameter_one_dimension(dict_data['phi'][:, :], dict_net['mx'])									# calculate the order parameter for all times
 		order_parameter_divided_phases = oracle_chequerboard_order_parameter_one_dimension(dict_data['phi'][:, :]/division, dict_net['mx'])			# calculate the order parameter for all times of divided phases
-	elif dict_net['topology'] == "ring" or dict_net['topology'] == 'global':
+	elif dict_net['topology'] == "ring" or dict_net['topology'] == 'global' or dict_net['topology'] == 'custom':
 		# print('Calculate order parameter for ring or global topology. For phases: ', dict_data['phi'])
 		time.sleep(5)
 		r = oracle_mTwistOrderParameter(dict_data['phi'][-int(numb_av_T*1.0/(F1*dict_pll['dt'])):, :], dict_net['mx'])		# calculate the m-twist order parameter for a time interval of 2 times the eigenperiod, ry is imaginary part

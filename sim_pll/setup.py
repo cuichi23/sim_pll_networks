@@ -297,8 +297,8 @@ def generate_phi0(dict_net: dict, dict_pll: dict, dict_algo: dict) -> None:
 				dict_net.update({'phiInitConfig': np.arange(0.0, dict_net['Nx']*twistdelta, twistdelta)})		# vector mit N entries from 0 increasing by twistdelta for every element, i.e., the phase-configuration
 				dict_net.update({'phiInitConfig': np.array(dict_net['phiInitConfig'])%(2.0*np.pi)})				# bring back into interval [0 2pi]
 		print('dict_net[*phiInitConfig*]:\t', dict_net['phiInitConfig'])										# in the original phase space of an m-twist solution
-	if dict_net['topology'] == 'global' or dict_net['topology'] == 'entrainPLLsHierarch':
-		dict_net.update({'phiInitConfig': np.zeros(dict_net['Nx']*dict_net['Ny'])})								# for all-to-all coupling we assume no twist states with m > 0
+	if dict_net['topology'] == 'global' or dict_net['topology'] == 'entrainPLLsHierarch' or dict_net['topology'] == 'custom':
+		dict_net.update({'phiInitConfig': np.zeros(dict_net['Nx']*dict_net['Ny'])})								# for all-to-all/custom coupling we assume no twist states with m > 0
 
 
 ################################################################################
@@ -444,6 +444,23 @@ def setup_topology(dict_net: dict):
 		G = nx.complete_graph(dict_net['Nx']*dict_net['Ny'])
 		# print('G and G.neighbors(PLL0):', G, G.neighbors(0)); sys.exit(1)
 
+	elif dict_net['topology'] == 'custom':
+		# arbitrary directed coupling defined by a binary adjacency matrix:
+		# adjacency_matrix[k][l] == 1 means oscillator k receives the signal of oscillator l;
+		# realized as edge (k, l) so that G.neighbors(k) lists the senders of oscillator k,
+		# consistent with the convention used by Delayer and PhaseDetectorCombiner
+		number_of_oscillators = dict_net['Nx'] * dict_net['Ny']
+		adjacency_matrix = np.asarray(dict_net['adjacency_matrix'])
+		if adjacency_matrix.shape != (number_of_oscillators, number_of_oscillators):
+			raise ValueError("dict_net['adjacency_matrix'] must be a square matrix of size Nx*Ny=%i, got shape %s."
+							 % (number_of_oscillators, str(adjacency_matrix.shape)))
+		G = nx.DiGraph()
+		G.add_nodes_from(range(number_of_oscillators))
+		for k in range(number_of_oscillators):
+			for l in range(number_of_oscillators):
+				if adjacency_matrix[k, l]:
+					G.add_edge(k, l)
+
 	elif ( dict_net['topology'] == 'compareEntrVsMutual' and dict_net['Nx'] == 6):
 		G = nx.DiGraph()
 		G.add_nodes_from([i for i in range(dict_net['Nx']*dict_net['Ny'])])
@@ -564,7 +581,8 @@ def setup_topology(dict_net: dict):
 		# G = nx.convert_node_labels_to_integers(G)
 		G = nx.convert_node_labels_to_integers(G, first_label=0, ordering='sorted') 						# converts 2d coordinates to 1d index of integers, e.g., k=0,...,N-1
 
-	if dict_net['Nx']*dict_net['Ny'] < 36 and not (dict_net['special_case'] == 'timeDepChangeOfCoupStr' or dict_net['special_case'] == 'timeDepInjectLockCoupStr'):
+	plot_diagnostics = dict_net.get('plot_topology_diagnostics', True)
+	if plot_diagnostics and dict_net['Nx']*dict_net['Ny'] < 36 and not (dict_net['special_case'] == 'timeDepChangeOfCoupStr' or dict_net['special_case'] == 'timeDepInjectLockCoupStr'):
 		plt.figure(99999)
 		nx.draw(G)
 		F = nx.adjacency_matrix(G)

@@ -20,6 +20,7 @@ import time
 import pickle
 
 from sim_pll import setup
+from sim_pll import check_dicts_lib as chk_dicts
 from sim_pll import evaluation_lib as eva
 from sim_pll import plot_lib as plot
 
@@ -27,6 +28,38 @@ now = datetime.datetime.now()
 
 ''' Enable automatic carbage collector '''
 gc.enable()
+
+
+def simulate_headless(dict_net: dict, dict_pll: dict, dict_algo: dict, seed: int = None) -> dict:
+	"""Run a single simulation without plotting, saving, or interactive side effects.
+
+	This is the programmatic entry point for batch use (parameter sweeps, the
+	reservoir-computing adapter, tests). It runs the dictionary consistency check,
+	prepares the network, evolves the dynamics, and returns the results. In contrast
+	to ``simulateSystem`` it never opens figures, writes pickle files, or blocks on
+	``plt.show()``.
+
+	Args:
+		dict_net: network/topology configuration; see ``dicts_factory.generate_dicts``.
+			Note that ``check_dicts_consistency`` converts ``Tsim`` from multiples of
+			the mean intrinsic period into seconds, so the dicts must not have been
+			checked before.
+		dict_pll: PLL/oscillator configuration.
+		dict_algo: algorithm configuration.
+		seed: seed for numpy's random number generator; pass an integer for
+			reproducible runs with VCO noise, or None to seed from entropy.
+
+	Returns:
+		dict with keys 'dict_net', 'dict_pll', 'dict_algo', and 'dict_data'; the
+		simulation results in 'dict_data' contain the phase array 'phi' of shape
+		[max_delay_steps + sim_time_steps, N], the time vector 't' in seconds, and
+		the order parameter time series 'order_parameter'.
+	"""
+	np.random.seed(seed)
+	dict_pll, dict_net, dict_algo = chk_dicts.check_dicts_consistency(dict_pll, dict_net, dict_algo)
+	dict_data, pll_list = prepare_simulation(dict_net, dict_pll, dict_algo)
+	perform_simulation_case(dict_net, dict_pll, dict_algo, dict_data, pll_list)
+	return {'dict_net': dict_net, 'dict_pll': dict_pll, 'dict_algo': dict_algo, 'dict_data': dict_data}
 
 
 ''' SIMULATE NETWORK '''

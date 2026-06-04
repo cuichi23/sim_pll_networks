@@ -1,0 +1,31 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "sim-pll"
+version = "1.0.0"
+description = "Simulation of networks of delay-coupled phase-locked loops (PLLs)"
+readme = "README.md"
+license = { file = "LICENSE" }
+authors = [
+    { name = "Lucas Wetzel" },
+]
+requires-python = ">=3.10"
+dependencies = [
+    "numpy>=1.24",
+    "scipy>=1.10",
+    "matplotlib>=3.7",
+    "networkx>=3.0",
+    "pandas>=2.0",
+    "allantools>=2019.9",
+]
+
+[project.optional-dependencies]
+test = ["pytest>=7.0"]
+
+[tool.setuptools]
+packages = ["sim_pll"]
+
+[tool.pytest.ini_options]
+testpaths = ["test"]

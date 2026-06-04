@@ -68,6 +68,42 @@ class TestSetupTopology:
         assert graph.has_edge(1, 3)
 
 
+class TestCustomTopology:
+    """topology='custom': arbitrary directed coupling from dict_net['adjacency_matrix'].
+
+    Convention (matches Delayer/PhaseDetectorCombiner): adjacency_matrix[k][l] == 1
+    means oscillator k receives the signal of oscillator l, realized as edge (k, l)
+    so that G.neighbors(k) lists the senders of k.
+    """
+
+    def test_directed_triad_neighbor_sets(self):
+        dict_net = make_dict_net('custom', 3, 1)
+        dict_net['adjacency_matrix'] = [[0, 1, 0], [1, 0, 0], [0, 1, 0]]  # 0<->1 mutual, 2 receives from 1
+        graph = setup.setup_topology(dict_net)
+        assert sorted(graph.neighbors(0)) == [1]
+        assert sorted(graph.neighbors(1)) == [0]
+        assert sorted(graph.neighbors(2)) == [1]
+
+    def test_all_to_all_matches_global(self):
+        dict_net = make_dict_net('custom', 3, 1)
+        dict_net['adjacency_matrix'] = np.ones((3, 3)) - np.eye(3)
+        graph = setup.setup_topology(dict_net)
+        global_graph = setup.setup_topology(make_dict_net('global', 3, 1))
+        for k in range(3):
+            assert sorted(graph.neighbors(k)) == sorted(global_graph.neighbors(k))
+
+    def test_rejects_non_square_matrix(self):
+        dict_net = make_dict_net('custom', 3, 1)
+        dict_net['adjacency_matrix'] = [[0, 1], [1, 0]]
+        with pytest.raises(ValueError):
+            setup.setup_topology(dict_net)
+
+    def test_rejects_missing_matrix(self):
+        dict_net = make_dict_net('custom', 3, 1)
+        with pytest.raises(KeyError):
+            setup.setup_topology(dict_net)
+
+
 class TestGeneratePhi0:
 
     @staticmethod

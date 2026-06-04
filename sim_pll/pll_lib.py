@@ -915,6 +915,13 @@ class Counter:
 		reference_phase: the phase at which counting starts
 	"""
 	def __init__(self):
+		"""Initialize the counter with the reference phase set to zero.
+
+		Notes
+		-----
+		The reference phase is the phase at which counting starts; reset it with
+		``reset`` to count cycles relative to an arbitrary phase.
+		"""
 		self.reference_phase: np.float64 = 0
 
 	def reset(self, reference_phase: np.float64) -> None:

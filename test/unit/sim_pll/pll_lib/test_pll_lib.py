@@ -1,20 +1,24 @@
-import unittest
+"""Unit tests for module-level helpers in sim_pll.pll_lib."""
+import numpy as np
+import pytest
+
+from sim_pll.pll_lib import get_from_value_or_list
 
 
-class TestPllLib(unittest.TestCase):
+class TestGetFromValueOrList:
 
-    def setUp(self):
-        # this method is called before every test
-        pass
+    def test_none_passthrough(self):
+        assert get_from_value_or_list(0, None, 3) is None
 
-    def tearDown(self) -> None:
-        # this method is called after every test
-        pass
+    def test_scalar_broadcast(self):
+        assert get_from_value_or_list(2, 1.5, 3) == 1.5
+        assert get_from_value_or_list(0, 4, 3) == 4
 
-    @unittest.skip("TODO: implement test")
-    def test_get_from_value_or_list(self):
-        pass
+    def test_list_indexed_by_pll_id(self):
+        values = [10.0, 20.0, 30.0]
+        assert get_from_value_or_list(0, values, 3) == 10.0
+        assert get_from_value_or_list(2, values, 3) == 30.0
 
-
-if __name__ == '__main__':
-    unittest.main()
+    def test_ndarray_indexed_by_pll_id(self):
+        values = np.array([7.0, 8.0, 9.0])
+        assert get_from_value_or_list(1, values, 3) == 8.0

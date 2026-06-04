@@ -1,88 +1,76 @@
-import unittest
+"""Unit tests for sim_pll.pll_lib.PhaseLockedLoop (assembled oscillator)."""
+import numpy as np
+import pytest
+
+from sim_pll import setup
+from sim_pll.pll_lib import PhaseLockedLoop
+from .conftest import build_component_dicts
 
 
-class TestPhaseLockedLoop(unittest.TestCase):
-
-    def setUp(self):
-        # this method is called before every test
-        pass
-
-    def tearDown(self) -> None:
-        # this method is called after every test
-        pass
-
-    @unittest.skip("TODO: implement test")
-    def test___init__(self):
-        pass
-
-    @unittest.skip("TODO: implement test")
-    def test_next(self):
-        pass
-
-    @unittest.skip("TODO: implement test")
-    def test_clock_periods_count(self):
-        pass
-
-    @unittest.skip("TODO: implement test")
-    def test_clock_halfperiods_count(self):
-        pass
-
-    @unittest.skip("TODO: implement test")
-    def test_clock_reset(self):
-        pass
-
-    @unittest.skip("TODO: implement test")
-    def test_setup_hist_reverse(self):
-        pass
-
-    @unittest.skip("TODO: implement test")
-    def test_set_delta_perturbation(self):
-        pass
-
-    @unittest.skip("TODO: implement test")
-    def test_next_no_external_input(self):
-        pass
-
-    @unittest.skip("TODO: implement test")
-    def test_next_free_running_open_loop(self):
-        pass
-
-    @unittest.skip("TODO: implement test")
-    def test_set_position_3d(self):
-        pass
-
-    @unittest.skip("TODO: implement test")
-    def test_set_speed_3d(self):
-        pass
-
-    @unittest.skip("TODO: implement test")
-    def test_set_gwn_diffusion_variance_3d(self):
-        pass
-
-    @unittest.skip("TODO: implement test")
-    def test_get_position_3d(self):
-        pass
+INTR_F_HZ = 1.0
+SAMPLE_F_HZ = 125.0
 
 
-    @unittest.skip("TODO: implement test")
-    def test_get_speed_3d(self):
-        pass
+def make_pll_list(n=3, adjacency_matrix=None, **overrides):
+    dict_pll, dict_net = build_component_dicts(n=n, adjacency_matrix=adjacency_matrix, **overrides)
+    dict_data = {}
+    pll_list = setup.generate_plls(dict_pll, dict_net, dict_data)
+    return pll_list, dict_pll, dict_net
 
 
-    @unittest.skip("TODO: implement test")
-    def test_get_gwn_diffusion_variance_3d(self):
-        pass
+class TestAssembly:
+
+    def test_generate_plls_returns_phase_locked_loops(self):
+        pll_list, _, _ = make_pll_list()
+        assert len(pll_list) == 3
+        assert all(isinstance(p, PhaseLockedLoop) for p in pll_list)
+        assert [p.pll_id for p in pll_list] == [0, 1, 2]
 
 
-    @unittest.skip("TODO: implement test")
-    def test_set_receive_sig_distance_treshold(self):
-        pass
+class TestClock:
+
+    def test_clock_period_and_half_period_count(self):
+        pll_list, _, _ = make_pll_list()
+        pll = pll_list[0]
+        pll.clock_reset(0.0)
+        assert pll.clock_periods_count(2.0 * np.pi) == 1
+        assert pll.clock_halfperiods_count(2.0 * np.pi) == 2
+
+    def test_clock_reset_changes_reference(self):
+        pll_list, _, _ = make_pll_list()
+        pll = pll_list[0]
+        pll.clock_reset(2.0 * np.pi)
+        assert pll.clock_periods_count(2.0 * np.pi) == 0
+        assert pll.clock_periods_count(4.0 * np.pi) == 1
 
 
-    @unittest.skip("TODO: implement test")
-    def test_evolve_position_in_3d(self):
-        pass
+class TestFreeRunningAndReverseHistory:
+
+    def test_free_running_open_loop_advances_at_intrinsic_freq(self):
+        pll_list, dict_pll, _ = make_pll_list(intrinsic_freqs_hz=INTR_F_HZ, coupling_strength_hz=0.1)
+        pll = pll_list[0]
+        pll.signal_controlled_oscillator.phi = 0.0
+        intr_freq_rad = pll.signal_controlled_oscillator.intr_freq_rad
+        phi = pll.next_free_running_open_loop()
+        assert phi == pytest.approx(intr_freq_rad * dict_pll['dt'])
+
+    def test_setup_hist_reverse_steps_backwards(self):
+        pll_list, dict_pll, _ = make_pll_list(intrinsic_freqs_hz=INTR_F_HZ)
+        pll = pll_list[0]
+        pll.signal_controlled_oscillator.phi = 5.0
+        intr_freq_rad = pll.signal_controlled_oscillator.intr_freq_rad
+        phi = pll.setup_hist_reverse()
+        assert phi == pytest.approx(5.0 - intr_freq_rad * dict_pll['dt'])
 
 
-if __name__ == '__main__':
-    unittest.main()
+class TestPositionAccessors:
+
+    def test_set_and_get_position_speed_variance(self):
+        pll_list, _, _ = make_pll_list()
+        pll = pll_list[0]
+        pll.set_position_3d(np.array([1.0, 2.0, 3.0]))
+        pll.set_speed_3d(np.array([0.1, 0.2, 0.3]))
+        pll.set_gwn_diffusion_variance_3d(np.array([0.0, 0.0, 0.0]))
+        np.testing.assert_array_equal(pll.get_position_3d(), np.array([1.0, 2.0, 3.0]))
+        np.testing.assert_array_equal(pll.get_speed_3d(), np.array([0.1, 0.2, 0.3]))
+        np.testing.assert_array_equal(pll.get_gwn_diffusion_variance_3d(), np.array([0.0, 0.0, 0.0]))

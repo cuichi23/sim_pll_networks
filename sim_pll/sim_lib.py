@@ -60,6 +60,88 @@ def simulate_headless(dict_net: dict, dict_pll: dict, dict_algo: dict, seed: int
 	return {'dict_net': dict_net, 'dict_pll': dict_pll, 'dict_algo': dict_algo, 'dict_data': dict_data}
 
 
+def simulate_headless_driven(dict_net: dict, dict_pll: dict, dict_algo: dict,
+							 driven_parameter: str, driven_node_ids, values_per_step,
+							 seed: int = None) -> dict:
+	"""Run a simulation in which one parameter of selected nodes follows an input stream.
+
+	This is the continuous-drive entry point for reservoir computing. In contrast to
+	the time-dependent evolve functions of ``perform_simulation_case`` (which generate
+	parametric ramps for Ising annealing and entrainment experiments and are tied to
+	specific topologies), this function injects an arbitrary per-time-step signal into
+	the running network and reads the transient. It reuses ``prepare_simulation`` for
+	the history, the delay buffers and the loop-filter initialization, and the standard
+	per-step ``PhaseLockedLoop.next`` for the physics. It does not plot, save, or call
+	``sys.exit`` on the happy path.
+
+	Args:
+		dict_net: network/topology configuration (must not have been checked before).
+		dict_pll: PLL configuration; ``special_case`` must be ``'False'`` so that the
+			standard container length is used.
+		dict_algo: algorithm configuration.
+		driven_parameter: ``'intrinsic_freq'`` drives the VCO intrinsic frequency of the
+			selected nodes; ``'coupling_strength'`` scales their phase-detector input
+			gains. Both values are interpreted in Hz.
+		driven_node_ids: iterable of oscillator indices whose parameter is driven.
+		values_per_step: array of length ``max_delay_steps + sim_time_steps`` with the
+			physical parameter value (Hz) at each simulation step. The leading
+			history block is ignored by the loop; pad it with the base value.
+		seed: seed for numpy's random number generator.
+
+	Returns:
+		dict with keys 'dict_net', 'dict_pll', 'dict_algo', and 'dict_data'. The results
+		in 'dict_data' contain 'phi' [max_delay_steps + sim_time_steps, N], the time
+		vector 't', the loop-filter control signal 'ctrl' [same shape] sampled every
+		step, and the realized 'driven_values' that were applied.
+	"""
+	if driven_parameter not in ('intrinsic_freq', 'coupling_strength'):
+		raise ValueError("driven_parameter must be 'intrinsic_freq' or 'coupling_strength'.")
+
+	np.random.seed(seed)
+	dict_pll, dict_net, dict_algo = chk_dicts.check_dicts_consistency(dict_pll, dict_net, dict_algo)
+	dict_data, pll_list = prepare_simulation(dict_net, dict_pll, dict_algo)
+
+	max_delay_steps = dict_net['max_delay_steps']
+	sim_time_steps = dict_pll['sim_time_steps']
+	total_steps = max_delay_steps + sim_time_steps
+	values_per_step = np.asarray(values_per_step, dtype=float)
+	if values_per_step.shape[0] != total_steps:
+		raise ValueError("values_per_step must have length max_delay_steps + sim_time_steps = %i, got %i."
+						 % (total_steps, values_per_step.shape[0]))
+	driven_node_ids = list(driven_node_ids)
+
+	# base values needed to apply a multiplicative drive to the coupling gains
+	base_gain = {k: np.array(pll_list[k].phase_detector_combiner.G_kl, dtype=float)
+				 for k in driven_node_ids}
+
+	def apply_drive(value):
+		if driven_parameter == 'intrinsic_freq':
+			for k in driven_node_ids:
+				pll_list[k].signal_controlled_oscillator.intr_freq_rad = 2.0 * np.pi * value
+		else:  # coupling_strength: scale the driven nodes' input gains about their base
+			for k in driven_node_ids:
+				pll_list[k].phase_detector_combiner.G_kl = base_gain[k] * value
+
+	phi = dict_data['phi']
+	clock_counter = dict_data['clock_counter']
+	phi_array_len = dict_net['phi_array_len']
+	phi_store = np.empty([total_steps, dict_net['Nx'] * dict_net['Ny']])
+	phi_store[0:max_delay_steps + 1, :] = phi[0:max_delay_steps + 1, :]
+	ctl_store = np.zeros([total_steps, dict_net['Nx'] * dict_net['Ny']])
+	ctl_store[max_delay_steps, :] = [pll.low_pass_filter.get_control_signal() for pll in pll_list]
+
+	for idx_time in range(max_delay_steps, max_delay_steps + sim_time_steps - 1, 1):
+		apply_drive(values_per_step[idx_time])
+		phi[(idx_time + 1) % phi_array_len, :] = [pll.next(idx_time, phi_array_len, phi) for pll in pll_list]
+		phi_store[idx_time + 1, :] = phi[(idx_time + 1) % phi_array_len, :]
+		ctl_store[idx_time + 1, :] = [pll.low_pass_filter.get_control_signal() for pll in pll_list]
+
+	t = np.arange(0, total_steps) * dict_pll['dt']
+	dict_data.pop('clock_counter', None)
+	dict_data.update({'t': t, 'phi': phi_store, 'ctrl': ctl_store, 'driven_values': values_per_step})
+	return {'dict_net': dict_net, 'dict_pll': dict_pll, 'dict_algo': dict_algo, 'dict_data': dict_data}
+
+
 ''' SIMULATE NETWORK '''
 def simulateSystem(dict_net: dict, dict_pll: dict, dict_algo: dict, multi_sim=False):
 	"""Function that organizes the simulation. a) sets up a list of PLLs and a container for the results (dict_data). Writes the initial histories as specified. b) carries out the
@@ -211,11 +293,14 @@ def prepare_simulation(dict_net: dict, dict_pll: dict, dict_algo: dict):
 
 		elif max_delay_steps < int(dict_pll['orderLF']) and (int(dict_pll['orderLF']) == 2 or int(dict_pll['orderLF']) == 1):
 			if dict_pll['typeOfHist'] == 'freeRunning':  # set the frequencyies in the past to determine the LF filter state for no delay
-				inst_freq_lastStep = dict_pll['intrF'] + np.random.normal(loc=0.0, scale=np.sqrt(dict_pll['noiseVarVCO'] * dict_pll['dt']))
-				inst_freq_prior_to_lastStep = dict_pll['intrF'] + np.random.normal(loc=0.0, scale=np.sqrt(dict_pll['noiseVarVCO'] * dict_pll['dt']))
+				# support per-oscillator intrinsic frequencies (list or array) as well as a scalar for all
+				intr_freq_i = dict_pll['intrF'][i] if isinstance(dict_pll['intrF'], (list, np.ndarray)) else dict_pll['intrF']
+				inst_freq_lastStep = intr_freq_i + np.random.normal(loc=0.0, scale=np.sqrt(dict_pll['noiseVarVCO'] * dict_pll['dt']))
+				inst_freq_prior_to_lastStep = intr_freq_i + np.random.normal(loc=0.0, scale=np.sqrt(dict_pll['noiseVarVCO'] * dict_pll['dt']))
 			elif dict_pll['typeOfHist'] == 'syncState':
-				inst_freq_lastStep = dict_pll['syncF'] + np.random.normal(loc=0.0, scale=np.sqrt(dict_pll['noiseVarVCO'] * dict_pll['dt']))
-				inst_freq_prior_to_lastStep = dict_pll['syncF'] + np.random.normal(loc=0.0, scale=np.sqrt(dict_pll['noiseVarVCO'] * dict_pll['dt']))
+				sync_freq_i = dict_pll['syncF'][i] if isinstance(dict_pll['syncF'], (list, np.ndarray)) else dict_pll['syncF']
+				inst_freq_lastStep = sync_freq_i + np.random.normal(loc=0.0, scale=np.sqrt(dict_pll['noiseVarVCO'] * dict_pll['dt']))
+				inst_freq_prior_to_lastStep = sync_freq_i + np.random.normal(loc=0.0, scale=np.sqrt(dict_pll['noiseVarVCO'] * dict_pll['dt']))
 			pll_list[i].low_pass_filter.set_initial_control_signal(inst_freq_lastStep, inst_freq_prior_to_lastStep)
 		else:
 			print('in simPLL.lib: Higher order LFs are net yet supported!')

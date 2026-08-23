@@ -4,6 +4,7 @@ pyproject.toml
 sim_pll/__init__.py
 sim_pll/check_dicts_lib.py
 sim_pll/coupling_fct_lib.py
+sim_pll/dicts_factory.py
 sim_pll/entrain_mutual_lib.py
 sim_pll/eval_ising_lib.py
 sim_pll/evaluation_lib.py
